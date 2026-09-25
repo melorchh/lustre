@@ -73,7 +73,7 @@ try {
     }
     http_response_code(500);
     header('Content-Type: text/plain; charset=utf-8');
-    echo 'Service temporarily unavailable. Please try again later.';
+     echo 'DB ERR: ' . $e->getMessage();
     exit(1);
 }
 
