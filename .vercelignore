@@ -1,0 +1,11 @@
+client/node_modules
+*.sql
+*.md
+system_flowchart*
+SYSTEM_FLOWCHART*
+system_scope*
+plans/
+.vercel
+node_modules
+toddcare-backend/env.local.php
+backup/

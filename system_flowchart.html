@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lustre Medical Diagnostic Clinic — System Flowchart</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #1a237e, #283593);
+            color: #fff;
+            padding: 30px 40px;
+        }
+        header h1 { font-size: 1.8rem; font-weight: 600; }
+        header p { margin-top: 8px; opacity: 0.85; font-size: 0.95rem; }
+        .chart-wrapper {
+            padding: 30px;
+            overflow-x: auto;
+        }
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
+        footer {
+            padding: 20px 40px;
+            background: #fafafa;
+            border-top: 1px solid #eee;
+            font-size: 0.85rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Lustre Medical Diagnostic Clinic</h1>
+            <p>Full System Flowchart</p>
+        </header>
+
+        <div class="chart-wrapper">
+            <div class="mermaid">
+flowchart TD
+    START([User Visits Clinic Website]) --> LANDING[Landing Page<br>landing.php]
+
+    LANDING --> REG{New Patient?}
+    LANDING --> LOGIN[Sign In<br>login.php / admin_login.php]
+
+    REG --> REGISTER[Register Account<br>register.php]
+    REGISTER --> OTP[Email OTP Verification<br>register_otp_send.php]
+    OTP --> REG_OK{OTP Valid?}
+    REG_OK -- No --> OTP
+    REG_OK -- Yes --> LOGIN
+
+    LOGIN --> AUTH{Valid Credentials?}
+    AUTH -- No --> LOGIN
+    AUTH -- Yes --> ROLE{User Role}
+
+    %% ==================== PATIENT FLOW ====================
+    ROLE -- Patient --> PDASH[Dashboard<br>dashboard.php]
+
+    PDASH --> BOOK[Book Appointment<br>book_appointment.php]
+    BOOK --> PICK[Dates &amp; Times<br>get_available_dates / get_available_times]
+    PICK --> CONFIRM{Confirm Booking}
+    CONFIRM -- Yes --> SLIP[Appointment Confirmation<br>appointment_confirmation.php / PDF]
+    CONFIRM -- No --> BOOK
+
+    PDASH --> MYAPPT[My Appointments<br>my_appointments.php]
+    MYAPPT --> ACTION1{Action}
+    ACTION1 -- Reschedule --> RESCHED[Reschedule<br>reschedule_appointment.php]
+    ACTION1 -- Cancel --> CANCEL[Cancel<br>cancel_appointment.php]
+
+    PDASH --> LABREQ[Request Lab Test<br>lab_request.php]
+    LABREQ --> LABSTATUS[View Lab Results<br>patient_lab_action.php]
+
+    %% ==================== ADMIN FLOW ====================
+    ROLE -- Admin --> ADASH[Admin Dashboard<br>admin_dashboard.php]
+
+    ADASH --> APPT[Manage Appointments<br>admin_appointments.php]
+    APPT --> APPTACT{Action}
+    APPTACT -- Update --> UPD[Update Appointment<br>admin_update_appointment.php]
+    APPTACT -- Walk-in --> WALK[Add Walk-in<br>admin_walkin_action.php]
+    APPTACT -- Approve --> OKAPPT
+
+    ADASH --> PATIENTS[Manage Patients<br>admin_patients.php]
+    ADASH --> DOCS[Manage Doctors<br>admin_doctors.php]
+    DOCS --> DOCACT[Doctor Actions<br>admin_doctor_actions.php]
+
+    ADASH --> SCHED[Manage Schedules<br>admin_schedules.php]
+    SCHED --> SCHEDACTS[Schedule Actions<br>admin_schedule_action.php]
+
+    ADASH --> VITALS[Manage Vitals<br>admin_vitals.php]
+    VITALS --> VITACT[Vitals Actions<br>admin_vitals_action.php]
+
+    ADASH --> LAB[Laboratory<br>admin_laboratory.php]
+    LAB --> LABACT[Lab Actions<br>lab_action.php]
+    LABACT --> LABRESULT[Lab Result PDF<br>lab_result_pdf.php]
+
+    ADASH --> HIST[Patient History<br>admin_history.php]
+    ADASH --> REPORTS[Reports<br>admin_reports.php]
+
+    %% ==================== SHARED HELPERS ====================
+    SLIP --> NOTIF[Email Notifications<br>appointment_mailer.php / send_reminders.php]
+    ADASH --> LOGOUT_ADMIN[Sign Out<br>admin_logout.php]
+    PDASH --> LOGOUT_PAT[Sign Out<br>logout.php]
+
+    %% Styles
+    classDef patient fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
+    classDef admin fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
+    classDef dec fill:#fff3e0,stroke:#ef6c00,stroke-width:2px;
+    classDef term fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px;
+
+    class START,LOGIN,REGISTER,OTP,PDASH,BOOK,SLIP,MYAPPT,LABREQ,LABSTATUS patient;
+    class ADASH,APPT,PATIENTS,DOCS,SCHED,VITALS,LAB,HIST,REPORTS admin;
+    class REG,REG_OK,AUTH,ROLE,CONFIRM,ACTION1,APPTACT dec;
+    class START term;
+            </div>
+        </div>
+
+        <footer>
+            <strong>Flow Summary:</strong>
+            Entry via landing.php &rarr; Login/Register with OTP &rarr; Role-based routing (Patient / Admin) &rarr;
+            Patient: Book/Reschedule/Cancel appointments, Lab requests. Admin: Manage appointments, patients,
+            doctors, schedules, vitals, lab, history, reports. Email notifications sent via appointment_mailer.php.
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>

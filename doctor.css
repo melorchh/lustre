@@ -1,0 +1,387 @@
+/* =========================================================
+   Doctor Portal — Elder-friendly UI overrides
+   Loaded AFTER admin.css and scoped to <body class="doctor-page">.
+   Goals: larger text, larger touch targets, higher contrast,
+          simpler labels (no uppercase/letterspacing tiny text).
+
+   Dark theme stays fully supported: most colors inherit the
+   admin.css variables (--white / --gray-* / --green etc).
+   ========================================================= */
+
+html {
+  scroll-behavior: smooth;
+}
+.doctor-page {
+  font-size: 17px; /* scaled rem base for comfortable reading */
+}
+
+/* ---------- Accessibility: clear, visible focus ---------- */
+.doctor-page :focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: 2px;
+}
+
+/* ---------- Layout: calm, centered content ---------- */
+.doctor-page .admin-content {
+  padding: 1.8rem 2rem 2.5rem;
+}
+@media (min-width: 1360px) {
+  .doctor-page .admin-content {
+    max-width: 1240px;
+  }
+}
+
+/* ---------- Sidebar / navigation ---------- */
+.doctor-page .nav-item {
+  font-size: 1.08rem;
+  min-height: 62px;
+  padding: 0.95rem 1.15rem;
+}
+.doctor-page .nav-item.active {
+  font-weight: 700;
+}
+.doctor-page .nav-icon svg {
+  width: 24px;
+  height: 24px;
+}
+.doctor-page .sidebar-user-name {
+  font-size: 1.02rem;
+}
+.doctor-page .btn-logout {
+  font-size: 1.02rem;
+  min-height: 58px;
+  padding: 1rem 1.1rem;
+}
+
+/* ---------- Topbar ---------- */
+.doctor-page .topbar-title {
+  font-size: 1.7rem;
+}
+.doctor-page .topbar-hello {
+  font-size: 1.05rem;
+}
+.doctor-page .topbar-hello-label {
+  font-size: 0.8rem;
+}
+.doctor-page .theme-toggle {
+  width: 48px;
+  height: 48px;
+}
+.doctor-page .theme-toggle svg {
+  width: 22px;
+  height: 22px;
+}
+.doctor-page .avatar--topbar {
+  width: 46px;
+  height: 46px;
+  font-size: 1.15rem;
+}
+
+/* ---------- Stat cards ---------- */
+.doctor-page .stat-card {
+  padding: 1.5rem 1.4rem;
+}
+.doctor-page .stat-number {
+  font-size: 2.5rem;
+}
+.doctor-page .stat-label {
+  font-size: 1.05rem;
+  margin-top: 0.2rem;
+}
+
+/* ---------- Cards & headings ---------- */
+.doctor-page .content-card {
+  padding: 1.8rem;
+}
+.doctor-page .content-card h2 {
+  font-size: 1.45rem;
+}
+.doctor-page .content-card > p {
+  font-size: 1.06rem;
+  line-height: 1.6;
+}
+
+/* ---------- Tables ---------- */
+.doctor-page table {
+  font-size: 1.05rem;
+}
+.doctor-page th {
+  font-size: 0.84rem;
+  padding: 0.95rem 1.1rem;
+}
+.doctor-page td {
+  padding: 1.05rem 1.1rem;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+.doctor-page table small {
+  font-size: 0.92rem;
+  color: var(--gray-600);
+}
+.doctor-page .empty-state-row {
+  padding: 2.2rem 1rem;
+  font-size: 1.05rem;
+}
+
+/* ---------- Badges & status pills ---------- */
+.doctor-page .badge {
+  padding: 0.42rem 1.05rem;
+  font-size: 0.88rem;
+}
+.doctor-page .badge-notset {
+  font-size: 1rem;
+}
+
+/* ---------- Buttons: larger, easier to hit ---------- */
+.doctor-page .btn-primary {
+  font-size: 1.08rem;
+  min-height: 58px;
+  padding: 1rem 1.9rem;
+}
+.doctor-page .btn-secondary {
+  font-size: 1.04rem;
+  min-height: 56px;
+  padding: 0.9rem 1.7rem;
+}
+.doctor-page .btn-add {
+  font-size: 1.06rem;
+  min-height: 56px;
+  padding: 0.95rem 1.6rem;
+}
+.doctor-page .btn-sm {
+  font-size: 0.98rem;
+  min-height: 48px;
+  padding: 0.6rem 1.15rem;
+  border-radius: 12px;
+}
+.doctor-page .btn-danger {
+  font-size: 1.04rem;
+  min-height: 56px;
+  padding: 0.9rem 1.7rem;
+}
+.doctor-page .btn-full {
+  min-height: 62px;
+  font-size: 1.12rem;
+}
+
+/* ---------- Forms: bigger fields, plain readable labels ---------- */
+.doctor-page .form-group label {
+  font-size: 0.95rem;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-bottom: 0.55rem;
+}
+.doctor-page .form-group input,
+.doctor-page .form-group select,
+.doctor-page .form-group textarea {
+  font-size: 1.08rem;
+  min-height: 58px;
+  padding: 0.95rem 1.15rem;
+}
+.doctor-page .form-group textarea {
+  min-height: 160px;
+}
+.doctor-page .form-group input::placeholder,
+.doctor-page .form-group textarea::placeholder {
+  color: var(--gray-400);
+}
+.doctor-page .error-message {
+  font-size: 1rem;
+  padding: 0.9rem 1.15rem;
+}
+
+/* ---------- Search / filter bar ---------- */
+.doctor-page .search-filter-bar {
+  gap: 0.9rem;
+}
+.doctor-page .search-filter-bar input,
+.doctor-page .search-filter-bar select {
+  font-size: 1.05rem;
+  min-height: 56px;
+  padding: 0.85rem 1.1rem;
+}
+
+/* ---------- Selects inside tables ---------- */
+.doctor-page .action-select {
+  font-size: 1rem;
+  min-height: 50px;
+  padding: 0.6rem 2.7rem 0.6rem 0.9rem;
+}
+.doctor-page .cust-dropdown.cd-action {
+  width: 170px;
+}
+
+/* ---------- Custom dropdown widget ---------- */
+.doctor-page .cust-dropdown .cd-btn {
+  font-size: 1.08rem;
+  min-height: 58px;
+  padding: 0.95rem 1.15rem;
+}
+.doctor-page .cd-btn .cd-arrow svg {
+  width: 20px;
+  height: 20px;
+}
+.doctor-page .cd-menu {
+  padding: 0.5rem;
+}
+.doctor-page .cd-menu.fd-form {
+  width: min(420px, 92vw);
+}
+.doctor-page .cd-opt {
+  font-size: 1.04rem;
+  padding: 0.8rem 1rem;
+  line-height: 1.45;
+}
+.doctor-page .cd-search-input {
+  font-size: 1.05rem;
+  min-height: 52px;
+}
+
+/* ---------- Modals ---------- */
+.doctor-page .modal-box,
+.doctor-page .result-modal-box {
+  padding: 2.2rem;
+  width: min(620px, 94vw);
+}
+.doctor-page .modal-box h2,
+.doctor-page .result-modal-box h3 {
+  font-size: 1.5rem;
+}
+.doctor-page .modal-box p {
+  font-size: 1.06rem;
+}
+.doctor-page .modal-close-btn,
+.doctor-page .result-close {
+  width: 44px;
+  height: 44px;
+  font-size: 1.25rem;
+}
+.doctor-page .result-modal-box .info-row .info-item span {
+  font-size: 1.08rem;
+}
+.doctor-page .result-modal-box .info-row .info-item label {
+  font-size: 0.92rem;
+}
+
+/* ---------- Confirm dialog ---------- */
+.doctor-page .confirm-box {
+  padding: 1.8rem 1.6rem 1.6rem;
+  width: min(460px, 100%);
+}
+.doctor-page .confirm-box h2 {
+  font-size: 1.3rem;
+}
+.doctor-page .confirm-box p {
+  font-size: 1.08rem;
+}
+.doctor-page .confirm-icon {
+  width: 60px;
+  height: 60px;
+}
+.doctor-page .confirm-icon svg {
+  width: 30px;
+  height: 30px;
+}
+
+/* ---------- Toasts ---------- */
+.doctor-page .toast {
+  font-size: 1.12rem;
+  padding: 1.15rem 2rem;
+  bottom: 6.5rem;
+}
+
+/* ---------- Date picker (admin_datepicker.js) ---------- */
+.doctor-page .admin-cal {
+  padding: 1.2rem;
+}
+.doctor-page .admin-cal .cal-month {
+  font-size: 1.2rem;
+}
+.doctor-page .admin-cal .cal-nav {
+  width: 46px;
+  height: 46px;
+}
+.doctor-page .admin-cal .cal-nav svg {
+  width: 20px;
+  height: 20px;
+}
+.doctor-page .admin-cal .cal-weekdays span {
+  font-size: 0.78rem;
+}
+.doctor-page .admin-cal .cal-day {
+  min-height: 46px;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.doctor-page .admin-cal .cal-clear {
+  font-size: 1rem;
+}
+
+/* ---------- Availability day cards (doctor_schedule) ---------- */
+.doctor-page .day-grid {
+  gap: 1.1rem;
+}
+.doctor-page .day-card {
+  gap: 1rem;
+  padding: 1.3rem 1.35rem;
+}
+.doctor-page .day-card-head h3 {
+  font-size: 1.18rem;
+}
+.doctor-page .day-time {
+  font-size: 1.1rem;
+  gap: 0.65rem;
+}
+.doctor-page .day-time svg {
+  width: 20px;
+  height: 20px;
+}
+.doctor-page .switch {
+  width: 54px;
+  height: 30px;
+}
+.doctor-page .switch .slider::before {
+  width: 22px;
+  height: 22px;
+  left: 4px;
+  top: 4px;
+}
+.doctor-page .switch input:checked + .slider::before {
+  transform: translateX(24px);
+}
+
+/* ---------- Login page ---------- */
+.doctor-page .login-card {
+  max-width: 490px;
+  padding: 2.9rem 2.6rem;
+}
+.doctor-page .login-header h1 {
+  font-size: 2rem;
+}
+.doctor-page .login-header p {
+  font-size: 1.08rem;
+}
+.doctor-page .login-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 24px;
+  margin: 0 auto 1.15rem;
+}
+.doctor-page .login-logo svg {
+  width: 46px;
+  height: 46px;
+}
+.doctor-page .back-link {
+  font-size: 1.05rem;
+  margin-top: 1.5rem;
+}
+
+/* ---------- Dark theme touches ---------- */
+[data-theme="dark"] .doctor-page table small {
+  color: var(--gray-400);
+}
+[data-theme="dark"] .doctor-page .theme-toggle {
+  background: #1c2636;
+  border-color: #2c3a52;
+  color: #d8e2ee;
+}

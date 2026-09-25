@@ -1,0 +1,245 @@
+================================================================================
+SYSTEM SCOPE, PURPOSE, AND FUNCTIONALITY
+Clinic Management System (Patient / Doctor / Admin Portals)
+Project: LustreMDC Clinic Management System
+================================================================================
+
+I. PURPOSE OF THE SYSTEM
+--------------------------------------------------------------------------------
+The system is a web-based clinic management system designed to computerize the
+daily operations of the clinic. Its main purpose is to provide a single,
+organized platform where patients, doctors, and front-desk/admin staff can
+manage medical consultations efficiently.
+
+Specifically, the system aims to:
+  1. Simplify appointment booking and management for patients and staff.
+  2. Reduce paper-based record keeping by storing patient records, vitals,
+     laboratory results, and immunization records in one database.
+  3. Organize patient flow at the clinic, including both scheduled
+     appointments and walk-in (counter) patients.
+  4. Support the clinic's maternal and child care services (consultations,
+     prenatal monitoring, laboratory testing, and vaccination).
+  5. Provide reports so the clinic can monitor performance, patient load,
+     appointment status, and revenue.
+
+The system is accessed through three (3) portals:
+  - Patient Portal     – for patients/clients
+  - Doctor Portal      – for the clinic's doctors
+  - Admin Portal       – for front-desk/admin staff
+
+
+II. USER ROLES
+--------------------------------------------------------------------------------
+1. PATIENT / CLIENT
+   - Registers an account and books appointments online.
+   - Views appointment status and history.
+   - Requests laboratory tests.
+   - Views vitals, lab results, and vaccination records.
+   - Can reschedule or cancel appointments.
+   - Can be registered as a walk-in by the frontline staff when arriving at the
+     clinic without an appointment.
+
+2. DOCTOR
+   - Logs in to view and manage consultations.
+   - Views appointments and updates appointment status.
+   - Manages personal clinic schedule and blocks unavailable time.
+   - Processes laboratory requests and encodes results.
+   - Views patient laboratory and appointment information.
+
+3. ADMIN / FRONT-DESK STAFF
+   - Manages the whole system through the admin panel.
+   - Books appointments on behalf of patients (counter booking).
+   - Registers walk-in clients and manages the daily queue.
+   - Manages patient records and doctor accounts.
+   - Manages doctor schedules and time blocks.
+   - Records laboratory tests, vitals, and vaccinations.
+   - Views analytics, generates reports, and prints documents (appointment
+     slips, lab results, vaccine cards).
+
+
+III. SYSTEM FUNCTIONALITY (BY MODULE)
+--------------------------------------------------------------------------------
+
+A. ACCOUNT / SECURITY MODULE
+   - Patient registration with OTP (One-Time PIN) verification and secure
+     password hashing.
+   - Patient login, doctor login, and admin login.
+   - Forgotten password recovery using OTP verification via email.
+   - Admin password change with current-password verification.
+   - Login lockout: the admin account is locked for 15 minutes after 5 failed
+     login attempts to prevent brute-force attacks.
+   - First-login password change: the default admin password (admin123) must be
+     changed upon first login for security.
+   - Session-based authentication so only logged-in users can access pages.
+
+B. PATIENT PORTAL
+   1. Home / Landing Page
+      - Displays the clinic's services, doctors, and information.
+      - Provides access to patient login and registration.
+   2. Patient Dashboard
+      - Shows the patient's appointments (sorted by status and date).
+      - Shows requested laboratory tests with their current status and results.
+      - Shows recorded vitals and vaccination history.
+      - Lists the clinic's doctors with their specialties and schedules.
+   3. Appointment Booking
+      - Patient selects a doctor and the system shows only available dates and
+        time slots based on the doctor's schedule.
+      - Unavailable dates and time blocks are automatically excluded.
+      - An appointment confirmation is generated and a confirmation slip/PDF
+        can be printed and an email notice can be sent.
+   4. My Appointments
+      - Patient can view, reschedule, or cancel appointments.
+      - Rescheduling updates the appointment history record.
+   5. Laboratory Request
+      - Patient can request laboratory tests (blood, urine/stool, infectious
+        disease, pregnancy/hormonal, imaging, and other tests).
+   6. Records Viewing
+      - Patient can view their vitals, laboratory results, and vaccination
+        records.
+
+C. DOCTOR PORTAL
+   1. Doctor Dashboard
+      - Shows the doctor's appointments and assigned patients.
+   2. Appointment Management
+      - Doctor updates appointment status (pending, confirmed, completed,
+        cancelled).
+   3. Schedule Management
+      - Doctor manages personal working schedule (days and time).
+      - Doctor can add "time blocks" (unavailable / time-off) that are applied
+        to the appointment system so patients cannot book those slots.
+      - The doctor's schedule text is automatically synced and displayed to
+        patients.
+   4. Laboratory Management
+      - Doctor requests laboratory tests for patients.
+      - Doctor encodes and updates laboratory test results and status
+        (pending, processing, completed).
+   5. Printing
+      - Doctor can print laboratory result PDFs.
+
+D. ADMIN PANEL
+   1. Dashboard
+      - Shows summary statistics: total patients, total doctors, pending,
+        confirmed, today's appointments, total appointments, and walk-ins
+        today.
+      - Quick actions: New Appointment (counter booking), Register Walk-In,
+        View Patients, Record Vitals, New Lab Test, Manage Doctors, Schedules,
+        View Walk-ins, and View Reports.
+      - Recent Appointments table with status and payment updates.
+      - Today's Walk-ins panel showing the current queue.
+   2. Appointment Management
+      - Front-desk books appointments for patients at the counter.
+      - Manages appointment status and payment status (paid/unpaid).
+      - Prints appointment slips.
+      - Handles rescheduling and tracks reschedule history.
+      - Searches and filters appointments by patient name, address, age,
+        status, and priority.
+   3. Patient Management
+      - Lists all patients with contact details, patient type, age, weight,
+        height, number of appointments, and last visit date.
+      - Search filters by name, address, and age.
+      - Registers walk-in clients (creates patient record + queue entry).
+   4. Walk-in Queue Management  (recent update – see Section IV)
+      - Dedicated "Walk-ins" page showing the daily queue.
+   5. Doctor Management
+      - Creates and manages doctor accounts with generated credentials.
+      - Updates doctor profiles (name, specialty, schedule, experience).
+   6. Schedule Management
+      - Admin manages doctor schedules and time blocks for all doctors.
+      - Time blocks are synced so the online booking calendar is accurate.
+   7. Laboratory Management
+      - Admin records and tracks laboratory tests for patients.
+      - Updates test status and results.
+      - Prints laboratory result PDFs.
+   8. Vitals & Vaccines
+      - Admin records patient vitals (weight, blood pressure, heart rate,
+        fundal height, notes) per visit.
+      - Records vaccinations with vaccine name, dose, administered date, and
+        next due date.
+      - Shows patient summary (latest weight, blood pressure, and next due
+        vaccine).
+      - Prints an immunization / vaccine card (PDF).
+   9. Reports & Analytics
+      - Generates reports with selectable period (today, week, month, year, or
+        custom date range).
+      - Filters by doctor, appointment status, and payment status.
+      - Shows charts (appointments, patients, completed, cancelled, paid, and
+        estimated revenue) using Chart.js.
+      - Provides summary breakdowns and statistics for decision making.
+   10. Archive / History
+       - Stores and displays past/archived appointments and laboratory tests
+         for record keeping.
+   11. Walk-ins
+       - Dedicated module for walk-in counter patients (see below).
+
+
+IV. SCOPE: WALK-IN QUEUE MANAGEMENT  (RECENT UPDATE)
+--------------------------------------------------------------------------------
+This update introduces a queue-based system for registering and managing
+walk-in (counter / walk-in without appointment) patients. The scope covers the
+following:
+
+   1. Walk-in Registration
+      - Front-desk staff can register a walk-in patient from the Dashboard or
+        the Patients page through a dedicated modal.
+      - The form captures patient details (full name, contact number, address,
+        patient type, age, weight, height) together with the selected DOCTOR
+        and ARRIVAL TIME, which are required so the patient is placed in the
+        correct queue. Email is optional (auto-generated if left blank), and a
+        system-generated patient account is created.
+
+   2. Dynamic Queue Numbering
+      - Each walk-in is assigned a queue number that is generated per doctor,
+        per day (e.g., Dr. A's queue #1, #2, #3; Dr. B's own #1, #2, ...).
+      - The queue is ordered by arrival time; if two patients arrive at the
+        same time, the earlier registration timestamp (and record ID) is used,
+        ensuring first-come, first-served fairness.
+
+   3. Walk-in Monitoring Page
+      - A dedicated "Walk-ins" page (linked in the sidebar of every admin
+        page) lists all walk-ins for a selected date (defaults to today).
+      - Records are grouped by doctor and show the queue number, patient name,
+        contact, patient type, arrival time, and current status.
+      - A date filter lets staff review past days or switch back to today.
+
+   4. Status Management
+      - Staff can update each walk-in's status through the queue:
+        Waiting -> In Service -> Served, or mark as Cancelled.
+      - Summary counters are displayed for the selected day: Total, Waiting,
+        In Service, Served, and Cancelled.
+
+   5. Dashboard Visibility
+      - The admin dashboard shows a "Walk-ins Today" statistic and a
+        "Today's Walk-ins" panel so reception can monitor the clinic's current
+        patient load at a glance.
+
+   6. Data Persistence
+      - A dedicated "walk_ins" database table stores the patient-doctor
+        relationship, arrival date and time, status, and creation timestamp.
+      - Indexed for fast lookup by doctor and date.
+
+   OUT OF SCOPE (for the walk-in update):
+      - Walk-ins do not consume appointment time slots and do not affect the
+        doctor's schedule.
+      - Walk-ins do not automatically create login credentials that patients
+        must use (the patient account is created for record keeping).
+      - The system does not automatically bill or print receipts for walk-in
+        patients.
+
+
+V. SUPPORTING FEATURES
+--------------------------------------------------------------------------------
+   - Automated appointment reminders: a background script (cron / task
+     scheduler) emails patients about upcoming appointments about 1 hour
+     before the schedule.
+   - Email notifications: appointment confirmation and reminder emails are
+     sent through the system's mailer.
+   - Printable documents: appointment confirmation/PDF, appointment slip,
+     laboratory result PDF, and vaccine/immunization card PDF.
+   - Responsive design and dark-mode support across the admin and patient
+     interfaces.
+   - Secure password storage using bcrypt password hashing.
+
+
+================================================================================
+END OF DOCUMENT
+================================================================================
