@@ -24,6 +24,15 @@ if (class_exists('DbConn', false)) {
     return;
 }
 
+// Guard against the mysqli extension not being loaded in the runtime: the
+// application passes these constants straight into fetch_all().
+if (!defined('MYSQLI_ASSOC')) {
+    define('MYSQLI_ASSOC', 1);
+}
+if (!defined('MYSQLI_NUM')) {
+    define('MYSQLI_NUM', 2);
+}
+
 class DbResult
 {
     public $num_rows = 0;
@@ -42,6 +51,16 @@ class DbResult
             return null;
         }
         return $this->rows[$this->idx++];
+    }
+
+    public function fetch_all($result_type = MYSQLI_ASSOC)
+    {
+        $remaining = array_slice($this->rows, $this->idx);
+        $this->idx = $this->num_rows;
+        if ($result_type === MYSQLI_NUM) {
+            return array_map('array_values', $remaining);
+        }
+        return $remaining;
     }
 
     public function data_seek($n)
@@ -283,6 +302,27 @@ class DbConn
         }
         $stmt->closeCursor();
         return true;
+    }
+
+    private function insertTable($sql)
+    {
+        if (preg_match('/^\s*INSERT\s+INTO\s+([A-Za-z0-9_\.]+)/i', $sql, $m)) {
+            $t = strtolower(str_replace(['`', '"'], '', $m[1]));
+            if (strpos($t, '.') !== false) {
+                $t = substr($t, strrpos($t, '.') + 1);
+            }
+            return $t;
+        }
+        return null;
+    }
+
+    private function lastInsertId($table)
+    {
+        try {
+            return (int)$this->pdo->lastInsertId($table . '_id_seq');
+        } catch (\Throwable $e) {
+            return 0;
+        }
     }
 
     public function real_escape_string($str)
