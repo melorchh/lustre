@@ -59,6 +59,50 @@ if ($dbSsl !== '' && $dbSsl !== 'disable') {
     $dsn .= ';sslmode=' . $dbSsl;
 }
 
+/**
+ * Aborts the request with a response that is safe to show publicly.
+ *
+ * The diagnostic detail (host, port, user, SQLSTATE) only ever goes to the
+ * server/function log via error_log(). The visitor gets one of two fixed
+ * strings, so a misconfiguration is never confused with a transient outage:
+ *
+ *   $retryable = true   server could not be reached  -> 503 + Retry-After
+ *   $retryable = false  configuration is wrong      -> 500, retrying is futile
+ */
+function toddcare_db_fail($reason, $detail = '', $retryable = false)
+{
+    error_log('[toddcare-db] ' . $reason . ' :: ' . $detail);
+
+    if (php_sapi_name() === 'cli') {
+        fwrite(STDERR, 'Database connection failed: ' . $reason . PHP_EOL);
+        fwrite(STDERR, '  ' . $detail . PHP_EOL);
+        exit(1);
+    }
+
+    http_response_code($retryable ? 503 : 500);
+    header('Content-Type: text/plain; charset=utf-8');
+    if ($retryable) {
+        header('Retry-After: 60');
+    }
+    echo $retryable
+        ? 'Service temporarily unavailable. Please try again later.'
+        : 'The service is misconfigured. Please contact the administrator.';
+    exit(1);
+}
+
+// DB_HOST defaults to localhost above, so an unset variable would otherwise
+// surface as an opaque "connection refused" from the Lambda itself. Call it out
+// by name instead. Only DB_HOST is checked: an empty DB_PASSWORD is already
+// reported precisely by the 28P01 branch below.
+if (toddcare_env('DB_HOST') === '') {
+    toddcare_db_fail(
+        'DB_HOST is not set',
+        'set DB_HOST/DB_PORT/DB_USER/DB_PASSWORD in the Vercel project environment '
+        . '(ap-southeast-1 pooler: host=aws-0-ap-southeast-1.pooler.supabase.com, '
+        . 'port=6543, user=postgres.<project-ref>)'
+    );
+}
+
 try {
     $pdo = new PDO($dsn, $dbUser, $dbPass, [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_SILENT,
@@ -67,14 +111,30 @@ try {
         PDO::ATTR_TIMEOUT            => 10,
     ]);
 } catch (\Exception $e) {
-    if (php_sapi_name() === 'cli') {
-        fwrite(STDERR, 'Database connection failed.' . PHP_EOL);
-        exit(1);
+    $sqlstate = isset($e->errorInfo[0]) ? (string) $e->errorInfo[0] : '';
+    $detail   = 'sqlstate=' . ($sqlstate === '' ? '(none)' : $sqlstate)
+              . ' host=' . $dbHost . ' port=' . $dbPort
+              . ' user=' . $dbUser . ' :: ' . $e->getMessage();
+
+    // SQLSTATE class 08 = connection exception (DNS, TCP timeout, refused).
+    if (strncmp($sqlstate, '08', 2) === 0) {
+        toddcare_db_fail(
+            'database unreachable',
+            $detail,
+            true
+        );
     }
-    http_response_code(500);
-    header('Content-Type: text/plain; charset=utf-8');
-    echo 'Service temporarily unavailable. Please try again later.';
-    exit(1);
+
+    // Class 28 = invalid authorization, 3D000 = database does not exist. The
+    // usual cause is a pooler username missing its "<project-ref>." prefix.
+    if (strncmp($sqlstate, '28', 2) === 0 || $sqlstate === '3D000') {
+        toddcare_db_fail(
+            'database rejected the credentials or database name',
+            $detail
+        );
+    }
+
+    toddcare_db_fail('unexpected database error', $detail);
 }
 
 // All timestamps are stored as local (Asia/Manila) wall-clock values. Keeping

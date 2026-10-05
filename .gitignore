@@ -4,3 +4,6 @@ client/node_modules/
 toddcare-backend/env.local.php
 *.sql
 *.log
+
+# stray nested clone created by an accidental `git init`
+lustre/
