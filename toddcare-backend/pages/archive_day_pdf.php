@@ -16,7 +16,7 @@ if (!in_array($tab, $allowed_tabs, true) || !preg_match('/^\d{4}-\d{2}-\d{2}$/',
 }
 
 $conn = null;
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 
 $apptCols = [
     ['label' => 'Patient',       'w' => 150],

@@ -6,7 +6,7 @@ if (!isset($_SESSION["admin_id"])) {
     exit;
 }
 
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $appointment_id = isset($_POST['appointment_id']) ? intval($_POST['appointment_id']) : 0;

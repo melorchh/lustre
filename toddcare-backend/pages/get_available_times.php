@@ -4,7 +4,7 @@ header('Pragma: no-cache');
 header('Expires: 0');
 header('Content-Type: application/json');
 
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 
 $doctor_id = isset($_GET['doctor_id']) ? intval($_GET['doctor_id']) : 0;
 $date = isset($_GET['date']) ? $_GET['date'] : '';

@@ -21,6 +21,7 @@ require_once __DIR__ . '/mysqli_compat.php';
 
 date_default_timezone_set('Asia/Manila');
 
+if (!function_exists('toddcare_env')) {
 function toddcare_env($key, $default = '')
 {
     $v = getenv($key);
@@ -31,6 +32,7 @@ function toddcare_env($key, $default = '')
         $v = isset($_SERVER[$key]) ? $_SERVER[$key] : '';
     }
     return ($v === false || $v === '') ? $default : $v;
+}
 }
 
 // Optional local fallback: array of DB_*/SMTP_*/GROQ_*/CRON_* overrides.

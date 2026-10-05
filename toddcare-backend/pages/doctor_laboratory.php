@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/../src/session.php';
 if (!isset($_SESSION["doctor_id"])) { header("Location: doctor_login.php"); exit; }
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 
 $doctor_id   = (int)$_SESSION['doctor_id'];
 $doctor_name = $_SESSION['doctor_name'];

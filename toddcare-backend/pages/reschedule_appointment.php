@@ -5,7 +5,7 @@ if (!isset($_SESSION["patient_id"])) {
     exit;
 }
 
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 
 $patient_id = $_SESSION["patient_id"];
 $appointment_id = isset($_POST["appointment_id"]) ? intval($_POST["appointment_id"]) : 0;

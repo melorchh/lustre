@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/../src/session.php';
 if (!isset($_SESSION["admin_id"])) { header("Location: admin_login.php"); exit; }
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 $admin_name = $_SESSION["admin_name"];
 
 $patients = $conn->query("SELECT p.id, p.name, p.email, p.contact, p.address, p.is_walk_in, p.weight_kg, p.height_cm, p.patient_type, p.age, p.created_at, COUNT(a.id) as appointment_count, MAX(a.appointment_date) as last_appointment FROM patients p LEFT JOIN appointments a ON p.id=a.patient_id GROUP BY p.id, p.name, p.email, p.contact, p.address, p.is_walk_in, p.weight_kg, p.height_cm, p.patient_type, p.age, p.created_at ORDER BY p.created_at DESC");

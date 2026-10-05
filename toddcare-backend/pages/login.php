@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . '/../src/session.php';
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = isset($_POST['email']) ? trim($_POST['email']) : '';

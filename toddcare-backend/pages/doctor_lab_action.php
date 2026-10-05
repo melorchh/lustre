@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/../src/session.php';
 if (!isset($_SESSION["doctor_id"])) { header("Content-Type: text/plain; charset=utf-8"); echo "Unauthorized"; exit; }
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 
 header('Content-Type: text/plain; charset=utf-8');
 

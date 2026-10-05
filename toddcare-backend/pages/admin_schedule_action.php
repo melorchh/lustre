@@ -6,7 +6,7 @@ if (!isset($_SESSION["admin_id"])) {
     exit;
 }
 
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 include __DIR__ . '/../src/schedule_sync.php';
 
 $action = isset($_GET['action']) ? $_GET['action'] : '';

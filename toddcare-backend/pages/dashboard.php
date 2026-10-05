@@ -7,7 +7,7 @@ if (!isset($_SESSION["patient_id"])) {
 }
 
 $conn = null;
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 
 $patient_id = $_SESSION["patient_id"];
 

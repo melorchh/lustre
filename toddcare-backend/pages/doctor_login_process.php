@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . '/../src/session.php';
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 
 // Ensure the doctor_accounts table exists
 $conn->query("CREATE TABLE IF NOT EXISTS doctor_accounts (

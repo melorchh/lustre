@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/../src/session.php';
 if (!isset($_SESSION["admin_id"])) { header("Location: admin_login.php"); exit; }
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 $admin_name = $_SESSION["admin_name"];
 
 $schedules = $conn->query("SELECT ds.*, d.name as doctor_name, d.specialty FROM doctor_schedules ds JOIN doctors d ON ds.doctor_id=d.id ORDER BY d.name, array_position(ARRAY['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'], ds.day_of_week)");

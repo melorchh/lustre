@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . '/../src/session.php';
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 
 if (!isset($_SESSION["doctor_account_id"])) { header("Location: doctor_login.php"); exit; }
 

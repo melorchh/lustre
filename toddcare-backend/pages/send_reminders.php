@@ -42,7 +42,7 @@ if (!$authed) {
     exit(1);
 }
 
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 
 // Who to remind: appointments starting in roughly 1 hour.
 // Appointment dates/times are stored as local (Asia/Manila) wall-clock values

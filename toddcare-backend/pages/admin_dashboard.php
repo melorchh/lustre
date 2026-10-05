@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/../src/session.php';
 if (!isset($_SESSION["admin_id"])) { header("Location: admin_login.php"); exit; }
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 $admin_name = $_SESSION["admin_name"];
 $total_patients    = $conn->query("SELECT COUNT(*) c FROM patients")->fetch_assoc()['c'];
 $total_doctors     = $conn->query("SELECT COUNT(*) c FROM doctors")->fetch_assoc()['c'];

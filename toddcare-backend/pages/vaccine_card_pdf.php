@@ -15,7 +15,7 @@ if ($vacc_id <= 0) {
 }
 
 $conn = null;
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 
 $stmt = $conn->prepare("
     SELECT

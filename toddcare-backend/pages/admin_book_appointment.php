@@ -2,7 +2,7 @@
 require __DIR__ . '/../src/session.php';
 if (!isset($_SESSION["admin_id"])) { echo "error: Unauthorized"; exit; }
 
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 
 $patient_id = isset($_POST["patient_id"]) ? intval($_POST["patient_id"]) : 0;
 $doctor_id  = isset($_POST["doctor_id"])  ? intval($_POST["doctor_id"])  : 0;

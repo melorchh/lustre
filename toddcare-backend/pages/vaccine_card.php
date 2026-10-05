@@ -10,7 +10,7 @@ $patient_id = (int)$_SESSION["patient_id"];
 $vacc_id    = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 $conn = null;
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 
 if ($vacc_id <= 0) {
     $conn->close();

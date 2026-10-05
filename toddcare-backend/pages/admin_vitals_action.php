@@ -2,7 +2,7 @@
 require __DIR__ . '/../src/session.php';
 if (!isset($_SESSION["admin_id"])) { header("Location: admin_login.php"); exit; }
 
-include __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/db.php';
 
 $action = $_POST['action'] ?? '';
 $patient_id = isset($_POST['patient_id']) ? (int)$_POST['patient_id'] : 0;
