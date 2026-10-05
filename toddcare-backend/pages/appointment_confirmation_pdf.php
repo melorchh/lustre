@@ -14,7 +14,6 @@ if ($appt_id <= 0) {
     exit('Invalid appointment request');
 }
 
-$conn = null;
 require_once __DIR__ . '/../src/db.php';
 
 $stmt = $conn->prepare("

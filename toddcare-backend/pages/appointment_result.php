@@ -9,7 +9,6 @@ if (!isset($_SESSION["patient_id"])) {
 $patient_id = (int)$_SESSION["patient_id"];
 $appt_id    = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-$conn = null;
 require_once __DIR__ . '/../src/db.php';
 
 if ($appt_id <= 0) {

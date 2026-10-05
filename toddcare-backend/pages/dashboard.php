@@ -6,7 +6,6 @@ if (!isset($_SESSION["patient_id"])) {
     exit;
 }
 
-$conn = null;
 require_once __DIR__ . '/../src/db.php';
 
 $patient_id = $_SESSION["patient_id"];

@@ -14,7 +14,6 @@ if ($vacc_id <= 0) {
     exit('Invalid vaccination request');
 }
 
-$conn = null;
 require_once __DIR__ . '/../src/db.php';
 
 $stmt = $conn->prepare("

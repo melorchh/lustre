@@ -15,7 +15,6 @@ if (!in_array($tab, $allowed_tabs, true) || !preg_match('/^\d{4}-\d{2}-\d{2}$/',
     exit('Invalid request');
 }
 
-$conn = null;
 require_once __DIR__ . '/../src/db.php';
 
 $apptCols = [
