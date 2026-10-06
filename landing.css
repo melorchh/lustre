@@ -1494,7 +1494,7 @@ footer .footer-copy {
 /* ══ CHATBOT ══ */
 #chatbotWidget {
   position: fixed;
-  bottom: 1.4rem;
+  bottom: calc(1.4rem + var(--kb, 0px));
   right: 1.4rem;
   z-index: 2900;
 }
@@ -1518,10 +1518,18 @@ footer .footer-copy {
   display: none;
   flex-direction: column;
   position: fixed;
-  bottom: 5.4rem;
+  /* An on-screen keyboard overlays the layout viewport rather than resizing
+     it, so a bottom-anchored fixed panel ends up underneath the keyboard and
+     its input bar is unreachable. --kb is the covered strip and --vvh/--vvw
+     the visible area; both are written by the visualViewport handler in
+     landing.php. The defaults keep desktop behaviour when JS is unavailable. */
+  bottom: calc(5.4rem + var(--kb, 0px));
   right: 1.4rem;
   width: min(380px, calc(100vw - 2rem));
+  max-width: calc(var(--vvw, 100vw) - 2rem);
   height: min(520px, 70vh);
+  /* never taller than what is actually visible above the keyboard */
+  max-height: calc(var(--vvh, 100vh) - 7rem);
   background: var(--white);
   border-radius: 20px;
   border: 1.5px solid var(--gray-100);
@@ -1531,6 +1539,14 @@ footer .footer-copy {
 }
 #chatbotBox.active {
   display: flex;
+}
+/* While the keyboard is up, reclaim the gap that normally clears the launcher
+   button — the button is hidden whenever this panel is open, so that offset
+   is dead space that would only shrink the panel. Applied only in this state
+   so every other layout stays pixel-identical. */
+#chatbotBox.kb-open {
+  bottom: calc(0.6rem + var(--kb, 0px));
+  max-height: calc(var(--vvh, 100vh) - 1.4rem);
 }
 .chatbot-header {
   display: flex;
