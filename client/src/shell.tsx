@@ -34,7 +34,7 @@ function BottomNav({ active }: { active: PageKey }) {
                 <path d={item.icon} />
               </svg>
             </span>
-            <span>{item.label}</span>
+            <span className="bn-label">{item.label}</span>
           </a>
         );
       })}

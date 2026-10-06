@@ -3567,14 +3567,15 @@ body.page-leaving {
   box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.06);
 }
 .bottom-nav a {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.2rem;
-  padding: 0.3rem 0.25rem;
-  min-height: 54px;
+  gap: 0.25rem;
+  padding: 0.4rem 0.15rem;
+  min-height: 60px;
   color: var(--gray-500);
   font-size: 0.66rem;
   font-weight: 700;
@@ -3583,11 +3584,25 @@ body.page-leaving {
   transition: color 0.2s ease, background 0.2s ease;
 }
 .bottom-nav .bn-icon {
+  flex: 0 0 26px;
   display: inline-flex;
   width: 26px;
   height: 26px;
   align-items: center;
   justify-content: center;
+}
+/* Fixed two-line label box: every icon stays on the same baseline whether its
+   label is one word ("Dashboard") or three ("Book Appointment"). */
+.bottom-nav .bn-label {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  width: 100%;
+  height: 2.3em;
+  line-height: 1.15;
+  text-align: center;
+  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 .bottom-nav a.active {
   color: var(--green-dark);
@@ -3595,6 +3610,26 @@ body.page-leaving {
 }
 .bottom-nav a:hover {
   color: var(--green-dark);
+}
+@media (max-width: 380px) {
+  .bottom-nav {
+    padding-left: 0.15rem;
+    padding-right: 0.15rem;
+  }
+  .bottom-nav a {
+    padding-left: 0.1rem;
+    padding-right: 0.1rem;
+    font-size: 0.6rem;
+  }
+  .bottom-nav .bn-icon {
+    flex-basis: 22px;
+    width: 22px;
+    height: 22px;
+  }
+  .bottom-nav .bn-icon svg {
+    width: 21px;
+    height: 21px;
+  }
 }
 @media (min-width: 769px) {
   .bottom-nav {
@@ -4240,11 +4275,18 @@ body.page-leaving {
    ═══════════════════════════════════════════════════ */
 @media (max-width: 769px) {
   .sidebar {
-    bottom: 80px;
+    bottom: 88px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    z-index: 910;
+    /* must out-rank .cta-bar (950) and .bottom-nav (900), otherwise the
+       CTA bar covers the bottom rail and Log Out is unreachable */
+    z-index: 960;
+    justify-content: flex-start;
     padding-bottom: 24px;
+  }
+  .sidebar-overlay {
+    /* clear the CTA bar too, so the drawer is the only interactive layer */
+    z-index: 955;
   }
   .rail-bottom {
     border-top: 1px solid var(--gray-100);

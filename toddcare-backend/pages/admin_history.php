@@ -126,19 +126,40 @@ $conn->close();
     <script>try{if(localStorage.getItem('meTheme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}</script>
 <link rel="stylesheet" href="admin.css?v=<?= filemtime(__DIR__ . '/../../admin.css') ?>">
     <style>
-        .archive-day-row{cursor:pointer}
+        .archive-day-row{cursor:pointer;-webkit-tap-highlight-color:transparent}
         .archive-day-cell{background:#f8fafc !important;border-left:3px solid #16a34a;padding:.6rem 1rem !important}
+        .archive-day-inner{display:flex;align-items:center;min-height:38px}
         .archive-day-row:hover .archive-day-cell{background:#f1f5f9 !important}
-        .archive-day-ic{color:#16a34a;vertical-align:middle;margin-right:.55rem}
-        .archive-day-label{font-weight:700;color:#0f172a;font-size:.9rem;vertical-align:middle}
-        .archive-day-count{color:#64748b;font-size:.78rem;margin-left:.6rem;vertical-align:middle}
-        .archive-day-arrow{float:right;color:#94a3b8;transition:transform .2s ease;vertical-align:middle;line-height:0;margin-top:.2rem}
+        .archive-day-ic{color:#16a34a;flex:0 0 auto;display:inline-flex}
+        .archive-day-label{font-weight:700;color:#0f172a;font-size:.9rem;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .archive-day-count{color:#64748b;font-size:.78rem;margin-left:.6rem;flex:0 0 auto;white-space:nowrap}
+        .archive-day-arrow{float:right;color:#94a3b8;transition:transform .2s ease;flex:0 0 auto;display:inline-flex;line-height:0;margin-top:.2rem}
         .daypdf-btn{display:inline-flex;align-items:center;gap:.32rem;height:30px;padding:0 .72rem 0 .52rem;border:1px solid #16a34a;background:#16a34a;color:#fff;border-radius:999px;cursor:pointer;font-family:inherit;font-size:.72rem;font-weight:700;white-space:nowrap;letter-spacing:.03em;line-height:1;box-shadow:0 2px 6px rgba(22,163,74,.3);transition:background .15s ease,transform .15s ease,box-shadow .15s ease}
         .daypdf-btn:hover{background:#15803d;transform:translateY(-1px);box-shadow:0 3px 10px rgba(22,163,74,.45)}
         .daypdf-btn.active{background:#0f766e;border-color:#0f766e;outline:2px solid #99f6e4;outline-offset:2px;box-shadow:0 2px 8px rgba(15,118,110,.4)}
         .daypdf-btn svg{display:block}
         .daypdf-group{margin-left:auto;display:inline-flex;align-items:center;gap:.5rem;flex-wrap:wrap}
         .archive-day-row.collapsed .archive-day-arrow{transform:rotate(-90deg)}
+        .archive-day-row.collapsed .archive-day-cell{background:#f1f5f9 !important;border-left-color:#94a3b8;box-shadow:inset 0 -1px 0 #e2e8f0}
+        .archive-day-row.collapsed .archive-day-label{color:#64748b}
+
+        /* Mobile: the day cell spans the full (horizontally scrollable) table
+           width, so pin it to the scrollport edge and keep the label, count
+           and chevron grouped at the left where they stay visible. */
+        @media (max-width:768px){
+            .archive-day-cell{position:sticky;left:0;z-index:2;padding:.5rem .7rem !important}
+            .archive-day-inner{min-height:44px;gap:.45rem}
+            .archive-day-label{font-size:.86rem}
+            .archive-day-count{font-size:.72rem;margin-left:.15rem}
+            .archive-day-arrow{float:none;margin-left:.35rem;margin-top:0}
+            .daypdf-group{margin-left:0;flex-wrap:nowrap;max-width:100%;overflow-x:auto;padding-bottom:.25rem;-webkit-overflow-scrolling:touch}
+        }
+        @media (max-width:380px){
+            .archive-day-count{display:none}
+        }
+        @media (hover:none){
+            .archive-day-row{cursor:default}
+        }
     </style>
     <title>Archives &mdash; LustreMDC Admin</title>
 </head>
@@ -293,10 +314,12 @@ $conn->close();
                         ?>
                         <tr class="archive-day-row" data-day="<?php echo $gday; ?>" onclick="toggleDay(this)">
                             <td colspan="7" class="archive-day-cell">
+                                <div class="archive-day-inner">
                                 <span class="archive-day-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
                                 <span class="archive-day-label"><?php echo $gdate->format('l, F j, Y'); ?></span>
                                 <span class="archive-day-count"><?php echo count($apts); ?> record<?php echo count($apts) !== 1 ? 's' : ''; ?></span>
                                 <span class="archive-day-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+                                </div>
                             </td>
                         </tr>
                         <?php foreach ($apts as $apt): ?>
@@ -436,10 +459,12 @@ $conn->close();
                         ?>
                         <tr class="archive-day-row" data-day="<?php echo $gday; ?>" onclick="toggleDay(this)">
                             <td colspan="8" class="archive-day-cell">
+                                <div class="archive-day-inner">
                                 <span class="archive-day-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
                                 <span class="archive-day-label"><?php echo $gdate->format('l, F j, Y'); ?></span>
                                 <span class="archive-day-count"><?php echo count($labrows); ?> record<?php echo count($labrows) !== 1 ? 's' : ''; ?></span>
                                 <span class="archive-day-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+                                </div>
                             </td>
                         </tr>
                         <?php foreach ($labrows as $lt): ?>
@@ -531,10 +556,12 @@ $conn->close();
                         ?>
                         <tr class="archive-day-row" data-day="<?php echo $gday; ?>" onclick="toggleDay(this)">
                             <td colspan="8" class="archive-day-cell">
+                                <div class="archive-day-inner">
                                 <span class="archive-day-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
                                 <span class="archive-day-label"><?php echo $gdate->format('l, F j, Y'); ?></span>
                                 <span class="archive-day-count"><?php echo count($vitrows); ?> record<?php echo count($vitrows) !== 1 ? 's' : ''; ?></span>
                                 <span class="archive-day-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+                                </div>
                             </td>
                         </tr>
                         <?php foreach ($vitrows as $vt): ?>
@@ -610,10 +637,12 @@ $conn->close();
                         ?>
 <tr class="archive-day-row" data-day="<?php echo $gday; ?>" onclick="toggleDay(this)">
                             <td colspan="7" class="archive-day-cell">
+                                <div class="archive-day-inner">
                                 <span class="archive-day-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
                                 <span class="archive-day-label"><?php echo $gdate->format('l, F j, Y'); ?></span>
                                 <span class="archive-day-count"><?php echo count($vacrows); ?> record<?php echo count($vacrows) !== 1 ? 's' : ''; ?></span>
                                 <span class="archive-day-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+                                </div>
                             </td>
                         </tr>
                         <?php foreach ($vacrows as $vc): ?>

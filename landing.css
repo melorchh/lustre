@@ -189,6 +189,49 @@ select {
   transform: translateY(-1px);
   box-shadow: 0 10px 24px rgba(13, 148, 136, 0.4);
 }
+
+/* ── Uniform navbar controls ──────────────────────────
+   FIL/EN, day/night, Sign In and Register Free must read
+   as one control group: identical height, radius, border
+   weight and type metrics. Only the colours differ. */
+.nav-actions {
+  align-items: center;
+}
+.nav-actions > .nav-btn,
+.nav-actions > .lang-toggle,
+.nav-actions > .theme-toggle {
+  flex: 0 0 auto;
+  height: 48px;
+  min-height: 48px;
+  border-radius: 12px;
+  border-width: 1.5px;
+  border-style: solid;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.nav-actions > .nav-btn {
+  padding: 0 1.5rem;
+}
+.nav-actions > .nav-btn-ghost,
+.nav-actions > .lang-toggle,
+.nav-actions > .theme-toggle {
+  border-color: var(--green-pale2);
+}
+.nav-actions > .nav-btn-solid {
+  border-color: transparent;
+}
+.nav-actions > .lang-toggle {
+  min-width: 56px;
+  padding: 0 0.9rem;
+  font-weight: 800;
+}
+.nav-actions > .theme-toggle {
+  width: 48px;
+  padding: 0;
+}
 .lang-toggle {
   display: inline-flex;
   align-items: center;
@@ -1801,6 +1844,26 @@ footer p {
     font-size: 0.86rem;
     border-radius: 10px;
   }
+  /* keep all four navbar controls on the same 42px metrics */
+  .nav-actions > .nav-btn,
+  .nav-actions > .lang-toggle,
+  .nav-actions > .theme-toggle {
+    height: 42px;
+    min-height: 42px;
+    border-radius: 10px;
+    font-size: 0.86rem;
+  }
+  .nav-actions > .nav-btn {
+    padding: 0 0.9rem;
+  }
+  .nav-actions > .lang-toggle {
+    min-width: 48px;
+    padding: 0 0.55rem;
+  }
+  .nav-actions > .theme-toggle {
+    width: 42px;
+    padding: 0;
+  }
   .hero {
     margin: 0.75rem 0.6rem 0;
     min-height: 520px;
@@ -1830,9 +1893,31 @@ footer p {
 
 /* ── Small phones (< 480px) ── */
 @media (max-width: 480px) {
+  /* Four uniform controls need the room: the wordmark is redundant here
+     (the logo + hero already carry it), so it yields the navbar. */
   .nav-clinic-name {
-    font-size: 0.72rem;
-    max-width: 28vw;
+    display: none;
+  }
+  .nav-actions {
+    gap: 0.35rem;
+  }
+  .nav-actions > .nav-btn,
+  .nav-actions > .lang-toggle,
+  .nav-actions > .theme-toggle {
+    height: 40px;
+    min-height: 40px;
+    font-size: 0.8rem;
+  }
+  .nav-actions > .nav-btn {
+    padding: 0 0.7rem;
+  }
+  .nav-actions > .lang-toggle {
+    min-width: 44px;
+    padding: 0 0.45rem;
+  }
+  .nav-actions > .theme-toggle {
+    width: 40px;
+    padding: 0;
   }
   .hero-eyebrow,
   .slide-label {
