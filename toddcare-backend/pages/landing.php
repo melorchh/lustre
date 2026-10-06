@@ -433,7 +433,7 @@ const labels_fil=['Kumpletong Blood Work at Diagnostics','OB-GYN at Prenatal Spe
 function getLabels(){return _lang==='fil'?labels_fil:labels_en;}
 const layers=Array.from(document.querySelectorAll('.slide-layer'));
 const dots=document.querySelectorAll('.dot'),labelEl=document.getElementById('slideLabel');
-let slide=0,slideTimer;
+let slide=0,slideTimer=null,labelTimer=null;
 
 // Retain precomputed background styles on each layer (cover + center)
 layers.forEach(l=>{
@@ -441,8 +441,23 @@ layers.forEach(l=>{
   l.style.backgroundSize='cover';
   l.style.backgroundPosition='center';
   // Preload the image so there are no flashes on first cycle
-  new Image().src=l.getAttribute('data-img');
+  const pre=new Image();
+  pre.src=l.getAttribute('data-img');
 });
+
+// One caption swap in flight at a time. The old code fired a bare
+// setTimeout(400) per slide, so rapid dot taps or a language toggle could
+// leave several pending: they then fired in order and painted the wrong
+// slide's words, or flashed the previous language back over the new one.
+function setLabel(text,instant){
+  clearTimeout(labelTimer);
+  if(instant){labelEl.textContent=text;labelEl.style.opacity='1';return;}
+  labelEl.style.opacity='0';
+  labelTimer=setTimeout(()=>{
+    labelEl.textContent=text;
+    labelEl.style.opacity='1';
+  },260);
+}
 
 function goSlide(n){
   layers[slide].classList.remove('active');
@@ -450,12 +465,27 @@ function goSlide(n){
   layers[slide].classList.add('active');
   dots.forEach(d=>d.classList.remove('active'));
   dots[slide].classList.add('active');
-  labelEl.style.opacity='0';
-  setTimeout(()=>{labelEl.innerHTML=getLabels()[slide];labelEl.style.opacity='1';},400);
+  setLabel(getLabels()[slide]);
 }
 function nextSlide(){goSlide((slide+1)%layers.length)}
-slideTimer=setInterval(nextSlide,4000);
-dots.forEach((d,i)=>d.addEventListener('click',()=>{clearInterval(slideTimer);goSlide(i);slideTimer=setInterval(nextSlide,4000);}));
+
+function startSlideshow(){if(!slideTimer)slideTimer=setInterval(nextSlide,4000);}
+function stopSlideshow(){clearInterval(slideTimer);slideTimer=null;}
+
+// Don't run full-bleed crossfades nobody is looking at: pause on a hidden tab
+// and whenever the hero has scrolled out of view.
+document.addEventListener('visibilitychange',()=>{document.hidden?stopSlideshow():startSlideshow();});
+if('IntersectionObserver' in window){
+  const heroEl=document.querySelector('.hero');
+  if(heroEl){
+    new IntersectionObserver(entries=>{
+      entries[0].isIntersecting?startSlideshow():stopSlideshow();
+    },{threshold:0.05}).observe(heroEl);
+  }
+}
+startSlideshow();
+
+dots.forEach((d,i)=>d.addEventListener('click',()=>{stopSlideshow();goSlide(i);startSlideshow();}));
 
 /* -- Modals -- */
 function openModal(id){document.getElementById(id).classList.add('active');document.body.style.overflow='hidden'}
@@ -1230,8 +1260,10 @@ function applyLang(lang) {
   // update loading text
   const loadP = document.querySelector('#loadingScreen p');
   if (loadP) loadP.textContent = TL.loading[lang];
-  // update current slide label
-  labelEl.innerHTML = getLabels()[slide];
+  // update current slide label (cancel any in-flight caption swap first, or it
+  // fires afterwards and overwrites this with the previous language)
+  clearTimeout(labelTimer);
+  labelEl.textContent = getLabels()[slide];
 }
 
 function toggleLang() {
