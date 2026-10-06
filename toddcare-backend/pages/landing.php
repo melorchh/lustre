@@ -1260,10 +1260,10 @@ function applyLang(lang) {
   // update loading text
   const loadP = document.querySelector('#loadingScreen p');
   if (loadP) loadP.textContent = TL.loading[lang];
-  // update current slide label (cancel any in-flight caption swap first, or it
-  // fires afterwards and overwrites this with the previous language)
-  clearTimeout(labelTimer);
-  labelEl.textContent = getLabels()[slide];
+  // update current slide label. setLabel() cancels any in-flight swap and
+  // forces opacity back to 1 — clearing the timer on its own left the pill
+  // stuck at opacity:0 (invisible) if the toggle landed mid-fade.
+  setLabel(getLabels()[slide],true);
 }
 
 function toggleLang() {
