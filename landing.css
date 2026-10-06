@@ -288,8 +288,12 @@ select {
   background-size: cover;
   background-position: center;
   opacity: 0;
-  transition: opacity 1s ease;
-  will-change: opacity;
+  transition: opacity 900ms ease;
+  /* No will-change here. Promoting all 5 full-bleed layers permanently keeps
+     5 decoded photo textures resident on the GPU, which starves mobile
+     compositing and makes the crossfade stutter. Opacity is composited
+     anyway, so the hint bought nothing and cost frames. */
+  pointer-events: none;
 }
 .slide-layer.active {
   opacity: 1;
@@ -378,7 +382,9 @@ select {
   padding: 0.45rem 1.1rem;
   border-radius: 50px;
   margin-bottom: 1.1rem;
-  transition: opacity 0.4s ease;
+  /* only opacity animates, so a new caption never triggers a layout/paint
+     pass on the pill or the elements below it */
+  transition: opacity 260ms ease;
 }
 
 .hero-title {
