@@ -1256,6 +1256,41 @@ applyLang(_lang);
   btn.addEventListener('click',()=>{box.classList.add('active');btn.style.display='none';inp.focus();});
   document.querySelector('.chatbot-close').addEventListener('click',()=>{box.classList.remove('active');btn.style.display='flex';});
 
+  /* Keep the panel above the on-screen keyboard. On phones the keyboard
+     overlays the layout viewport instead of resizing it, so a position:fixed
+     panel anchored to its bottom edge sits underneath the keyboard and the
+     input bar cannot be reached. visualViewport reports the area that is
+     actually visible; --kb is the covered strip, --vvh/--vvw the visible
+     size, and #chatbotBox consumes all three. */
+  const vv=window.visualViewport;
+  let vvPending=0;
+  function syncViewport(){
+    if(vvPending){return;}
+    vvPending=requestAnimationFrame(()=>{
+      vvPending=0;
+      if(!vv){return;}
+      const covered=window.innerHeight-vv.height-vv.offsetTop;
+      /* below ~100px it is just browser chrome collapsing, not a keyboard */
+      const kb=covered>100?Math.round(covered):0;
+      const root=document.documentElement.style;
+      root.setProperty('--kb',kb+'px');
+      root.setProperty('--vvh',Math.round(vv.height)+'px');
+      root.setProperty('--vvw',Math.round(vv.width)+'px');
+      box.classList.toggle('kb-open',kb>0);
+      /* shrinking the box squeezes the message list, so keep the newest
+         message in view instead of letting it drop below the input */
+      if(kb>0){msgs.scrollTop=msgs.scrollHeight;}
+    });
+  }
+  if(vv){
+    vv.addEventListener('resize',syncViewport);
+    vv.addEventListener('scroll',syncViewport);
+  }
+  window.addEventListener('orientationchange',()=>{setTimeout(syncViewport,250);});
+  inp.addEventListener('focus',syncViewport);
+  inp.addEventListener('blur',syncViewport);
+  syncViewport();
+
   document.querySelectorAll('.chip').forEach(chip=>{
     chip.addEventListener('click',()=>{inp.value=chip.getAttribute('data-msg');sendMsg();});
   });
