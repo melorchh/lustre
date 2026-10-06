@@ -210,11 +210,14 @@ if (isset($_SESSION["patient_id"])) {
 
 <!-- == FOOTER == -->
 <footer>
-  <p>
-    <span>&copy; <?php echo date('Y'); ?> LustreMDC Clinics &amp; Diagnostics. <span data-t="footer_rights">All rights reserved.</span></span>
-    <a class="nav-btn nav-btn-solid admin-btn" href="doctor_login.php">Doctor</a>
-    <a class="nav-btn nav-btn-solid admin-btn" href="admin_login.php">Admin</a>
-  </p>
+  <div class="footer-inner">
+    <p class="footer-copy">&copy; <?php echo date('Y'); ?> LustreMDC Clinics &amp; Diagnostics. <span data-t="footer_rights">All rights reserved.</span></p>
+    <div class="footer-staff">
+      <span class="footer-staff-label" data-t="footer_staff">Staff Portal</span>
+      <a class="staff-btn" href="doctor_login.php" data-t="footer_doctor">Doctor</a>
+      <a class="staff-btn" href="admin_login.php" data-t="footer_admin">Admin</a>
+    </div>
+  </div>
 </footer>
 
 <!-- == LOGIN MODAL == -->
@@ -1178,6 +1181,9 @@ const TL = {
   reg_have_account: { en: 'Already have an account?', fil: 'May account na ba?' },
   reg_login: { en: 'Login here', fil: 'Mag-login dito' },
   footer_rights: { en: 'All rights reserved.', fil: 'Lahat ng karapatan ay reserved.' },
+  footer_staff: { en: 'Staff Portal', fil: 'Portal ng Staff' },
+  footer_doctor: { en: 'Doctor Login', fil: 'Pag-login ng Doktor' },
+  footer_admin: { en: 'Admin Login', fil: 'Pag-login ng Admin' },
   svc_title: { en: 'Laboratory & Diagnostic Services', fil: 'Laboratory at Diagnostic Services' },
   svc_sub: { en: 'From routine bloodwork to specialized diagnostics \u2014 fast, accurate, and accessible.', fil: 'Mula sa regular na bloodwork hanggang sa specialized diagnostics \u2014 mabilis, tama, at accessible.' },
   svc_blood: { en: 'Blood Tests', fil: 'Blood Tests' },
