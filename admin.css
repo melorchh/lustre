@@ -207,7 +207,9 @@ h3 {
   border-right: 1.5px solid var(--gray-100);
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  /* The drawer never scrolls — only .sidebar-nav does, so the Sign Out
+     footer is a pinned row that is always on screen. */
+  overflow: hidden;
   transition: width 0.32s var(--ease);
 }
 @media (max-width: 900px) {
@@ -215,7 +217,10 @@ h3 {
     position: fixed;
     left: -290px;
     top: 0;
-    height: 100vh;
+    /* track the real viewport, not 100vh: on mobile 100vh is the *large*
+       height, which pushed the footer under the browser chrome */
+    bottom: 0;
+    height: auto;
     z-index: 1000;
     box-shadow: 0 0 40px rgba(20, 83, 45, 0.2);
     transition: left 0.3s var(--ease);
@@ -228,11 +233,8 @@ h3 {
   .admin-sidebar.open {
     left: 0;
   }
-  /* One scroll container in the drawer. Nested scrollers swallow the swipe
-     and leave the Sign Out footer unreachable. */
   .admin-sidebar .sidebar-nav {
-    flex: 0 0 auto;
-    overflow: visible;
+    overscroll-behavior: contain;
   }
   .admin-sidebar .sidebar-footer {
     flex: 0 0 auto;
@@ -245,7 +247,7 @@ h3 {
     top: 0;
     height: 100vh;
     width: 88px;
-    overflow-y: auto;
+    overflow: hidden;
     scrollbar-width: none;
   }
   .admin-sidebar::-webkit-scrollbar,
@@ -254,6 +256,10 @@ h3 {
   }
   .admin-sidebar:hover {
     width: 280px;
+    scrollbar-width: none;
+  }
+  /* the rail itself no longer scrolls, so reveal the nav's own scrollbar */
+  .admin-sidebar:hover .sidebar-nav {
     scrollbar-width: thin;
     scrollbar-color: var(--gray-200) transparent;
   }
