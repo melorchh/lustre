@@ -4278,8 +4278,15 @@ body.page-leaving {
     bottom: 88px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    z-index: 910;
+    /* must out-rank .cta-bar (950) and .bottom-nav (900), otherwise the
+       CTA bar covers the bottom rail and Log Out is unreachable */
+    z-index: 960;
+    justify-content: flex-start;
     padding-bottom: 24px;
+  }
+  .sidebar-overlay {
+    /* clear the CTA bar too, so the drawer is the only interactive layer */
+    z-index: 955;
   }
   .rail-bottom {
     border-top: 1px solid var(--gray-100);
