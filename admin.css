@@ -228,6 +228,16 @@ h3 {
   .admin-sidebar.open {
     left: 0;
   }
+  /* One scroll container in the drawer. Nested scrollers swallow the swipe
+     and leave the Sign Out footer unreachable. */
+  .admin-sidebar .sidebar-nav {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+  .admin-sidebar .sidebar-footer {
+    flex: 0 0 auto;
+    padding-bottom: calc(1.75rem + env(safe-area-inset-bottom));
+  }
 }
 @media (min-width: 901px) {
   .admin-sidebar {
@@ -446,7 +456,11 @@ h3 {
   font-size: 0.95rem;
 }
 .sidebar-nav {
-  flex: 1;
+  flex: 1 1 auto;
+  /* A flex item defaults to min-height:auto, which refuses to shrink below
+     its content. That overflowed the drawer and pushed the Sign Out footer
+     below the fold on short screens. */
+  min-height: 0;
   padding: 0.5rem 0;
   overflow-y: auto;
 }
@@ -493,6 +507,8 @@ h3 {
   white-space: nowrap;
 }
 .sidebar-footer {
+  /* never let the Sign Out button be squeezed or scrolled out of reach */
+  flex: 0 0 auto;
   padding: 0.75rem 1.5rem 1.75rem;
 }
 .btn-logout {
