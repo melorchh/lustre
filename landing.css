@@ -350,6 +350,9 @@ select {
   align-items: center;
   gap: 0.5rem;
   align-self: flex-start;
+  /* never grow past the hero column on narrow phones */
+  max-width: 100%;
+  min-width: 0;
   background: rgba(255, 255, 255, 0.14);
   border: 1px solid rgba(255, 255, 255, 0.22);
   color: #ffffff;
@@ -362,18 +365,29 @@ select {
   backdrop-filter: blur(6px);
   margin-bottom: 1.1rem;
 }
+/* the caption text takes the shrink, so the marker can never be squeezed
+   down onto it (its glow box-shadow made the collision very visible) */
+.hero-eyebrow > span:last-child {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
 .eyebrow-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--green-light);
   box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.25);
+  flex-shrink: 0;
 }
 
 .slide-label {
   display: inline-flex;
   align-items: center;
   align-self: flex-start;
+  /* wrap inside the pill rather than pushing wider than the hero column */
+  max-width: 100%;
+  min-width: 0;
+  line-height: 1.35;
   background: rgba(16, 185, 129, 0.22);
   border: 1px solid rgba(74, 222, 128, 0.4);
   color: var(--green-pale2);
@@ -385,6 +399,7 @@ select {
   /* only opacity animates, so a new caption never triggers a layout/paint
      pass on the pill or the elements below it */
   transition: opacity 260ms ease;
+  overflow-wrap: break-word;
 }
 
 .hero-title {
@@ -1974,6 +1989,12 @@ footer .footer-copy {
   .slide-label {
     font-size: 0.68rem;
     padding: 0.4rem 0.85rem;
+  }
+  /* 0.12em tracking on uppercase made this wider than the hero column at
+     320px, so it was clipped by .hero{overflow:hidden} */
+  .hero-eyebrow {
+    letter-spacing: 0.06em;
+    line-height: 1.35;
   }
   .hero-subtitle {
     font-size: 0.95rem;
