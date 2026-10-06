@@ -3,11 +3,12 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "scripts": {
-    "build": "tsc --noEmit && vite build",
-    "watch": "vite build --watch",
-    "preview": "vite preview"
-  },
+ "scripts": {
+  "dev": "vite",
+  "build": "tsc --noEmit && vite build",
+  "watch": "vite build --watch",
+  "preview": "vite preview"
+},
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
