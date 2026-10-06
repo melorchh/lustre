@@ -48,7 +48,18 @@ if (!$row) {
  */
 
 function esc($s) {
-    return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], (string)$s);
+    $s = (string)$s;
+    // Base-14 Type1 fonts are single-byte. Convert to CP1252 (the encoding
+    // declared on the font objects below) and drop control bytes, so a high
+    // byte can never corrupt the content stream and blank the whole page.
+    if (function_exists('mb_convert_encoding')) {
+        $c = @mb_convert_encoding($s, 'CP1252', 'UTF-8');
+        if (is_string($c) && $c !== '') {
+            $s = $c;
+        }
+    }
+    $s = preg_replace('/[^\x20-\x7E\xA0-\xFF]/', '', $s);
+    return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $s);
 }
 
 function rgb($hex) {
@@ -75,7 +86,12 @@ function rectfill(&$s, $x, $yTop, $w, $h, $c) {
 }
 
 function pdftxt(&$s, $x, $yTop, $str, $font, $size, $c) {
-    $s .= "BT /F$font $size Tf $x " . (842 - $yTop) . " Td $c[0] $c[1] $c[2] rg (" . esc($str) . ") Tj ET\n";
+    // 'B'/'R' are logical roles, but the page only declares the /F1 (Helvetica)
+    // and /F2 (Helvetica-Bold) resources. Asking for /FB or /FR names an
+    // undefined resource, so the text operator is an error and strict viewers
+    // (mobile PDF viewers) drop it and render a blank page.
+    $res = ($font === 'B') ? 'F2' : 'F1';
+    $s .= "BT /$res $size Tf $x " . (842 - $yTop) . " Td $c[0] $c[1] $c[2] rg (" . esc($str) . ") Tj ET\n";
 }
 
 $green      = rgb('#16a34a');
@@ -166,9 +182,9 @@ $objs = [];
 $objs[] = "<< /Type /Catalog /Pages 2 0 R >>";
 $objs[] = "<< /Type /Pages /Kids [3 0 R] /Count 1 >>";
 $objs[] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 $w_pt $h_pt] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>";
-$objs[] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
-$objs[] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>";
-$objs[] = "<< /Length " . strlen($stream) . " >>\nstream\n" . $stream . "\nendstream";
+$objs[] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
+$objs[] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
+$objs[] = "<< /Length " . (strlen($stream) + 1) . " >>\nstream\n" . $stream . "\nendstream";
 
 $offset  = strlen($pdf);
 $offsets = [0];
