@@ -62,8 +62,6 @@ if (isset($_SESSION["patient_id"])) {
       <span data-t="hero_eyebrow">Modern Healthcare, Simplified</span>
     </div>
 
-    <div class="slide-label" id="slideLabel"><span data-t="slide_default">Complete Blood Work &amp; Diagnostics</span></div>
-
     <h1 class="hero-title">
       <span data-t="hero_title1">Your Health,</span><br>
       <span class="hero-title-accent" data-t="hero_title2">Expertly Cared For</span>
@@ -428,12 +426,9 @@ if (isset($_SESSION["patient_id"])) {
 window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',scrollY>40));
 
 /* -- Slideshow (GPU-friendly crossfade with preloaded images) -- */
-const labels_en=['Complete Blood Work & Diagnostics','OB-GYN & Prenatal Specialist Care','Infectious Disease Screening','Cardiac & Imaging Services','Walk-in Drug Testing & Clearance'];
-const labels_fil=['Kumpletong Blood Work at Diagnostics','OB-GYN at Prenatal Specialist Care','Infectious Disease Screening','Cardiac at Imaging Services','Walk-in Drug Testing at Clearance'];
-function getLabels(){return _lang==='fil'?labels_fil:labels_en;}
 const layers=Array.from(document.querySelectorAll('.slide-layer'));
-const dots=document.querySelectorAll('.dot'),labelEl=document.getElementById('slideLabel');
-let slide=0,slideTimer=null,labelTimer=null;
+const dots=document.querySelectorAll('.dot');
+let slide=0,slideTimer=null;
 
 // Retain precomputed background styles on each layer (cover + center)
 layers.forEach(l=>{
@@ -445,27 +440,12 @@ layers.forEach(l=>{
   pre.src=l.getAttribute('data-img');
 });
 
-// One caption swap in flight at a time. The old code fired a bare
-// setTimeout(400) per slide, so rapid dot taps or a language toggle could
-// leave several pending: they then fired in order and painted the wrong
-// slide's words, or flashed the previous language back over the new one.
-function setLabel(text,instant){
-  clearTimeout(labelTimer);
-  if(instant){labelEl.textContent=text;labelEl.style.opacity='1';return;}
-  labelEl.style.opacity='0';
-  labelTimer=setTimeout(()=>{
-    labelEl.textContent=text;
-    labelEl.style.opacity='1';
-  },260);
-}
-
 function goSlide(n){
   layers[slide].classList.remove('active');
   slide=n;
   layers[slide].classList.add('active');
   dots.forEach(d=>d.classList.remove('active'));
   dots[slide].classList.add('active');
-  setLabel(getLabels()[slide]);
 }
 function nextSlide(){goSlide((slide+1)%layers.length)}
 
@@ -1235,11 +1215,6 @@ const TL = {
   svc_obgyn: { en: 'OB-GYN specialty', fil: 'OB-GYN specialty' },
   svc_header: { en: 'Everything You Need, Right Here', fil: 'Lahat ng Kailangan Mo, Dito Lang' },
   loading: { en: 'Processing\u2026', fil: 'Pinoproseso\u2026' },
-  appt_slide1: { en: 'Complete Blood Work & Diagnostics', fil: 'Kumpletong Blood Work at Diagnostics' },
-  appt_slide2: { en: 'OB-GYN & Prenatal Specialist Care', fil: 'OB-GYN at Prenatal Specialist Care' },
-  appt_slide3: { en: 'Infectious Disease Screening', fil: 'Infectious Disease Screening' },
-  appt_slide4: { en: 'Cardiac & Imaging Services', fil: 'Cardiac at Imaging Services' },
-  appt_slide5: { en: 'Walk-in Drug Testing & Clearance', fil: 'Walk-in Drug Testing at Clearance' },
 };
 let _lang = localStorage.getItem('meLang') || 'en';
 
@@ -1255,15 +1230,9 @@ function applyLang(lang) {
     const key = el.getAttribute('data-t-ph');
     if (TL[key] && TL[key][lang]) el.placeholder = TL[key][lang];
   });
-  // slideshow labels
-  const slideLabels = document.getElementById('slideLabel');
   // update loading text
   const loadP = document.querySelector('#loadingScreen p');
   if (loadP) loadP.textContent = TL.loading[lang];
-  // update current slide label. setLabel() cancels any in-flight swap and
-  // forces opacity back to 1 — clearing the timer on its own left the pill
-  // stuck at opacity:0 (invisible) if the toggle landed mid-fade.
-  setLabel(getLabels()[slide],true);
 }
 
 function toggleLang() {
