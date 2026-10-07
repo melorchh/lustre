@@ -4,6 +4,7 @@ export interface Doctor {
   specialty: string;
   schedule: string | null;
   experience: number | null;
+  test_procedures?: string | null;
 }
 
 export interface MedicalDate {
