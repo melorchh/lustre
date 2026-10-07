@@ -41,6 +41,34 @@ $upcoming_appts = $conn->query("
     ORDER BY a.appointment_date ASC, a.appointment_time ASC LIMIT 6
 ");
 
+// Today's walk-in queue for this doctor (queue # assigned in arrival order)
+$walkin_queue = [];
+$queue_waiting = 0;
+$queue_today = date('Y-m-d');
+$walkins = $conn->query("
+    SELECT w.id, w.arrival_time, w.status,
+           p.name AS patient_name, p.contact
+    FROM walk_ins w
+    JOIN patients p ON w.patient_id = p.id
+    WHERE w.doctor_id = $doctor_id AND w.arrival_date = '$queue_today'
+    ORDER BY w.arrival_time ASC, w.created_at ASC, w.id ASC
+");
+if ($walkins) {
+    $qn = 0;
+    while ($w = $walkins->fetch_assoc()) {
+        $qn++;
+        if ($w['status'] === 'waiting') $queue_waiting++;
+        $walkin_queue[] = [
+            'id'      => (int)$w['id'],
+            'queue'   => $qn,
+            'name'    => $w['patient_name'],
+            'contact' => $w['contact'],
+            'arrival' => date('g:i A', strtotime($w['arrival_time'])),
+            'status'  => $w['status'],
+        ];
+    }
+}
+
 $conn->close();
 
 function fill_color($s) {
@@ -112,6 +140,10 @@ function fill_color($s) {
                     <div class="stat-number" style="color:#3b82f6"><?php echo $count_today_appts; ?></div>
                     <div class="stat-label">Today's Appointments</div>
                 </div>
+                <div class="stat-card" style="border-top-color:#0ea5e9">
+                    <div class="stat-number" id="queueWaitingStat" style="color:#0ea5e9"><?php echo $queue_waiting; ?></div>
+                    <div class="stat-label">Walk-ins Waiting</div>
+                </div>
                 <div class="stat-card" style="border-top-color:#f59e0b">
                     <div class="stat-number" style="color:#f59e0b"><?php echo $count_pending_results; ?></div>
                     <div class="stat-label">Appointments Awaiting Result</div>
@@ -119,6 +151,48 @@ function fill_color($s) {
                 <div class="stat-card" style="border-top-color:#10b981">
                     <div class="stat-number" style="color:#10b981"><?php echo $active_days; ?>/7</div>
                     <div class="stat-label">Available Days</div>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="patients-header">
+                    <div>
+                        <h2 style="margin-bottom:4px;">Walk-in Queue (Today)</h2>
+                        <small style="color:#64748b">Walk-ins registered by the front desk, in arrival order. <span id="queueUpdated">Auto-refreshes every 20s</span></small>
+                    </div>
+                    <button type="button" class="btn-sm btn-edit" onclick="refreshQueue(true)">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+                        Refresh
+                    </button>
+                </div>
+                <div class="table-scroll">
+                    <table id="queueTable">
+                        <thead><tr><th>Queue</th><th>Patient</th><th>Arrival</th><th>Status</th></tr></thead>
+                        <tbody id="queueBody">
+                        <?php if (count($walkin_queue) > 0): ?>
+                            <?php foreach ($walkin_queue as $w):
+                                $wcolors = ['waiting'=>'background:#fef3c7;color:#92400e','in_service'=>'background:#dbeafe;color:#1e40af','served'=>'background:#d1fae5;color:#065f46','cancelled'=>'background:#fee2e2;color:#991b1b'];
+                                $wbc = $wcolors[$w['status']] ?? '';
+                            ?>
+                            <tr>
+                                <td><span class="badge" style="background:#16a34a;color:#fff;font-size:1rem;font-weight:800">#<?php echo $w['queue']; ?></span></td>
+                                <td><strong><?php echo htmlspecialchars($w['name']); ?></strong><br><small style="color:#64748b"><?php echo htmlspecialchars($w['contact']); ?></small></td>
+                                <td><?php echo htmlspecialchars($w['arrival']); ?></td>
+                                <td style="white-space:nowrap">
+                                    <span class="badge" style="<?php echo $wbc; ?>"><?php echo ucfirst(str_replace('_',' ',$w['status'])); ?></span>
+                                    <select class="action-select" data-id="<?php echo $w['id']; ?>" onchange="updateWalkinStatus(this)" aria-label="Queue status">
+                                        <?php foreach (['waiting','in_service','served','cancelled'] as $opt): ?>
+                                        <option value="<?php echo $opt; ?>" <?php echo $w['status']===$opt?'selected':''; ?>><?php echo ucfirst(str_replace('_',' ',$opt)); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr><td colspan="4" class="empty-state-row" id="queueEmpty"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.7L18 9.3l-4.4 1.6L12 15.6l-1.6-4.7L6 9.3l4.4-1.6z" style="stroke-width:1.8"/><path d="M5 20h14"/></svg></div>No walk-ins registered yet today.</td></tr>
+                        <?php endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -300,6 +374,67 @@ function fill_color($s) {
         document.getElementById('dashResultModal').addEventListener('click', function(e){
             if(e.target === this) closeDashResultModal();
         });
+
+        /* -- Walk-in queue (live) -- */
+        const WQ_STATUSES = ['waiting','in_service','served','cancelled'];
+        const WQ_COLORS = {
+            waiting:'background:#fef3c7;color:#92400e',
+            in_service:'background:#dbeafe;color:#1e40af',
+            served:'background:#d1fae5;color:#065f46',
+            cancelled:'background:#fee2e2;color:#991b1b'
+        };
+        const WQ_EMPTY = '<tr><td colspan="4" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.7L18 9.3l-4.4 1.6L12 15.6l-1.6-4.7L6 9.3l4.4-1.6z" style="stroke-width:1.8"/><path d="M5 20h14"/></svg></div>No walk-ins registered yet today.</td></tr>';
+        function wqEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+        function wqLabel(s){return s.charAt(0).toUpperCase()+s.slice(1).replace(/_/g,' ');}
+        function wqRow(w){
+            const opts = WQ_STATUSES.map(s=>'<option value="'+s+'"'+(w.status===s?' selected':'')+'>'+wqLabel(s)+'</option>').join('');
+            return '<tr>' +
+                '<td><span class="badge" style="background:#16a34a;color:#fff;font-size:1rem;font-weight:800">#'+w.queue+'</span></td>' +
+                '<td><strong>'+wqEsc(w.name)+'</strong><br><small style="color:#64748b">'+wqEsc(w.contact)+'</small></td>' +
+                '<td>'+wqEsc(w.arrival)+'</td>' +
+                '<td style="white-space:nowrap">' +
+                    '<span class="badge" style="'+(WQ_COLORS[w.status]||'')+'">'+wqLabel(w.status)+'</span> ' +
+                    '<select class="action-select" data-id="'+w.id+'" onchange="updateWalkinStatus(this)" aria-label="Queue status">'+opts+'</select>' +
+                '</td></tr>';
+        }
+        let wqBusy = false, wqPending = false;
+        function refreshQueue(manual){
+            if (wqBusy){ if (manual) wqPending = true; return; }
+            wqBusy = true; wqPending = false;
+            fetch('doctor_walkin_queue.php')
+            .then(r=>r.json())
+            .then(d=>{
+                if(!d || !d.ok) return;
+                const body = document.getElementById('queueBody');
+                if (body) body.innerHTML = d.rows.length ? d.rows.map(wqRow).join('') : WQ_EMPTY;
+                const stat = document.getElementById('queueWaitingStat');
+                if (stat) stat.textContent = d.waiting;
+                const upd = document.getElementById('queueUpdated');
+                if (upd) upd.textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'});
+                if (manual) showToast('Queue refreshed','success');
+            })
+            .catch(()=>{ if (manual) showToast('Could not refresh the queue','error'); })
+            .finally(()=>{ wqBusy = false; if (wqPending) refreshQueue(false); });
+        }
+        function updateWalkinStatus(sel){
+            const fd = new FormData();
+            fd.append('action','update_status');
+            fd.append('walkin_id', sel.getAttribute('data-id'));
+            fd.append('status', sel.value);
+            showLoading();
+            fetch('doctor_walkin_queue.php', {method:'POST', body:fd})
+            .then(r=>r.text())
+            .then(res=>{
+                hideLoading();
+                if(res.trim()==='success') showToast('Queue status updated','success');
+                else showToast(res,'error');
+                wqPending = true;
+                refreshQueue();
+            })
+            .catch(()=>{ hideLoading(); showToast('Network error','error'); wqPending = true; refreshQueue(); });
+        }
+        setInterval(()=>{ if(!document.hidden) refreshQueue(); }, 20000);
+        document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refreshQueue(); });
 
         /* -- LustreMDC Smooth Transitions -- */
         (function(){
