@@ -29,8 +29,9 @@ $day_in_service  = $conn->query("SELECT COUNT(*) c FROM walk_ins WHERE arrival_d
 $day_served      = $conn->query("SELECT COUNT(*) c FROM walk_ins WHERE arrival_date = '$sel_date' AND status='served'")->fetch_assoc()['c'];
 $day_cancelled   = $conn->query("SELECT COUNT(*) c FROM walk_ins WHERE arrival_date = '$sel_date' AND status='cancelled'")->fetch_assoc()['c'];
 
+$conn->query("ALTER TABLE walk_ins ADD COLUMN IF NOT EXISTS test_procedure TEXT NOT NULL DEFAULT ''");
 $walkins = $conn->query("
-    SELECT w.id, w.arrival_time, w.status AS walk_status, w.created_at,
+    SELECT w.id, w.arrival_time, w.status AS walk_status, w.created_at, w.test_procedure,
            p.name AS patient_name, p.patient_type, p.contact,
            d.id AS doctor_id, d.name AS doctor_name, d.specialty
     FROM walk_ins w
@@ -146,7 +147,7 @@ if ($walkins) {
                     <h3 style="margin:0 0 8px;font-family:var(--font-heading,'Lora',serif);color:#0f172a;">Dr. <?php echo htmlspecialchars($doc_name); ?> <small style="color:#64748b;font-weight:400">(<?php echo htmlspecialchars($doc_spec); ?>)</small></h3>
                     <div class="table-scroll">
                         <table>
-                            <thead><tr><th>Queue</th><th>Patient</th><th>Type</th><th>Arrival</th><th>Status</th><th>Actions</th></tr></thead>
+                            <thead><tr><th>Queue</th><th>Patient</th><th>Type</th><th>Arrival</th><th>Test / Procedure</th><th>Status</th><th>Actions</th></tr></thead>
                             <tbody>
                             <?php foreach ($rows as $w): if ((string)$w['doctor_id'] !== (string)$did) continue;
                                 $ws = $w['walk_status'];
@@ -159,6 +160,7 @@ if ($walkins) {
                                 <td><strong><?php echo htmlspecialchars($w['patient_name']); ?></strong><br><small style="color:#64748b"><?php echo htmlspecialchars($w['contact']); ?></small></td>
                                 <td><?php echo htmlspecialchars(ucfirst($w['patient_type'] ?: 'adult')); ?></td>
                                 <td><?php echo $wt->format('g:i A'); ?></td>
+                                <td><?php echo htmlspecialchars($w['test_procedure'] ?: '—'); ?></td>
                                 <td><span class="badge" style="<?php echo $wbc; ?>"><?php echo ucfirst($ws); ?></span></td>
                                 <td>
                                     <select class="action-select" onchange="updateWalkinStatus(<?php echo $w['id']; ?>, this.value)">

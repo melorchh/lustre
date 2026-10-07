@@ -8,6 +8,8 @@ if (!isset($_SESSION["admin_id"])) {
 
 require_once __DIR__ . '/../src/db.php';
 
+$conn->query("ALTER TABLE walk_ins ADD COLUMN IF NOT EXISTS test_procedure TEXT NOT NULL DEFAULT ''");
+
 $action = $_POST['action'] ?? '';
 
 if ($action === 'add_walkin') {
@@ -22,6 +24,7 @@ if ($action === 'add_walkin') {
     $gender  = isset($_POST['gender']) ? strtolower(trim($_POST['gender'])) : '';
     $doctor_id = isset($_POST['doctor_id']) ? intval($_POST['doctor_id']) : 0;
     $arrival_time = trim($_POST['arrival_time'] ?? '');
+    $test_procedure = trim($_POST['test_procedure'] ?? '');
 
     if ($name === '') { echo 'Patient name is required.'; exit; }
     if ($contact === '') { echo 'Contact number is required.'; exit; }
@@ -124,8 +127,8 @@ if ($action === 'add_walkin') {
         // Record the walk-in entry (queue) for the selected doctor
         $arrival_date = date('Y-m-d');
         $arrival_hm   = date('H:i:s', strtotime($arrival_time));
-        $wi = $conn->prepare("INSERT INTO walk_ins (patient_id, doctor_id, arrival_date, arrival_time, status) VALUES (?, ?, ?, ?, 'waiting')");
-        $wi->bind_param("iiss", $newId, $doctor_id, $arrival_date, $arrival_hm);
+        $wi = $conn->prepare("INSERT INTO walk_ins (patient_id, doctor_id, arrival_date, arrival_time, test_procedure, status) VALUES (?, ?, ?, ?, ?, 'waiting')");
+        $wi->bind_param("iisss", $newId, $doctor_id, $arrival_date, $arrival_hm, $test_procedure);
         $wi->execute();
         $wi->close();
 

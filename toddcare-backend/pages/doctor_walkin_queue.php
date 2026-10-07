@@ -54,7 +54,7 @@ if ($action === 'save_result') {
 // GET — today's queue for this doctor
 $today   = date('Y-m-d');
 $walkins = $conn->query("
-    SELECT w.id, w.arrival_time, w.status, w.result,
+    SELECT w.id, w.arrival_time, w.status, w.result, w.test_procedure,
            p.name AS patient_name, p.contact
     FROM walk_ins w
     JOIN patients p ON w.patient_id = p.id
@@ -72,13 +72,14 @@ if ($walkins) {
         if ($w['status'] === 'waiting')    $waiting++;
         if ($w['status'] === 'in_service') $in_service++;
         $rows[] = [
-            'id'      => (int)$w['id'],
-            'queue'   => $n,
-            'name'    => $w['patient_name'],
-            'contact' => $w['contact'],
-            'arrival' => date('g:i A', strtotime($w['arrival_time'])),
-            'status'  => $w['status'],
-            'result'  => (string)($w['result'] ?? ''),
+            'id'        => (int)$w['id'],
+            'queue'     => $n,
+            'name'      => $w['patient_name'],
+            'contact'   => $w['contact'],
+            'arrival'   => date('g:i A', strtotime($w['arrival_time'])),
+            'status'    => $w['status'],
+            'procedure' => (string)($w['test_procedure'] ?? ''),
+            'result'    => (string)($w['result'] ?? ''),
         ];
     }
 }
