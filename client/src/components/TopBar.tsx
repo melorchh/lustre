@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getInitialData, initials } from '../api';
 import { useLang } from '../lang';
+import { LangToggle, ThemeToggle } from './Toggles';
 
 interface TopBarProps {
   title: string;
@@ -154,7 +155,7 @@ export default function TopBar({ title, patientName, onMenu }: TopBarProps) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
-  const { t, lang, setLang, langLabel } = useLang();
+  const { t } = useLang();
 
   const results = useMemo(() => (open ? buildResults(query) : []), [query, open]);
 
@@ -175,23 +176,6 @@ export default function TopBar({ title, patientName, onMenu }: TopBarProps) {
   }
   const showDropdown = open && query.trim().length > 0;
   const noResults = showDropdown && grouped.length === 0;
-
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof document === 'undefined') return false;
-    return document.documentElement.getAttribute('data-theme') === 'dark';
-  });
-
-  const toggleTheme = () => {
-    const next = !isDark;
-    setIsDark(next);
-    document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light');
-    try {
-      localStorage.setItem('meTheme', next ? 'dark' : 'light');
-    } catch {
-      /* storage unavailable */
-    }
-    window.dispatchEvent(new CustomEvent('themechange'));
-  };
 
   return (
     <header className="topbar">
@@ -244,28 +228,8 @@ export default function TopBar({ title, patientName, onMenu }: TopBarProps) {
       </div>
 
       <div className="topbar-actions">
-        <button
-          className="lang-toggle"
-          onClick={() => setLang(lang === 'en' ? 'fil' : 'en')}
-          title={lang === 'en' ? 'Switch to Filipino' : 'Switch to English'}
-          aria-label={lang === 'en' ? 'Switch to Filipino' : 'Switch to English'}
-        >
-          {langLabel}
-        </button>
-        <button
-          className="theme-toggle"
-          onClick={toggleTheme}
-          aria-label={isDark ? t('tb_light') : t('tb_dark')}
-          title={isDark ? t('tb_light') : t('tb_dark')}
-        >
-          <svg className="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="4" />
-            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-          </svg>
-          <svg className="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
-          </svg>
-        </button>
+        <LangToggle />
+        <ThemeToggle />
         <div className="client-card">
           <div className="topbar-hello">
             <span className="topbar-hello-label">{t('tb_hello')}</span>

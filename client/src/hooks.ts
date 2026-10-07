@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 export function useScrollLock(locked: boolean): void {
   useEffect(() => {
@@ -52,6 +52,34 @@ export function useScrollLock(locked: boolean): void {
       }
     };
   }, [locked]);
+}
+
+function readTheme(): 'dark' | 'light' {
+  if (typeof document === 'undefined') return 'light';
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+}
+
+export function useTheme(): { isDark: boolean; toggleTheme: () => void } {
+  const [isDark, setIsDark] = useState(() => readTheme() === 'dark');
+
+  useEffect(() => {
+    const sync = () => setIsDark(readTheme() === 'dark');
+    window.addEventListener('themechange', sync);
+    return () => window.removeEventListener('themechange', sync);
+  }, []);
+
+  const toggleTheme = () => {
+    const next = readTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try {
+      localStorage.setItem('meTheme', next);
+    } catch {
+      /* storage unavailable */
+    }
+    window.dispatchEvent(new CustomEvent('themechange'));
+  };
+
+  return { isDark, toggleTheme };
 }
 
 export interface ToastHandle {
