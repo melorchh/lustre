@@ -16,18 +16,6 @@ $conn->query("CREATE TABLE IF NOT EXISTS doctor_accounts (
 $doctors = $conn->query("SELECT d.id, d.name, d.specialty, d.schedule, d.experience, d.created_at, COUNT(a.id) as appointment_count FROM doctors d LEFT JOIN appointments a ON d.id=a.doctor_id GROUP BY d.id, d.name, d.specialty, d.schedule, d.experience, d.created_at ORDER BY d.name");
 $accounts = $conn->query("SELECT da.id AS account_id, da.username, da.created_at, d.id AS doctor_id, d.name AS doctor_name, d.specialty FROM doctor_accounts da JOIN doctors d ON da.doctor_id=d.id ORDER BY d.name");
 $doctors_options = $conn->query("SELECT id, name, specialty FROM doctors ORDER BY name");
-
-require_once __DIR__ . '/specialties_schema.php';
-doctor_specialties_ensure($conn);
-$spec_rows = $conn->query("SELECT id, name FROM doctor_specialties ORDER BY name");
-$spec_options = '';
-$spec_json = [];
-if ($spec_rows) {
-    while ($sr = $spec_rows->fetch_assoc()) {
-        $spec_options .= '<option value="' . htmlspecialchars($sr['name'], ENT_QUOTES) . '">' . htmlspecialchars($sr['name']) . '</option>';
-        $spec_json[] = ['id' => (int)$sr['id'], 'name' => $sr['name']];
-    }
-}
 $conn->close();
 ?><!DOCTYPE html>
 <html lang="en">
@@ -229,13 +217,7 @@ $conn->close();
                     </div>
                     <div class="form-group">
                         <label>Specialty</label>
-                        <div style="display:flex;gap:.5rem;">
-                            <select name="specialty" id="addSpecialty" class="form-dropdown" required>
-                                <option value="">Select Specialty</option>
-                                <?php echo $spec_options; ?>
-                            </select>
-                            <button type="button" class="btn-sm btn-edit" style="flex-shrink:0;" onclick="openSpecialtiesModal()" title="Add or edit specialties">Manage</button>
-                        </div>
+                        <input type="text" name="specialty" placeholder="e.g. Obstetrics & Gynecology" required>
                     </div>
                     <div class="form-group">
                         <label>Schedule</label>
@@ -268,13 +250,7 @@ $conn->close();
                     </div>
                     <div class="form-group">
                         <label>Specialty</label>
-                        <div style="display:flex;gap:.5rem;">
-                            <select name="specialty" id="editSpecialty" class="form-dropdown" required>
-                                <option value="">Select Specialty</option>
-                                <?php echo $spec_options; ?>
-                            </select>
-                            <button type="button" class="btn-sm btn-edit" style="flex-shrink:0;" onclick="openSpecialtiesModal()" title="Add or edit specialties">Manage</button>
-                        </div>
+                        <input type="text" name="specialty" id="editSpecialty" required>
                     </div>
                     <div class="form-group">
                         <label>Schedule</label>
@@ -304,34 +280,6 @@ $conn->close();
             <div class="form-actions" style="justify-content:center;">
                 <button class="btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
                 <button class="btn-sm btn-delete" style="padding:0.65rem 1.25rem;font-size:0.95rem;" onclick="executeDelete()">Yes, Delete</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Manage Specialties Modal -->
-    <div class="modal-overlay" id="specialtiesModal">
-        <div class="modal-box" style="max-width:520px;max-height:80vh;overflow-y:auto;">
-            <button class="modal-close-btn" onclick="closeModal('specialtiesModal')">&times;</button>
-            <h2>Manage Specialties</h2>
-            <p style="color:#64748b;margin:0 0 1.25rem;font-size:0.95rem;">Add, rename, or remove the specialty options available when adding a doctor.</p>
-            <div style="display:flex;gap:.5rem;margin-bottom:1rem;">
-                <input type="text" id="newSpecName" placeholder="New specialty..." style="flex:1;min-width:0;padding:.6rem .8rem;border:2px solid var(--gray-100);border-radius:10px;font-size:.95rem;font-family:inherit;color:var(--gray-800);background:var(--white);">
-                <button type="button" class="btn-primary" onclick="addSpecialty()">Add</button>
-            </div>
-            <div id="specList"></div>
-        </div>
-    </div>
-
-    <!-- Delete Specialty Confirm Modal -->
-    <div class="modal-overlay" id="specDelModal">
-        <div class="modal-box" style="max-width:400px;text-align:center;">
-            <button class="modal-close-btn" onclick="closeModal('specDelModal')">&times;</button>
-            <div style="font-size:3rem;margin-bottom:0.75rem;color:#16a34a;display:flex;justify-content:center;"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
-            <h2 style="margin-bottom:0.5rem;">Delete Specialty?</h2>
-            <p id="specDelMsg" style="color:#64748b;margin-bottom:1.5rem;font-size:0.95rem;"></p>
-            <div class="form-actions" style="justify-content:center;">
-                <button class="btn-secondary" onclick="closeModal('specDelModal')">Cancel</button>
-                <button class="btn-sm btn-delete" style="padding:0.65rem 1.25rem;font-size:0.95rem;" onclick="executeSpecDelete()">Yes, Delete</button>
             </div>
         </div>
     </div>
@@ -396,7 +344,7 @@ $conn->close();
         function openEditModal(btn){
             document.getElementById('editDoctorId').value    = btn.dataset.id;
             document.getElementById('editName').value        = btn.dataset.name;
-            setSpecValue(document.getElementById('editSpecialty'), btn.dataset.specialty || '');
+            document.getElementById('editSpecialty').value   = btn.dataset.specialty;
             document.getElementById('editSchedule').value    = btn.dataset.schedule;
             document.getElementById('editExperience').value  = btn.dataset.experience;
             openModal('editModal');
@@ -446,166 +394,6 @@ $conn->close();
                 })
                 .catch(err => { hideLoading(); showToast('Error: ' + err.message, 'error'); });
 }
-
-    /* -- Manage Specialties -- */
-    var __specs = <?php echo json_encode($spec_json); ?>;
-
-    function openSpecialtiesModal(){
-        openModal('specialtiesModal');
-        renderSpecs();
-    }
-
-    function renderSpecs(){
-        var wrap = document.getElementById('specList');
-        wrap.innerHTML = '';
-        if(!__specs.length){
-            wrap.innerHTML = '<p style="color:#64748b;font-size:.9rem;">No specialties yet. Add one above.</p>';
-            return;
-        }
-        __specs.forEach(function(s){
-            var row = document.createElement('div');
-            row.setAttribute('style','display:flex;align-items:center;gap:.8rem;padding:.55rem .8rem;border:1px solid var(--gray-100);border-radius:12px;margin-bottom:.5rem;background:var(--white);');
-            var name = document.createElement('span');
-            name.textContent = s.name;
-            name.setAttribute('style','flex:1;min-width:0;font-weight:600;color:var(--gray-800);overflow-wrap:anywhere;');
-            var acts = document.createElement('div');
-            acts.setAttribute('style','display:flex;gap:.4rem;flex-shrink:0;');
-            var eb = document.createElement('button');
-            eb.type = 'button'; eb.className = 'btn-sm btn-edit'; eb.textContent = 'Edit';
-            eb.onclick = function(){ editSpec(s.id, name, row); };
-            var db = document.createElement('button');
-            db.type = 'button'; db.className = 'btn-sm btn-delete'; db.textContent = 'Delete';
-            db.onclick = function(){ openSpecDelete(s); };
-            acts.appendChild(eb); acts.appendChild(db);
-            row.appendChild(name); row.appendChild(acts);
-            wrap.appendChild(row);
-        });
-    }
-
-    function editSpec(id, nameEl, row){
-        var acts = row.lastChild;
-        acts.innerHTML = '';
-        var input = document.createElement('input');
-        input.type = 'text'; input.id = 'specEditInput_' + id;
-        input.value = nameEl.textContent;
-        input.setAttribute('style','flex:1;min-width:0;padding:.45rem .7rem;border:2px solid var(--gray-100);border-radius:10px;font-size:.9rem;font-family:inherit;color:var(--gray-800);background:var(--white);');
-        row.replaceChild(input, nameEl);
-        var sbtn = document.createElement('button');
-        sbtn.type = 'button'; sbtn.className = 'btn-sm btn-primary'; sbtn.textContent = 'Save';
-        sbtn.onclick = function(){ saveSpecRename(id); };
-        var cbtn = document.createElement('button');
-        cbtn.type = 'button'; cbtn.className = 'btn-sm btn-secondary'; cbtn.textContent = 'Cancel';
-        cbtn.onclick = renderSpecs;
-        acts.appendChild(sbtn); acts.appendChild(cbtn);
-        input.focus();
-    }
-
-    function saveSpecRename(id){
-        var input = document.getElementById('specEditInput_' + id);
-        var name = input ? input.value.trim() : '';
-        if(!name){ showToast('Enter a specialty name','error'); if(input) input.focus(); return; }
-        showLoading();
-        var fd = new FormData();
-        fd.append('id', id);
-        fd.append('name', name);
-        fetch('specialties_action.php?action=rename', {method:'POST', body:fd})
-            .then(r => r.text())
-            .then(res => {
-                hideLoading();
-                if(res.trim() === 'success'){ loadSpecs(); showToast('Specialty updated!','success'); }
-                else showToast(res.trim().replace(/^error:\s*/i,''), 'error');
-            })
-            .catch(() => { hideLoading(); showToast('Network error','error'); });
-    }
-
-    function addSpecialty(){
-        var input = document.getElementById('newSpecName');
-        var name = input.value.trim();
-        if(!name){ showToast('Enter a specialty name','error'); input.focus(); return; }
-        showLoading();
-        var fd = new FormData();
-        fd.append('name', name);
-        fetch('specialties_action.php?action=add', {method:'POST', body:fd})
-            .then(r => r.text())
-            .then(res => {
-                hideLoading();
-                if(res.trim() === 'success'){ input.value = ''; loadSpecs(); showToast('Specialty added!','success'); }
-                else showToast(res.trim().replace(/^error:\s*/i,''), 'error');
-            })
-            .catch(() => { hideLoading(); showToast('Network error','error'); });
-    }
-
-    var __specDel = null;
-    function openSpecDelete(s){
-        __specDel = s;
-        document.getElementById('specDelMsg').textContent =
-            'Delete "' + s.name + '" from the specialty list? Doctors already using it keep that specialty on their profile.';
-        openModal('specDelModal');
-    }
-    function executeSpecDelete(){
-        if(!__specDel){ closeModal('specDelModal'); return; }
-        showLoading();
-        var fd = new FormData();
-        fd.append('id', __specDel.id);
-        fetch('specialties_action.php?action=delete', {method:'POST', body:fd})
-            .then(r => r.text())
-            .then(res => {
-                hideLoading();
-                if(res.trim() === 'success'){
-                    __specDel = null;
-                    closeModal('specDelModal');
-                    loadSpecs();
-                    showToast('Specialty deleted!','success');
-                } else { showToast(res.trim().replace(/^error:\s*/i,''), 'error'); }
-            })
-            .catch(() => { hideLoading(); showToast('Network error','error'); });
-    }
-
-    function loadSpecs(){
-        fetch('specialties_action.php?action=list')
-            .then(r => r.json())
-            .then(data => {
-                __specs = Array.isArray(data) ? data : [];
-                renderSpecs();
-                rebuildSpecDropdowns();
-            })
-            .catch(() => {});
-    }
-
-    function rebuildSpecDropdowns(){
-        ['addSpecialty','editSpecialty'].forEach(function(id){
-            var sel = document.getElementById(id);
-            if(!sel) return;
-            var cur = sel.value;
-            sel.innerHTML = '<option value="">Select Specialty</option>';
-            __specs.forEach(function(s){
-                var o = document.createElement('option');
-                o.value = s.name; o.textContent = s.name;
-                sel.appendChild(o);
-            });
-            if(cur) setSpecValue(sel, cur);
-            if(window.__fdResync) window.__fdResync(sel);
-        });
-    }
-
-    function setSpecValue(sel, val){
-        var found = false;
-        for (var i = 0; i < sel.options.length; i++){
-            if(sel.options[i].value === val){ found = true; break; }
-        }
-        if(!found){
-            var o = document.createElement('option');
-            o.value = val; o.textContent = val;
-            sel.appendChild(o);
-        }
-        sel.value = val;
-    }
-
-    document.getElementById('newSpecName').addEventListener('keydown', function(e){
-        if(e.key === 'Enter'){ e.preventDefault(); addSpecialty(); }
-    });
-
-    rebuildSpecDropdowns();
 
     /* -- Doctor Accounts -- */
     document.getElementById('addAccountForm').addEventListener('submit', function(e){
