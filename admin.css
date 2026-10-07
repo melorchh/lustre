@@ -2136,6 +2136,24 @@ body::-webkit-scrollbar {
   height: 0;
 }
 
+.table-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-200) transparent;
+  -ms-overflow-style: auto;
+}
+.table-scroll::-webkit-scrollbar {
+  display: block;
+  width: 8px;
+  height: 10px;
+}
+.table-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.table-scroll::-webkit-scrollbar-thumb {
+  background: var(--gray-200);
+  border-radius: 8px;
+}
+
 /* ═══════════════════════════════════════════════════
    DESIGNED DATE PICKER  (matches client calendar)
    ═══════════════════════════════════════════════════ */
@@ -2865,6 +2883,30 @@ body::-webkit-scrollbar {
     white-space: normal;
     height: auto;
     min-height: 52px;
+  }
+}
+
+@media (max-width: 768px) {
+  #patientsTable th:nth-child(1),
+  #patientsTable td:nth-child(1),
+  #patientsTable th:nth-child(6),
+  #patientsTable td:nth-child(6),
+  #patientsTable th:nth-child(7),
+  #patientsTable td:nth-child(7),
+  #patientsTable th:nth-child(10),
+  #patientsTable td:nth-child(10) {
+    display: none !important;
+  }
+  #patientsTable th,
+  #patientsTable td {
+    padding: 0.7rem 0.6rem;
+  }
+  #patientsTable td {
+    min-width: 92px;
+  }
+  #patientsTable td:nth-child(2),
+  #patientsTable td:nth-child(9) {
+    min-width: 0;
   }
 }
 
