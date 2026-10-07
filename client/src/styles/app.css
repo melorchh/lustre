@@ -2714,6 +2714,60 @@ body.page-leaving {
   color: var(--green-dark);
 }
 
+/* ── Booking error alert (nested dialog over the modal) ── */
+.modal-alert {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(13, 35, 46, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: fadeIn 0.2s ease both;
+}
+.modal-alert-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--white);
+  border: 1.5px solid var(--gray-100);
+  border-radius: 24px;
+  padding: 1.75rem 1.5rem 1.5rem;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(13, 35, 46, 0.35);
+  animation: sheetUp 0.35s var(--spring) both;
+}
+.modal-alert-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: #fde8e8;
+  color: #dc2626;
+  margin-bottom: 0.9rem;
+}
+html[data-theme="dark"] .modal-alert-icon {
+  background: #3a1d1d;
+  color: #f0a3a3;
+}
+.modal-alert-title {
+  font-family: 'Lora', serif;
+  font-size: 1.3rem;
+  color: var(--green-deep);
+  margin: 0 0 0.45rem;
+}
+.modal-alert-msg {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--gray-600);
+  margin: 0 0 1.25rem;
+  word-break: break-word;
+}
+
 /* ── Cancel modal ────────────────────────────────── */
 .modal-sheet--sm {
   max-width: 440px;

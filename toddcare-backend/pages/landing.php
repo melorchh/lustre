@@ -719,8 +719,9 @@ function checkFpPasswordStrength(pw){
     bindNav();
   }
 
-  function popupHTML(){
-    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const CAL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  function dayCellsHTML(){
     const firstDow = new Date(viewY, viewM, 1).getDay();
     const daysInMonth = new Date(viewY, viewM + 1, 0).getDate();
     const t = new Date();
@@ -736,43 +737,83 @@ function checkFpPasswordStrength(pw){
       const cls = ['reg-cal-btn'].concat(isSel?'active':[], isToday?'cal-today':[], future?'cal-future':[]).join(' ');
       cells += '<span class="reg-cal-day"><button type="button" class="'+cls+'" data-date="'+ds+'">'+d+'</button></span>';
     }
+    return cells;
+  }
+
+  // Year dropdown options: this decade back 100 years for birth dates,
+  // widened automatically if the arrows navigated outside that range.
+  function yearOptionsHTML(){
+    const nowY = new Date().getFullYear();
+    const max = Math.max(nowY, viewY);
+    const min = Math.min(nowY - 100, viewY);
+    let opts = '';
+    for (let y = max; y >= min; y--){
+      opts += '<option value="'+y+'"'+(y===viewY?' selected':'')+'>'+y+'</option>';
+    }
+    return opts;
+  }
+
+  function popupHTML(){
     return '<div class="reg-calendar">' +
       '<div class="reg-cal-head">' +
         '<button type="button" class="reg-cal-nav" data-nav="-1" aria-label="Previous month"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>' +
-        '<span class="reg-cal-month">'+months[viewM]+' '+viewY+'</span>' +
+        '<div class="reg-cal-title">' +
+          '<span class="reg-cal-month">'+CAL_MONTHS[viewM]+'</span>' +
+          '<select class="reg-cal-year" aria-label="Year">'+yearOptionsHTML()+'</select>' +
+        '</div>' +
         '<button type="button" class="reg-cal-nav" data-nav="1" aria-label="Next month"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>' +
       '</div>' +
       '<div class="reg-cal-weekdays">'+WEEKDAYS.map(w=>'<span>'+w+'</span>').join('')+'</div>' +
-      '<div class="reg-cal-days">'+cells+'</div>' +
+      '<div class="reg-cal-days">'+dayCellsHTML()+'</div>' +
       '<div class="reg-cal-legend"><span class="reg-cal-legend-dot"></span><span>'+(hidden.value?('Selected: '+input.value):'Pick your birth date')+'</span>' +
         (hidden.value?'<button type="button" class="reg-cal-clear">Clear</button>':'') +
       '</div>' +
     '</div>';
   }
 
-  function bindNav(){
+  // Update the month/year label and day grid inside the SAME popup node.
+  // Never swap the node itself: the inline position/width set in openPopup()
+  // would be lost, and the document click handler would see a detached target
+  // and close the calendar.
+  function refreshPopup(){
     const pop = document.getElementById('regDpPopup'); if (!pop) return;
-    pop.querySelectorAll('.reg-cal-nav').forEach(function(n){
-      n.addEventListener('click', function(ev){
-        ev.stopPropagation(); // the re-render below detaches this button; without this the
-                              // document click handler would treat the click as "outside"
-                              // the popup and close the calendar
-        const dir = parseInt(n.getAttribute('data-nav'),10);
-        let m = viewM + dir;
-        if (m<0){ m=11; viewY--; } else if (m>11){ m=0; viewY++; }
-        viewM = m;
-        // Re-render inside the SAME popup node so the inline position/width
-        // set in openPopup() is kept — replacing the node dropped them and
-        // threw the calendar out of place.
-        pop.innerHTML = popupHTML();
-        bindNav();
-      });
-    });
+    const monthEl = pop.querySelector('.reg-cal-month');
+    if (monthEl) monthEl.textContent = CAL_MONTHS[viewM];
+    const yearEl = pop.querySelector('.reg-cal-year');
+    if (yearEl){ yearEl.innerHTML = yearOptionsHTML(); yearEl.value = String(viewY); }
+    const daysEl = pop.querySelector('.reg-cal-days');
+    if (daysEl) daysEl.innerHTML = dayCellsHTML();
+    bindDayButtons(pop);
+  }
+
+  function bindDayButtons(pop){
     pop.querySelectorAll('.reg-cal-btn').forEach(function(b){
       b.addEventListener('click', function(){ setValue(b.getAttribute('data-date')); close(); });
     });
     const clear = pop.querySelector('.reg-cal-clear');
     if (clear) clear.addEventListener('click', function(){ setValue(''); close(); });
+  }
+
+  function bindNav(){
+    const pop = document.getElementById('regDpPopup'); if (!pop) return;
+    pop.querySelectorAll('.reg-cal-nav').forEach(function(n){
+      n.addEventListener('click', function(ev){
+        ev.stopPropagation(); // without this the document click handler can treat the
+                              // click as "outside" the popup and close the calendar
+        const dir = parseInt(n.getAttribute('data-nav'),10);
+        let m = viewM + dir;
+        if (m<0){ m=11; viewY--; } else if (m>11){ m=0; viewY++; }
+        viewM = m;
+        refreshPopup();
+      });
+    });
+    const yearSel = pop.querySelector('.reg-cal-year');
+    if (yearSel) yearSel.addEventListener('change', function(ev){
+      ev.stopPropagation();
+      const y = parseInt(yearSel.value, 10);
+      if (!isNaN(y)){ viewY = y; refreshPopup(); }
+    });
+    bindDayButtons(pop);
   }
 
   // Open the calendar from the trigger button or clicking the field

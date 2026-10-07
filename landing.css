@@ -1357,6 +1357,33 @@ footer .footer-copy {
   color: var(--green-deep);
   text-transform: capitalize;
 }
+.reg-cal-title {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.reg-cal-year {
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--green-deep);
+  background: var(--white);
+  border: 1.5px solid var(--gray-100);
+  border-radius: 10px;
+  padding: 0.3rem 0.35rem;
+  cursor: pointer;
+  max-width: 5.4rem;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+.reg-cal-year:hover,
+.reg-cal-year:focus {
+  border-color: var(--green);
+  background: var(--green-pale);
+  outline: none;
+}
 .reg-cal-nav {
   width: 38px;
   height: 38px;

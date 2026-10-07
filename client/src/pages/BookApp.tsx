@@ -5,12 +5,11 @@ import Shell from '../shell';
 import Hero from '../components/Hero';
 import DoctorCard from '../components/DoctorCard';
 import BookingModal from '../components/BookingModal';
-import { useScrollLock, useToast } from '../hooks';
+import { useScrollLock } from '../hooks';
 import { useLang } from '../lang';
 
 export default function BookApp() {
   const { patientName, doctors } = getInitialData();
-  const { showToast } = useToast();
   const { t } = useLang();
 
   const [search, setSearch] = useState('');
@@ -107,7 +106,7 @@ export default function BookApp() {
       </div>
 
       {modalDoctor && (
-        <BookingModal doctor={modalDoctor} onClose={() => setModalDoctor(null)} onToast={showToast} />
+        <BookingModal doctor={modalDoctor} onClose={() => setModalDoctor(null)} />
       )}
     </Shell>
   );

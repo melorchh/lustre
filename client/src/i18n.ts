@@ -117,6 +117,13 @@ export const dict: Record<string, Record<Lang, string>> = {
   bm_no_times: { en: 'No available times for this date.', fil: 'Walang available na oras sa petsang ito.' },
   bm_duration: { en: 'Appointment duration: 2 hours', fil: 'Tagal ng appointment: 2 oras' },
   bm_confirm: { en: 'Confirm Appointment', fil: 'I-confirm ang Appointment' },
+  bm_conflict_title: { en: 'Time Slot Already Booked', fil: 'Na-book na ang Oras' },
+  bm_conflict_msg: {
+    en: 'Someone else just booked {d} at {time}, so this slot is no longer available. Please pick another time.',
+    fil: 'May ibang tao na nag-book ng {d} sa {time}, kaya hindi na available ang slot na ito. Paki-pumili ng ibang oras.',
+  },
+  bm_error_title: { en: "Booking Didn't Go Through", fil: 'Hindi Natuloy ang Booking' },
+  bm_error_ok: { en: 'OK, got it', fil: 'Sige, naiintindihan' },
 
   // Lab request page
   lab_title: { en: 'Laboratory Tests', fil: 'Laboratory Tests' },

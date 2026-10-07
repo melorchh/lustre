@@ -8,7 +8,6 @@ import { useLang } from '../lang';
 interface BookingModalProps {
   doctor: Doctor;
   onClose: () => void;
-  onToast: (msg: string, type?: 'success' | 'error') => void;
 }
 
 function SkeletonChips({ count }: { count: number }) {
@@ -124,7 +123,7 @@ export function CalendarPicker({
   );
 }
 
-export default function BookingModal({ doctor, onClose, onToast }: BookingModalProps) {
+export default function BookingModal({ doctor, onClose }: BookingModalProps) {
   const [dates, setDates] = useState<MedicalDate[]>([]);
   const [datesLoading, setDatesLoading] = useState(true);
   const [datesError, setDatesError] = useState(false);
@@ -140,6 +139,12 @@ export default function BookingModal({ doctor, onClose, onToast }: BookingModalP
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [bookedApptId, setBookedApptId] = useState(0);
+  const [bookingError, setBookingError] = useState<{
+    conflict: boolean;
+    detail: string;
+    date: string;
+    time: string;
+  } | null>(null);
   const { t } = useLang();
 
   const services = useMemo(() => servicesFor(doctor.specialty), [doctor.specialty]);
@@ -178,16 +183,14 @@ export default function BookingModal({ doctor, onClose, onToast }: BookingModalP
     }
   }, [success]);
 
-  const pickDate = (date: string) => {
-    if (date === selectedDate) return;
-    setSelectedDate(date);
+  const loadTimes = (date: string) => {
     setSelectedTime('');
     setTimes([]);
     setTimesLoading(true);
     setTimesError(false);
     fetchAvailableTimes(doctor.id, date)
-      .then((t) => {
-        setTimes(t);
+      .then((list) => {
+        setTimes(list);
         setTimesLoading(false);
       })
       .catch(() => {
@@ -195,6 +198,12 @@ export default function BookingModal({ doctor, onClose, onToast }: BookingModalP
         setTimesLoading(false);
         setTimesError(true);
       });
+  };
+
+  const pickDate = (date: string) => {
+    if (date === selectedDate) return;
+    setSelectedDate(date);
+    loadTimes(date);
   };
 
   const pickTime = (time: string) => setSelectedTime(time);
@@ -208,7 +217,12 @@ export default function BookingModal({ doctor, onClose, onToast }: BookingModalP
       setSuccess(true);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Booking failed. Please try again.';
-      onToast(msg, 'error');
+      // "slot just taken by someone else" — refresh the list so the stale
+      // time disappears and the patient can pick another one
+      const conflict = /already booked|overlapping/i.test(msg);
+      const stale = conflict || /not available|time off/i.test(msg);
+      setBookingError({ conflict, detail: msg, date: selectedDate, time: selectedTime });
+      if (stale) loadTimes(selectedDate);
     } finally {
       setSubmitting(false);
     }
@@ -403,6 +417,38 @@ placeholder={t('bm_other_ph')}
           </>
         )}
       </div>
+
+      {bookingError && (
+        <div className="modal-alert" onClick={() => setBookingError(null)}>
+          <div
+            className="modal-alert-card"
+            role="alertdialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="modal-alert-icon" aria-hidden="true">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 9v4M12 17h.01" />
+                <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+              </svg>
+            </span>
+            <h3 className="modal-alert-title">
+              {bookingError.conflict ? t('bm_conflict_title') : t('bm_error_title')}
+            </h3>
+            <p className="modal-alert-msg">
+              {bookingError.conflict
+                ? t('bm_conflict_msg', {
+                    d: formatLongDate(bookingError.date),
+                    time: formatTime12h(bookingError.time),
+                  })
+                : bookingError.detail}
+            </p>
+            <button className="btn-confirm" onClick={() => setBookingError(null)}>
+              {t('bm_error_ok')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
