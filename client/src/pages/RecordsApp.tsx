@@ -362,6 +362,7 @@ interface RescheduleModalProps {
 
 function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) {
   const { t } = useLang();
+  const { showToast } = useToast();
   const [dates, setDates] = useState<MedicalDate[]>([]);
   const [datesLoading, setDatesLoading] = useState(true);
   const [datesError, setDatesError] = useState(false);
@@ -421,15 +422,10 @@ function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) 
       await rescheduleAppointment(apt.id, apt.doctor_id, selectedDate, selectedTime);
       onRescheduled();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : t('rec_resched_failed');
-      if (typeof window !== 'undefined') {
-        const t = document.getElementById('toast');
-        if (t) {
-          t.textContent = msg;
-          t.className = 'toast show error';
-          window.setTimeout(() => (t.className = 'toast'), 3500);
-        }
-      }
+      const raw = e instanceof Error ? e.message : '';
+      const usable =
+        raw.length > 0 && raw.length <= 140 && !raw.includes('<') && raw.trim().charAt(0) !== '{';
+      showToast(usable ? raw : t('rec_resched_failed'), 'error');
       setSubmitting(false);
     }
   };
@@ -542,7 +538,7 @@ export default function RecordsApp() {
   const confirmRescheduled = () => {
     setReschedTarget(null);
     showToast(t('rec_rescheduled_ok'), 'success');
-    window.setTimeout(() => window.location.reload(), 900);
+    window.setTimeout(() => window.location.reload(), 2200);
   };
 
   const confirmCancel = async () => {
@@ -558,7 +554,7 @@ export default function RecordsApp() {
       if (text.trim() === 'success') {
         setCancelTarget(null);
         showToast(t('rec_cancelled_ok'), 'success');
-        window.setTimeout(() => window.location.reload(), 900);
+        window.setTimeout(() => window.location.reload(), 2200);
       } else {
         showToast(text, 'error');
         setCancelTarget(null);
