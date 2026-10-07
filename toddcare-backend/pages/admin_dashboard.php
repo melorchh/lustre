@@ -807,6 +807,7 @@ $conn->close();
                 '<div class="foot">Please arrive 10-15 minutes early. Show this slip at the counter.</div>'+
                 '</div><script>window.onload=function(){window.print();}<\/script></body></html>');
             w.document.close();
+            showToast('Slip ready to print','success');
         }
         function reloadPage(){document.body.classList.add('__leaving');setTimeout(function(){window.location.href='admin_dashboard.php';},215);}
 

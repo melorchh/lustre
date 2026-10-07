@@ -288,7 +288,7 @@ $conn->close();
                     </select>
                     <span class="daypdf-group">
                         <?php foreach ($apt_groups as $gday => $apts): ?>
-                            <button type="button" class="daypdf-btn" data-day="<?php echo $gday; ?>" title="Download <?php echo date('M j, Y', strtotime($gday)); ?> as PDF" onclick="window.location.href='archive_day_pdf.php?tab=appointments&day=<?php echo $gday; ?>'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span><?php echo date('M j', strtotime($gday)); ?></span></button>
+                            <button type="button" class="daypdf-btn" data-day="<?php echo $gday; ?>" title="Download <?php echo date('M j, Y', strtotime($gday)); ?> as PDF" onclick="downloadDayPdf('archive_day_pdf.php?tab=appointments&day=<?php echo $gday; ?>')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span><?php echo date('M j', strtotime($gday)); ?></span></button>
                         <?php endforeach; ?>
                     </span>
                     <span class="result-count" id="aptResultCount"></span>
@@ -432,7 +432,7 @@ $conn->close();
                     </select>
                     <span class="daypdf-group">
                         <?php foreach ($lab_groups as $gday => $labrows): ?>
-                            <button type="button" class="daypdf-btn" data-day="<?php echo $gday; ?>" title="Download <?php echo date('M j, Y', strtotime($gday)); ?> as PDF" onclick="window.location.href='archive_day_pdf.php?tab=labtests&day=<?php echo $gday; ?>'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span><?php echo date('M j', strtotime($gday)); ?></span></button>
+                            <button type="button" class="daypdf-btn" data-day="<?php echo $gday; ?>" title="Download <?php echo date('M j, Y', strtotime($gday)); ?> as PDF" onclick="downloadDayPdf('archive_day_pdf.php?tab=labtests&day=<?php echo $gday; ?>')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span><?php echo date('M j', strtotime($gday)); ?></span></button>
                         <?php endforeach; ?>
                     </span>
                     <span class="result-count" id="labResultCount"></span>
@@ -529,7 +529,7 @@ $conn->close();
                     <input type="search" id="vitalSearch" placeholder="Search patient name&#8230;" oninput="filterVitals()">
                     <span class="daypdf-group">
                         <?php foreach ($vital_groups as $gday => $vitrows): ?>
-                            <button type="button" class="daypdf-btn" data-day="<?php echo $gday; ?>" title="Download <?php echo date('M j, Y', strtotime($gday)); ?> as PDF" onclick="window.location.href='archive_day_pdf.php?tab=vitals&day=<?php echo $gday; ?>'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span><?php echo date('M j', strtotime($gday)); ?></span></button>
+                            <button type="button" class="daypdf-btn" data-day="<?php echo $gday; ?>" title="Download <?php echo date('M j, Y', strtotime($gday)); ?> as PDF" onclick="downloadDayPdf('archive_day_pdf.php?tab=vitals&day=<?php echo $gday; ?>')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span><?php echo date('M j', strtotime($gday)); ?></span></button>
                         <?php endforeach; ?>
                     </span>
                     <span class="result-count" id="vitalResultCount"></span>
@@ -611,7 +611,7 @@ $conn->close();
                     <input type="search" id="vaccSearchDose" placeholder="Search dose..." oninput="filterVaccinations()">
                     <span class="daypdf-group">
                         <?php foreach ($vacc_groups as $gday => $vacrows): ?>
-                            <button type="button" class="daypdf-btn" data-day="<?php echo $gday; ?>" title="Download <?php echo date('M j, Y', strtotime($gday)); ?> as PDF" onclick="window.location.href='archive_day_pdf.php?tab=vaccinations&day=<?php echo $gday; ?>'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span><?php echo date('M j', strtotime($gday)); ?></span></button>
+                            <button type="button" class="daypdf-btn" data-day="<?php echo $gday; ?>" title="Download <?php echo date('M j, Y', strtotime($gday)); ?> as PDF" onclick="downloadDayPdf('archive_day_pdf.php?tab=vaccinations&day=<?php echo $gday; ?>')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span><?php echo date('M j', strtotime($gday)); ?></span></button>
                         <?php endforeach; ?>
                     </span>
                     <span class="result-count" id="vaccResultCount"></span>
@@ -752,6 +752,8 @@ $conn->close();
       }
     }
     function showToast(msg,type=''){try{if(!window.__noFlash){clearTimeout(window.__flashT);localStorage.setItem('lustreAdminFlash',JSON.stringify({m:String(msg),t:type||''}));window.__flashT=setTimeout(function(){try{localStorage.removeItem('lustreAdminFlash')}catch(e){}},2500);}}catch(e){}const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(type?' '+type:'');setTimeout(()=>t.className='toast',3200);}
+
+    function downloadDayPdf(url){showToast('PDF downloaded','success');window.location.href=url;}
 
     function switchTab(name,btn){
         document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
@@ -930,6 +932,7 @@ function filterLab(){
             '<div class="foot">Please arrive 10-15 minutes early. Show this slip at the counter.</div>'+
             '</div><script>window.onload=function(){window.print();}<\/script></body></html>');
         w.document.close();
+        showToast('Slip ready to print','success');
     }
 
 (function(){

@@ -141,6 +141,7 @@ if (isset($_SESSION["admin_id"])) {
             .then(result => {
                 hideLoading();
                 if (result.trim() === 'success') {
+                    showToast('Welcome back!', 'success');
                     document.body.classList.add('__leaving');
                     setTimeout(() => { window.location.href = 'admin_dashboard.php'; }, 400);
                 } else if (result.trim() === 'change_password') {
