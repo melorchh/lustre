@@ -2767,6 +2767,14 @@ html[data-theme="dark"] .modal-alert-icon {
   margin: 0 0 1.25rem;
   word-break: break-word;
 }
+.modal-alert-icon--ok {
+  background: #d9f3ee;
+  color: #0d9488;
+}
+html[data-theme="dark"] .modal-alert-icon--ok {
+  background: #10312f;
+  color: #5eead4;
+}
 
 /* ── Cancel modal ────────────────────────────────── */
 .modal-sheet--sm {
