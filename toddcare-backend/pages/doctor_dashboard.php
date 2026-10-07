@@ -48,7 +48,7 @@ $walkin_queue = [];
 $queue_waiting = 0;
 $queue_today = date('Y-m-d');
 $walkins = $conn->query("
-    SELECT w.id, w.arrival_time, w.status, w.result,
+    SELECT w.id, w.arrival_time, w.status, w.result, w.test_procedure,
            p.name AS patient_name, p.contact
     FROM walk_ins w
     JOIN patients p ON w.patient_id = p.id
@@ -61,13 +61,14 @@ if ($walkins) {
         $qn++;
         if ($w['status'] === 'waiting') $queue_waiting++;
         $walkin_queue[] = [
-            'id'      => (int)$w['id'],
-            'queue'   => $qn,
-            'name'    => $w['patient_name'],
-            'contact' => $w['contact'],
-            'arrival' => date('g:i A', strtotime($w['arrival_time'])),
-            'status'  => $w['status'],
-            'result'  => (string)($w['result'] ?? ''),
+            'id'        => (int)$w['id'],
+            'queue'     => $qn,
+            'name'      => $w['patient_name'],
+            'contact'   => $w['contact'],
+            'arrival'   => date('g:i A', strtotime($w['arrival_time'])),
+            'status'    => $w['status'],
+            'procedure' => (string)($w['test_procedure'] ?? ''),
+            'result'    => (string)($w['result'] ?? ''),
         ];
     }
 }
@@ -170,7 +171,7 @@ function fill_color($s) {
                 </div>
                 <div class="table-scroll">
                     <table id="queueTable">
-                        <thead><tr><th>Queue</th><th>Patient</th><th>Arrival</th><th>Status</th></tr></thead>
+                        <thead><tr><th>Queue</th><th>Patient</th><th>Test / Procedure</th><th>Arrival</th><th>Status</th></tr></thead>
                         <tbody id="queueBody">
                         <?php if (count($walkin_queue) > 0): ?>
                             <?php foreach ($walkin_queue as $w):
@@ -180,6 +181,7 @@ function fill_color($s) {
                             <tr>
                                 <td><span class="badge" style="background:#16a34a;color:#fff;font-size:1rem;font-weight:800">#<?php echo $w['queue']; ?></span></td>
                                 <td><strong><?php echo htmlspecialchars($w['name']); ?></strong><br><small style="color:#64748b"><?php echo htmlspecialchars($w['contact']); ?></small></td>
+                                <td><?php echo htmlspecialchars($w['procedure'] ?: '—'); ?></td>
                                 <td><?php echo htmlspecialchars($w['arrival']); ?></td>
                                 <td style="white-space:nowrap">
                                     <span class="badge" style="<?php echo $wbc; ?>"><?php echo ucfirst(str_replace('_',' ',$w['status'])); ?></span>
@@ -195,7 +197,7 @@ function fill_color($s) {
                             </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <tr><td colspan="4" class="empty-state-row" id="queueEmpty"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.7L18 9.3l-4.4 1.6L12 15.6l-1.6-4.7L6 9.3l4.4-1.6z" style="stroke-width:1.8"/><path d="M5 20h14"/></svg></div>No walk-ins registered yet today.</td></tr>
+                            <tr><td colspan="5" class="empty-state-row" id="queueEmpty"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.7L18 9.3l-4.4 1.6L12 15.6l-1.6-4.7L6 9.3l4.4-1.6z" style="stroke-width:1.8"/><path d="M5 20h14"/></svg></div>No walk-ins registered yet today.</td></tr>
                         <?php endif; ?>
                         </tbody>
                     </table>
@@ -406,7 +408,7 @@ function fill_color($s) {
             served:'background:#d1fae5;color:#065f46',
             cancelled:'background:#fee2e2;color:#991b1b'
         };
-        const WQ_EMPTY = '<tr><td colspan="4" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.7L18 9.3l-4.4 1.6L12 15.6l-1.6-4.7L6 9.3l4.4-1.6z" style="stroke-width:1.8"/><path d="M5 20h14"/></svg></div>No walk-ins registered yet today.</td></tr>';
+        const WQ_EMPTY = '<tr><td colspan="5" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.7L18 9.3l-4.4 1.6L12 15.6l-1.6-4.7L6 9.3l4.4-1.6z" style="stroke-width:1.8"/><path d="M5 20h14"/></svg></div>No walk-ins registered yet today.</td></tr>';
         function wqEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
         function wqLabel(s){return s.charAt(0).toUpperCase()+s.slice(1).replace(/_/g,' ');}
         function wqRow(w){
@@ -417,6 +419,7 @@ function fill_color($s) {
             return '<tr>' +
                 '<td><span class="badge" style="background:#16a34a;color:#fff;font-size:1rem;font-weight:800">#'+w.queue+'</span></td>' +
                 '<td><strong>'+wqEsc(w.name)+'</strong><br><small style="color:#64748b">'+wqEsc(w.contact)+'</small></td>' +
+                '<td>'+wqEsc(w.procedure||'—')+'</td>' +
                 '<td>'+wqEsc(w.arrival)+'</td>' +
                 '<td style="white-space:nowrap">' +
                     '<span class="badge" style="'+(WQ_COLORS[w.status]||'')+'">'+wqLabel(w.status)+'</span> ' +
@@ -495,6 +498,7 @@ function fill_color($s) {
                 if (info) info.innerHTML =
                     '<div class="info-item"><label>Queue</label><span>#'+row.queue+'</span></div>' +
                     '<div class="info-item"><label>Patient</label><span>'+wqEsc(row.name)+'</span></div>' +
+                    '<div class="info-item"><label>Test / Procedure</label><span>'+(row.procedure?wqEsc(row.procedure):'—')+'</span></div>' +
                     '<div class="info-item"><label>Status</label><span>'+wqLabel(row.status)+'</span></div>';
                 if (ta && wqModalMode === 'edit') ta.value = row.result || '';
             })

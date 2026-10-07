@@ -54,17 +54,19 @@ if ($tbq) {
 $walkin_doc_options = '';
 $walkin_docs_json = [];
 $walkin_specs = [];
-$wl_doc = $conn->query("SELECT id, name, specialty FROM doctors ORDER BY name");
+$conn->query("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS test_procedures TEXT NOT NULL DEFAULT ''");
+$conn->query("ALTER TABLE walk_ins ADD COLUMN IF NOT EXISTS test_procedure TEXT NOT NULL DEFAULT ''");
+$wl_doc = $conn->query("SELECT id, name, specialty, test_procedures FROM doctors ORDER BY name");
 if ($wl_doc) {
     while ($wd = $wl_doc->fetch_assoc()) {
         $walkin_doc_options .= '<option value="' . (int)$wd['id'] . '">Dr. ' . htmlspecialchars($wd['name']) . ' (' . htmlspecialchars($wd['specialty']) . ')</option>';
-        $walkin_docs_json[] = ['id' => (int)$wd['id'], 'name' => $wd['name'], 'specialty' => $wd['specialty']];
+        $walkin_docs_json[] = ['id' => (int)$wd['id'], 'name' => $wd['name'], 'specialty' => $wd['specialty'], 'tests' => (string)($wd['test_procedures'] ?? '')];
         $walkin_specs[$wd['specialty']] = true;
     }
 }
 
 $today_walkins = $conn->query("
-    SELECT w.id, w.arrival_date, w.arrival_time, w.status AS walk_status,
+    SELECT w.id, w.arrival_date, w.arrival_time, w.status AS walk_status, w.test_procedure,
            p.name AS patient_name, p.patient_type, d.name AS doctor_name
     FROM walk_ins w
     JOIN patients p ON w.patient_id = p.id
@@ -262,7 +264,7 @@ $conn->close();
                 </div>
                 <div class="table-scroll">
                     <table>
-                        <thead><tr><th>Queue</th><th>Patient</th><th>Type</th><th>Arrival</th><th>Doctor</th><th>Status</th></tr></thead>
+                        <thead><tr><th>Queue</th><th>Patient</th><th>Type</th><th>Arrival</th><th>Test / Procedure</th><th>Doctor</th><th>Status</th></tr></thead>
                         <tbody>
                         <?php
                         $wi_counts = [];
@@ -282,11 +284,12 @@ $conn->close();
                             <td><strong><?php echo htmlspecialchars($tw['patient_name']); ?></strong></td>
                             <td><span class="badge badge-urgent"><?php echo htmlspecialchars(ucfirst($tw['patient_type'])); ?></span></td>
                             <td><?php echo $wt->format('g:i A'); ?></td>
+                            <td><?php echo htmlspecialchars($tw['test_procedure'] ?: '—'); ?></td>
                             <td>Dr. <?php echo htmlspecialchars($tw['doctor_name']); ?></td>
                             <td><span class="badge" style="<?php echo $wbc; ?>"><?php echo ucfirst($ws); ?></span></td>
                         </tr>
                         <?php endwhile; else: ?>
-                        <tr><td colspan="6" style="text-align:center;color:#94a3b8;">No walk-ins registered today yet.</td></tr>
+                        <tr><td colspan="7" style="text-align:center;color:#94a3b8;">No walk-ins registered today yet.</td></tr>
                         <?php endif; ?>
                         </tbody>
                     </table>
@@ -361,6 +364,12 @@ $conn->close();
                     <select name="doctor_id" class="form-dropdown" required>
                         <option value="">Select Doctor</option>
                         <?php echo $walkin_doc_options; ?>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Test / Procedure</label>
+                    <select name="test_procedure" class="form-dropdown" data-searchable disabled>
+                        <option value="">Select a doctor first</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -532,29 +541,61 @@ $conn->close();
             overlay.addEventListener('click',function(e){if(e.target===this)closeModal(this.id);});
         });
 
-        // ---- Walk-in specialty filter (narrows the doctor dropdown) ----
+        // ---- Walk-in specialty ⇄ doctor link + test/procedure dropdown ----
         var __walkinDocs = <?php echo json_encode($walkin_docs_json); ?>;
         function __walkinEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+        function __walkinDoc(doctorId){doctorId=Number(doctorId)||0;for(var i=0;i<__walkinDocs.length;i++){if(__walkinDocs[i].id===doctorId)return __walkinDocs[i];}return null;}
+        function __rebuildWalkinProcs(){
+            var f=document.getElementById('walkinForm'); if(!f) return;
+            var docSel=f.querySelector('select[name="doctor_id"]');
+            var procSel=f.querySelector('select[name="test_procedure"]');
+            if(!procSel) return;
+            var did=docSel?Number(docSel.value)||0:0;
+            var d=__walkinDoc(did);
+            var html;
+            if(!did){ html='<option value="">Select a doctor first</option>'; procSel.disabled=true; }
+            else{
+                html='<option value="">Select Test / Procedure</option>';
+                var seen={};
+                (String(d?d.tests:'').split('\n')||[]).forEach(function(ln){
+                    ln=ln.trim();
+                    if(ln && !seen[ln]){ seen[ln]=1; html+='<option value="'+__walkinEsc(ln)+'">'+__walkinEsc(ln)+'</option>'; }
+                });
+                procSel.disabled=false;
+            }
+            procSel.innerHTML=html;
+            procSel.value='';
+            if(window.__fdResync) window.__fdResync(procSel);
+        }
         function __rebuildWalkinDocs(){
             var f=document.getElementById('walkinForm'); if(!f) return;
             var specSel=f.querySelector('select[name="specialty"]');
             var docSel=f.querySelector('select[name="doctor_id"]');
             if(!specSel||!docSel) return;
             var sp=specSel.value;
+            var keep=Number(docSel.value)||0;
             var html='<option value="">Select Doctor</option>';
             for(var i=0;i<__walkinDocs.length;i++){
                 var d=__walkinDocs[i];
                 if(sp && d.specialty!==sp) continue;
-                html+='<option value="'+d.id+'">Dr. '+__walkinEsc(d.name)+' ('+__walkinEsc(d.specialty)+')</option>';
+                html+='<option value="'+d.id+'"'+(keep===d.id?' selected':'')+'>Dr. '+__walkinEsc(d.name)+' ('+__walkinEsc(d.specialty)+')</option>';
             }
             docSel.innerHTML=html;
+            docSel.value=(keep && docSel.querySelector('option[value="'+keep+'"]'))?String(keep):'';
             if(window.__fdResync) window.__fdResync(docSel);
+            __rebuildWalkinProcs();
         }
         (function(){
             var f=document.getElementById('walkinForm'); if(!f||f.dataset.specBound) return;
             f.dataset.specBound='1';
             var specSel=f.querySelector('select[name="specialty"]');
+            var docSel=f.querySelector('select[name="doctor_id"]');
             if(specSel) specSel.addEventListener('change', __rebuildWalkinDocs);
+            if(docSel) docSel.addEventListener('change', function(){
+                var d=__walkinDoc(docSel.value);
+                if(specSel){ specSel.value = d?d.specialty:''; }
+                __rebuildWalkinProcs();
+            });
             f.addEventListener('reset', function(){ setTimeout(__rebuildWalkinDocs, 0); });
         })();
 

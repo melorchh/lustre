@@ -1200,6 +1200,50 @@ table small {
   background:var(--green);
   color:#fff;
 }
+.cd-search-wrap{
+  padding:.35rem;
+  border-bottom:1px solid var(--gray-100);
+  margin-bottom:.2rem;
+}
+.cd-search-input{
+  width:100%;
+  padding:.6rem .8rem;
+  border:2px solid var(--gray-100);
+  border-radius:8px;
+  font-size:.92rem;
+  font-family:inherit;
+  color:var(--gray-800);
+  background:var(--white);
+  outline:none;
+  transition:border-color .2s,box-shadow .2s;
+  box-sizing:border-box;
+}
+.cd-search-input:focus{
+  border-color:var(--green);
+  box-shadow:0 0 0 3px rgba(22,163,74,.12);
+}
+.cd-search-input::placeholder{
+  color:var(--gray-400,#9ca3af);
+}
+.cust-dropdown .cd-btn.cd-searchable{
+  position:relative;
+}
+.cust-dropdown .cd-btn.cd-searchable::before{
+  content:'';
+  position:absolute;
+  left:1.1rem;
+  top:50%;
+  transform:translateY(-50%);
+  width:16px;
+  height:16px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2316a34a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-size:contain;
+  background-repeat:no-repeat;
+  pointer-events:none;
+}
+.cust-dropdown .cd-btn.cd-searchable .cd-label{
+  padding-left:1.5rem;
+}
 
 /* ── Custom form dropdown (Request New Lab Test etc.) ── */
 .form-dropdown{
