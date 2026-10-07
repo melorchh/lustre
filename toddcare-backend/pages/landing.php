@@ -753,14 +753,18 @@ function checkFpPasswordStrength(pw){
   function bindNav(){
     const pop = document.getElementById('regDpPopup'); if (!pop) return;
     pop.querySelectorAll('.reg-cal-nav').forEach(function(n){
-      n.addEventListener('click', function(){
+      n.addEventListener('click', function(ev){
+        ev.stopPropagation(); // the re-render below detaches this button; without this the
+                              // document click handler would treat the click as "outside"
+                              // the popup and close the calendar
         const dir = parseInt(n.getAttribute('data-nav'),10);
         let m = viewM + dir;
         if (m<0){ m=11; viewY--; } else if (m>11){ m=0; viewY++; }
         viewM = m;
-        const newPop = document.createElement('div'); newPop.id='regDpPopup'; newPop.className='reg-dp-popup';
-        newPop.innerHTML = popupHTML();
-        pop.replaceWith(newPop);
+        // Re-render inside the SAME popup node so the inline position/width
+        // set in openPopup() is kept — replacing the node dropped them and
+        // threw the calendar out of place.
+        pop.innerHTML = popupHTML();
         bindNav();
       });
     });
@@ -820,7 +824,8 @@ function checkFpPasswordStrength(pw){
   });
 
   document.addEventListener('click', function(e){
-    if (open && !document.getElementById('regDpPopup').contains(e.target) && !field.contains(e.target)) close();
+    const popEl = document.getElementById('regDpPopup');
+    if (open && popEl && !popEl.contains(e.target) && !field.contains(e.target)) close();
   });
   document.addEventListener('keydown', function(e){ if (e.key==='Escape') close(); });
 })();
