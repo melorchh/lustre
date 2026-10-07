@@ -42,11 +42,13 @@ $upcoming_appts = $conn->query("
 ");
 
 // Today's walk-in queue for this doctor (queue # assigned in arrival order)
+require_once __DIR__ . '/walkin_schema.php';
+walkins_ensure_result_column($conn);
 $walkin_queue = [];
 $queue_waiting = 0;
 $queue_today = date('Y-m-d');
 $walkins = $conn->query("
-    SELECT w.id, w.arrival_time, w.status,
+    SELECT w.id, w.arrival_time, w.status, w.result,
            p.name AS patient_name, p.contact
     FROM walk_ins w
     JOIN patients p ON w.patient_id = p.id
@@ -65,6 +67,7 @@ if ($walkins) {
             'contact' => $w['contact'],
             'arrival' => date('g:i A', strtotime($w['arrival_time'])),
             'status'  => $w['status'],
+            'result'  => (string)($w['result'] ?? ''),
         ];
     }
 }
@@ -180,11 +183,14 @@ function fill_color($s) {
                                 <td><?php echo htmlspecialchars($w['arrival']); ?></td>
                                 <td style="white-space:nowrap">
                                     <span class="badge" style="<?php echo $wbc; ?>"><?php echo ucfirst(str_replace('_',' ',$w['status'])); ?></span>
-                                    <select class="action-select" data-id="<?php echo $w['id']; ?>" onchange="updateWalkinStatus(this)" aria-label="Queue status">
+                                    <select class="action-select" data-id="<?php echo $w['id']; ?>" data-prev="<?php echo htmlspecialchars($w['status']); ?>" onchange="updateWalkinStatus(this)" aria-label="Queue status">
                                         <?php foreach (['waiting','in_service','served','cancelled'] as $opt): ?>
                                         <option value="<?php echo $opt; ?>" <?php echo $w['status']===$opt?'selected':''; ?>><?php echo ucfirst(str_replace('_',' ',$opt)); ?></option>
                                         <?php endforeach; ?>
                                     </select>
+                                    <?php if ($w['status'] === 'served'): ?>
+                                    <button type="button" class="btn-sm btn-edit" style="margin-left:6px" onclick="openWalkinResultModal(<?php echo (int)$w['id']; ?>, 'edit')"><?php echo ($w['result'] !== '') ? 'Result' : 'Add Result'; ?></button>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -314,6 +320,23 @@ function fill_color($s) {
         </div>
     </div>
 
+    <!-- Walk-in Result Modal -->
+    <div class="result-modal" id="walkinResultModal">
+        <div class="result-modal-box">
+            <button class="result-close" onclick="closeWalkinResultModal()">&#10005;</button>
+            <h3 id="wqResultTitle">Walk-in Result</h3>
+            <div class="info-row" id="wqResultInfoRow"></div>
+            <div class="form-group">
+                <label>Result / Findings</label>
+                <textarea id="wqResultText" rows="8" placeholder="Enter the result, diagnosis, findings, and notes for this walk-in..."></textarea>
+            </div>
+            <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+                <button class="btn-primary" onclick="saveWalkinResult()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Save Result</button>
+                <button class="btn-secondary" onclick="closeWalkinResultModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function openSidebar(){document.getElementById('adminSidebar').classList.add('open');document.getElementById('sidebarOverlay').classList.add('active');document.body.style.overflow='hidden';}
         function closeSidebar(){document.getElementById('adminSidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('active');document.body.style.overflow='';}
@@ -388,13 +411,17 @@ function fill_color($s) {
         function wqLabel(s){return s.charAt(0).toUpperCase()+s.slice(1).replace(/_/g,' ');}
         function wqRow(w){
             const opts = WQ_STATUSES.map(s=>'<option value="'+s+'"'+(w.status===s?' selected':'')+'>'+wqLabel(s)+'</option>').join('');
+            const resultBtn = w.status==='served'
+                ? ' <button type="button" class="btn-sm btn-edit" style="margin-left:4px" onclick="openWalkinResultModal('+w.id+',\'edit\')">'+((w.result&&w.result.length)?'Result':'Add Result')+'</button>'
+                : '';
             return '<tr>' +
                 '<td><span class="badge" style="background:#16a34a;color:#fff;font-size:1rem;font-weight:800">#'+w.queue+'</span></td>' +
                 '<td><strong>'+wqEsc(w.name)+'</strong><br><small style="color:#64748b">'+wqEsc(w.contact)+'</small></td>' +
                 '<td>'+wqEsc(w.arrival)+'</td>' +
                 '<td style="white-space:nowrap">' +
                     '<span class="badge" style="'+(WQ_COLORS[w.status]||'')+'">'+wqLabel(w.status)+'</span> ' +
-                    '<select class="action-select" data-id="'+w.id+'" onchange="updateWalkinStatus(this)" aria-label="Queue status">'+opts+'</select>' +
+                    '<select class="action-select" data-id="'+w.id+'" data-prev="'+wqEsc(w.status)+'" onchange="updateWalkinStatus(this)" aria-label="Queue status">'+opts+'</select>' +
+                    resultBtn +
                 '</td></tr>';
         }
         let wqBusy = false, wqPending = false;
@@ -417,22 +444,112 @@ function fill_color($s) {
             .finally(()=>{ wqBusy = false; if (wqPending) refreshQueue(false); });
         }
         function updateWalkinStatus(sel){
+            const id = sel.getAttribute('data-id');
+            if (sel.value === 'served') {
+                openWalkinResultModal(id, 'served');
+                return;
+            }
             const fd = new FormData();
             fd.append('action','update_status');
-            fd.append('walkin_id', sel.getAttribute('data-id'));
+            fd.append('walkin_id', id);
             fd.append('status', sel.value);
             showLoading();
             fetch('doctor_walkin_queue.php', {method:'POST', body:fd})
             .then(r=>r.text())
             .then(res=>{
                 hideLoading();
-                if(res.trim()==='success') showToast('Queue status updated','success');
-                else showToast(res,'error');
+                if(res.trim()==='success'){
+                    sel.setAttribute('data-prev', sel.value);
+                    showToast('Queue status updated','success');
+                } else {
+                    showToast(res,'error');
+                    sel.value = sel.getAttribute('data-prev') || 'waiting';
+                }
                 wqPending = true;
                 refreshQueue();
             })
-            .catch(()=>{ hideLoading(); showToast('Network error','error'); wqPending = true; refreshQueue(); });
+            .catch(()=>{ hideLoading(); showToast('Network error','error'); sel.value = sel.getAttribute('data-prev') || 'waiting'; wqPending = true; refreshQueue(); });
         }
+
+        /* -- Walk-in result modal -- */
+        let wqModalMode = 'edit';
+        let wqModalId = null;
+        function openWalkinResultModal(id, mode){
+            wqModalId = id;
+            wqModalMode = mode || 'edit';
+            const ta = document.getElementById('wqResultText');
+            if (ta) ta.value = '';
+            const title = document.getElementById('wqResultTitle');
+            if (title) title.textContent = wqModalMode === 'served' ? 'Mark Served · Input Result' : 'Walk-in Result';
+            const info = document.getElementById('wqResultInfoRow');
+            if (info) info.innerHTML = '<div class="info-item"><label>Patient</label><span>Loading&hellip;</span></div>';
+            const m = document.getElementById('walkinResultModal');
+            m.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            fetch('doctor_walkin_queue.php')
+            .then(r=>r.json())
+            .then(d=>{
+                if(!d || !d.ok || wqModalId !== id) return;
+                const row = (d.rows||[]).find(x=>x.id===id);
+                if(!row) return;
+                if (info) info.innerHTML =
+                    '<div class="info-item"><label>Queue</label><span>#'+row.queue+'</span></div>' +
+                    '<div class="info-item"><label>Patient</label><span>'+wqEsc(row.name)+'</span></div>' +
+                    '<div class="info-item"><label>Status</label><span>'+wqLabel(row.status)+'</span></div>';
+                if (ta && wqModalMode === 'edit') ta.value = row.result || '';
+            })
+            .catch(()=>{});
+        }
+        function closeWalkinResultModal(){
+            const m = document.getElementById('walkinResultModal');
+            if (m) m.classList.remove('active');
+            document.body.style.overflow = '';
+            if (wqModalMode === 'served' && wqModalId) {
+                const sel = document.querySelector('#queueBody select[data-id="'+wqModalId+'"]');
+                if (sel) sel.value = sel.getAttribute('data-prev') || 'waiting';
+            }
+            wqModalId = null;
+            wqModalMode = 'edit';
+        }
+        function saveWalkinResult(){
+            if(!wqModalId) return;
+            const result = document.getElementById('wqResultText').value.trim();
+            if(!result && wqModalMode !== 'served'){
+                showToast('Please enter the result','error');
+                return;
+            }
+            showLoading();
+            const fd = new FormData();
+            fd.append('walkin_id', wqModalId);
+            fd.append('result', result);
+            if (wqModalMode === 'served'){
+                fd.append('action','update_status');
+                fd.append('status','served');
+            } else {
+                fd.append('action','save_result');
+            }
+            fetch('doctor_walkin_queue.php', {method:'POST', body:fd})
+            .then(r=>r.text())
+            .then(res=>{
+                hideLoading();
+                if(res.trim()==='success'){
+                    showToast('Result saved successfully!','success');
+                    const m = document.getElementById('walkinResultModal');
+                    m.classList.remove('active');
+                    document.body.style.overflow = '';
+                    wqModalId = null;
+                    wqModalMode = 'edit';
+                    wqPending = true;
+                    refreshQueue();
+                } else {
+                    showToast(res,'error');
+                }
+            })
+            .catch(()=>{ hideLoading(); showToast('Network error','error'); });
+        }
+        document.getElementById('walkinResultModal').addEventListener('click', function(e){
+            if(e.target === this) closeWalkinResultModal();
+        });
         setInterval(()=>{ if(!document.hidden) refreshQueue(); }, 20000);
         document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refreshQueue(); });
 

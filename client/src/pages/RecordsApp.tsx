@@ -108,9 +108,6 @@ function VaccineCard({ v }: { v: Vaccination }) {
             <a className="btn-proof-appt" href={`vaccine_card.php?id=${v.id}`}>
               <SvgView size={14} /> {t('rec_view_card')}
             </a>
-            <a className="btn-result-appt" href={`vaccine_card_pdf.php?id=${v.id}`} onClick={(e) => { e.preventDefault(); window.open(`vaccine_card_pdf.php?id=${v.id}`, '_blank', 'noopener'); }}>
-              <SvgDownload size={14} /> {t('rec_download_pdf')}
-            </a>
           </div>
         </div>
         <div className="appt-right">
