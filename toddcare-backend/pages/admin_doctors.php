@@ -13,9 +13,10 @@ $conn->query("CREATE TABLE IF NOT EXISTS doctor_accounts (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 )");
 
-$doctors = $conn->query("SELECT d.id, d.name, d.specialty, d.schedule, d.experience, d.created_at, COUNT(a.id) as appointment_count FROM doctors d LEFT JOIN appointments a ON d.id=a.doctor_id GROUP BY d.id, d.name, d.specialty, d.schedule, d.experience, d.created_at ORDER BY d.name");
+$doctors = $conn->query("SELECT d.id, d.name, d.specialty, d.schedule, d.experience, d.created_at, d.test_procedures, COUNT(a.id) as appointment_count FROM doctors d LEFT JOIN appointments a ON d.id=a.doctor_id GROUP BY d.id, d.name, d.specialty, d.schedule, d.experience, d.created_at, d.test_procedures ORDER BY d.name");
 $accounts = $conn->query("SELECT da.id AS account_id, da.username, da.created_at, d.id AS doctor_id, d.name AS doctor_name, d.specialty FROM doctor_accounts da JOIN doctors d ON da.doctor_id=d.id ORDER BY d.name");
 $doctors_options = $conn->query("SELECT id, name, specialty FROM doctors ORDER BY name");
+$conn->query("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS test_procedures TEXT NOT NULL DEFAULT ''");
 $conn->close();
 ?><!DOCTYPE html>
 <html lang="en">
@@ -86,6 +87,16 @@ $conn->close();
                         <div class="doctor-specialty"><?php echo htmlspecialchars($doctor['specialty']); ?></div>
                         <div class="doctor-meta"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><?php echo htmlspecialchars($doctor['schedule']); ?></div>
                         <div class="doctor-meta"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><?php echo (int)$doctor['experience']; ?> years experience</div>
+                        <?php
+                            $docTestsArr = array_values(array_filter(array_map('trim', explode("\n", (string)($doctor['test_procedures'] ?? '')))));
+                            if (!empty($docTestsArr)):
+                        ?>
+                            <div class="doctor-procs">
+                                <?php foreach ($docTestsArr as $tt): ?>
+                                    <span class="proc-chip"><?php echo htmlspecialchars($tt); ?></span>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
                         <div class="doctor-footer">
                             <span>Appointments: <span style="color:#16a34a"><?php echo $doctor['appointment_count']; ?></span></span>
                         </div>
@@ -96,6 +107,7 @@ $conn->close();
                                 data-specialty="<?php echo htmlspecialchars($doctor['specialty'], ENT_QUOTES); ?>"
                                 data-schedule="<?php echo htmlspecialchars($doctor['schedule'], ENT_QUOTES); ?>"
                                 data-experience="<?php echo (int)$doctor['experience']; ?>"
+                                data-tests="<?php echo htmlspecialchars((string)($doctor['test_procedures'] ?? ''), ENT_QUOTES); ?>"
                                 onclick="openEditModal(this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button>
                             <button class="btn-sm btn-delete"
                                 data-id="<?php echo $doctor['id']; ?>"
@@ -220,6 +232,11 @@ $conn->close();
                         <input type="text" name="specialty" placeholder="e.g. Obstetrics & Gynecology" required>
                     </div>
                     <div class="form-group">
+                        <label>Tests / Procedures</label>
+                        <textarea name="test_procedures" rows="3" placeholder="Type the tests / procedures, one per line:&#10;Fertility Consultation&#10;Hormonal Panel&#10;Transvaginal Ultrasound"></textarea>
+                        <small style="color:#64748b;font-size:.78rem;display:block;margin-top:.35rem;">One per line. List as many as the doctor handles.</small>
+                    </div>
+                    <div class="form-group">
                         <label>Schedule</label>
                         <input type="text" name="schedule" placeholder="e.g. Mon-Fri: 9AM-5PM" required>
                     </div>
@@ -251,6 +268,11 @@ $conn->close();
                     <div class="form-group">
                         <label>Specialty</label>
                         <input type="text" name="specialty" id="editSpecialty" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tests / Procedures</label>
+                        <textarea name="test_procedures" id="editTestProcedures" rows="3" placeholder="One test / procedure per line"></textarea>
+                        <small style="color:#64748b;font-size:.78rem;display:block;margin-top:.35rem;">One per line. List as many as the doctor handles.</small>
                     </div>
                     <div class="form-group">
                         <label>Schedule</label>
@@ -347,6 +369,7 @@ $conn->close();
             document.getElementById('editSpecialty').value   = btn.dataset.specialty;
             document.getElementById('editSchedule').value    = btn.dataset.schedule;
             document.getElementById('editExperience').value  = btn.dataset.experience;
+            document.getElementById('editTestProcedures').value = btn.dataset.tests || '';
             openModal('editModal');
         }
 

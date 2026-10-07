@@ -12,6 +12,14 @@ $conn->query("CREATE TABLE IF NOT EXISTS doctor_accounts (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 )");
 
+$conn->query("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS test_procedures TEXT NOT NULL DEFAULT ''");
+
+function norm_tests($raw)
+{
+    $lines = array_map('trim', explode("\n", (string)$raw));
+    return implode("\n", array_values(array_filter($lines)));
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo "Invalid request"; exit; }
 
 $action = isset($_POST['action']) ? trim($_POST['action']) : '';
@@ -21,13 +29,14 @@ if ($action === 'add') {
     $specialty  = isset($_POST['specialty'])  ? trim($_POST['specialty'])  : '';
     $schedule   = isset($_POST['schedule'])   ? trim($_POST['schedule'])   : '';
     $experience = isset($_POST['experience']) ? (int)$_POST['experience']  : 0;
+    $tests      = norm_tests(isset($_POST['test_procedures']) ? $_POST['test_procedures'] : '');
 
     if (empty($name) || empty($specialty) || empty($schedule)) {
         echo "All fields are required"; exit;
     }
 
-    $stmt = $conn->prepare("INSERT INTO doctors (name, specialty, schedule, experience) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("sssi", $name, $specialty, $schedule, $experience);
+    $stmt = $conn->prepare("INSERT INTO doctors (name, specialty, schedule, experience, test_procedures) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssis", $name, $specialty, $schedule, $experience, $tests);
     echo $stmt->execute() ? "success" : "Failed: " . $stmt->error;
     $stmt->close();
 
@@ -37,13 +46,14 @@ if ($action === 'add') {
     $specialty  = isset($_POST['specialty'])  ? trim($_POST['specialty'])  : '';
     $schedule   = isset($_POST['schedule'])   ? trim($_POST['schedule'])   : '';
     $experience = isset($_POST['experience']) ? (int)$_POST['experience']  : 0;
+    $tests      = norm_tests(isset($_POST['test_procedures']) ? $_POST['test_procedures'] : '');
 
     if (!$id || empty($name) || empty($specialty) || empty($schedule)) {
         echo "All fields are required"; exit;
     }
 
-    $stmt = $conn->prepare("UPDATE doctors SET name=?, specialty=?, schedule=?, experience=? WHERE id=?");
-    $stmt->bind_param("sssii", $name, $specialty, $schedule, $experience, $id);
+    $stmt = $conn->prepare("UPDATE doctors SET name=?, specialty=?, schedule=?, experience=?, test_procedures=? WHERE id=?");
+    $stmt->bind_param("sssisi", $name, $specialty, $schedule, $experience, $tests, $id);
     echo $stmt->execute() ? "success" : "Failed: " . $stmt->error;
     $stmt->close();
 
