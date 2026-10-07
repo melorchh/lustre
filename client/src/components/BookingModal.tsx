@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Doctor, MedicalDate } from '../types';
 import { fetchAvailableDates, fetchAvailableTimes, bookAppointment, formatTime12h, formatLongDate, initials } from '../api';
-import { OTHER_SERVICE } from '../services';
+import { DEFAULT_SERVICES, OTHER_SERVICE } from '../services';
 import Select from './Select';
 import { useLang } from '../lang';
 
@@ -152,7 +152,15 @@ export default function BookingModal({ doctor, onClose }: BookingModalProps) {
       .split('\n')
       .map((p) => p.trim())
       .filter((p) => p && p !== OTHER_SERVICE);
-    return [...doctorProcs, OTHER_SERVICE];
+    const seen = new Set<string>();
+    const merged: string[] = [];
+    for (const s of [...DEFAULT_SERVICES, ...doctorProcs]) {
+      if (s && !seen.has(s)) {
+        seen.add(s);
+        merged.push(s);
+      }
+    }
+    return [...merged, OTHER_SERVICE];
   }, [doctor.test_procedures]);
 
   const serviceValue = service === OTHER_SERVICE ? serviceOther.trim() : service.trim();
