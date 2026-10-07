@@ -198,6 +198,16 @@ function pdftxt(&$s, $x, $yTop, $str, $font, $size, $c) {
         $font, $size, $x, pageH_i() - $yTop, $c[0], $c[1], $c[2], E((string)$str));
 }
 
+// Right-aligned text: PDF text is drawn leftward from the given x, so a
+// string placed at the right margin would run off the page edge. Estimate
+// the rendered width (over-estimate so the text never overflows the edge)
+// and start it far enough to the left instead.
+function pdftxt_r(&$s, $rightX, $yTop, $str, $font, $size, $c) {
+    $w   = strlen((string)$str) * $size * 0.70;
+    $x   = max($GLOBALS['M'], $rightX - $w);
+    pdftxt($s, $x, $yTop, $str, $font, $size, $c);
+}
+
 function pageH_i() { global $pageH; return $pageH; }
 
 function wrapLines($str, $size, $maxW) {
@@ -242,8 +252,8 @@ function newPage(&$pages, &$stream, $cols, $title, $dayLabel) {
     rectfill($stream, 0, 0, 595, $headerH, $green_dark);
     pdftxt($stream, $M, 32, 'LUSTRE MDC CLINICS & DIAGNOSTICS', 'B', 12, [0.9, 0.97, 0.93]);
     pdftxt($stream, $M, 20, 'ARCHIVE ' . strtoupper($title) . '  Â·  ' . $dayLabel, 'B', 8.5, [0.85, 0.94, 0.9]);
-    pdftxt($stream, 595 - $M, 32, 'DAILY RECORD', 'B', 12, [0.9, 0.97, 0.93]);
-    pdftxt($stream, 595 - $M, 20, 'GENERATED ' . strtoupper(date('M j, Y g:i A')), 'R', 7, [0.85, 0.94, 0.9]);
+    pdftxt_r($stream, 595 - $M, 32, 'DAILY RECORD', 'B', 12, [0.9, 0.97, 0.93]);
+    pdftxt_r($stream, 595 - $M, 20, 'GENERATED ' . strtoupper(date('M j, Y g:i A')), 'R', 7, [0.85, 0.94, 0.9]);
     $Y = $headerH + 24;
 
     pdftxt($stream, $M, $Y, strtoupper($title) . ' RECORDS FOR ' . $dayLabel, 'B', 11, $green_deep);

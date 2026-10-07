@@ -352,7 +352,27 @@ $conn->close();
                 </div>
                 <div class="form-group">
                     <label>Arrival Time</label>
-                    <input type="time" name="arrival_time" value="<?php echo date('H:i'); ?>">
+                    <select name="arrival_time" class="form-dropdown" data-searchable>
+                        <?php
+                        $at_val   = date('H:i');
+                        $at_label = date('g:i A');
+                        $at_min   = ((int)date('G')) * 60 + (int)date('i');
+                        $at_grid  = 5;
+                        $at_ongrid = ($at_min % $at_grid) === 0;
+                        $at_inserted = false;
+                        for ($m = 0; $m < 24 * 60; $m += $at_grid) {
+                            if (!$at_ongrid && !$at_inserted && $at_min < $m) {
+                                echo '<option value="' . $at_val . '" selected>' . $at_label . '</option>';
+                                $at_inserted = true;
+                            }
+                            $v = sprintf('%02d:%02d', intdiv($m, 60), $m % 60);
+                            echo '<option value="' . $v . '"' . ($v === $at_val ? ' selected' : '') . '>' . date('g:i A', strtotime($v)) . '</option>';
+                        }
+                        if (!$at_ongrid && !$at_inserted) {
+                            echo '<option value="' . $at_val . '" selected>' . $at_label . '</option>';
+                        }
+                        ?>
+                    </select>
                 </div>
             </div>
 <div class="form-grid">

@@ -93,6 +93,16 @@ function pdftxt(&$s, $x, $yTop, $str, $font, $size, $c) {
     $s .= "BT /$res $size Tf $x " . (595 - $yTop) . " Td $c[0] $c[1] $c[2] rg (" . esc($str) . ") Tj ET\n";
 }
 
+// Right-aligned text: PDF text is drawn leftward from the given x, so a
+// string placed at the right margin would run off the page edge. Estimate
+// the rendered width (over-estimate so the text never overflows the edge)
+// and start it far enough to the left instead.
+function pdftxt_r(&$s, $rightX, $yTop, $str, $font, $size, $c) {
+    $w = strlen((string)$str) * $size * 0.70;
+    $x = max($GLOBALS['M'], $rightX - $w);
+    pdftxt($s, $x, $yTop, $str, $font, $size, $c);
+}
+
 function pdftxt_multi(&$s, $x, $yTop, $str, $font, $size, $c, $maxWidth) {
     $words = explode(' ', $str);
     $line  = '';
@@ -135,8 +145,8 @@ $header_h = 64;
 rectfill($stream, 0, 0, $w_pt, $header_h, $blue_dark);
 pdftxt($stream, $M, 40, 'LUSTRE MDC CLINICS & DIAGNOSTICS', 'B', 13, $white);
 pdftxt($stream, $M, 26, 'VACCINATION CARD', 'R', 9, [0.85, 0.93, 0.98]);
-pdftxt($stream, $w_pt - $M, 40, 'VACC-' . str_pad($vacc_id, 6, '0', STR_PAD_LEFT), 'B', 13, $white);
-pdftxt($stream, $w_pt - $M, 26, 'RECORD NO.', 'R', 6.5, [0.85, 0.93, 0.98]);
+pdftxt_r($stream, $w_pt - $M, 40, 'VACC-' . str_pad($vacc_id, 6, '0', STR_PAD_LEFT), 'B', 13, $white);
+pdftxt_r($stream, $w_pt - $M, 26, 'RECORD NO.', 'R', 6.5, [0.85, 0.93, 0.98]);
 $Y = $header_h + 16;
 
 // â”€â”€ Patient row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

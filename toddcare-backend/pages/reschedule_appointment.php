@@ -151,9 +151,30 @@ if ($stmt->execute() && $stmt->affected_rows >= 0) {
     header('Content-Type: application/json');
     echo json_encode(['success' => true, 'appointment_id' => $appointment_id]);
 
-    // Email the patient a reschedule confirmation (non-fatal on failure)
-    require_once __DIR__ . '/appointment_mailer.php';
-    send_appointment_email($conn, $appointment_id, 'rescheduled');
+    // Push the response to the client before the slow SMTP send runs, so a
+    // sluggish mail server can never stall (or appear to stall) the request.
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    } else {
+        while (ob_get_level() > 0) {
+            @ob_end_flush();
+        }
+        @flush();
+    }
+
+    // Email the patient a reschedule confirmation (non-fatal on failure).
+    // Buffered so any warnings/output the mailer produces are discarded and
+    // can never be appended to the JSON response above.
+    ob_start();
+    try {
+        require_once __DIR__ . '/appointment_mailer.php';
+        send_appointment_email($conn, $appointment_id, 'rescheduled');
+    } catch (Throwable $e) {
+        error_log('Reschedule email failed (appt=' . $appointment_id . '): ' . $e->getMessage());
+    }
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
 } else {
     echo "error: Failed to reschedule appointment. Please try again.";
 }

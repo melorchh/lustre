@@ -184,7 +184,7 @@ $Y += 16;
 pdftxt($stream, $M, $Y, 'APPOINTMENT RESULT / FINDINGS', 'B', 10, $green_deep);
 $Y += 18;
 
-$lines = wrap_text($row['result'], 92);
+$lines = wrap_text($row['result'], 84);
 foreach ($lines as $line) {
     if ($Y > 760) {
         // new page placeholder â€” not implemented for simplicity; keep on same page is fine for short results
