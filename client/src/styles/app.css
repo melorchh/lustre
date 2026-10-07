@@ -965,6 +965,25 @@ input {
   margin-bottom: 0.55rem;
 }
 
+.doctor-procs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.6rem;
+}
+
+.proc-chip {
+  display: inline-flex;
+  align-items: center;
+  background: var(--green-pale);
+  border: 1px solid var(--green-pale2);
+  color: var(--green-dark);
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 50px;
+}
+
 .doctor-card-meta {
   display: flex;
   flex-wrap: wrap;

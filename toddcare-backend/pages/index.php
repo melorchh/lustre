@@ -19,7 +19,8 @@ $stmt->fetch();
 $stmt->close();
 
 $doctors = [];
-$res = $conn->query("SELECT id, name, specialty, schedule, experience FROM doctors ORDER BY name");
+$conn->query("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS test_procedures TEXT NOT NULL DEFAULT ''");
+$res = $conn->query("SELECT id, name, specialty, schedule, experience, test_procedures FROM doctors ORDER BY name");
 if ($res) {
     $doctors = $res->fetch_all(MYSQLI_ASSOC);
 }

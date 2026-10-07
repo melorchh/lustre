@@ -21,11 +21,12 @@ export default function BookApp() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return doctors ?? [];
-    return (doctors ?? []).filter(
-      (d) =>
-        d.name.toLowerCase().includes(q) ||
-        d.specialty.toLowerCase().includes(q),
-    );
+    return (doctors ?? []).filter((d) => {
+      if (d.name.toLowerCase().includes(q) || d.specialty.toLowerCase().includes(q)) return true;
+      return (d.test_procedures || '')
+        .split('\n')
+        .some((p) => p.trim().toLowerCase().includes(q));
+    });
   }, [doctors, search]);
 
   return (

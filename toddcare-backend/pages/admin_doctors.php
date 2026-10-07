@@ -233,8 +233,13 @@ $conn->close();
                     </div>
                     <div class="form-group">
                         <label>Tests / Procedures</label>
-                        <textarea name="test_procedures" rows="3" placeholder="Type the tests / procedures, one per line:&#10;Fertility Consultation&#10;Hormonal Panel&#10;Transvaginal Ultrasound"></textarea>
-                        <small style="color:#64748b;font-size:.78rem;display:block;margin-top:.35rem;">One per line. List as many as the doctor handles.</small>
+                        <div class="tp-input-box">
+                            <input type="text" id="addTestInput" placeholder="Type a test / procedure..." autocomplete="off">
+                            <button type="button" class="btn-sm" style="min-width:64px;" onclick="tpAddChip(tpAdd)">Add</button>
+                        </div>
+                        <div class="tp-chips" id="addTestChips"></div>
+                        <input type="hidden" name="test_procedures" id="addTestsHidden" value="">
+                        <small style="color:#64748b;font-size:.78rem;display:block;margin-top:.35rem;">Type one and press Enter or Add. Each shows on top and can be removed with &times;.</small>
                     </div>
                     <div class="form-group">
                         <label>Schedule</label>
@@ -271,8 +276,13 @@ $conn->close();
                     </div>
                     <div class="form-group">
                         <label>Tests / Procedures</label>
-                        <textarea name="test_procedures" id="editTestProcedures" rows="3" placeholder="One test / procedure per line"></textarea>
-                        <small style="color:#64748b;font-size:.78rem;display:block;margin-top:.35rem;">One per line. List as many as the doctor handles.</small>
+                        <div class="tp-input-box">
+                            <input type="text" id="editTestInput" placeholder="Type a test / procedure..." autocomplete="off">
+                            <button type="button" class="btn-sm" style="min-width:64px;" onclick="tpAddChip(tpEdit)">Add</button>
+                        </div>
+                        <div class="tp-chips" id="editTestChips"></div>
+                        <input type="hidden" name="test_procedures" id="editTestsHidden" value="">
+                        <small style="color:#64748b;font-size:.78rem;display:block;margin-top:.35rem;">Type one and press Enter or Add. Each shows on top and can be removed with &times;.</small>
                     </div>
                     <div class="form-group">
                         <label>Schedule</label>
@@ -338,9 +348,67 @@ $conn->close();
             });
         });
 
+        // -- Tests / Procedures chips input ------------
+        var tpAdd  = { list: [], input: null, chips: null, hidden: null };
+        var tpEdit = { list: [], input: null, chips: null, hidden: null };
+
+        function tpInit(tp, inputId, chipsId, hiddenId){
+            tp.input  = document.getElementById(inputId);
+            tp.chips  = document.getElementById(chipsId);
+            tp.hidden = document.getElementById(hiddenId);
+            tp.input.addEventListener('keydown', function(e){
+                if(e.key === 'Enter'){ e.preventDefault(); tpAddChip(tp); }
+            });
+        }
+
+        function tpRender(tp){
+            tp.chips.innerHTML = '';
+            tp.list.forEach(function(name, i){
+                var chip = document.createElement('span');
+                chip.className = 'proc-chip proc-chip--x';
+                var label = document.createElement('span');
+                label.textContent = name;
+                var x = document.createElement('button');
+                x.type = 'button';
+                x.className = 'proc-chip-x';
+                x.setAttribute('aria-label', 'Remove ' + name);
+                x.textContent = '\u00d7';
+                x.onclick = function(){ tp.list.splice(i, 1); tpRender(tp); };
+                chip.appendChild(label);
+                chip.appendChild(x);
+                tp.chips.appendChild(chip);
+            });
+            tp.hidden.value = tp.list.join('\n');
+        }
+
+        function tpAddChip(tp){
+            var val = tp.input.value.trim();
+            if(!val) return;
+            tp.list.unshift(val);
+            tp.input.value = '';
+            tpRender(tp);
+            tp.input.focus();
+        }
+
+        function tpSetFrom(tp, raw){
+            tp.list = String(raw || '').split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
+            tp.input.value = '';
+            tpRender(tp);
+        }
+
+        function tpClear(tp){
+            tp.list = [];
+            tp.input.value = '';
+            tpRender(tp);
+        }
+
+        tpInit(tpAdd, 'addTestInput', 'addTestChips', 'addTestsHidden');
+        tpInit(tpEdit, 'editTestInput', 'editTestChips', 'editTestsHidden');
+
         // -- Add ----------------------------------------------
         function openAddModal(){
             document.getElementById('addForm').reset();
+            tpClear(tpAdd);
             openModal('addModal');
         }
 
@@ -369,7 +437,7 @@ $conn->close();
             document.getElementById('editSpecialty').value   = btn.dataset.specialty;
             document.getElementById('editSchedule').value    = btn.dataset.schedule;
             document.getElementById('editExperience').value  = btn.dataset.experience;
-            document.getElementById('editTestProcedures').value = btn.dataset.tests || '';
+            tpSetFrom(tpEdit, btn.dataset.tests || '');
             openModal('editModal');
         }
 
