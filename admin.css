@@ -2942,153 +2942,23 @@ body::-webkit-scrollbar {
   }
 }
 
-/* ─── Tests / Procedures multi-select picker ─── */
-.tp-picker {
-  position: relative;
-  width: 100%;
-}
-.tp-select {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
-  width: 100%;
-  min-height: 46px;
-  padding: 0.5rem 0.85rem;
-  background: var(--white);
-  border: 2px solid var(--gray-100);
-  border-radius: 12px;
-  cursor: text;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-.tp-select:focus-within {
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
-}
-.tp-chips {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
-}
-.tp-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  background: var(--green-pale);
-  color: var(--green-dark);
-  border: 1.5px solid var(--green-pale2);
-  border-radius: 999px;
-  padding: 0.28rem 0.75rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  max-width: 100%;
-  line-height: 1.3;
-}
-.tp-chip--static {
-  border-radius: 999px;
-}
-.tp-chip-x {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.14);
-  color: inherit;
-  font-size: 0.85rem;
-  line-height: 1;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.tp-chip-x:hover {
-  background: rgba(0, 0, 0, 0.26);
-}
-.tp-input {
-  flex: 1;
-  min-width: 130px;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-family: inherit;
-  font-size: 0.9rem;
-  color: var(--gray-800);
-  padding: 0.2rem 0;
-}
-.tp-menu {
-  display: none;
-  position: fixed;
-  z-index: 3000;
-  background: var(--white);
-  border: 1.5px solid var(--gray-100);
-  border-radius: 14px;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.16);
-  max-height: 260px;
-  overflow-y: auto;
-  padding: 0.35rem;
-}
-.tp-opt {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.55rem 0.7rem;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: var(--gray-800);
-  font-weight: 600;
-  user-select: none;
-}
-.tp-opt:hover {
-  background: var(--green-pale);
-}
-.tp-opt--on {
-  color: var(--green-dark);
-}
-.tp-opt--on .tp-check {
-  background: var(--green-dark);
-  color: var(--white);
-  border-color: var(--green-dark);
-}
-.tp-check {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 19px;
-  height: 19px;
-  border-radius: 6px;
-  flex-shrink: 0;
-  border: 1.5px solid var(--gray-200);
-  font-size: 0.72rem;
-  color: transparent;
-}
-.tp-opt-add {
-  color: var(--green-dark);
-}
-.tp-opt-add .tp-plus {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 19px;
-  height: 19px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: var(--green);
-  color: #fff;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-.tp-empty {
-  padding: 0.7rem;
-  color: #64748b;
-  font-size: 0.86rem;
-}
+/* ─── Doctor tests / procedures chips ─── */
 .doctor-procs {
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem;
   margin: 0.5rem 0 0.25rem;
+}
+.proc-chip {
+  display: inline-flex;
+  align-items: center;
+  background: var(--green-pale);
+  color: var(--green-dark);
+  border: 1.5px solid var(--green-pale2);
+  border-radius: 999px;
+  padding: 0.28rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.3;
+  max-width: 100%;
 }
