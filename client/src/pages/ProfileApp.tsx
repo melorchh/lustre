@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { getInitialData, initials, formatStamp } from '../api';
 import Shell from '../shell';
 import Hero from '../components/Hero';
-import { SvgUser, SvgHeart, SvgCheck, SvgCheckCircle } from '../components/icons';
+import { SvgUser, SvgHeart, SvgCheck } from '../components/icons';
 import { useToast } from '../hooks';
 import { useLang } from '../lang';
 
@@ -47,14 +47,7 @@ export default function ProfileApp() {
 
   const [savingInfo, setSavingInfo] = useState(false);
   const [savingMetrics, setSavingMetrics] = useState(false);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const successTimer = useRef<number | undefined>(undefined);
-
-  const showSuccess = (msg: string) => {
-    window.clearTimeout(successTimer.current);
-    setSuccessMsg(msg);
-    successTimer.current = window.setTimeout(() => setSuccessMsg(null), 5000);
-  };
+  const [donePopup, setDonePopup] = useState<{ title: string; msg: string } | null>(null);
 
   const saveInfo = async () => {
     if (!info.name.trim() || !info.email.trim() || !info.contact.trim()) {
@@ -77,8 +70,7 @@ export default function ProfileApp() {
       const res = await fetch('patient_profile_action.php', { method: 'POST', body: fd });
       const text = await res.text();
       if (text.trim() === 'success') {
-        showSuccess(t('prof_updated_ok'));
-        showToast(t('prof_update_toast'), 'success');
+        setDonePopup({ title: t('prof_update_toast'), msg: t('prof_updated_ok') });
       } else {
         showToast(text.trim().replace(/^error:\s*/i, '') || t('prof_update_failed'), 'error');
       }
@@ -109,8 +101,7 @@ export default function ProfileApp() {
       const res = await fetch('patient_profile_action.php', { method: 'POST', body: fd });
       const text = await res.text();
       if (text.trim() === 'success') {
-        showSuccess(t('prof_measurements_ok'));
-        showToast(t('prof_measurements_toast'), 'success');
+        setDonePopup({ title: t('prof_measurements_toast'), msg: t('prof_measurements_ok') });
       } else {
         showToast(text.trim().replace(/^error:\s*/i, '') || t('prof_measurements_failed'), 'error');
       }
@@ -123,8 +114,6 @@ export default function ProfileApp() {
 
   const bmiVal = bmi(Number(metrics.weight) || null, Number(metrics.height) || null);
   const bmiInfo = bmiVal ? bmiLabel(bmiVal) : null;
-
-  useEffect(() => () => window.clearTimeout(successTimer.current), []);
 
   return (
     <Shell page="profile" title={t('prof_title')} patientName={data.patientName}>
@@ -145,23 +134,6 @@ export default function ProfileApp() {
             </span>
           </div>
         </div>
-
-        {successMsg && (
-          <div className="profile-success" role="status">
-            <span className="profile-success-icon">
-              <SvgCheckCircle size={20} />
-            </span>
-            <span className="profile-success-msg">{successMsg}</span>
-            <button
-              type="button"
-              className="profile-success-close"
-              onClick={() => setSuccessMsg(null)}
-              aria-label={t('prof_dismiss')}
-            >
-              &times;
-            </button>
-          </div>
-        )}
 
         <section className="profile-card">
           <div className="section-hdr">
@@ -300,6 +272,28 @@ export default function ProfileApp() {
           </button>
         </section>
       </main>
+
+      {donePopup && (
+        <div className="modal-alert" onClick={() => setDonePopup(null)}>
+          <div
+            className="modal-alert-card"
+            role="alertdialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="modal-alert-icon modal-alert-icon--ok" aria-hidden="true">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </span>
+            <h3 className="modal-alert-title">{donePopup.title}</h3>
+            <p className="modal-alert-msg">{donePopup.msg}</p>
+            <button className="btn-confirm" onClick={() => setDonePopup(null)}>
+              {t('bm_error_ok')}
+            </button>
+          </div>
+        </div>
+      )}
     </Shell>
   );
 }

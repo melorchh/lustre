@@ -109,7 +109,7 @@ if (isset($_SESSION["admin_id"])) {
             document.getElementById('errorMessage').classList.remove('show');
         }
 
-        function showToast(msg, type) {
+        function showToast(msg, type) {try{if(!window.__noFlash){clearTimeout(window.__flashT);localStorage.setItem('lustreAdminFlash',JSON.stringify({m:String(msg),t:type||''}));window.__flashT=setTimeout(function(){try{localStorage.removeItem('lustreAdminFlash')}catch(e){}},2500);}}catch(e){}
             var t = document.getElementById('toast');
             t.textContent = msg;
             t.className = 'toast show' + (type ? ' ' + type : '');
@@ -157,5 +157,6 @@ if (isset($_SESSION["admin_id"])) {
             });
         });
     </script>
+<script>try{var __af=JSON.parse(localStorage.getItem('lustreAdminFlash')||'null');if(__af&&__af.m){localStorage.removeItem('lustreAdminFlash');window.__noFlash=1;showToast(__af.m,__af.t);}}catch(e){}</script>
 </body>
 </html>
