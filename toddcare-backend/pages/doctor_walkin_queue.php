@@ -11,6 +11,8 @@ if (!isset($_SESSION["doctor_id"])) {
     exit;
 }
 require_once __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/walkin_schema.php';
+walkins_ensure_result_column($conn);
 
 $doctor_id = (int)$_SESSION['doctor_id'];
 $action    = $_POST['action'] ?? '';
@@ -22,8 +24,27 @@ if ($action === 'update_status') {
     if ($wid <= 0)      { echo 'Invalid walk-in.'; $conn->close(); exit; }
     if (!in_array($status, $allowed, true)) { echo 'Invalid status.'; $conn->close(); exit; }
 
-    $upd = $conn->prepare("UPDATE walk_ins SET status = ? WHERE id = ? AND doctor_id = ?");
-    $upd->bind_param("sii", $status, $wid, $doctor_id);
+    if (array_key_exists('result', $_POST)) {
+        $result = trim($_POST['result']);
+        $upd = $conn->prepare("UPDATE walk_ins SET status = ?, result = ? WHERE id = ? AND doctor_id = ?");
+        $upd->bind_param("ssii", $status, $result, $wid, $doctor_id);
+    } else {
+        $upd = $conn->prepare("UPDATE walk_ins SET status = ? WHERE id = ? AND doctor_id = ?");
+        $upd->bind_param("sii", $status, $wid, $doctor_id);
+    }
+    if ($upd->execute()) { echo 'success'; } else { echo 'Update failed.'; }
+    $upd->close();
+    $conn->close();
+    exit;
+}
+
+if ($action === 'save_result') {
+    $wid = isset($_POST['walkin_id']) ? intval($_POST['walkin_id']) : 0;
+    $result = trim($_POST['result'] ?? '');
+    if ($wid <= 0) { echo 'Invalid walk-in.'; $conn->close(); exit; }
+
+    $upd = $conn->prepare("UPDATE walk_ins SET result = ? WHERE id = ? AND doctor_id = ?");
+    $upd->bind_param("sii", $result, $wid, $doctor_id);
     if ($upd->execute()) { echo 'success'; } else { echo 'Update failed.'; }
     $upd->close();
     $conn->close();
@@ -33,7 +54,7 @@ if ($action === 'update_status') {
 // GET — today's queue for this doctor
 $today   = date('Y-m-d');
 $walkins = $conn->query("
-    SELECT w.id, w.arrival_time, w.status,
+    SELECT w.id, w.arrival_time, w.status, w.result,
            p.name AS patient_name, p.contact
     FROM walk_ins w
     JOIN patients p ON w.patient_id = p.id
@@ -57,6 +78,7 @@ if ($walkins) {
             'contact' => $w['contact'],
             'arrival' => date('g:i A', strtotime($w['arrival_time'])),
             'status'  => $w['status'],
+            'result'  => (string)($w['result'] ?? ''),
         ];
     }
 }

@@ -52,10 +52,14 @@ if ($tbq) {
 
 // Today's walk-ins (registered walk-in clients)
 $walkin_doc_options = '';
+$walkin_docs_json = [];
+$walkin_specs = [];
 $wl_doc = $conn->query("SELECT id, name, specialty FROM doctors ORDER BY name");
 if ($wl_doc) {
     while ($wd = $wl_doc->fetch_assoc()) {
         $walkin_doc_options .= '<option value="' . (int)$wd['id'] . '">Dr. ' . htmlspecialchars($wd['name']) . ' (' . htmlspecialchars($wd['specialty']) . ')</option>';
+        $walkin_docs_json[] = ['id' => (int)$wd['id'], 'name' => $wd['name'], 'specialty' => $wd['specialty']];
+        $walkin_specs[$wd['specialty']] = true;
     }
 }
 
@@ -344,6 +348,15 @@ $conn->close();
 <form id="walkinForm">
             <div class="form-grid">
                 <div class="form-group">
+                    <label>Specialty</label>
+                    <select name="specialty" class="form-dropdown" data-searchable>
+                        <option value="">All specialties</option>
+                        <?php foreach (array_keys($walkin_specs) as $sp): ?>
+                        <option value="<?php echo htmlspecialchars($sp); ?>"><?php echo htmlspecialchars($sp); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>Doctor *</label>
                     <select name="doctor_id" class="form-dropdown" required>
                         <option value="">Select Doctor</option>
@@ -513,11 +526,37 @@ $conn->close();
         function openModal(id){document.getElementById(id).classList.add('active');document.body.style.overflow='hidden';}
         function closeModal(id){document.getElementById(id).classList.remove('active');document.body.style.overflow='';}
         function openNewApptModal(){document.getElementById('newApptForm').reset();if(typeof __resetTime==='function')__resetTime();if(typeof __setDateValue==='function'){__setDateValue('');}openModal('newApptModal');}
-        function openWalkinModal(){document.getElementById('walkinForm').reset();openModal('walkinModal');}
+        function openWalkinModal(){document.getElementById('walkinForm').reset();if(typeof __rebuildWalkinDocs==='function')__rebuildWalkinDocs();openModal('walkinModal');}
 
         document.querySelectorAll('.modal-overlay').forEach(function(overlay){
             overlay.addEventListener('click',function(e){if(e.target===this)closeModal(this.id);});
         });
+
+        // ---- Walk-in specialty filter (narrows the doctor dropdown) ----
+        var __walkinDocs = <?php echo json_encode($walkin_docs_json); ?>;
+        function __walkinEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+        function __rebuildWalkinDocs(){
+            var f=document.getElementById('walkinForm'); if(!f) return;
+            var specSel=f.querySelector('select[name="specialty"]');
+            var docSel=f.querySelector('select[name="doctor_id"]');
+            if(!specSel||!docSel) return;
+            var sp=specSel.value;
+            var html='<option value="">Select Doctor</option>';
+            for(var i=0;i<__walkinDocs.length;i++){
+                var d=__walkinDocs[i];
+                if(sp && d.specialty!==sp) continue;
+                html+='<option value="'+d.id+'">Dr. '+__walkinEsc(d.name)+' ('+__walkinEsc(d.specialty)+')</option>';
+            }
+            docSel.innerHTML=html;
+            if(window.__fdResync) window.__fdResync(docSel);
+        }
+        (function(){
+            var f=document.getElementById('walkinForm'); if(!f||f.dataset.specBound) return;
+            f.dataset.specBound='1';
+            var specSel=f.querySelector('select[name="specialty"]');
+            if(specSel) specSel.addEventListener('change', __rebuildWalkinDocs);
+            f.addEventListener('reset', function(){ setTimeout(__rebuildWalkinDocs, 0); });
+        })();
 
         // Walk-in submit
         function bindWalkin(){var f=document.getElementById('walkinForm');if(!f||f.dataset.bound)return;f.dataset.bound='1';
@@ -638,25 +677,35 @@ $conn->close();
             __timeSel.innerHTML='<option value="">Select time...</option>';
             if(window.__fdResync){window.__fdResync(__timeSel);}
         }
+        var __timeReq = 0;
         function __populateTimes(did,dateStr){
+            var req = ++__timeReq;
             if(!__timeSel)return;
             if(!did||!dateStr){__resetTime();return;}
-            var sched=__docSched[did];
-            if(!sched){__resetTime();return;}
-            var d=new Date(dateStr+'T00:00:00');
-            var slot=sched[__days[d.getDay()]];
-            if(!slot){__resetTime();return;}
-            var start=__toMin(slot[0]), end=__toMin(slot[1]);
-            var lastStart=end-DUR;
-            var html='<option value="">Select time...</option>';
-            for(var t=start; t<=lastStart; t+=TIME_STEP){
-                if(__isSlotBlocked(did,dateStr,t,t+DUR))continue;
-                var v=__toHMS(t);
-                html+='<option value="'+v+'">'+__fmt12(v)+' - '+__fmt12(__toHMS(t+DUR))+'</option>';
-            }
-            if(html==='<option value="">Select time...</option>')html='<option value="">No slots available</option>';
-            __timeSel.innerHTML=html;
+            if(!__docSched[did]){__resetTime();return;}
+            __timeSel.innerHTML='<option value="">Loading times...</option>';
             if(window.__fdResync){window.__fdResync(__timeSel);}
+            fetch('get_available_times.php?doctor_id='+encodeURIComponent(did)+'&date='+encodeURIComponent(dateStr))
+            .then(function(r){return r.json();})
+            .then(function(list){
+                if(req!==__timeReq||!__timeSel)return;
+                var html='<option value="">Select time...</option>';
+                if(Array.isArray(list)&&list.length){
+                    for(var i=0;i<list.length;i++){
+                        var v=list[i];
+                        html+='<option value="'+v+'">'+__fmt12(v)+' - '+__fmt12(__toHMS(__toMin(v)+DUR))+'</option>';
+                    }
+                } else {
+                    html+='<option value="">No slots available</option>';
+                }
+                __timeSel.innerHTML=html;
+                if(window.__fdResync){window.__fdResync(__timeSel);}
+            })
+            .catch(function(){
+                if(req!==__timeReq||!__timeSel)return;
+                __timeSel.innerHTML='<option value="">Select time...</option><option value="">Failed to load times</option>';
+                if(window.__fdResync){window.__fdResync(__timeSel);}
+            });
         }
         function __refreshApptTime(){
             var did=__docInput?__docInput.value:'';

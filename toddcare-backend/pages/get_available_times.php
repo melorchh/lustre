@@ -108,14 +108,19 @@ foreach ($schedules as $schedule) {
                 continue;
             }
         }
-        
+
+        // The full 2-hour visit must fit before the shift ends
+        if ($t + (2 * 60 * 60) > $end) {
+            continue;
+        }
+
         // Check if this slot is not booked (considering 2-hour duration)
         $is_booked = false;
         
         // Convert slot time to seconds since midnight
         $slot_parts = explode(':', $time);
         $slot_start_seconds = ($slot_parts[0] * 3600) + ($slot_parts[1] * 60);
-        $slot_end_seconds = $slot_start_seconds + (30 * 60); // 30-minute slot
+        $slot_end_seconds = $slot_start_seconds + (2 * 60 * 60); // full 2-hour visit window
         
         // Check against all booked 2-hour blocks
         foreach ($booked_blocks as $block) {
