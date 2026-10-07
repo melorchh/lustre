@@ -362,7 +362,6 @@ interface RescheduleModalProps {
 
 function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) {
   const { t } = useLang();
-  const { showToast } = useToast();
   const [dates, setDates] = useState<MedicalDate[]>([]);
   const [datesLoading, setDatesLoading] = useState(true);
   const [datesError, setDatesError] = useState(false);
@@ -372,6 +371,7 @@ function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) 
   const [timesError, setTimesError] = useState(false);
   const [selectedTime, setSelectedTime] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [alertMsg, setAlertMsg] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -425,7 +425,7 @@ function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) 
       const raw = e instanceof Error ? e.message : '';
       const usable =
         raw.length > 0 && raw.length <= 140 && !raw.includes('<') && raw.trim().charAt(0) !== '{';
-      showToast(usable ? raw : t('rec_resched_failed'), 'error');
+      setAlertMsg(usable ? raw : t('rec_resched_failed'));
       setSubmitting(false);
     }
   };
@@ -514,6 +514,29 @@ function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) 
             </>
           )}
         </button>
+
+        {alertMsg && (
+          <div className="modal-alert" onClick={() => setAlertMsg(null)}>
+            <div
+              className="modal-alert-card"
+              role="alertdialog"
+              aria-modal="true"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className="modal-alert-icon" aria-hidden="true">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 9v4M12 17h.01" />
+                  <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+                </svg>
+              </span>
+              <h3 className="modal-alert-title">{t('rec_resched_error_title')}</h3>
+              <p className="modal-alert-msg">{alertMsg}</p>
+              <button className="btn-confirm" onClick={() => setAlertMsg(null)}>
+                {t('bm_error_ok')}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -532,13 +555,13 @@ export default function RecordsApp() {
   const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [reschedTarget, setReschedTarget] = useState<Appointment | null>(null);
+  const [doneMsg, setDoneMsg] = useState<string | null>(null);
 
-  useScrollLock(!!cancelTarget || !!reschedTarget);
+  useScrollLock(!!cancelTarget || !!reschedTarget || !!doneMsg);
 
   const confirmRescheduled = () => {
     setReschedTarget(null);
-    showToast(t('rec_rescheduled_ok'), 'success');
-    window.setTimeout(() => window.location.reload(), 2200);
+    setDoneMsg(t('rec_rescheduled_ok'));
   };
 
   const confirmCancel = async () => {
@@ -553,8 +576,7 @@ export default function RecordsApp() {
       const text = await res.text();
       if (text.trim() === 'success') {
         setCancelTarget(null);
-        showToast(t('rec_cancelled_ok'), 'success');
-        window.setTimeout(() => window.location.reload(), 2200);
+        setDoneMsg(t('rec_cancelled_ok'));
       } else {
         showToast(text, 'error');
         setCancelTarget(null);
@@ -683,6 +705,28 @@ export default function RecordsApp() {
         <div className="loading-screen active">
           <div className="spinner" />
           <p>{t('rec_processing')}</p>
+        </div>
+      )}
+
+      {doneMsg && (
+        <div className="modal-alert" onClick={() => window.location.reload()}>
+          <div
+            className="modal-alert-card"
+            role="alertdialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="modal-alert-icon modal-alert-icon--ok" aria-hidden="true">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </span>
+            <h3 className="modal-alert-title">{doneMsg}</h3>
+            <p className="modal-alert-msg">{t('rec_done_msg')}</p>
+            <button className="btn-confirm" onClick={() => window.location.reload()}>
+              {t('bm_error_ok')}
+            </button>
+          </div>
         </div>
       )}
     </Shell>

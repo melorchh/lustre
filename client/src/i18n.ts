@@ -232,6 +232,8 @@ export const dict: Record<string, Record<Lang, string>> = {
   rec_cancelled_ok: { en: 'Appointment cancelled.', fil: 'Kinansela ang appointment.' },
   rec_resched_failed: { en: 'Rescheduling failed. Please try again.', fil: 'Hindi nai-reschedule. Pakisubukan muli.' },
   rec_network_err: { en: 'Network error. Please try again.', fil: 'Network error. Pakisubukan muli.' },
+  rec_resched_error_title: { en: "Reschedule Didn't Go Through", fil: 'Hindi Natuloy ang Reschedule' },
+  rec_done_msg: { en: 'Your appointment has been updated.', fil: 'Na-update ang iyong appointment.' },
 
   // Profile page
   prof_title: { en: 'My Profile', fil: 'Aking Profile' },
