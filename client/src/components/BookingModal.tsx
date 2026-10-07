@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Doctor, MedicalDate } from '../types';
 import { fetchAvailableDates, fetchAvailableTimes, bookAppointment, formatTime12h, formatLongDate, initials } from '../api';
-import { servicesFor, OTHER_SERVICE } from '../services';
+import { OTHER_SERVICE } from '../services';
 import Select from './Select';
 import { useLang } from '../lang';
 
@@ -147,22 +147,13 @@ export default function BookingModal({ doctor, onClose }: BookingModalProps) {
   } | null>(null);
   const { t } = useLang();
 
-  const services = useMemo(() => servicesFor(doctor.specialty), [doctor.specialty]);
   const serviceOptions = useMemo(() => {
-    const seen = new Set<string>();
-    const merged: string[] = [];
     const doctorProcs = (doctor.test_procedures || '')
       .split('\n')
       .map((p) => p.trim())
-      .filter(Boolean);
-    for (const s of [...services, ...doctorProcs]) {
-      if (s && !seen.has(s)) {
-        seen.add(s);
-        merged.push(s);
-      }
-    }
-    return [...merged, OTHER_SERVICE];
-  }, [services, doctor.test_procedures]);
+      .filter((p) => p && p !== OTHER_SERVICE);
+    return [...doctorProcs, OTHER_SERVICE];
+  }, [doctor.test_procedures]);
 
   const serviceValue = service === OTHER_SERVICE ? serviceOther.trim() : service.trim();
 
@@ -359,7 +350,9 @@ placeholder={t('bm_other_ph')}
                   onChange={(e) => setServiceOther(e.target.value)}
                 />
               )}
-              <span className="picker-hint">{t('bm_hint', { s: doctor.specialty })}</span>
+              {serviceOptions.length > 1 && (
+                <span className="picker-hint">{t('bm_hint')}</span>
+              )}
             </div>
 
             <div className="step-pill step-pill--muted">
