@@ -133,6 +133,7 @@ if (isset($_SESSION["doctor_id"])) {
             .then(result => {
                 hideLoading();
                 if (result.trim() === 'success') {
+                    try{localStorage.setItem('lustreAdminFlash',JSON.stringify({m:'Welcome back!',t:'success'}));}catch(e){}
                     document.body.classList.add('__leaving');
                     setTimeout(() => { window.location.href = 'doctor_dashboard.php'; }, 400);
                 } else {
