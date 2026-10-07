@@ -385,3 +385,240 @@ html {
   border-color: #2c3a52;
   color: #d8e2ee;
 }
+
+/* =========================================================
+   MOBILE RESPONSIVE
+   The elder-friendly overrides above deliberately win over
+   admin.css — which also defeated admin.css's own mobile
+   rules (paddings, type scale), cramming the layout on
+   phones. These blocks scale the doctor UI back down at
+   each breakpoint so cards, tables, topbar and forms stop
+   collapsing into each other.
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .doctor-page .admin-content {
+    padding: 1.1rem 1rem 2rem;
+  }
+  .doctor-page .topbar {
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+  .doctor-page .topbar-title {
+    font-size: 1.35rem;
+  }
+  .doctor-page .content-card {
+    padding: 1.2rem 1rem;
+  }
+  .doctor-page .content-card h2 {
+    font-size: 1.22rem;
+    margin-bottom: 0.9rem;
+  }
+  .doctor-page .stats-grid {
+    gap: 0.85rem;
+    margin-bottom: 1.2rem;
+  }
+  .doctor-page .stat-card {
+    padding: 1.1rem 1rem;
+  }
+  .doctor-page .stat-number {
+    font-size: 2rem;
+  }
+  .doctor-page .stat-label {
+    font-size: 0.95rem;
+  }
+  .doctor-page .btn-primary,
+  .doctor-page .btn-secondary,
+  .doctor-page .btn-add,
+  .doctor-page .btn-danger {
+    min-height: 52px;
+    padding: 0.8rem 1.3rem;
+    font-size: 1rem;
+  }
+  .doctor-page .btn-sm {
+    min-height: 46px;
+    padding: 0.55rem 0.95rem;
+    font-size: 0.95rem;
+  }
+  .doctor-page .btn-full {
+    min-height: 56px;
+    font-size: 1.05rem;
+  }
+  .doctor-page .nav-item {
+    min-height: 56px;
+    padding: 0.8rem 1.1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Topbar: title + theme toggle + avatar only — the greeting
+     label overlaps the title on narrow screens */
+  .doctor-page .topbar-hello {
+    display: none;
+  }
+  .doctor-page .topbar-title {
+    font-size: 1.22rem;
+  }
+  .doctor-page .theme-toggle {
+    width: 44px;
+    height: 44px;
+  }
+  .doctor-page .theme-toggle svg {
+    width: 20px;
+    height: 20px;
+  }
+  .doctor-page .avatar--topbar {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+
+  .doctor-page .content-card {
+    padding: 1.1rem 0.9rem;
+  }
+  .doctor-page .content-card h2 {
+    font-size: 1.14rem;
+  }
+
+  /* Stats: 2-up on phones, type scaled so labels/numbers fit */
+  .doctor-page .stats-grid {
+    gap: 0.75rem;
+  }
+  .doctor-page .stat-card {
+    padding: 1rem 0.9rem;
+    border-radius: 14px;
+  }
+  .doctor-page .stat-number {
+    font-size: 1.8rem;
+  }
+  .doctor-page .stat-label {
+    font-size: 0.9rem;
+    margin-top: 0.1rem;
+  }
+
+  /* Tables: compact cells so rows read as rows, not blobs.
+     Horizontal scroll still handles column overflow. */
+  .doctor-page table {
+    font-size: 0.97rem;
+  }
+  .doctor-page th {
+    font-size: 0.72rem;
+    padding: 0.7rem 0.7rem;
+  }
+  .doctor-page td {
+    padding: 0.75rem 0.7rem;
+    font-size: 0.97rem;
+    line-height: 1.4;
+  }
+  .doctor-page table small {
+    font-size: 0.85rem;
+  }
+  .doctor-page .badge {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+  }
+  .doctor-page .action-select {
+    font-size: 0.93rem;
+    min-height: 44px;
+    padding: 0.45rem 2.2rem 0.45rem 0.7rem;
+    max-width: 100%;
+  }
+  .doctor-page .empty-state-row {
+    padding: 1.7rem 0.75rem;
+    font-size: 0.98rem;
+  }
+
+  /* Forms / search: one column, comfortable touch targets */
+  .doctor-page .search-filter-bar input,
+  .doctor-page .search-filter-bar select {
+    font-size: 1rem;
+    min-height: 50px;
+    padding: 0.75rem 1rem;
+  }
+  .doctor-page .form-group input,
+  .doctor-page .form-group select,
+  .doctor-page .form-group textarea {
+    font-size: 1rem;
+    min-height: 50px;
+    padding: 0.8rem 0.95rem;
+  }
+  .doctor-page .form-group textarea {
+    min-height: 130px;
+  }
+  .doctor-page .cust-dropdown .cd-btn {
+    font-size: 1rem;
+    min-height: 50px;
+    padding: 0.8rem 1rem;
+  }
+
+  /* Modals: keep the sheet inside the viewport */
+  .doctor-page .result-modal {
+    padding: 0.9rem;
+  }
+  .doctor-page .modal-box,
+  .doctor-page .result-modal-box {
+    padding: 1.5rem 1.15rem;
+    width: min(560px, 96vw);
+  }
+  .doctor-page .modal-box h2,
+  .doctor-page .result-modal-box h3 {
+    font-size: 1.3rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .doctor-page .toast {
+    font-size: 1rem;
+    padding: 0.95rem 1.3rem;
+    bottom: 5.5rem;
+    max-width: calc(100vw - 2rem);
+  }
+
+  .doctor-page .day-card {
+    padding: 1.05rem 1rem;
+  }
+  .doctor-page .day-card-head h3 {
+    font-size: 1.1rem;
+  }
+  .doctor-page .login-card {
+    padding: 2rem 1.4rem;
+  }
+  .doctor-page .login-header h1 {
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .doctor-page .topbar-title {
+    font-size: 1.12rem;
+  }
+  .doctor-page .stat-card {
+    padding: 0.9rem 0.85rem;
+  }
+  .doctor-page .stat-number {
+    font-size: 1.55rem;
+  }
+  .doctor-page .stat-label {
+    font-size: 0.85rem;
+  }
+  .doctor-page .content-card {
+    padding: 1rem 0.8rem;
+  }
+  .doctor-page .content-card h2 {
+    font-size: 1.08rem;
+  }
+  .doctor-page table {
+    font-size: 0.92rem;
+  }
+  .doctor-page td {
+    padding: 0.7rem 0.6rem;
+  }
+  .doctor-page .btn-sm {
+    min-height: 44px;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.9rem;
+  }
+  .doctor-page .modal-box,
+  .doctor-page .result-modal-box {
+    padding: 1.3rem 1rem;
+  }
+}
