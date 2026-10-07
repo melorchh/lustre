@@ -1943,7 +1943,7 @@ input {
   text-align: center;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   background: var(--gray-800);
-  color: var(--white);
+  color: #fff;
 }
 .toast.show {
   transform: translateX(-50%) translateY(0);
@@ -4418,6 +4418,12 @@ html[data-theme="dark"] .topbar-search {
 
 html[data-theme="dark"] .toast {
   background: rgba(22, 30, 43, 0.96);
+}
+html[data-theme="dark"] .toast.success {
+  background: #0d9488;
+}
+html[data-theme="dark"] .toast.error {
+  background: #dc2626;
 }
 
 html[data-theme="dark"] .bottom-nav {
