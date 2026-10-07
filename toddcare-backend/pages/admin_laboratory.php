@@ -28,29 +28,18 @@ $patients_list = $conn->query("SELECT id, name, email FROM patients ORDER BY nam
 $doctors_list  = $conn->query("SELECT id, name, specialty FROM doctors ORDER BY name");
 
 // Lab test type presets
-$test_types = [
-    'Complete Blood Count (CBC)',
-    'Blood Typing & Cross-matching',
-    'Urinalysis',
-    'Pregnancy Test (Serum hCG)',
-    'Pap Smear',
-    'Transvaginal Ultrasound',
-    'Prenatal Panel',
-    'Glucose Tolerance Test (GTT)',
-    'Thyroid Function Test',
-    'Sexually Transmitted Infection (STI) Panel',
-    'Hormonal Panel (FSH, LH, Estrogen)',
-    'Cervical Culture & Sensitivity',
-    'Coagulation Profile (PT/PTT)',
-    'Hepatitis B Surface Antigen',
-    'HIV Screening',
-    'Rubella Antibody Test',
-    'VDRL / Syphilis Test',
-    'Fetal Anomaly Scan',
-    'Non-Stress Test (NST)',
-    'Amniotic Fluid Index (AFI)',
-    'Other',
-];
+require_once __DIR__ . '/lab_types_schema.php';
+lab_test_types_ensure($conn);
+
+$lt_rows = $conn->query("SELECT id, name FROM lab_test_types ORDER BY name");
+$type_options = '';
+$lt_json = [];
+if ($lt_rows) {
+    while ($tr = $lt_rows->fetch_assoc()) {
+        $type_options .= '<option value="' . htmlspecialchars($tr['name'], ENT_QUOTES) . '">' . htmlspecialchars($tr['name']) . '</option>';
+        $lt_json[] = ['id' => (int)$tr['id'], 'name' => $tr['name']];
+    }
+}
 
 $conn->close();
 ?>
@@ -136,7 +125,10 @@ $conn->close();
 
         <!-- Add Lab Test Form -->
         <div class="content-card">
-            <h2>Request New Lab Test</h2>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:1rem;">
+                <h2 style="margin:0;">Request New Lab Test</h2>
+                <button type="button" class="btn-secondary btn-sm" onclick="openLabTypesModal()">Manage Test Types</button>
+            </div>
             <form id="addLabForm">
                 <div class="form-grid">
                     <div class="form-group">
@@ -165,9 +157,8 @@ $conn->close();
                         <label>Test Type</label>
                         <select name="test_type" class="form-dropdown" required onchange="toggleOther(this)">
                             <option value="">Select Test Type</option>
-                            <?php foreach ($test_types as $t): ?>
-                            <option value="<?php echo htmlspecialchars($t); ?>"><?php echo htmlspecialchars($t); ?></option>
-                            <?php endforeach; ?>
+                            <?php echo $type_options; ?>
+                            <option value="Other">Other</option>
                         </select>
                     </div>
                     <div class="form-group" id="otherTypeGroup" style="display:none">
@@ -344,6 +335,20 @@ $conn->close();
     </div>
 </div>
 
+<!-- -- Manage Test Types Modal -- -->
+<div class="result-modal" id="labTypesModal">
+    <div class="result-modal-box" style="max-width:520px;max-height:80vh;overflow-y:auto;">
+        <button class="result-close" onclick="closeLabTypesModal()">&#10005;</button>
+        <h3>Manage Test Types</h3>
+        <p style="color:#64748b;font-size:.88rem;margin-bottom:1rem;">Choose which procedures/tests appear in the &quot;Test Type&quot; dropdown. New types show up here and in the request form right away.</p>
+        <div style="display:flex;gap:.5rem;margin-bottom:1rem;">
+            <input type="text" id="newTypeName" placeholder="New test / procedure name..." style="flex:1;min-width:0;padding:.6rem .8rem;border:2px solid var(--gray-100);border-radius:12px;font-size:.95rem;font-family:inherit;color:var(--gray-800);background:var(--white);">
+            <button type="button" class="btn-primary" onclick="addLabType()">Add</button>
+        </div>
+        <div id="labTypesList"></div>
+    </div>
+</div>
+
 <script>
     /* -- Sidebar -- */
     function openSidebar(){document.getElementById('adminSidebar').classList.add('open');document.getElementById('sidebarOverlay').classList.add('active');document.body.style.overflow='hidden';}
@@ -367,6 +372,8 @@ $conn->close();
     function showToast(msg,type=''){try{if(!window.__noFlash){clearTimeout(window.__flashT);localStorage.setItem('lustreAdminFlash',JSON.stringify({m:String(msg),t:type||''}));window.__flashT=setTimeout(function(){try{localStorage.removeItem('lustreAdminFlash')}catch(e){}},2500);}}catch(e){}const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(type?' '+type:'');setTimeout(()=>t.className='toast',3500);}
     function showLoading(){document.getElementById('loadingScreen').classList.add('active');}
     function hideLoading(){document.getElementById('loadingScreen').classList.remove('active');}
+
+    var __ltTypes = <?php echo json_encode($lt_json); ?>;
 
     /* -- Confirm modal (replaces native confirm) -- */
     let __confirmCb = null;
@@ -399,6 +406,132 @@ $conn->close();
     function toggleOther(sel){
         document.getElementById('otherTypeGroup').style.display = sel.value === 'Other' ? '' : 'none';
     }
+
+    /* -- Manage Test Types -- */
+    function openLabTypesModal(){
+        document.getElementById('labTypesModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+        renderLabTypes();
+    }
+    function closeLabTypesModal(){
+        document.getElementById('labTypesModal').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    function renderLabTypes(){
+        var wrap = document.getElementById('labTypesList');
+        wrap.innerHTML = '';
+        if(!__ltTypes.length){
+            wrap.innerHTML = '<p style="color:#64748b;font-size:.9rem;">No test types yet. Add one above.</p>';
+            return;
+        }
+        __ltTypes.forEach(function(t){
+            var row = document.createElement('div');
+            row.setAttribute('style','display:flex;align-items:center;gap:.8rem;padding:.55rem .8rem;border:1px solid var(--gray-100);border-radius:12px;margin-bottom:.5rem;background:var(--white);');
+            var name = document.createElement('span');
+            name.textContent = t.name;
+            name.setAttribute('style','flex:1;min-width:0;font-weight:600;color:var(--gray-800);overflow-wrap:anywhere;');
+            var acts = document.createElement('div');
+            acts.setAttribute('style','display:flex;gap:.4rem;flex-shrink:0;');
+            var eb = document.createElement('button');
+            eb.type = 'button'; eb.className = 'btn-sm btn-edit'; eb.textContent = 'Edit';
+            eb.onclick = (function(nid, nameEl){ return function(){ editLabType(nid, nameEl, row); }; })(t.id, name);
+            var db = document.createElement('button');
+            db.type = 'button'; db.className = 'btn-sm btn-delete'; db.textContent = 'Delete';
+            db.onclick = (function(tt){ return function(){ deleteLabType(tt); }; })(t);
+            acts.appendChild(eb); acts.appendChild(db);
+            row.appendChild(name); row.appendChild(acts);
+            wrap.appendChild(row);
+        });
+    }
+    function editLabType(id, nameEl, row){
+        var acts = row.lastChild;
+        acts.innerHTML = '';
+        var input = document.createElement('input');
+        input.type = 'text'; input.id = 'ltEditInput_' + id;
+        input.value = nameEl.textContent;
+        input.setAttribute('style','flex:1;min-width:0;padding:.45rem .7rem;border:2px solid var(--gray-100);border-radius:10px;font-size:.9rem;font-family:inherit;color:var(--gray-800);background:var(--white);');
+        row.replaceChild(input, nameEl);
+        var sbtn = document.createElement('button');
+        sbtn.type = 'button'; sbtn.className = 'btn-sm btn-primary'; sbtn.textContent = 'Save';
+        sbtn.onclick = function(){ saveLabTypeRename(id); };
+        var cbtn = document.createElement('button');
+        cbtn.type = 'button'; cbtn.className = 'btn-sm btn-secondary'; cbtn.textContent = 'Cancel';
+        cbtn.onclick = renderLabTypes;
+        acts.appendChild(sbtn); acts.appendChild(cbtn);
+        input.focus();
+    }
+    function saveLabTypeRename(id){
+        var input = document.getElementById('ltEditInput_' + id);
+        var name = input ? input.value.trim() : '';
+        if(!name){ showToast('Enter a name','error'); if(input) input.focus(); return; }
+        showLoading();
+        var fd = new FormData();
+        fd.append('id', id);
+        fd.append('name', name);
+        fetch('lab_types_action.php?action=rename', { method:'POST', body:fd })
+        .then(function(r){ return r.text(); })
+        .then(function(res){
+            hideLoading();
+            if(res.trim()==='success'){ loadLabTypes(); showToast('Test type updated!','success'); }
+            else showToast(res.trim().replace(/^error:\s*/i,''), 'error');
+        }).catch(function(){ hideLoading(); showToast('Network error','error'); });
+    }
+    function addLabType(){
+        var input = document.getElementById('newTypeName');
+        var name = input.value.trim();
+        if(!name){ showToast('Enter a test type name','error'); input.focus(); return; }
+        showLoading();
+        var fd = new FormData();
+        fd.append('name', name);
+        fetch('lab_types_action.php?action=add', { method:'POST', body:fd })
+        .then(function(r){ return r.text(); })
+        .then(function(res){
+            hideLoading();
+            if(res.trim()==='success'){ input.value=''; loadLabTypes(); showToast('Test type added!','success'); }
+            else showToast(res.trim().replace(/^error:\s*/i,''), 'error');
+        }).catch(function(){ hideLoading(); showToast('Network error','error'); });
+    }
+    function deleteLabType(t){
+        confirmAction('Delete "' + t.name + '" from the test list? Existing lab records keep their original name.', function(){
+            var fd = new FormData();
+            fd.append('id', t.id);
+            fetch('lab_types_action.php?action=delete', { method:'POST', body:fd })
+            .then(function(r){ return r.text(); })
+            .then(function(res){
+                if(res.trim()==='success'){ loadLabTypes(); showToast('Test type deleted!','success'); }
+                else showToast(res.trim().replace(/^error:\s*/i,''), 'error');
+            }).catch(function(){ showToast('Network error','error'); });
+        });
+    }
+    function loadLabTypes(){
+        fetch('lab_types_action.php?action=list')
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            __ltTypes = Array.isArray(data) ? data : [];
+            renderLabTypes();
+            rebuildTestTypesDropdown();
+        }).catch(function(){});
+    }
+    function rebuildTestTypesDropdown(){
+        var sel = document.querySelector('select[name="test_type"]');
+        if(!sel) return;
+        sel.innerHTML = '<option value="">Select Test Type</option>';
+        __ltTypes.forEach(function(t){
+            var o = document.createElement('option');
+            o.value = t.name; o.textContent = t.name;
+            sel.appendChild(o);
+        });
+        var other = document.createElement('option');
+        other.value = 'Other'; other.textContent = 'Other';
+        sel.appendChild(other);
+        if(window.__fdResync) window.__fdResync(sel);
+    }
+    document.getElementById('labTypesModal').addEventListener('click', function(e){
+        if(e.target === this) closeLabTypesModal();
+    });
+    document.getElementById('newTypeName').addEventListener('keydown', function(e){
+        if(e.key === 'Enter'){ e.preventDefault(); addLabType(); }
+    });
 
     /* -- Add Lab Test -- */
     document.getElementById('addLabForm').addEventListener('submit', function(e){
