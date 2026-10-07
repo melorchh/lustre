@@ -102,7 +102,6 @@ export const dict: Record<string, Record<Lang, string>> = {
   bm_redirecting: { en: 'Redirecting to your appointments…', fil: 'Nililipat sa iyong mga appointment…' },
   bm_step1: { en: 'Step 1 of 3 · Choose your service', fil: 'Hakbang 1 sa 3 · Pumili ng serbisyo' },
   bm_need: { en: 'What do you need?', fil: 'Ano ang kailangan mo?' },
-  bm_procs: { en: 'Available procedures:', fil: 'Mga available na procedure:' },
   bm_select_service: { en: 'Select a test / procedure…', fil: 'Pumili ng test / procedure…' },
   bm_other_ph: { en: 'Type the specific test / procedure you need', fil: 'I-type ang specific test / procedure na kailangan mo' },
   bm_hint: { en: 'Options are based on {s}.', fil: 'Ang mga opsyon ay batay sa {s}.' },
