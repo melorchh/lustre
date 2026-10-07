@@ -104,7 +104,7 @@ export const dict: Record<string, Record<Lang, string>> = {
   bm_need: { en: 'What do you need?', fil: 'Ano ang kailangan mo?' },
   bm_select_service: { en: 'Select a test / procedure…', fil: 'Pumili ng test / procedure…' },
   bm_other_ph: { en: 'Type the specific test / procedure you need', fil: 'I-type ang specific test / procedure na kailangan mo' },
-  bm_hint: { en: 'Procedures offered by this doctor are listed above.', fil: 'Nakalista sa itaas ang mga procedure na inaalok ng doktor na ito.' },
+  bm_hint: { en: 'Need a specific one? Pick "Other" and type it below.', fil: 'May partikular kang kailangan? Pumili ng "Other" at i-type sa ibaba.' },
   bm_step2: { en: 'Step 2 of 3 · Pick date & time', fil: 'Hakbang 2 sa 3 · Pumili ng petsa at oras' },
   bm_dates: { en: 'Available Dates', fil: 'Available na Petsa' },
   bm_dates_err: { en: "Couldn't load dates. Please close and try again.", fil: 'Hindi ma-load ang mga petsa. Pakisara at subukan muli.' },
