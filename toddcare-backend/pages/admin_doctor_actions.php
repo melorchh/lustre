@@ -12,87 +12,6 @@ $conn->query("CREATE TABLE IF NOT EXISTS doctor_accounts (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 )");
 
-require_once __DIR__ . '/test_procedures_schema.php';
-test_procedures_ensure($conn);
-
-function save_doctor_procedures($conn, $doctor_id, $raw_json)
-{
-    if ($doctor_id <= 0) return true;
-    $items = json_decode((string)$raw_json, true);
-    if (!is_array($items)) return true;
-
-    $del = $conn->prepare("DELETE FROM doctor_test_procedures WHERE doctor_id = ?");
-    $del->bind_param("i", $doctor_id);
-    $del->execute();
-    $del->close();
-
-    $ok = true;
-    foreach ($items as $it) {
-        if (!is_array($it)) continue;
-        $name = isset($it['name']) ? trim((string)$it['name']) : '';
-        if ($name === '' || strlen($name) > 140) continue;
-        $pid = isset($it['id']) ? (int)$it['id'] : 0;
-
-        if ($pid > 0) {
-            $chk = $conn->prepare("SELECT id FROM test_procedures WHERE id = ?");
-            $chk->bind_param("i", $pid);
-            $chk->execute();
-            $chk->store_result();
-            if ($chk->num_rows === 0) $pid = 0;
-            $chk->close();
-        }
-
-        if ($pid <= 0) {
-            $sel = $conn->prepare("SELECT id FROM test_procedures WHERE name = ?");
-            $sel->bind_param("s", $name);
-            $sel->execute();
-            $sel->store_result();
-            if ($sel->num_rows > 0) {
-                $sel->bind_result($fid);
-                $sel->fetch();
-                $pid = (int)$fid;
-            } else {
-                $ins = $conn->prepare("INSERT INTO test_procedures (name) VALUES (?)");
-                $ins->bind_param("s", $name);
-                if ($ins->execute()) {
-                    $pid = (int)$ins->insert_id;
-                    if ($pid <= 0) {
-                        $back = $conn->prepare("SELECT id FROM test_procedures WHERE name = ?");
-                        $back->bind_param("s", $name);
-                        $back->execute();
-                        $back->store_result();
-                        if ($back->num_rows > 0) { $back->bind_result($bid); $back->fetch(); $pid = (int)$bid; }
-                        $back->close();
-                    }
-                } else {
-                    $sel2 = $conn->prepare("SELECT id FROM test_procedures WHERE name = ?");
-                    $sel2->bind_param("s", $name);
-                    $sel2->execute();
-                    $sel2->store_result();
-                    if ($sel2->num_rows > 0) {
-                        $sel2->bind_result($fid2);
-                        $sel2->fetch();
-                        $pid = (int)$fid2;
-                    } else {
-                        $ok = false;
-                    }
-                    $sel2->close();
-                }
-                $ins->close();
-            }
-            $sel->close();
-        }
-
-        if ($pid > 0) {
-            $link = $conn->prepare("INSERT INTO doctor_test_procedures (doctor_id, procedure_id) VALUES (?, ?)");
-            $link->bind_param("ii", $doctor_id, $pid);
-            if (!$link->execute()) $ok = false;
-            $link->close();
-        }
-    }
-    return $ok;
-}
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo "Invalid request"; exit; }
 
 $action = isset($_POST['action']) ? trim($_POST['action']) : '';
@@ -109,26 +28,8 @@ if ($action === 'add') {
 
     $stmt = $conn->prepare("INSERT INTO doctors (name, specialty, schedule, experience) VALUES (?, ?, ?, ?)");
     $stmt->bind_param("sssi", $name, $specialty, $schedule, $experience);
-    $ok = $stmt->execute();
-    $doctor_id = (int)$stmt->insert_id;
+    echo $stmt->execute() ? "success" : "Failed: " . $stmt->error;
     $stmt->close();
-
-    if (!$ok) { echo "Failed: " . $stmt->error; exit; }
-
-    if ($doctor_id <= 0) {
-        $fb = $conn->prepare("SELECT id FROM doctors WHERE name = ? AND specialty = ? AND schedule = ? ORDER BY id DESC LIMIT 1");
-        $fb->bind_param("sss", $name, $specialty, $schedule);
-        $fb->execute();
-        $fb->store_result();
-        if ($fb->num_rows > 0) { $fb->bind_result($fbid); $fb->fetch(); $doctor_id = (int)$fbid; }
-        $fb->close();
-    }
-
-    $procsJson = isset($_POST['test_procedures_json']) ? $_POST['test_procedures_json'] : '';
-    save_doctor_procedures($conn, $doctor_id, $procsJson);
-    echo "success";
-    $conn->close();
-    exit;
 
 } elseif ($action === 'edit') {
     $id         = isset($_POST['doctor_id'])  ? (int)$_POST['doctor_id']   : 0;
@@ -143,15 +44,8 @@ if ($action === 'add') {
 
     $stmt = $conn->prepare("UPDATE doctors SET name=?, specialty=?, schedule=?, experience=? WHERE id=?");
     $stmt->bind_param("sssii", $name, $specialty, $schedule, $experience, $id);
-
-    if (!$stmt->execute()) { echo "Failed: " . $stmt->error; $stmt->close(); $conn->close(); exit; }
+    echo $stmt->execute() ? "success" : "Failed: " . $stmt->error;
     $stmt->close();
-
-    $procsJson = isset($_POST['test_procedures_json']) ? $_POST['test_procedures_json'] : '';
-    save_doctor_procedures($conn, $id, $procsJson);
-    echo "success";
-    $conn->close();
-    exit;
 
 } elseif ($action === 'delete') {
     $id = isset($_POST['doctor_id']) ? (int)$_POST['doctor_id'] : 0;
