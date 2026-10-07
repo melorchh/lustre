@@ -4307,15 +4307,15 @@ body.page-leaving {
     gap: 0.6rem;
     width: 100%;
   }
-  /* the lang button stretches to the remaining width, so switching FIL/EN
-     never changes its box and the row never shifts */
-  .rail-toggles .lang-toggle {
-    flex: 1 1 auto;
+  /* both buttons split the row 50/50: identical width + height (46px),
+     so the row never shifts and the pair always looks uniform */
+  .rail-toggles .lang-toggle,
+  .rail-toggles .theme-toggle {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
     justify-content: center;
     padding: 0 1rem;
-  }
-  .rail-toggles .theme-toggle {
-    flex: 0 0 auto;
   }
 }
 
