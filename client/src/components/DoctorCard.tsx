@@ -21,10 +21,6 @@ const gradients = [
 export default function DoctorCard({ doctor, index, selected, onSelect }: DoctorCardProps) {
   const { t } = useLang();
   const g = gradients[index % gradients.length];
-  const procs = (doctor.test_procedures || '')
-    .split('\n')
-    .map((p) => p.trim())
-    .filter(Boolean);
   return (
     <button
       type="button"
@@ -48,15 +44,6 @@ export default function DoctorCard({ doctor, index, selected, onSelect }: Doctor
       <div className="doctor-card-body">
         <div className="doctor-card-name">Dr. {doctor.name}</div>
         <div className="doctor-card-specialty">{doctor.specialty}</div>
-        {procs.length > 0 && (
-          <div className="doctor-procs">
-            {procs.map((p) => (
-              <span className="proc-chip" key={p}>
-                {p}
-              </span>
-            ))}
-          </div>
-        )}
         <div className="doctor-card-meta">
           {doctor.experience != null && doctor.experience > 0 && (
             <span className="doctor-chip">{t('doc_yrs_exp', { y: doctor.experience })}</span>

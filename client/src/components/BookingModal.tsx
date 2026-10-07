@@ -149,6 +149,10 @@ export default function BookingModal({ doctor, onClose }: BookingModalProps) {
 
   const services = useMemo(() => servicesFor(doctor.specialty), [doctor.specialty]);
   const serviceOptions = useMemo(() => [...services, OTHER_SERVICE], [services]);
+  const procs = (doctor.test_procedures || '')
+    .split('\n')
+    .map((p) => p.trim())
+    .filter(Boolean);
 
   const serviceValue = service === OTHER_SERVICE ? serviceOther.trim() : service.trim();
 
@@ -344,6 +348,18 @@ placeholder={t('bm_other_ph')}
                   value={serviceOther}
                   onChange={(e) => setServiceOther(e.target.value)}
                 />
+              )}
+              {procs.length > 0 && (
+                <div className="proc-row">
+                  <span className="proc-row-label">{t('bm_procs')}</span>
+                  <div className="procs-list">
+                    {procs.map((p) => (
+                      <span className="proc-chip" key={p}>
+                        {p}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               )}
               <span className="picker-hint">{t('bm_hint', { s: doctor.specialty })}</span>
             </div>

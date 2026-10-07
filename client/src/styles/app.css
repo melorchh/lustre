@@ -965,13 +965,6 @@ input {
   margin-bottom: 0.55rem;
 }
 
-.doctor-procs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-bottom: 0.6rem;
-}
-
 .proc-chip {
   display: inline-flex;
   align-items: center;
@@ -982,6 +975,24 @@ input {
   font-weight: 600;
   padding: 0.2rem 0.6rem;
   border-radius: 50px;
+}
+
+.proc-row {
+  margin-top: 0.75rem;
+}
+
+.proc-row-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--gray-500);
+  margin-bottom: 0.4rem;
+}
+
+.procs-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
 }
 
 .doctor-card-meta {
