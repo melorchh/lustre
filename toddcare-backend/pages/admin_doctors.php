@@ -16,6 +16,27 @@ $conn->query("CREATE TABLE IF NOT EXISTS doctor_accounts (
 $doctors = $conn->query("SELECT d.id, d.name, d.specialty, d.schedule, d.experience, d.created_at, COUNT(a.id) as appointment_count FROM doctors d LEFT JOIN appointments a ON d.id=a.doctor_id GROUP BY d.id, d.name, d.specialty, d.schedule, d.experience, d.created_at ORDER BY d.name");
 $accounts = $conn->query("SELECT da.id AS account_id, da.username, da.created_at, d.id AS doctor_id, d.name AS doctor_name, d.specialty FROM doctor_accounts da JOIN doctors d ON da.doctor_id=d.id ORDER BY d.name");
 $doctors_options = $conn->query("SELECT id, name, specialty FROM doctors ORDER BY name");
+
+require_once __DIR__ . '/test_procedures_schema.php';
+test_procedures_ensure($conn);
+$pt_rows = $conn->query("SELECT id, name FROM test_procedures ORDER BY name");
+$proc_json = [];
+$proc_name_map = [];
+if ($pt_rows) {
+    while ($pt = $pt_rows->fetch_assoc()) {
+        $proc_json[] = ['id' => (int)$pt['id'], 'name' => $pt['name']];
+        $proc_name_map[(int)$pt['id']] = $pt['name'];
+    }
+}
+$pt_links = $conn->query("SELECT doctor_id, procedure_id FROM doctor_test_procedures");
+$doc_procs = [];
+if ($pt_links) {
+    while ($lp = $pt_links->fetch_assoc()) {
+        $doc_procs[(int)$lp['doctor_id']][] = (int)$lp['procedure_id'];
+    }
+}
+$doc_procs_json = [];
+foreach ($doc_procs as $did => $plist) { $doc_procs_json[(string)$did] = $plist; }
 $conn->close();
 ?><!DOCTYPE html>
 <html lang="en">
@@ -86,6 +107,15 @@ $conn->close();
                         <div class="doctor-specialty"><?php echo htmlspecialchars($doctor['specialty']); ?></div>
                         <div class="doctor-meta"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><?php echo htmlspecialchars($doctor['schedule']); ?></div>
                         <div class="doctor-meta"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><?php echo (int)$doctor['experience']; ?> years experience</div>
+                        <?php if (!empty($doc_procs[(int)$doctor['id']])): ?>
+                            <div class="doctor-procs">
+                                <?php foreach ($doc_procs[(int)$doctor['id']] as $ppid): ?>
+                                    <?php if (isset($proc_name_map[$ppid])): ?>
+                                        <span class="tp-chip tp-chip--static"><?php echo htmlspecialchars($proc_name_map[$ppid]); ?></span>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
                         <div class="doctor-footer">
                             <span>Appointments: <span style="color:#16a34a"><?php echo $doctor['appointment_count']; ?></span></span>
                         </div>
@@ -220,6 +250,17 @@ $conn->close();
                         <input type="text" name="specialty" placeholder="e.g. Obstetrics & Gynecology" required>
                     </div>
                     <div class="form-group">
+                        <label>Tests / Procedures</label>
+                        <div class="tp-picker" id="addProcPicker">
+                            <div class="tp-select">
+                                <div class="tp-chips" id="addProcChips"></div>
+                                <input type="text" class="tp-input" id="addProcInput" placeholder="Type to search or add..." autocomplete="off">
+                            </div>
+                            <div class="tp-menu tp-menu--fixed" id="addProcMenu"></div>
+                        </div>
+                        <input type="hidden" name="test_procedures_json" id="addProceduresJson" value="[]">
+                    </div>
+                    <div class="form-group">
                         <label>Schedule</label>
                         <input type="text" name="schedule" placeholder="e.g. Mon-Fri: 9AM-5PM" required>
                     </div>
@@ -251,6 +292,17 @@ $conn->close();
                     <div class="form-group">
                         <label>Specialty</label>
                         <input type="text" name="specialty" id="editSpecialty" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tests / Procedures</label>
+                        <div class="tp-picker" id="editProcPicker">
+                            <div class="tp-select">
+                                <div class="tp-chips" id="editProcChips"></div>
+                                <input type="text" class="tp-input" id="editProcInput" placeholder="Type to search or add..." autocomplete="off">
+                            </div>
+                            <div class="tp-menu tp-menu--fixed" id="editProcMenu"></div>
+                        </div>
+                        <input type="hidden" name="test_procedures_json" id="editProceduresJson" value="[]">
                     </div>
                     <div class="form-group">
                         <label>Schedule</label>
@@ -319,6 +371,8 @@ $conn->close();
         // -- Add ----------------------------------------------
         function openAddModal(){
             document.getElementById('addForm').reset();
+            addProcPicker.clearSelection();
+            addProcPicker.closeMenu();
             openModal('addModal');
         }
 
@@ -347,6 +401,8 @@ $conn->close();
             document.getElementById('editSpecialty').value   = btn.dataset.specialty;
             document.getElementById('editSchedule').value    = btn.dataset.schedule;
             document.getElementById('editExperience').value  = btn.dataset.experience;
+            editProcPicker.setSelection(__docProcs[btn.dataset.id] || []);
+            editProcPicker.closeMenu();
             openModal('editModal');
         }
 
@@ -394,6 +450,188 @@ $conn->close();
                 })
                 .catch(err => { hideLoading(); showToast('Error: ' + err.message, 'error'); });
 }
+
+    /* -- Tests / Procedures picker -- */
+    var __procs = <?php echo json_encode($proc_json); ?>;
+    var __docProcs = <?php echo json_encode($doc_procs_json); ?>;
+
+    function ProcPicker(cfg){
+        var self = this;
+        this.root   = document.getElementById(cfg.root);
+        this.chips  = document.getElementById(cfg.chips);
+        this.input  = document.getElementById(cfg.input);
+        this.json   = document.getElementById(cfg.json);
+        this.menu   = document.getElementById(cfg.menu);
+        this.master = __procs.slice();
+        this.sel    = [];
+        this.open   = false;
+
+        document.body.appendChild(this.menu);
+
+        this.isSelId = function(id){
+            return this.sel.some(function(s){ return s.id === id; });
+        };
+        this.isSelName = function(name){
+            return this.sel.some(function(s){ return s.name.toLowerCase() === name.toLowerCase(); });
+        };
+        this.render = function(){
+            var self = this;
+            this.chips.innerHTML = '';
+            this.sel.forEach(function(s, i){
+                var chip = document.createElement('span');
+                chip.className = 'tp-chip';
+                var label = document.createElement('span');
+                label.textContent = s.name;
+                var x = document.createElement('button');
+                x.type = 'button';
+                x.className = 'tp-chip-x';
+                x.setAttribute('aria-label','Remove');
+                x.innerHTML = '&times;';
+                x.onclick = function(){ self.removeAt(i); };
+                chip.appendChild(label);
+                chip.appendChild(x);
+                self.chips.appendChild(chip);
+            });
+            this.json.value = JSON.stringify(this.sel.map(function(s){
+                return { id: (s.id ? s.id : null), name: s.name };
+            }));
+        };
+        this.removeAt = function(i){
+            this.sel.splice(i, 1);
+            this.render();
+            if(this.open) this.renderMenu(this.input.value);
+        };
+        this.addName = function(name){
+            if(!name) return;
+            if(this.isSelName(name)){ this.input.value=''; this.renderMenu(''); return; }
+            var m = null;
+            for (var i = 0; i < this.master.length; i++){
+                if(this.master[i].name.toLowerCase() === name.toLowerCase()){ m = this.master[i]; break; }
+            }
+            if(m){ if(!this.isSelId(m.id)) this.sel.push({ id:m.id, name:m.name }); }
+            else { this.sel.push({ id:null, name:name }); }
+            this.render();
+        };
+        this.toggleId = function(id){
+            var idx = -1;
+            for (var i = 0; i < this.sel.length; i++){ if(this.sel[i].id === id){ idx = i; break; } }
+            if(idx >= 0){ this.sel.splice(idx, 1); }
+            else {
+                for (var j = 0; j < this.master.length; j++){
+                    if(this.master[j].id === id){ this.sel.push({ id:this.master[j].id, name:this.master[j].name }); break; }
+                }
+            }
+            this.render();
+            if(this.open) this.renderMenu(this.input.value);
+        };
+        this.renderMenu = function(filter){
+            var q = (filter || '').trim().toLowerCase();
+            this.menu.innerHTML = '';
+            var self = this;
+            if(q && !this.master.some(function(m){ return m.name.toLowerCase() === q; }) && !this.isSelName(q)){
+                var add = document.createElement('div');
+                add.className = 'tp-opt tp-opt-add';
+                var plus = document.createElement('span');
+                plus.className = 'tp-plus';
+                plus.textContent = '+';
+                var t = document.createElement('span');
+                t.textContent = filter.trim();
+                add.appendChild(plus);
+                add.appendChild(t);
+                add.addEventListener('mousedown', function(e){
+                    e.preventDefault();
+                    self.addName(filter.trim());
+                    self.input.value = '';
+                    if(self.open) self.renderMenu('');
+                });
+                this.menu.appendChild(add);
+            }
+            var any = false;
+            this.master.forEach(function(m){
+                if(q && m.name.toLowerCase().indexOf(q) === -1) return;
+                any = true;
+                var o = document.createElement('div');
+                o.className = 'tp-opt' + (self.isSelId(m.id) ? ' tp-opt--on' : '');
+                var check = document.createElement('span');
+                check.className = 'tp-check';
+                check.textContent = self.isSelId(m.id) ? '\u2713' : '';
+                var t = document.createElement('span');
+                t.textContent = m.name;
+                o.appendChild(check);
+                o.appendChild(t);
+                o.addEventListener('mousedown', (function(mm){ return function(e){ e.preventDefault(); self.toggleId(mm.id); }; })(m));
+                self.menu.appendChild(o);
+            });
+            if(!this.menu.children.length){
+                var e = document.createElement('div');
+                e.className = 'tp-empty';
+                e.textContent = 'No procedures yet. Type a name and press Enter to create it.';
+                this.menu.appendChild(e);
+            }
+        };
+        this.openMenu = function(){
+            this.open = true;
+            this.menu.style.display = 'block';
+            this.renderMenu(this.input.value);
+            var r = this.input.getBoundingClientRect();
+            this.menu.style.width = Math.max(r.width, 260) + 'px';
+            this.menu.style.left = r.left + 'px';
+            var top = r.bottom + 4;
+            if(top + this.menu.offsetHeight > window.innerHeight - 8) top = Math.max(8, r.top - this.menu.offsetHeight - 4);
+            this.menu.style.top = top + 'px';
+        };
+        this.closeMenu = function(){
+            this.open = false;
+            this.menu.style.display = 'none';
+        };
+        this.setSelection = function(ids){
+            var self = this;
+            this.sel = [];
+            (ids || []).forEach(function(id){
+                for (var i = 0; i < self.master.length; i++){
+                    if(self.master[i].id === id){ self.sel.push({ id:self.master[i].id, name:self.master[i].name }); break; }
+                }
+            });
+            this.render();
+        };
+        this.clearSelection = function(){
+            this.sel = [];
+            this.input.value = '';
+            this.render();
+        };
+        this.input.addEventListener('focus', function(){ self.openMenu(); });
+        this.input.addEventListener('input', function(){ if(self.open) self.renderMenu(self.input.value); });
+        this.input.addEventListener('keydown', function(e){
+            if(e.key === 'Enter'){
+                e.preventDefault();
+                var q = self.input.value.trim();
+                if(q){ self.addName(q); self.input.value = ''; if(self.open) self.renderMenu(''); }
+            } else if(e.key === 'Backspace' && !self.input.value && self.sel.length){
+                e.preventDefault();
+                self.removeAt(self.sel.length - 1);
+            } else if(e.key === 'Escape'){
+                self.closeMenu();
+                self.input.blur();
+            }
+        });
+        this.root.addEventListener('mousedown', function(e){
+            if(e.target === self.root || (e.target.closest && e.target.closest('.tp-select'))){ self.input.focus(); }
+        });
+    }
+
+    var addProcPicker  = new ProcPicker({ root:'addProcPicker', chips:'addProcChips', input:'addProcInput', json:'addProceduresJson', menu:'addProcMenu' });
+    var editProcPicker = new ProcPicker({ root:'editProcPicker', chips:'editProcChips', input:'editProcInput', json:'editProceduresJson', menu:'editProcMenu' });
+
+    document.addEventListener('mousedown', function(e){
+        [addProcPicker, editProcPicker].forEach(function(p){
+            if(!p.open) return;
+            if(!p.root.contains(e.target) && !p.menu.contains(e.target)) p.closeMenu();
+        });
+    });
+
+    document.addEventListener('keydown', function(e){
+        if(e.key === 'Escape'){ if(addProcPicker.open) addProcPicker.closeMenu(); if(editProcPicker.open) editProcPicker.closeMenu(); }
+    });
 
     /* -- Doctor Accounts -- */
     document.getElementById('addAccountForm').addEventListener('submit', function(e){
