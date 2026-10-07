@@ -283,6 +283,11 @@ input {
   color: var(--green-dark);
 }
 
+/* language + theme toggles inside the drawer (mobile only) */
+.rail-toggles {
+  display: none;
+}
+
 /* ── DESKTOP: slim icon rail, slides open on hover ──
    Collapsed: 76px rail, icons anchored to the rail's
    center column (38px) so they NEVER move. Hover/pin
@@ -4252,16 +4257,9 @@ body.page-leaving {
     padding: 0 14px;
   }
   .topbar-actions {
-    position: static;
-    transform: none;
-    /* keep the toggles in flow so they still set row 1's height, but pin them
-       with margin-left:auto so they land at the same x on every page,
-       whatever the page title length */
-    flex: 0 0 auto;
-    flex-shrink: 0;
-    gap: 0.5rem;
-    order: 2;
-    margin-left: auto;
+    /* the fil/eng + day/night toggles live in the sidenav drawer on mobile,
+       so their position can never shift with the chosen option */
+    display: none;
   }
   .client-card {
     display: none !important;
@@ -4302,6 +4300,22 @@ body.page-leaving {
     border-top: 1px solid var(--gray-100);
     padding-top: 1rem;
     margin-top: auto;
+  }
+  .rail-toggles {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+  }
+  /* the lang button stretches to the remaining width, so switching FIL/EN
+     never changes its box and the row never shifts */
+  .rail-toggles .lang-toggle {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: 0 1rem;
+  }
+  .rail-toggles .theme-toggle {
+    flex: 0 0 auto;
   }
 }
 
