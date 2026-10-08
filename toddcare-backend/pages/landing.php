@@ -30,7 +30,7 @@ if (isset($_SESSION["patient_id"])) {
       <span class="nav-clinic-name">LUSTRE MEDICAL DIAGNOSTIC CLINIC</span>
     </a>
     <div class="nav-links">
-      <a href="#about" data-t="nav_about">About</a>
+      <a href="about.php" data-t="nav_about">About</a>
       <a href="#contact" data-t="nav_contact">Contact</a>
     </div>
     <div class="nav-actions">
@@ -207,15 +207,6 @@ if (isset($_SESSION["patient_id"])) {
       </ul>
       <div class="service-badge">Walk-ins welcome</div>
     </div>
-  </div>
-</section>
-
-<!-- == ABOUT == -->
-<section class="page-section" id="about">
-  <div class="section-header">
-    <div class="section-tag" data-t="about_tag">About</div>
-    <h2 class="section-title" data-t="about_title">About LustreMDC</h2>
-    <p class="section-sub" data-t="about_sub">Content coming soon.</p>
   </div>
 </section>
 
@@ -1284,9 +1275,6 @@ const TL = {
   svc_panels: { en: 'panels available', fil: 'panels available' },
   svc_obgyn: { en: 'OB-GYN specialty', fil: 'OB-GYN specialty' },
   svc_header: { en: 'Everything You Need, Right Here', fil: 'Lahat ng Kailangan Mo, Dito Lang' },
-  about_tag: { en: 'About', fil: 'Tungkol' },
-  about_title: { en: 'About LustreMDC', fil: 'Tungkol sa LustreMDC' },
-  about_sub: { en: 'Content coming soon.', fil: 'Parating na ang nilalaman.' },
   contact_tag: { en: 'Contact', fil: 'Contact' },
   contact_title: { en: 'Get In Touch', fil: 'Makipag-ugnayan Ka' },
   contact_sub: { en: 'Content coming soon.', fil: 'Parating na ang nilalaman.' },

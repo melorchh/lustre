@@ -1,0 +1,77 @@
+<?php
+require __DIR__ . '/../src/session.php';
+// If already logged in, go to the patient dashboard
+if (isset($_SESSION["patient_id"])) {
+    header("Location: dashboard.php");
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0d9488">
+<title>About &mdash; LustreMDC</title>
+<script>try{if(localStorage.getItem('meTheme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}</script>
+<link rel="stylesheet" href="landing.css?v=<?= filemtime(__DIR__ . '/../../landing.css') ?>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="images/Lustre.png" type="image/png">
+</head>
+<body>
+
+<!-- == NAVBAR == -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="landing.php" class="nav-brand">
+      <div class="nav-logo-circle"><img src="images/Lustre.png" alt="Logo" class="logo-img" width="40" height="40"></div>
+      <span class="nav-clinic-name">LUSTRE MEDICAL DIAGNOSTIC CLINIC</span>
+    </a>
+    <div class="nav-links">
+      <a href="about.php" class="active" aria-current="page">About</a>
+      <a href="landing.php#contact">Contact</a>
+    </div>
+    <div class="nav-actions">
+      <button class="theme-toggle" type="button" aria-label="Toggle light/dark mode" title="Toggle dark mode">
+        <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      </button>
+      <a class="nav-btn nav-btn-ghost" href="login.php">Sign In</a>
+      <a class="nav-btn nav-btn-solid" href="register.php">Register Free</a>
+    </div>
+  </div>
+</nav>
+
+<!-- == ABOUT == -->
+<section class="page-section about-page">
+  <div class="section-header">
+    <div class="section-tag">About</div>
+    <h1 class="section-title">About LustreMDC</h1>
+    <p class="section-sub">Content coming soon.</p>
+  </div>
+  <div class="about-actions">
+    <a class="back-home-btn" href="landing.php">&larr; Back to home</a>
+  </div>
+</section>
+
+<!-- == FOOTER == -->
+<footer>
+  <div class="footer-inner">
+    <p class="footer-copy">&copy; <?php echo date('Y'); ?> LustreMDC Clinics &amp; Diagnostics. <span>All rights reserved.</span></p>
+    <div class="footer-staff">
+      <span class="footer-staff-label">Staff Portal</span>
+      <a class="staff-btn" href="doctor_login.php">Doctor</a>
+      <a class="staff-btn" href="admin_login.php">Admin</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* -- Navbar scroll -- */
+window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',scrollY>40));
+</script>
+<script src="admin_theme.js?v=<?= filemtime(__DIR__ . '/../../admin_theme.js') ?>"></script>
+</body>
+</html>
