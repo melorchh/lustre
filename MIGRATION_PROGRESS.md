@@ -1,4 +1,4 @@
-# MedExpert v6 — Migration Progress
+# Lustre v6 — Migration Progress
 
 Status snapshot: **2026-09-23**. Migration from XAMPP/MySQL-only to a serverless-ready
 PHP app (Postgres via Supabase, env-based secrets, DB-backed sessions) is code-complete.
@@ -12,10 +12,10 @@ which needs your environment (Supabase project, Vercel env vars, secret rotation
 ### New files
 | File | Purpose |
 |---|---|
-| `supabase/schema.sql` | Postgres schema: 14 tables (migrated from MySQL `toddcare_database.sql`), indexes, `updated_at` triggers, seeds (4 doctors, admin `admin123`, 17 schedule rows). Flags are `SMALLINT 0/1` (not PG `boolean`) so PHP truthiness stays `'0'`/`'1'` like MySQL. |
-| `toddcare-backend/src/db.php` | Rewritten: PDO `pgsql:` connection, config from `DB_*` env vars, gitignored `env.local.php` fallback, `SET TIME ZONE 'Asia/Manila'`, generic 500 on connect failure (no credential leak). Guarded against double-include. |
-| `toddcare-backend/src/mysqli_compat.php` | PDO-backed mysqli shim so the ~60 page files use the same `$conn->query/prepare`, `->fetch_assoc`, `->bind_param` API with zero call-site edits. `insert_id` resolves the identity sequence (`<table>_id_seq`) because pdo_pgsql's unsuffixed `lastInsertId()` returns 0. |
-| `toddcare-backend/src/session.php` | DB-backed sessions (PHP file sessions don't work on serverless). Stores payload in `app_sessions`, upserts on write, GC purges expired rows, cookie `mdc_sess` (httponly, SameSite=Lax, Secure on HTTPS). |
+| `supabase/schema.sql` | Postgres schema: 14 tables (migrated from MySQL `lustre_database.sql`), indexes, `updated_at` triggers, seeds (4 doctors, admin `admin123`, 17 schedule rows). Flags are `SMALLINT 0/1` (not PG `boolean`) so PHP truthiness stays `'0'`/`'1'` like MySQL. |
+| `lustre-backend/src/db.php` | Rewritten: PDO `pgsql:` connection, config from `DB_*` env vars, gitignored `env.local.php` fallback, `SET TIME ZONE 'Asia/Manila'`, generic 500 on connect failure (no credential leak). Guarded against double-include. |
+| `lustre-backend/src/mysqli_compat.php` | PDO-backed mysqli shim so the ~60 page files use the same `$conn->query/prepare`, `->fetch_assoc`, `->bind_param` API with zero call-site edits. `insert_id` resolves the identity sequence (`<table>_id_seq`) because pdo_pgsql's unsuffixed `lastInsertId()` returns 0. |
+| `lustre-backend/src/session.php` | DB-backed sessions (PHP file sessions don't work on serverless). Stores payload in `app_sessions`, upserts on write, GC purges expired rows, cookie `LUSTRE_sess` (httponly, SameSite=Lax, Secure on HTTPS). |
 | `api/medbot.php` | Server-side Groq proxy. Reads `GROQ_API_KEY`/`GROQ_MODEL` from env, same-origin guard, passthrough of the chat-completions JSON. |
 | `api/send_reminders.php` | Rewritten cron-ready endpoint: `Authorization: Bearer $CRON_SECRET` (or CLI), queries `appointment_date + appointment_time BETWEEN ? AND ?`, updates `reminder_sent`. Triggers: Vercel Pro `crons` entry or any external scheduler (e.g. cron-job.org) every 5 min. |
 
@@ -31,8 +31,8 @@ which needs your environment (Supabase project, Vercel env vars, secret rotation
 - `GROUP BY d.id` with `d.*` → explicit full column lists (Postgres requires functional dependency on PK actually — safe everywhere).
 
 ### Mechanical sweeps
-- All 65 root `*.php` → `api/`; include paths fixed to `__DIR__ . '/../toddcare-backend/…'`.
-- `session_start();` (line 2 of 61 files) → `require __DIR__ . '/../toddcare-backend/src/session.php';`.
+- All 65 root `*.php` → `api/`; include paths fixed to `__DIR__ . '/../lustre-backend/…'`.
+- `session_start();` (line 2 of 61 files) → `require __DIR__ . '/../lustre-backend/src/session.php';`.
 - All 77 `filemtime('x')` / `__DIR__ . '/' . $asset` calls → `__DIR__ . '/../'` paths (assets live at repo root; URLs are unchanged and served by the `handle: filesystem` route).
 
 ### Secrets removed from source
@@ -44,7 +44,7 @@ which needs your environment (Supabase project, Vercel env vars, secret rotation
 ## How to run locally (XAMPP)
 
 1. Enable `pdo_pgsql` in `D:\xampp\php\php.ini`, restart Apache. (MySQL is no longer used.)
-2. Create `toddcare-backend/env.local.php` (gitignored, excluded from `.vercelignore` too):
+2. Create `lustre-backend/env.local.php` (gitignored, excluded from `.vercelignore` too):
    ```php
    <?php
    return array(
@@ -66,7 +66,7 @@ which needs your environment (Supabase project, Vercel env vars, secret rotation
    );
    ```
 3. Run `supabase/schema.sql` once in the Supabase SQL editor (or `psql`).
-4. Browse the site (Apache `htdocs/medexpertv6/`); the app now talks only to Postgres.
+4. Browse the site (Apache `htdocs/Lustrev6/`); the app now talks only to Postgres.
 
 ## How to deploy (Vercel)
 
@@ -78,7 +78,7 @@ which needs your environment (Supabase project, Vercel env vars, secret rotation
    - **Hobby/free:** external scheduler hitting `https://<app>.vercel.app/api/send_reminders.php` every 5 min with `Authorization: Bearer <CRON_SECRET>`.
 
 ## Verification already done
-- `php -l` clean: 72/72 files (`api/*.php` + `toddcare-backend/src/*.php`).
+- `php -l` clean: 72/72 files (`api/*.php` + `lustre-backend/src/*.php`).
 - Zero matches for: `gsk_…` Groq key, `eutxeqhsattumjhy` Gmail app password, `mysqli_*` function calls, and MySQL-isms `CURDATE|DATE_ADD|DATE_SUB|DATE_FORMAT|TIME_FORMAT|WEEKDAY(|FIELD(|AUTO_INCREMENT|ON DUPLICATE|UNIX_TIMESTAMP`.
 - Boot smoke: session bootstrap → db.php → graceful "service unavailable" path (no fatal/redeclare errors, correct include order).
 

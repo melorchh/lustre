@@ -1,10 +1,10 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /medexpertv6/
+    RewriteBase /lustre/
 
-    RewriteRule ^toddcare-backend/ - [F,L]
+    RewriteRule ^lustre-backend/ - [F,L]
 
-    RewriteCond %{REQUEST_URI} !^/medexpertv6/api/
+    RewriteCond %{REQUEST_URI} !^/lustre/api/
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^([a-zA-Z0-9_]+\.php)$ api/router.php?page=$1 [QSA,L]

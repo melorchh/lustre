@@ -1,9 +1,11 @@
 <?php
 require __DIR__ . '/../src/session.php';
+// If not logged in, redirect to landing page
 if (!isset($_SESSION["patient_id"])) {
     header("Location: landing.php");
     exit;
 }
+
 require_once __DIR__ . '/../src/db.php';
 
 $patient_id = $_SESSION["patient_id"];
@@ -16,21 +18,9 @@ $stmt->bind_result($user_name);
 $stmt->fetch();
 $stmt->close();
 
-$patient = [];
-$stmt = $conn->prepare("SELECT id, name, email, contact, address, weight_kg, height_cm, patient_type, age, created_at FROM patients WHERE id=?");
-$stmt->bind_param("i", $patient_id);
-$stmt->execute();
-$res = $stmt->get_result();
-$patient = $res->fetch_assoc();
-$stmt->close();
-if (!$patient) {
-    $conn->close();
-    header("Location: logout.php");
-    exit;
-}
-
 $doctors = [];
-$res = $conn->query("SELECT id, name, specialty FROM doctors ORDER BY name");
+$conn->query("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS test_procedures TEXT NOT NULL DEFAULT ''");
+$res = $conn->query("SELECT id, name, specialty, schedule, experience, test_procedures FROM doctors ORDER BY name");
 if ($res) {
     $doctors = $res->fetch_all(MYSQLI_ASSOC);
 }
@@ -38,6 +28,7 @@ if ($res) {
 $appointments = [];
 $stmt = $conn->prepare("
     SELECT a.id, a.appointment_date, a.appointment_time, a.status, a.payment_status, a.created_at,
+           a.result, a.result_date,
            d.name as doctor_name, d.specialty
     FROM appointments a JOIN doctors d ON a.doctor_id = d.id
     WHERE a.patient_id = ? ORDER BY a.appointment_date DESC, a.appointment_time DESC
@@ -73,56 +64,21 @@ $stmt->execute();
 $vaccinations = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 
+$lab_categories = [
+    'Blood Tests' => ['Complete Blood Count (CBC)','Fasting Blood Sugar (FBS)','Lipid Profile','Uric Acid','Creatinine / BUN','Blood Typing & Cross-matching','Coagulation Profile (PT/PTT)','Hepatitis B Surface Antigen','HIV Screening'],
+    'Urine & Stool Tests' => ['Urinalysis','Fecalysis (Stool Exam)','Occult Blood Test'],
+    'Infectious Disease Tests' => ['Dengue NS1 / IgG / IgM','COVID-19 Antigen / RT-PCR','VDRL / Syphilis Test','Rubella Antibody Test','Sexually Transmitted Infection (STI) Panel'],
+    'Pregnancy & Hormonal' => ['Pregnancy Test (Serum hCG)','Thyroid Function Test','Prenatal Panel','Hormonal Panel (FSH, LH, Estrogen)','Glucose Tolerance Test (GTT)','Pap Smear','Transvaginal Ultrasound'],
+    'Imaging & Monitoring' => ['Fetal Anomaly Scan','Non-Stress Test (NST)','Amniotic Fluid Index (AFI)','Cervical Culture & Sensitivity'],
+    'Other' => ['Other (specify below)'],
+];
+
 $conn->close();
 
 $asset_css = 'client/dist/assets/app.css';
-$asset_js  = 'client/dist/assets/profile.js';
+$asset_js  = 'client/dist/assets/app.js';
 $v_css = is_file(__DIR__ . '/../../' . $asset_css) ? filemtime(__DIR__ . '/../../' . $asset_css) : 0;
 $v_js  = is_file(__DIR__ . '/../../' . $asset_js)  ? filemtime(__DIR__ . '/../../' . $asset_js)  : 0;
-
-$lab_categories = [
-    'Blood Tests' => [
-        'Complete Blood Count (CBC)',
-        'Fasting Blood Sugar (FBS)',
-        'Lipid Profile',
-        'Uric Acid',
-        'Creatinine / BUN',
-        'Blood Typing & Cross-matching',
-        'Coagulation Profile (PT/PTT)',
-        'Hepatitis B Surface Antigen',
-        'HIV Screening',
-    ],
-    'Urine & Stool Tests' => [
-        'Urinalysis',
-        'Fecalysis (Stool Exam)',
-        'Occult Blood Test',
-    ],
-    'Infectious Disease Tests' => [
-        'Dengue NS1 / IgG / IgM',
-        'COVID-19 Antigen / RT-PCR',
-        'VDRL / Syphilis Test',
-        'Rubella Antibody Test',
-        'Sexually Transmitted Infection (STI) Panel',
-    ],
-    'Pregnancy & Hormonal' => [
-        'Pregnancy Test (Serum hCG)',
-        'Thyroid Function Test',
-        'Prenatal Panel',
-        'Hormonal Panel (FSH, LH, Estrogen)',
-        'Glucose Tolerance Test (GTT)',
-        'Pap Smear',
-        'Transvaginal Ultrasound',
-    ],
-    'Imaging & Monitoring' => [
-        'Fetal Anomaly Scan',
-        'Non-Stress Test (NST)',
-        'Amniotic Fluid Index (AFI)',
-        'Cervical Culture & Sensitivity',
-    ],
-    'Other' => [
-        'Other (specify below)',
-    ],
-];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -130,22 +86,15 @@ $lab_categories = [
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0d9488">
-  <script>try{if(localStorage.getItem('meTheme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}</script>
-  <link rel="icon" href="images/Lustre.png" type="image/png">
-  <link rel="stylesheet" href="<?php echo $asset_css; ?>?v=<?php echo $v_css; ?>">
+  <title>LustreMDC &mdash; Book Appointment</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <title>My Profile &mdash; LustreMDC</title>
-</head>
-<body>
-  <div id="root"></div>
-
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="images/Lustre.png" type="image/png">
+  <script>try{if(localStorage.getItem('meTheme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}</script>
   <script>
-    window.__MEDEXPERT__ = {
+    window.__LUSTRE__ = {
       patientName: <?php echo json_encode($user_name, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>,
-      patientId: <?php echo (int) $patient_id; ?>,
-      patient: <?php echo json_encode($patient, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>,
       doctors: <?php echo json_encode($doctors, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>,
       appointments: <?php echo json_encode($appointments, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>,
       labTests: <?php echo json_encode($lab_tests, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>,
@@ -154,6 +103,10 @@ $lab_categories = [
       categories: <?php echo json_encode($lab_categories, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>
     };
   </script>
+  <link rel="stylesheet" href="<?php echo $asset_css; ?>?v=<?php echo $v_css; ?>">
+</head>
+<body>
+  <div id="root"></div>
   <script type="module" src="<?php echo $asset_js; ?>?v=<?php echo $v_js; ?>"></script>
 </body>
 </html>

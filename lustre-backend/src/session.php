@@ -12,14 +12,14 @@
 // session is guaranteed to have a working $conn too.
 // ============================================================================
 
-if (defined('TODDCARE_SESSION_LOADED')) {
+if (defined('LUSTRE_SESSION_LOADED')) {
     return;
 }
-define('TODDCARE_SESSION_LOADED', true);
+define('LUSTRE_SESSION_LOADED', true);
 
 require_once __DIR__ . '/db.php';
 
-class ToddCareSessionHandler implements SessionHandlerInterface
+class LustreSessionHandler implements SessionHandlerInterface
 {
     private $pdo;
 
@@ -97,12 +97,12 @@ class ToddCareSessionHandler implements SessionHandlerInterface
 }
 
 $handlerPdo = (isset($conn) && $conn instanceof DbConn) ? $conn->getPdo() : null;
-session_set_save_handler(new ToddCareSessionHandler($handlerPdo), true);
+session_set_save_handler(new LustreSessionHandler($handlerPdo), true);
 
 $sessionHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
 
-session_name('mdc_sess');
+session_name('lustre_sess');
 session_set_cookie_params(array(
     'lifetime' => 0,
     'path'     => '/',

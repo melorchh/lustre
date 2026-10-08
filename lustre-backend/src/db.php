@@ -12,17 +12,17 @@
 // env vars. Command-line usage (send_reminders.php) also reads these.
 // ============================================================================
 
-if (defined('TODDCARE_DB_LOADED')) {
+if (defined('LUSTRE_DB_LOADED')) {
     return;
 }
-define('TODDCARE_DB_LOADED', true);
+define('LUSTRE_DB_LOADED', true);
 
 require_once __DIR__ . '/mysqli_compat.php';
 
 date_default_timezone_set('Asia/Manila');
 
-if (!function_exists('toddcare_env')) {
-function toddcare_env($key, $default = '')
+if (!function_exists('lustre_env')) {
+function lustre_env($key, $default = '')
 {
     $v = getenv($key);
     if ($v === false || $v === '') {
@@ -49,12 +49,12 @@ if (is_file($__env_local)) {
 }
 unset($__env_local);
 
-$dbHost   = toddcare_env('DB_HOST', 'localhost');
-$dbPort   = toddcare_env('DB_PORT', '5432');
-$dbName   = toddcare_env('DB_NAME', 'postgres');
-$dbUser   = toddcare_env('DB_USER', 'postgres');
-$dbPass   = toddcare_env('DB_PASSWORD', '');
-$dbSsl    = toddcare_env('DB_SSLMODE', 'require');
+$dbHost   = lustre_env('DB_HOST', 'localhost');
+$dbPort   = lustre_env('DB_PORT', '5432');
+$dbName   = lustre_env('DB_NAME', 'postgres');
+$dbUser   = lustre_env('DB_USER', 'postgres');
+$dbPass   = lustre_env('DB_PASSWORD', '');
+$dbSsl    = lustre_env('DB_SSLMODE', 'require');
 
 $dsn = 'pgsql:host=' . $dbHost . ';port=' . $dbPort . ';dbname=' . $dbName;
 if ($dbSsl !== '' && $dbSsl !== 'disable') {
@@ -71,9 +71,9 @@ if ($dbSsl !== '' && $dbSsl !== 'disable') {
  *   $retryable = true   server could not be reached  -> 503 + Retry-After
  *   $retryable = false  configuration is wrong      -> 500, retrying is futile
  */
-function toddcare_db_fail($reason, $detail = '', $retryable = false)
+function LUSTRE_DB_fail($reason, $detail = '', $retryable = false)
 {
-    error_log('[toddcare-db] ' . $reason . ' :: ' . $detail);
+    error_log('[lustre-db] ' . $reason . ' :: ' . $detail);
 
     if (php_sapi_name() === 'cli') {
         fwrite(STDERR, 'Database connection failed: ' . $reason . PHP_EOL);
@@ -96,8 +96,8 @@ function toddcare_db_fail($reason, $detail = '', $retryable = false)
 // surface as an opaque "connection refused" from the Lambda itself. Call it out
 // by name instead. Only DB_HOST is checked: an empty DB_PASSWORD is already
 // reported precisely by the 28P01 branch below.
-if (toddcare_env('DB_HOST') === '') {
-    toddcare_db_fail(
+if (lustre_env('DB_HOST') === '') {
+    LUSTRE_DB_fail(
         'DB_HOST is not set',
         'set DB_HOST/DB_PORT/DB_USER/DB_PASSWORD in the Vercel project environment '
         . '(ap-southeast-1 pooler: host=aws-0-ap-southeast-1.pooler.supabase.com, '
@@ -120,7 +120,7 @@ try {
 
     // SQLSTATE class 08 = connection exception (DNS, TCP timeout, refused).
     if (strncmp($sqlstate, '08', 2) === 0) {
-        toddcare_db_fail(
+        LUSTRE_DB_fail(
             'database unreachable',
             $detail,
             true
@@ -130,13 +130,13 @@ try {
     // Class 28 = invalid authorization, 3D000 = database does not exist. The
     // usual cause is a pooler username missing its "<project-ref>." prefix.
     if (strncmp($sqlstate, '28', 2) === 0 || $sqlstate === '3D000') {
-        toddcare_db_fail(
+        LUSTRE_DB_fail(
             'database rejected the credentials or database name',
             $detail
         );
     }
 
-    toddcare_db_fail('unexpected database error', $detail);
+    LUSTRE_DB_fail('unexpected database error', $detail);
 }
 
 // All timestamps are stored as local (Asia/Manila) wall-clock values. Keeping

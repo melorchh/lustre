@@ -1,4 +1,4 @@
-# MedExpert v6 → Vercel Deployment-Ready Migration Plan
+# Lustre v6 → Vercel Deployment-Ready Migration Plan
 
 **Decisions locked (user):** Supabase (PostgreSQL) as the database · rotate both leaked secrets (Gmail App Password, Groq API key) · reminder-cron plan TBD → build a secret-protected HTTP endpoint that works on Hobby *and* Pro, document both triggers.
 
@@ -8,10 +8,10 @@
 |---|---|---|
 | 1 — Vercel scaffolding | ✅ Done | `api/*.php` (66 files), `vercel.json`, `api/php.ini`, `.gitignore`, `.vercelignore`, `.env.example` |
 | 2a — Schema | ✅ Done | `supabase/schema.sql` (14 tables, triggers, seeds) |
-| 2b — DB layer | ✅ Done | `toddcare-backend/src/db.php` (PDO/pgsql, env + gitignored `env.local.php` fallback, Asia/Manila, generic 500) |
-| 2c — mysqli shim | ✅ Done | `toddcare-backend/src/mysqli_compat.php` (`DbConn`/`DbResult`/`DbStmt`, sequence-aware `insert_id`) |
+| 2b — DB layer | ✅ Done | `lustre-backend/src/db.php` (PDO/pgsql, env + gitignored `env.local.php` fallback, Asia/Manila, generic 500) |
+| 2c — mysqli shim | ✅ Done | `lustre-backend/src/mysqli_compat.php` (`DbConn`/`DbResult`/`DbStmt`, sequence-aware `insert_id`) |
 | 2d — Dialect pass | ✅ Done | `CURRENT_DATE`, `to_char`, `array_position`, `::int` casts, PG DDL, `GROUP BY` fixes, `DELETE` without `LIMIT` |
-| 3 — DB sessions | ✅ Done | `toddcare-backend/src/session.php` + `session_start()` replaced in 61 files |
+| 3 — DB sessions | ✅ Done | `lustre-backend/src/session.php` + `session_start()` replaced in 61 files |
 | 4 — Secrets to env | ✅ Done | `SMTPConfig.php` env-ized; `api/medbot.php` Groq proxy; Groq key removed from `landing.php` |
 | 5 — Reminders HTTP | ✅ Done | `api/send_reminders.php` (Bearer `CRON_SECRET` or CLI), `(date + time)` comparison |
 | 6 — filemtime | ✅ Done | All 77 `filemtime()` refs → `__DIR__ . '/../'` (root assets) |
@@ -25,9 +25,9 @@ Remaining before go-live (needs your environment): Supabase project + `supabase/
 
 | Area | State | Vercel impact |
 |---|---|---|
-| Stack | ~70 flat PHP files at repo root, file-per-page routing, XAMPP/MySQL (`mysqli`, hardcoded `localhost/root/''` in `toddcare-backend/src/db.php`) | Needs function-per-file layout + external DB |
+| Stack | ~70 flat PHP files at repo root, file-per-page routing, XAMPP/MySQL (`mysqli`, hardcoded `localhost/root/''` in `lustre-backend/src/db.php`) | Needs function-per-file layout + external DB |
 | Sessions | `session_start()` on line 2 of 61 files, default file-backed save handler | Incompatible with serverless → move to DB-backed handler |
-| DB schema | `toddcare_database.sql`: 13 tables, MySQL `ENUM`/`AUTO_INCREMENT`/`ON UPDATE` idioms, seed data (4 doctors, admin, schedules) | Must be converted to Postgres DDL for Supabase |
+| DB schema | `lustre_database.sql`: 13 tables, MySQL `ENUM`/`AUTO_INCREMENT`/`ON UPDATE` idioms, seed data (4 doctors, admin, schedules) | Must be converted to Postgres DDL for Supabase |
 | SQL dialect | `CURDATE()`, `DATE_FORMAT`, `TIME_FORMAT`, `FIELD(...)`, `DATE_ADD`, `DELETE … LIMIT 1`, `ON DUPLICATE KEY`, runtime `CREATE TABLE … AUTO_INCREMENT` in 5 files | Must be rewritten to Postgres equivalents |
 | mysqli API surface (used, all OO) | `$conn->query/prepare/insert_id/error/close`; stmt `bind_param/execute/get_result/num_rows/affected_rows/insert_id/error/close`; result `fetch_assoc/num_rows/data_seek` | Covered by a small PDO-backed compatibility shim (no call-site edits) |
 | Email | Raw-socket SMTP, **Gmail app password committed** in `SMTPConfig.php` | Move to env + rotate |
@@ -36,7 +36,7 @@ Remaining before go-live (needs your environment): Supabase project + `supabase/
 | Cron | `send_reminders.php` is CLI-only (Windows Task Scheduler/crontab), 45–75-min reminder window | Convert to HTTP endpoint w/ `CRON_SECRET` |
 | Assets | CSS/JS at root, `images/`, committed React build in `client/dist/`; `filemtime('x')` cache-busting in ~77 places (unguarded in most) | Static files stay at root; `filemtime` paths must be fixed for `api/` layout |
 | Composer | None — zero third-party PHP deps | No vendor step ✔ |
-| Security | `.sql` dumps + `toddcare-backend/` source would be publicly served from repo root; `die(connect_error)` leaks credentials | `.vercelignore` + 404 route + generic errors |
+| Security | `.sql` dumps + `lustre-backend/` source would be publicly served from repo root; `die(connect_error)` leaks credentials | `.vercelignore` + 404 route + generic errors |
 | Runtime | PHP on Vercel = community `vercel-php` runtime (PHP 8.4/8.5), **includes `mysqli`, `pdo_pgsql`, `curl`, `openssl`, `sockets`, `session`** | Confirmed feasible |
 
 ---
@@ -50,7 +50,7 @@ Browser ── /login.php, /admin_*.php … (URLs unchanged)
 Vercel  [vercel-php runtime]
    ├── api/*.php            ← all pages/endpoints (moved from root)
    ├── style.css, admin.css, images/, client/dist/…  ← static, served by CDN
-   └── toddcare-backend/src/ ← shared includes (uploaded, blocked from HTTP by 404 route)
+   └── lustre-backend/src/ ← shared includes (uploaded, blocked from HTTP by 404 route)
    │
    ├── PDO(pdo_pgsql) ──► Supabase Postgres (pooler :6543, sslmode=require)
    ├── DB-backed sessions (app_sessions table, same PDO connection)
@@ -67,16 +67,16 @@ Local XAMPP dev keeps working with: `extension=pdo_pgsql` enabled + env vars poi
 
 ### Phase 1 — Vercel scaffolding (mechanical)
 
-1. **Move all root `*.php` → `api/`** (~65 files). Leave at root: CSS/JS files, `images/`, `client/`, `toddcare-backend/`, `*.sql`, docs.
+1. **Move all root `*.php` → `api/`** (~65 files). Leave at root: CSS/JS files, `images/`, `client/`, `lustre-backend/`, `*.sql`, docs.
 2. **Fix includes** in every moved file:
-   `include __DIR__ . '/toddcare-backend/…'` → `include __DIR__ . '/../toddcare-backend/…'` (62 occurrences; same for the 3 `require` SMTP includes + 2 `schedule_sync.php` includes).
+   `include __DIR__ . '/lustre-backend/…'` → `include __DIR__ . '/../lustre-backend/…'` (62 occurrences; same for the 3 `require` SMTP includes + 2 `schedule_sync.php` includes).
 3. **Create `vercel.json`**:
    ```jsonc
    {
      "functions": { "api/*.php": { "runtime": "vercel-php@0.8.0", "memory": 1024, "maxDuration": 60 } },
      "regions": ["sin1"],   // match Supabase project region (recommend Singapore)
      "routes": [
-       { "src": "/toddcare-backend/(.*)", "status": 404 },   // never serve shared-include source
+       { "src": "/lustre-backend/(.*)", "status": 404 },   // never serve shared-include source
        { "handle": "filesystem" },                            // css/js/images/client-dist first
        { "src": "/([^/]+\\.php)", "dest": "/api/$1" },        // all page URLs keep their shape
        { "src": "/", "dest": "/api/index.php" }
@@ -86,12 +86,12 @@ Local XAMPP dev keeps working with: `extension=pdo_pgsql` enabled + env vars poi
    (PHP 8.4 / `vercel-php@0.8.0` for maturity; `0.9.0` = PHP 8.5 if preferred.)
 4. **Create `api/php.ini`**: `memory_limit=512M`, `date.timezone=Asia/Manila`, `display_errors=Off`.
 5. **Create `.vercelignore`**: `client/node_modules`, `*.sql`, `*.md`, `system_flowchart*`, `SYSTEM_FLOWCHART*`, `system_scope*`, `plans/`, `.vercel` — keeps DB dumps and docs out of the public deployment.
-6. **Create `.gitignore`** (repo has no git yet): `node_modules/`, `.vercel/`, `toddcare-backend/src/env.local.php`.
+6. **Create `.gitignore`** (repo has no git yet): `node_modules/`, `.vercel/`, `lustre-backend/src/env.local.php`.
 7. **Routing sanity**: every internal link already uses explicit `*.php` URLs (relative) — verified, no clean-URL rewrites needed. Redirects like `Location: landing.php` resolve correctly.
 
 ### Phase 2 — Supabase Postgres migration (the core of the work)
 
-**2a. Schema — create `supabase/schema.sql`** (run once in Supabase SQL editor), converted from `toddcare_database.sql`:
+**2a. Schema — create `supabase/schema.sql`** (run once in Supabase SQL editor), converted from `lustre_database.sql`:
 
 - Drop `CREATE DATABASE` / `USE`.
 - `INT AUTO_INCREMENT PRIMARY KEY` → `INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY` (explicit-id seed inserts still work).
@@ -104,13 +104,13 @@ Local XAMPP dev keeps working with: `extension=pdo_pgsql` enabled + env vars poi
 - **Add `app_sessions`** table (Phase 3) and `email_tokens` (currently auto-created by OTP scripts).
 - All 13 tables + the 12 existing indexes + FKs.
 
-**2b. DB layer — rewrite `toddcare-backend/src/db.php`:**
+**2b. DB layer — rewrite `lustre-backend/src/db.php`:**
 - Config from env: `DB_HOST` (Supabase pooler host), `DB_PORT` (6543), `DB_USER` (`postgres.<ref>`), `DB_PASSWORD`, `DB_NAME` (Supabase default: `postgres`), `DB_SSLMODE=require`. Optional gitignored `env.local.php` overrides for XAMPP.
 - Connect: `new PDO("pgsql:host=…;port=…;dbname=…", user, pass, [ERRMODE_SILENT, EMULATE_PREPARES=>false, default fetch assoc])`.
 - Set `Asia/Manila` timezone (keep). Guard so double-include is a no-op (session bootstrap will pre-load it).
 - **Failure handling:** replace `die(connect_error)` (credential leak) with `error_log(full detail)` + generic `http_response_code(500)` message.
 
-**2c. mysqli compatibility shim — new `toddcare-backend/src/mysqli_compat.php`:**
+**2c. mysqli compatibility shim — new `lustre-backend/src/mysqli_compat.php`:**
 
 Backs the **exact** API surface the 60+ files already use, so no call sites change:
 
@@ -145,13 +145,13 @@ Backs the **exact** API surface the 60+ files already use, so no call sites chan
 
 ### Phase 3 — DB-backed sessions (61 files, one-line change each)
 
-1. New `toddcare-backend/src/session.php`:
+1. New `lustre-backend/src/session.php`:
    - `require` guarded `db.php` (opens PDO early);
    - `CREATE TABLE IF NOT EXISTS app_sessions (session_id TEXT PRIMARY KEY, payload TEXT, last_activity TIMESTAMPTZ DEFAULT now())` (lazy, mirrors the app’s existing runtime-DDL style);
    - `session_set_save_handler()` over PDO (`read/write/destroy/gc` — gc: probabilistic DELETE + hard purge in the reminders job);
    - cookie params: `samesite=Lax`, `httponly=true`, `secure` when `VERCEL=1` or HTTPS (so XAMPP HTTP still works);
    - `session_start()`.
-2. In all 61 moved files, replace `session_start();` (line 2) with `require __DIR__ . '/../toddcare-backend/src/session.php';` (mechanical, scriptable).
+2. In all 61 moved files, replace `session_start();` (line 2) with `require __DIR__ . '/../lustre-backend/src/session.php';` (mechanical, scriptable).
 3. Logout pages keep their `unset()` behavior (unchanged).
 
 ### Phase 4 — Secrets to env + rotation (user rotates, we relocate)
@@ -178,7 +178,7 @@ Backs the **exact** API surface the 60+ files already use, so no call sites chan
 
 ### Phase 7 — Hardening pass
 
-- 404 route for `/toddcare-backend/*` (Phase 1) + `.vercelignore` for dumps/docs (Phase 1) → no source/schema disclosure.
+- 404 route for `/lustre-backend/*` (Phase 1) + `.vercelignore` for dumps/docs (Phase 1) → no source/schema disclosure.
 - Generic DB error page (Phase 2b).
 - Grep-audit for any remaining literals: `gsk_`, `eutxeqhsattumjhy`, `localhost`, `root` credentials, `session_start()`.
 
@@ -200,13 +200,13 @@ Backs the **exact** API surface the 60+ files already use, so no call sites chan
 | `GROQ_API_KEY` `GROQ_MODEL` | AI chatbot (rotated key, server-side only) |
 | `CRON_SECRET` | Bearer token guarding `/api/send_reminders.php` |
 
-Local XAMPP: enable `extension=pdo_pgsql` in `php.ini`, restart Apache, put the same values in gitignored `toddcare-backend/env.local.php` (or point local dev straight at Supabase).
+Local XAMPP: enable `extension=pdo_pgsql` in `php.ini`, restart Apache, put the same values in gitignored `lustre-backend/env.local.php` (or point local dev straight at Supabase).
 
 ---
 
 ## 6. Verification plan
 
-1. **Lint:** `php -l` every file in `api/` + `toddcare-backend/src/` (via `D:\xampp\php\php.exe`).
+1. **Lint:** `php -l` every file in `api/` + `lustre-backend/src/` (via `D:\xampp\php\php.exe`).
 2. **Static audits:** the zero-match greps listed at the end of Phase 2d + Phase 7.
 3. **Local functional smoke (XAMPP + Supabase DB):** landing → register/OTP email → login (patient/admin/doctor) → book / reschedule / cancel appointment → walk-in, vitals, vaccinations → lab request/result → schedules + time blocks → all 5 PDFs → password change → reminders endpoint via CLI.
 4. **Deploy preview:** `vercel` (CLI) or push to a GitHub repo connected to Vercel → verify `/` routing, static assets, sessions persisting across requests (login survives multiple page loads — proves DB sessions), outbound DB/SMTP/Groq from the function, cron endpoint 401 without token / 200 with token.
