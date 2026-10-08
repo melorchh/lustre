@@ -72,21 +72,20 @@ export default function Tour({ active, onDone }: TourProps) {
     const step = STEPS[index];
     setMobile(isMobile());
     const sel = resolveSelector(step);
-    if (!sel) {
-      setRing(null);
-      setPos(null);
-      return;
-    }
-    const el = document.querySelector(sel);
+    const el = sel ? document.querySelector(sel) : null;
     if (!el) {
-      setRing(null);
-      setPos(null);
+      setRing((prev) => (prev === null ? prev : null));
+      setPos((prev) => (prev === null ? prev : null));
       return;
     }
     const r = rectOf(el);
-    setRing(r);
+    setRing((prev) =>
+      prev && prev.top === r.top && prev.left === r.left && prev.width === r.width && prev.height === r.height
+        ? prev
+        : r
+    );
     if (isMobile()) {
-      setPos(null); // sheet via CSS
+      setPos((prev) => (prev === null ? prev : null)); // sheet via CSS
       return;
     }
     const ch = cardRef.current?.offsetHeight ?? 190;
@@ -99,7 +98,7 @@ export default function Tour({ active, onDone }: TourProps) {
     else top = Math.max(12, (vh - ch) / 2);
     let left = r.left + r.width / 2 - cw / 2;
     left = Math.max(12, Math.min(left, vw - cw - 12));
-    setPos({ top, left });
+    setPos((prev) => (prev && prev.top === top && prev.left === left ? prev : { top, left }));
   }, [index]);
 
   // New step: scroll the target into view, then lock; focus the primary button.
@@ -153,10 +152,10 @@ export default function Tour({ active, onDone }: TourProps) {
     return () => window.removeEventListener('keydown', onKey);
   }, [active, index, finish]);
 
-  // Position card after render (height needed for flip decisions).
+  // Re-measure after the card paints (its height drives the flip decision).
   useLayoutEffect(() => {
     if (active) update();
-  });
+  }, [active, index, mobile, update]);
 
   if (!active) return null;
 

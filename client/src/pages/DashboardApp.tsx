@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { Appointment, LabTest, Vaccination } from '../types';
 import { getInitialData, formatLongDate, formatTime12h, formatStamp, initials } from '../api';
 import Shell from '../shell';
@@ -285,7 +285,8 @@ export default function DashboardApp() {
   const { t, lang } = useLang();
 
   // First-login walkthrough: ?tour=1 from the login flow (new accounts only).
-  // Strip the param immediately and remember completion so a refresh never re-shows it.
+  // The param stays in the URL while the tour runs (so a refresh restarts it),
+  // and is stripped once the tour is finished or skipped.
   const [showTour, setShowTour] = useState(() => {
     try {
       return (
@@ -296,11 +297,6 @@ export default function DashboardApp() {
       return false;
     }
   });
-  useEffect(() => {
-    if (showTour && window.location.search) {
-      history.replaceState(null, '', window.location.pathname);
-    }
-  }, [showTour]);
   const endTour = () => {
     try {
       localStorage.setItem('lustre_tour_done', '1');
@@ -308,6 +304,9 @@ export default function DashboardApp() {
       /* storage unavailable */
     }
     setShowTour(false);
+    if (window.location.search) {
+      history.replaceState(null, '', window.location.pathname);
+    }
   };
 
   const firstName = (patientName || 'Patient').split(' ')[0];
