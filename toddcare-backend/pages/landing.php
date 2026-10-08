@@ -434,6 +434,31 @@ if (isset($_SESSION["patient_id"])) {
 <div class="loading-screen" id="loadingScreen"><div class="spinner"></div><p>Processing&#8230;</p></div>
 <div id="toast"></div>
 
+<!-- == MOBILE BOTTOM NAV == -->
+<nav class="bottom-nav" aria-label="Primary">
+  <a class="bottom-nav-item bottom-nav-home active" href="#hero" aria-current="page">
+    <span class="bottom-nav-icon">
+      <svg class="ic-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.7V21h14V9.7"/><path d="M9.5 21v-6h5v6"/></svg>
+      <svg class="ic-fill" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3 3 10.6V21h6v-6h6v6h6V10.6Z"/></svg>
+    </span>
+    <span>Home</span>
+  </a>
+  <a class="bottom-nav-item" href="about.php">
+    <span class="bottom-nav-icon">
+      <svg class="ic-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11.2v5"/><circle cx="12" cy="7.8" r="0.9" fill="currentColor" stroke="none"/></svg>
+      
+    </span>
+    <span>About</span>
+  </a>
+  <a class="bottom-nav-item" href="#contact">
+    <span class="bottom-nav-icon">
+      <svg class="ic-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 16.9v2.8a2 2 0 0 1-2.2 2 19.6 19.6 0 0 1-8.5-3 19.3 19.3 0 0 1-6-6 19.6 19.6 0 0 1-3-8.6 2 2 0 0 1 2-2.2h2.8a2 2 0 0 1 2 1.7c.13 1 .37 1.9.7 2.8a2 2 0 0 1-.49 2.1L8 9.9a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2.1-.5c.9.33 1.83.57 2.8.7a2 2 0 0 1 1.7 2.1Z"/></svg>
+      </span>
+    <span>Contact</span>
+  </a>
+  <button class="bottom-nav-cta" type="button" onclick="openModal('loginModal')">Book Now</button>
+</nav>
+
 <script>
 /* -- Navbar scroll -- */
 window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',scrollY>40));
