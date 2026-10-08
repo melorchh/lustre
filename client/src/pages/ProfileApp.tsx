@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { getInitialData, initials, formatStamp } from '../api';
 import Shell from '../shell';
 import Hero from '../components/Hero';
@@ -47,7 +47,29 @@ export default function ProfileApp() {
 
   const [savingInfo, setSavingInfo] = useState(false);
   const [savingMetrics, setSavingMetrics] = useState(false);
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [editingMetrics, setEditingMetrics] = useState(false);
   const [donePopup, setDonePopup] = useState<{ title: string; msg: string } | null>(null);
+
+  const infoSnapshot = useRef({ ...info });
+  const metricsSnapshot = useRef({ ...metrics });
+
+  const startEditInfo = () => {
+    infoSnapshot.current = { ...info };
+    setEditingInfo(true);
+  };
+  const cancelEditInfo = () => {
+    setInfo({ ...infoSnapshot.current });
+    setEditingInfo(false);
+  };
+  const startEditMetrics = () => {
+    metricsSnapshot.current = { ...metrics };
+    setEditingMetrics(true);
+  };
+  const cancelEditMetrics = () => {
+    setMetrics({ ...metricsSnapshot.current });
+    setEditingMetrics(false);
+  };
 
   const saveInfo = async () => {
     if (!info.name.trim() || !info.email.trim() || !info.contact.trim()) {
@@ -70,6 +92,7 @@ export default function ProfileApp() {
       const res = await fetch('patient_profile_action.php', { method: 'POST', body: fd });
       const text = await res.text();
       if (text.trim() === 'success') {
+        setEditingInfo(false);
         setDonePopup({ title: t('prof_update_toast'), msg: t('prof_updated_ok') });
       } else {
         showToast(text.trim().replace(/^error:\s*/i, '') || t('prof_update_failed'), 'error');
@@ -101,6 +124,7 @@ export default function ProfileApp() {
       const res = await fetch('patient_profile_action.php', { method: 'POST', body: fd });
       const text = await res.text();
       if (text.trim() === 'success') {
+        setEditingMetrics(false);
         setDonePopup({ title: t('prof_measurements_toast'), msg: t('prof_measurements_ok') });
       } else {
         showToast(text.trim().replace(/^error:\s*/i, '') || t('prof_measurements_failed'), 'error');
@@ -151,6 +175,7 @@ export default function ProfileApp() {
                 value={info.name}
                 onChange={(e) => setInfo({ ...info, name: e.target.value })}
                 placeholder={t('prof_full_name_ph')}
+                disabled={!editingInfo}
               />
             </div>
 
@@ -163,6 +188,7 @@ export default function ProfileApp() {
                 value={info.email}
                 onChange={(e) => setInfo({ ...info, email: e.target.value })}
                 placeholder="you@example.com"
+                disabled={!editingInfo}
               />
             </div>
 
@@ -175,6 +201,7 @@ export default function ProfileApp() {
                 value={info.contact}
                 onChange={(e) => setInfo({ ...info, contact: e.target.value })}
                 placeholder="e.g. 0917 123 4567"
+                disabled={!editingInfo}
               />
             </div>
 
@@ -189,6 +216,7 @@ export default function ProfileApp() {
                 value={info.age}
                 onChange={(e) => setInfo({ ...info, age: e.target.value })}
                 placeholder={t('prof_age')}
+                disabled={!editingInfo}
               />
             </div>
 
@@ -201,14 +229,29 @@ export default function ProfileApp() {
                 value={info.address}
                 onChange={(e) => setInfo({ ...info, address: e.target.value })}
                 placeholder={t('prof_address_ph')}
+                disabled={!editingInfo}
               />
             </div>
           </div>
 
-          <button type="button" className="submit-btn" disabled={savingInfo} onClick={saveInfo}>
-            {savingInfo ? <span className="btn-spinner" aria-hidden="true" /> : <SvgUser size={18} />}
-            {t('prof_save_info')}
-          </button>
+          {!editingInfo ? (
+            <div className="profile-actions">
+              <button type="button" className="submit-btn" onClick={startEditInfo}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                {t('prof_edit')}
+              </button>
+            </div>
+          ) : (
+            <div className="profile-actions">
+              <button type="button" className="submit-btn" disabled={savingInfo} onClick={saveInfo}>
+                {savingInfo ? <span className="btn-spinner" aria-hidden="true" /> : <SvgUser size={18} />}
+                {t('prof_save_changes')}
+              </button>
+              <button type="button" className="btn-outline" disabled={savingInfo} onClick={cancelEditInfo}>
+                {t('prof_cancel')}
+              </button>
+            </div>
+          )}
         </section>
 
         <section className="profile-card">
@@ -231,6 +274,7 @@ export default function ProfileApp() {
                 value={metrics.height}
                 onChange={(e) => setMetrics({ ...metrics, height: e.target.value })}
                 placeholder="e.g. 165"
+                disabled={!editingMetrics}
               />
             </div>
 
@@ -247,6 +291,7 @@ export default function ProfileApp() {
                 value={metrics.weight}
                 onChange={(e) => setMetrics({ ...metrics, weight: e.target.value })}
                 placeholder="e.g. 58.5"
+                disabled={!editingMetrics}
               />
             </div>
           </div>
@@ -266,10 +311,24 @@ export default function ProfileApp() {
             <p className="bmi-hint">{t('prof_bmi_hint')}</p>
           )}
 
-          <button type="button" className="submit-btn" disabled={savingMetrics} onClick={saveMetrics}>
-            {savingMetrics ? <span className="btn-spinner" aria-hidden="true" /> : <SvgCheck size={18} />}
-            {t('prof_save_measurements')}
-          </button>
+          {!editingMetrics ? (
+            <div className="profile-actions">
+              <button type="button" className="submit-btn" onClick={startEditMetrics}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                {t('prof_edit')}
+              </button>
+            </div>
+          ) : (
+            <div className="profile-actions">
+              <button type="button" className="submit-btn" disabled={savingMetrics} onClick={saveMetrics}>
+                {savingMetrics ? <span className="btn-spinner" aria-hidden="true" /> : <SvgCheck size={18} />}
+                {t('prof_save_changes')}
+              </button>
+              <button type="button" className="btn-outline" disabled={savingMetrics} onClick={cancelEditMetrics}>
+                {t('prof_cancel')}
+              </button>
+            </div>
+          )}
         </section>
       </main>
 

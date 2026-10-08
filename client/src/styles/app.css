@@ -3464,6 +3464,43 @@ html[data-theme="dark"] .modal-alert-icon--ok {
   cursor: not-allowed;
 }
 
+/* ── Profile edit / view mode ─────────────────────── */
+.profile-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+.profile-actions .submit-btn {
+  margin-top: 0;
+}
+.btn-outline {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 58px;
+  padding: 1.05rem;
+  border: 2px solid var(--gray-100);
+  border-radius: 16px;
+  background: var(--white);
+  color: var(--gray-800);
+  font-size: 1.06rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.25s var(--ease);
+}
+.btn-outline:hover:not(:disabled) {
+  border-color: var(--green);
+  color: var(--green-dark);
+  transform: translateY(-2px);
+}
+.btn-outline:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 /* ── Success card (lab) ──────────────────────────── */
 .success-card {
   background: var(--white);
@@ -5062,6 +5099,18 @@ html[data-theme="dark"] .db-result-note {
   color: var(--gray-400);
   font-weight: 500;
 }
+.text-input:disabled {
+  background: var(--gray-100);
+  border-color: var(--gray-100);
+  color: var(--gray-600);
+  cursor: not-allowed;
+  -webkit-text-fill-color: var(--gray-600);
+  opacity: 1;
+}
+.text-input:disabled::placeholder {
+  color: var(--gray-400);
+  -webkit-text-fill-color: var(--gray-400);
+}
 
 .bmi-card {
   display: flex;
@@ -5146,6 +5195,9 @@ html[data-theme="dark"] .db-result-note {
   }
   .profile-form-grid {
     grid-template-columns: 1fr;
+  }
+  .profile-actions {
+    flex-direction: column;
   }
 }
 
