@@ -1,7 +1,7 @@
 import type { InitialData, MedicalDate } from './types';
 
 export function getInitialData(): InitialData {
-  return window.__Lustre__ ?? { patientName: 'Patient', doctors: [] };
+  return window.__LUSTRE__ ?? { patientName: 'Patient', doctors: [] };
 }
 
 export async function fetchAvailableDates(doctorId: number): Promise<MedicalDate[]> {

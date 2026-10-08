@@ -89,6 +89,6 @@ export interface InitialData {
 
 declare global {
   interface Window {
-    __Lustre__?: InitialData;
+    __LUSTRE__?: InitialData;
   }
 }

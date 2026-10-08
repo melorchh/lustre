@@ -1,6 +1,6 @@
 <?php
-require __DIR__ . '/../toddcare-backend/src/session.php';
-include __DIR__ . '/../toddcare-backend/src/db.php';
+require __DIR__ . '/../lustre-backend/src/session.php';
+include __DIR__ . '/../lustre-backend/src/db.php';
 
 header('Content-Type: text/plain; charset=utf-8');
 
