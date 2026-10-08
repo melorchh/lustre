@@ -887,6 +887,61 @@ select {
   }
 }
 
+/* ── Mission & Vision (About page) ── */
+.mv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  max-width: 920px;
+  margin: 2.4rem auto 0;
+}
+.mv-card {
+  background: var(--white);
+  border: 1.5px solid var(--gray-100);
+  border-radius: 24px;
+  padding: 2rem 1.9rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s var(--ease);
+}
+.mv-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--green-pale2);
+}
+.mv-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: var(--green-pale);
+  color: var(--green-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.1rem;
+}
+.mv-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--green-dark);
+  margin-bottom: 0.55rem;
+}
+.mv-text {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--gray-600);
+  margin: 0;
+}
+@media (max-width: 640px) {
+  .mv-grid {
+    grid-template-columns: 1fr;
+  }
+  .mv-card {
+    padding: 1.6rem 1.4rem;
+  }
+}
+
 /* ══ FOOTER ══ */
 footer {
   margin-top: 3.5rem;
@@ -2434,13 +2489,17 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
   transform: translateY(-1px);
 }
 
-/* Only on tablet/phone widths � the top navbar carries the links on desktop */
+/* Only on tablet/phone widths — the top navbar carries the links on desktop */
 @media (max-width: 1024px) {
   .bottom-nav {
     display: flex;
   }
-  body {
-    padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+  /* No body padding here: the fixed nav overlays the page instead.
+     The footer itself stretches down behind the nav so its teal runs
+     flush into the white bar with no background gap at the bottom. */
+  footer {
+    margin-bottom: 0;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
   /* lift the chatbot clear of the fixed bar */
   #chatbotWidget {

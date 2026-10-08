@@ -119,93 +119,40 @@ if (isset($_SESSION["patient_id"])) {
 <!-- == SERVICES == -->
 <section class="services" id="services">
   <div class="section-header">
-    <div class="section-tag" data-t="svc_title">Laboratory &amp; Diagnostic Services</div>
+    <div class="section-tag" data-t="svc_title">Clinic Services</div>
     <h2 class="section-title" data-t="svc_header">Everything You Need,<br>Right Here</h2>
-    <p class="section-sub" data-t="svc_sub">From routine bloodwork to specialized diagnostics &mdash; fast, accurate, and accessible.</p>
+    <p class="section-sub" data-t="svc_sub">Consultations, vaccinations, and medical certificates &mdash; all in one place.</p>
   </div>
 
   <div class="services-grid">
     <div class="service-card">
-      <div class="service-icon icon-blue"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7s6 6.3 6 10.4a6 6 0 0 1-12 0C6 9 12 2.7 12 2.7Z"/></svg></div>
-      <div class="service-title" data-t="svc_blood">Blood Tests</div>
-      <div class="service-desc" data-t="svc_blood_desc">Comprehensive hematology and chemistry panels for a full picture of your health.</div>
-      <ul class="service-items">
-        <li>CBC &mdash; checks anemia, infection &amp; overall health</li>
-        <li>Fasting Blood Sugar (FBS) &mdash; for diabetes screening</li>
-        <li>Lipid Profile &mdash; cholesterol &amp; triglycerides</li>
-        <li>Uric Acid &mdash; gout detection</li>
-        <li>Creatinine / BUN &mdash; kidney function</li>
-        <li>Blood Typing &mdash; ABO &amp; Rh factor</li>
-      </ul>
-      <div class="service-badge">6 tests available</div>
+      <div class="service-icon icon-blue"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12h.01"/><path d="M15 12h.01"/><path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/></svg></div>
+      <div class="service-title" data-t="svc_peds">Pediatric Consultation</div>
     </div>
 
     <div class="service-card">
-      <div class="service-icon icon-cyan"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v6.3L4.5 17a2.5 2.5 0 0 0 2 4h11a2.5 2.5 0 0 0 2-4L14 8.3V2"/><path d="M8.5 2h7"/><path d="M7 15h10"/></svg></div>
-      <div class="service-title" data-t="svc_urine">Urine &amp; Stool Tests</div>
-      <div class="service-desc" data-t="svc_urine_desc">Detect urinary, digestive, and parasitic conditions early through targeted specimen analysis.</div>
-      <ul class="service-items">
-        <li>Urinalysis &mdash; UTI, kidney &amp; diabetes markers</li>
-        <li>Fecalysis (Stool Exam) &mdash; parasites &amp; digestion</li>
-        <li>Occult Blood Test &mdash; hidden blood in stool</li>
-      </ul>
-      <div class="service-badge">3 tests available</div>
+      <div class="service-icon icon-cyan"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div class="service-title" data-t="svc_adult">Adult Consultation</div>
     </div>
 
     <div class="service-card">
-      <div class="service-icon icon-rose"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 1 1-1h2"/></svg></div>
-      <div class="service-title" data-t="svc_infectious">Infectious Disease Tests</div>
-      <div class="service-desc" data-t="svc_infectious_desc">Rapid screening and confirmation tests for common viral and bacterial infections.</div>
-      <ul class="service-items">
-        <li>Dengue NS1 / IgG / IgM</li>
-        <li>COVID-19 Antigen / RT-PCR</li>
-        <li>Hepatitis B Screening &mdash; HBsAg</li>
-        <li>HIV Screening (select branches)</li>
-        <li>Typhoid &mdash; Widal Test</li>
-      </ul>
-      <div class="service-badge">5 panels available</div>
+      <div class="service-icon icon-rose"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M12 14v7"/><path d="M9 18h6"/></svg></div>
+      <div class="service-title" data-t="svc_obgyn_c">OB-Gyn Consultation (by appointment)</div>
     </div>
 
     <div class="service-card">
-      <div class="service-icon icon-purple"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h.01"/><path d="M15 12h.01"/><path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/><path d="M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5S14 8 12 8s-3.5-1.1-3.5-2.5"/></svg></div>
-      <div class="service-title" data-t="svc_pregnancy">Pregnancy &amp; Hormonal</div>
-      <div class="service-desc" data-t="svc_pregnancy_desc">Specialized OB-GYN testing for reproductive health, fertility, and prenatal monitoring.</div>
-      <ul class="service-items">
-        <li>Pregnancy Test &mdash; urine or serum hCG</li>
-        <li>TSH &mdash; thyroid function screen</li>
-        <li>Prenatal Panel &mdash; complete maternal workup</li>
-        <li>Hormonal Profile &mdash; FSH, LH, Estrogen</li>
-        <li>Glucose Tolerance Test (GTT)</li>
-      </ul>
-      <div class="service-badge">OB-GYN specialty</div>
+      <div class="service-icon icon-purple"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m18 2 4 4"/><path d="m17 7 3-3"/><path d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5"/><path d="m9 11 4 4"/><path d="m5 19-3 3"/><path d="m14 4 6 6"/></svg></div>
+      <div class="service-title" data-t="svc_vaccine">Pediatric and Adult Vaccination</div>
     </div>
 
     <div class="service-card">
-      <div class="service-icon icon-amber"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19.07 4.93A10 10 0 0 0 6.99 3.34"/><path d="M4 6h.01"/><path d="M2.29 9.62a10 10 0 1 0 19.02-1.27"/><path d="M16.24 7.76a6 6 0 1 0-8.01 8.91"/><path d="M12 18h.01"/><path d="M17.99 11.66a6 6 0 0 1-2.22 5.01"/><circle cx="12" cy="12" r="2"/></svg></div>
-      <div class="service-title" data-t="svc_imaging">Imaging Services</div>
-      <div class="service-desc" data-t="svc_imaging_desc">State-of-the-art imaging for internal assessment, prenatal monitoring, and structural evaluation.</div>
-      <ul class="service-items">
-        <li>X-Ray &mdash; chest, skeletal &amp; diagnostic</li>
-        <li>Ultrasound &mdash; abdominal, pelvic &amp; prenatal</li>
-        <li>Transvaginal Ultrasound &mdash; OB-GYN specific</li>
-        <li>Fetal Anomaly Scan</li>
-        <li>Amniotic Fluid Index (AFI)</li>
-      </ul>
-      <div class="service-badge">By appointment</div>
+      <div class="service-icon icon-amber"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></svg></div>
+      <div class="service-title" data-t="svc_medcert">Medical Certification</div>
     </div>
 
     <div class="service-card">
-      <div class="service-icon icon-green"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2v2"/><path d="M5 2v2"/><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/></svg></div>
-      <div class="service-title" data-t="svc_other">Other Clinical Services</div>
-      <div class="service-desc" data-t="svc_other_desc">Occupational health, cardiac screening, and clearance services for work and school requirements.</div>
-      <ul class="service-items">
-        <li>ECG &mdash; electrocardiogram for heart health</li>
-        <li>Drug Testing &mdash; employment &amp; pre-employment</li>
-        <li>Physical Exam &mdash; school &amp; work clearance</li>
-        <li>Non-Stress Test (NST) &mdash; prenatal monitoring</li>
-        <li>Medical Certificate Issuance</li>
-      </ul>
-      <div class="service-badge">Walk-ins welcome</div>
+      <div class="service-icon icon-green"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></div>
+      <div class="service-title" data-t="svc_physexam">Physical Examination / Fit to Work Certification</div>
     </div>
   </div>
 </section>
@@ -1297,25 +1244,14 @@ const TL = {
   footer_staff: { en: 'Staff Portal', fil: 'Portal ng Staff' },
   footer_doctor: { en: 'Doctor Login', fil: 'Pag-login ng Doktor' },
   footer_admin: { en: 'Admin Login', fil: 'Pag-login ng Admin' },
-  svc_title: { en: 'Laboratory & Diagnostic Services', fil: 'Laboratory at Diagnostic Services' },
-  svc_sub: { en: 'From routine bloodwork to specialized diagnostics \u2014 fast, accurate, and accessible.', fil: 'Mula sa regular na bloodwork hanggang sa specialized diagnostics \u2014 mabilis, tama, at accessible.' },
-  svc_blood: { en: 'Blood Tests', fil: 'Blood Tests' },
-  svc_blood_desc: { en: 'Comprehensive hematology and chemistry panels for a full picture of your health.', fil: 'Kumpletong hematology at chemistry panels para sa buong larawan ng iyong kalusugan.' },
-  svc_urine: { en: 'Urine & Stool Tests', fil: 'Urine at Stool Tests' },
-  svc_urine_desc: { en: 'Detect urinary, digestive, and parasitic conditions early through targeted specimen analysis.', fil: 'Tuklasin nang maaga ang urinary, digestive, at parasitic conditions sa pamamagitan ng specimen analysis.' },
-  svc_infectious: { en: 'Infectious Disease Tests', fil: 'Infectious Disease Tests' },
-  svc_infectious_desc: { en: 'Rapid screening and confirmation tests for common viral and bacterial infections.', fil: 'Mabilis na screening at confirmation tests para sa karaniwang viral at bacterial infections.' },
-  svc_pregnancy: { en: 'Pregnancy & Hormonal', fil: 'Pagbubuntis at Hormonal' },
-  svc_pregnancy_desc: { en: 'Specialized OB-GYN testing for reproductive health, fertility, and prenatal monitoring.', fil: 'Specialized OB-GYN testing para sa reproductive health, fertility, at prenatal monitoring.' },
-  svc_imaging: { en: 'Imaging Services', fil: 'Imaging Services' },
-  svc_imaging_desc: { en: 'State-of-the-art imaging for internal assessment, prenatal monitoring, and structural evaluation.', fil: 'State-of-the-art imaging para sa internal assessment, prenatal monitoring, at structural evaluation.' },
-  svc_other: { en: 'Other Clinical Services', fil: 'Iba pang Clinical Services' },
-  svc_other_desc: { en: 'Occupational health, cardiac screening, and clearance services for work and school requirements.', fil: 'Occupational health, cardiac screening, at clearance services para sa work at school requirements.' },
-  svc_walkins: { en: 'Walk-ins welcome', fil: 'Walk-ins welcome' },
-  svc_byappt: { en: 'By appointment', fil: 'By appointment' },
-  svc_available: { en: 'tests available', fil: 'tests available' },
-  svc_panels: { en: 'panels available', fil: 'panels available' },
-  svc_obgyn: { en: 'OB-GYN specialty', fil: 'OB-GYN specialty' },
+  svc_title: { en: 'Clinic Services', fil: 'Mga Serbisyo sa Klinika' },
+  svc_sub: { en: 'Consultations, vaccinations, and medical certificates \u2014 all in one place.', fil: 'Mga konsultasyon, bakuna, at medical certificate \u2014 lahat sa isang lugar.' },
+  svc_peds: { en: 'Pediatric Consultation', fil: 'Pediatrikong Konsultasyon' },
+  svc_adult: { en: 'Adult Consultation', fil: 'Konsultasyong Pang-adulto' },
+  svc_obgyn_c: { en: 'OB-Gyn Consultation (by appointment)', fil: 'OB-Gyn Konsultasyon (sa pamamagitan ng appointment)' },
+  svc_vaccine: { en: 'Pediatric and Adult Vaccination', fil: 'Pediatrikong at Pang-adultong Bakuna' },
+  svc_medcert: { en: 'Medical Certification', fil: 'Medical na Sertipikasyon' },
+  svc_physexam: { en: 'Physical Examination / Fit to Work Certification', fil: 'Physical Examination / Fit to Work Certification' },
   svc_header: { en: 'Everything You Need, Right Here', fil: 'Lahat ng Kailangan Mo, Dito Lang' },
   contact_tag: { en: 'Contact', fil: 'Contact' },
   contact_title: { en: 'Get In Touch', fil: 'Makipag-ugnayan Ka' },
