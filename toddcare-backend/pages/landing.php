@@ -187,11 +187,6 @@ if (isset($_SESSION["patient_id"])) {
 <footer>
   <div class="footer-inner">
     <p class="footer-copy">&copy; <?php echo date('Y'); ?> LustreMDC Clinics &amp; Diagnostics. <span data-t="footer_rights">All rights reserved.</span></p>
-    <div class="footer-staff">
-      <span class="footer-staff-label" data-t="footer_staff">Staff Portal</span>
-      <a class="staff-btn" href="doctor_login.php" data-t="footer_doctor">Doctor</a>
-      <a class="staff-btn" href="admin_login.php" data-t="footer_admin">Admin</a>
-    </div>
   </div>
 </footer>
 
@@ -204,7 +199,7 @@ if (isset($_SESSION["patient_id"])) {
     <div class="modal-sub" data-t="login_sub">Sign in to manage your appointments</div>
     <div class="form-error" id="loginError"></div>
     <form id="loginForm">
-      <div class="field"><label data-t="login_email">Email address</label><input type="email" name="email" placeholder="you@example.com" required autocomplete="email"></div>
+      <div class="field"><label data-t="login_email">Email or username</label><input type="email" name="email" placeholder="you@example.com or username" required autocomplete="email"></div>
       <div class="field"><label data-t="login_password">Password</label><div class="pw-field"><input type="password" name="password" id="loginPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required autocomplete="current-password"><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
       <button type="submit" class="submit-btn"><span data-t="login_btn">Sign In</span> &rarr;</button>
     </form>
@@ -480,15 +475,22 @@ function showToast(msg,type=''){const t=document.getElementById('toast');t.textC
 function showLoading(){document.getElementById('loadingScreen').classList.add('active')}
 function hideLoading(){document.getElementById('loadingScreen').classList.remove('active')}
 
-/* -- Login -- */
+/* -- Login (patients by email; admins and doctors by username) -- */
 document.getElementById('loginForm').addEventListener('submit',function(e){
   e.preventDefault();const err=document.getElementById('loginError');err.classList.remove('show');showLoading();
   fetch('login.php',{method:'POST',body:new FormData(this)}).then(r=>r.text()).then(res=>{hideLoading();
-    if(res.trim()==='success:new'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php',900);}
-    else if(res.trim()==='success'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php',900);}
+    res=res.trim();
+    if(res==='success:new'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php',900);}
+    else if(res==='success'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php',900);}
+    else if(res==='success:doctor'){showToast('Welcome back, Doctor!','success');setTimeout(()=>location.href='doctor_dashboard.php',900);}
+    else if(res==='success:admin'){showToast('Welcome back!','success');setTimeout(()=>location.href='admin_dashboard.php',900);}
+    else if(res==='success:admin:change'){showToast('Please set a new password','success');setTimeout(()=>location.href='admin_change_password.php',900);}
     else{err.textContent=res;err.classList.add('show');}
   }).catch(()=>{hideLoading();showToast('Network error','error');});
 });
+
+/* -- Deep link: landing.php?signin=1 opens the Sign In sheet -- */
+if(new URLSearchParams(location.search).has('signin')){setTimeout(()=>openModal('loginModal'),350);}
 
 /* -- Forgot Password -- */
 let fpEmail = '';
@@ -1198,7 +1200,7 @@ const TL = {
   trust_label: { en: 'Trusted Diagnostic Services', fil: 'Mapagkakatiwalaang Diagnostic Services' },
   login_title: { en: 'Welcome', fil: 'Maligayang Pagdating' },
   login_sub: { en: 'Sign in to manage your appointments', fil: 'Mag-sign in para pamahalaan ang iyong mga appointment' },
-  login_email: { en: 'Email address', fil: 'Email Address' },
+  login_email: { en: 'Email or username', fil: 'Email o username' },
   login_password: { en: 'Password', fil: 'Password' },
   login_btn: { en: 'Sign In', fil: 'Mag-sign In' },
   login_forgot: { en: 'Forgot password?', fil: 'Nakalimutan ang password?' },
@@ -1241,9 +1243,6 @@ const TL = {
   reg_have_account: { en: 'Already have an account?', fil: 'May account na ba?' },
   reg_login: { en: 'Login here', fil: 'Mag-login dito' },
   footer_rights: { en: 'All rights reserved.', fil: 'Lahat ng karapatan ay reserved.' },
-  footer_staff: { en: 'Staff Portal', fil: 'Portal ng Staff' },
-  footer_doctor: { en: 'Doctor Login', fil: 'Pag-login ng Doktor' },
-  footer_admin: { en: 'Admin Login', fil: 'Pag-login ng Admin' },
   svc_title: { en: 'Clinic Services', fil: 'Mga Serbisyo sa Klinika' },
   svc_sub: { en: 'Consultations, vaccinations, and medical certificates \u2014 all in one place.', fil: 'Mga konsultasyon, bakuna, at medical certificate \u2014 lahat sa isang lugar.' },
   svc_peds: { en: 'Pediatric Consultation', fil: 'Pediatrikong Konsultasyon' },
