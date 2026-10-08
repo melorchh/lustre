@@ -56,6 +56,29 @@ if (isset($_SESSION["patient_id"])) {
   </div>
 </section>
 
+<!-- == MISSION & VISION == -->
+<section class="page-section mv-section">
+  <div class="section-header">
+    <div class="section-tag">Mission &amp; Vision</div>
+    <h2 class="section-title">What Guides Us</h2>
+    <p class="section-sub">The purpose and promise behind everything we do.</p>
+  </div>
+
+  <div class="mv-grid">
+    <div class="mv-card">
+      <div class="mv-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+      <div class="mv-label">Mission</div>
+      <p class="mv-text">To provide safe, efficient, and affordable healthcare services with professionalism and integrity. We are committed to meeting the medical needs of our patients through skilled staff, and compassionate service.</p>
+    </div>
+
+    <div class="mv-card">
+      <div class="mv-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></div>
+      <div class="mv-label">Vision</div>
+      <p class="mv-text">To be a trusted healthcare provider that delivers compassionate, high-quality and accessible medical services to the community. We aim to promote healthier lives through patient-centered care and continuous improvement.</p>
+    </div>
+  </div>
+</section>
+
 <!-- == CLINIC RULES AND REGULATIONS == -->
 <section class="page-section rules-section" id="rules">
   <div class="section-header">
