@@ -190,6 +190,35 @@ select {
   box-shadow: 0 10px 24px rgba(13, 148, 136, 0.4);
 }
 
+/* ── Text links (About / Contact) ──
+   Same 48px pill metrics, radius, type and hover motion as the
+   other navbar controls — only the fill is absent until hover. */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.nav-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 1.1rem;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--gray-600);
+  transition: all 0.25s var(--ease);
+}
+.nav-links a:hover {
+  background: var(--green-pale2);
+  color: var(--green-dark);
+  transform: translateY(-1px);
+}
+
 /* ── Uniform navbar controls ──────────────────────────
    FIL/EN, day/night, Sign In and Register Free must read
    as one control group: identical height, radius, border
@@ -695,6 +724,17 @@ select {
   padding: 0.4rem 0.95rem;
   border-radius: 50px;
   border: 1px solid var(--green-pale2);
+}
+
+/* ══ ABOUT / CONTACT (placeholder sections) ══ */
+.page-section {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 3.5rem 1.5rem 1rem;
+  scroll-margin-top: 6rem;
+}
+.page-section .section-header {
+  margin-bottom: 0;
 }
 
 /* ══ FOOTER ══ */
@@ -1830,6 +1870,15 @@ footer .footer-copy {
 }
 
 /* ══ RESPONSIVE ══ */
+/* ── Tablet & below ──
+   The wordmark + four uniform controls already fill the row here, so the
+   text links yield the navbar (they return above 1024px). */
+@media (max-width: 1024px) {
+  .nav-links {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   .navbar-inner {
     padding: 0.7rem 1rem;

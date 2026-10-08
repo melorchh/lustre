@@ -29,6 +29,10 @@ if (isset($_SESSION["patient_id"])) {
       <div class="nav-logo-circle"><img src="images/Lustre.png" alt="Logo" class="logo-img" width="40" height="40"></div>
       <span class="nav-clinic-name">LUSTRE MEDICAL DIAGNOSTIC CLINIC</span>
     </a>
+    <div class="nav-links">
+      <a href="#about" data-t="nav_about">About</a>
+      <a href="#contact" data-t="nav_contact">Contact</a>
+    </div>
     <div class="nav-actions">
       <button class="lang-toggle" type="button" id="langToggle" onclick="toggleLang()" title="Switch language">
         <span id="langLabel">FIL</span>
@@ -203,6 +207,24 @@ if (isset($_SESSION["patient_id"])) {
       </ul>
       <div class="service-badge">Walk-ins welcome</div>
     </div>
+  </div>
+</section>
+
+<!-- == ABOUT == -->
+<section class="page-section" id="about">
+  <div class="section-header">
+    <div class="section-tag" data-t="about_tag">About</div>
+    <h2 class="section-title" data-t="about_title">About LustreMDC</h2>
+    <p class="section-sub" data-t="about_sub">Content coming soon.</p>
+  </div>
+</section>
+
+<!-- == CONTACT == -->
+<section class="page-section" id="contact">
+  <div class="section-header">
+    <div class="section-tag" data-t="contact_tag">Contact</div>
+    <h2 class="section-title" data-t="contact_title">Get In Touch</h2>
+    <p class="section-sub" data-t="contact_sub">Content coming soon.</p>
   </div>
 </section>
 
@@ -1179,6 +1201,8 @@ function resetRegisterOtp() {
 
 // -- Language Toggle (EN / FIL) --
 const TL = {
+  nav_about: { en: 'About', fil: 'Tungkol' },
+  nav_contact: { en: 'Contact', fil: 'Makipag-ugnayan' },
   nav_signin: { en: 'Sign In', fil: 'Mag-sign In' },
   nav_register: { en: 'Register Free', fil: 'Mag-register Libre' },
   hero_eyebrow: { en: 'Modern Healthcare, Simplified', fil: 'Modernong Kalusugan, Pinasimple' },
@@ -1260,6 +1284,12 @@ const TL = {
   svc_panels: { en: 'panels available', fil: 'panels available' },
   svc_obgyn: { en: 'OB-GYN specialty', fil: 'OB-GYN specialty' },
   svc_header: { en: 'Everything You Need, Right Here', fil: 'Lahat ng Kailangan Mo, Dito Lang' },
+  about_tag: { en: 'About', fil: 'Tungkol' },
+  about_title: { en: 'About LustreMDC', fil: 'Tungkol sa LustreMDC' },
+  about_sub: { en: 'Content coming soon.', fil: 'Parating na ang nilalaman.' },
+  contact_tag: { en: 'Contact', fil: 'Contact' },
+  contact_title: { en: 'Get In Touch', fil: 'Makipag-ugnayan Ka' },
+  contact_sub: { en: 'Content coming soon.', fil: 'Parating na ang nilalaman.' },
   loading: { en: 'Processing\u2026', fil: 'Pinoproseso\u2026' },
 };
 let _lang = localStorage.getItem('meLang') || 'en';
