@@ -2235,3 +2235,105 @@ html[data-theme="dark"] .theme-toggle .icon-sun {
 html[data-theme="dark"] .theme-toggle .icon-moon {
   display: block;
 }
+/* ---------------------------------------------------
+   MOBILE BOTTOM NAV — fixed bar, rounded top corners
+   --------------------------------------------------- */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1300;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.75rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
+  background: var(--white);
+  border-top: 1.5px solid var(--gray-100);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -6px 24px rgba(13, 148, 136, 0.14);
+}
+.bottom-nav-item {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0.3rem 0.15rem;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--gray-600);
+  transition: color 0.2s var(--ease);
+}
+.bottom-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+}
+.bottom-nav-item svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+  color: var(--gray-800);
+}
+.bottom-nav-item .ic-fill {
+  display: none;
+}
+.bottom-nav-item.active {
+  color: var(--green-dark);
+}
+.bottom-nav-item.active svg {
+  color: var(--green-dark);
+}
+.bottom-nav-home.active .ic-outline {
+  display: none;
+}
+.bottom-nav-home.active .ic-fill {
+  display: block;
+}
+.bottom-nav-cta {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 1.15rem;
+  border: none;
+  border-radius: 12px;
+  background: var(--green-dark);
+  color: var(--white);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.25s var(--ease);
+}
+.bottom-nav-cta:hover {
+  background: var(--green);
+  transform: translateY(-1px);
+}
+
+/* Only on tablet/phone widths — the top navbar carries the links on desktop */
+@media (max-width: 1024px) {
+  .bottom-nav {
+    display: flex;
+  }
+  body {
+    padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+  }
+  /* lift the chatbot clear of the fixed bar */
+  #chatbotWidget {
+    bottom: calc(5.6rem + var(--kb, 0px));
+  }
+  #chatbotBox {
+    bottom: calc(9.9rem + var(--kb, 0px));
+  }
+}
