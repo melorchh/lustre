@@ -745,7 +745,7 @@ select {
   margin-bottom: 0;
 }
 .about-page {
-  min-height: calc(100vh - 220px);
+  min-height: 42vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -772,6 +772,119 @@ select {
 .back-home-btn:hover {
   background: var(--green-pale2);
   transform: translateY(-1px);
+}
+
+/* ── Contact cards (same card language as the services grid) ── */
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  max-width: 920px;
+  margin: 2.4rem auto 0;
+}
+.contact-card {
+  background: var(--white);
+  border: 1.5px solid var(--gray-100);
+  border-radius: 24px;
+  padding: 1.8rem 1.7rem;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  transition: all 0.3s var(--ease);
+}
+.contact-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--green-pale2);
+}
+.contact-icon {
+  width: 62px;
+  height: 62px;
+  border-radius: 20px;
+  background: var(--green-pale);
+  color: var(--green-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+.contact-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--green-dark);
+  margin-bottom: 0.35rem;
+}
+.contact-name {
+  font-family: 'Lora', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--green-deep);
+}
+.contact-detail {
+  color: var(--gray-600);
+  font-size: 0.95rem;
+}
+.contact-detail a {
+  color: var(--green-dark);
+  font-weight: 700;
+  text-decoration: none;
+}
+.contact-detail a:hover {
+  text-decoration: underline;
+}
+
+/* ── Clinic rules and regulations (About page) ── */
+.rules-card {
+  max-width: 920px;
+  margin: 2.4rem auto 0;
+  background: var(--white);
+  border: 1.5px solid var(--gray-100);
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1.7rem;
+}
+.rule-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+.rule-num {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--green-pale);
+  border: 1.5px solid var(--green-pale2);
+  color: var(--green-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+.rule-title {
+  font-family: 'Lora', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--green-deep);
+}
+.rule-item .service-items {
+  padding-left: calc(34px + 0.75rem);
+  margin-bottom: 0;
+}
+@media (max-width: 640px) {
+  .rules-card {
+    padding: 1.5rem 1.25rem;
+    gap: 1.4rem;
+  }
+  .rule-item .service-items {
+    padding-left: 0;
+  }
 }
 
 /* ══ FOOTER ══ */
@@ -2236,7 +2349,7 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
   display: block;
 }
 /* ---------------------------------------------------
-   MOBILE BOTTOM NAV � fixed bar, rounded top corners
+   MOBILE BOTTOM NAV � fixed bar, rounded top corners
    --------------------------------------------------- */
 .bottom-nav {
   display: none;
@@ -2321,7 +2434,7 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
   transform: translateY(-1px);
 }
 
-/* Only on tablet/phone widths � the top navbar carries the links on desktop */
+/* Only on tablet/phone widths � the top navbar carries the links on desktop */
 @media (max-width: 1024px) {
   .bottom-nav {
     display: flex;

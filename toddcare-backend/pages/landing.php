@@ -215,7 +215,24 @@ if (isset($_SESSION["patient_id"])) {
   <div class="section-header">
     <div class="section-tag" data-t="contact_tag">Contact</div>
     <h2 class="section-title" data-t="contact_title">Get In Touch</h2>
-    <p class="section-sub" data-t="contact_sub">Content coming soon.</p>
+    <p class="section-sub" data-t="contact_sub">Visit or call us &mdash; we are happy to help.</p>
+  </div>
+  <div class="contact-grid">
+    <div class="contact-card">
+      <span class="contact-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/><path d="M12 7.5v5M9.5 10h5"/></svg></span>
+      <div class="contact-label" data-t="contact_clinic_label">Clinic</div>
+      <div class="contact-name" data-t="contact_clinic">Lustre Medical and Diagnostic Clinic</div>
+    </div>
+    <div class="contact-card">
+      <span class="contact-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
+      <div class="contact-label" data-t="contact_address_label">Address</div>
+      <div class="contact-detail">111 Urbano Velasco Avenue, Brgy. Pinagbuhatan, Pasig City</div>
+    </div>
+    <div class="contact-card">
+      <span class="contact-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 16.9v2.8a2 2 0 0 1-2.2 2 19.6 19.6 0 0 1-8.5-3 19.3 19.3 0 0 1-6-6 19.6 19.6 0 0 1-3-8.6 2 2 0 0 1 2-2.2h2.8a2 2 0 0 1 2 1.7c.13 1 .37 1.9.7 2.8a2 2 0 0 1-.49 2.1L8 9.9a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2.1-.5c.9.33 1.83.57 2.8.7a2 2 0 0 1 1.7 2.1Z"/></svg></span>
+      <div class="contact-label" data-t="contact_phone_label">Phone</div>
+      <div class="contact-detail"><a href="tel:+639285996038">0928 599 6038</a></div>
+    </div>
   </div>
 </section>
 
@@ -1302,7 +1319,11 @@ const TL = {
   svc_header: { en: 'Everything You Need, Right Here', fil: 'Lahat ng Kailangan Mo, Dito Lang' },
   contact_tag: { en: 'Contact', fil: 'Contact' },
   contact_title: { en: 'Get In Touch', fil: 'Makipag-ugnayan Ka' },
-  contact_sub: { en: 'Content coming soon.', fil: 'Parating na ang nilalaman.' },
+  contact_sub: { en: 'Visit or call us \u2014 we are happy to help.', fil: 'Bisitahin o tawagan kami \u2014 handa kaming tumulong.' },
+  contact_clinic_label: { en: 'Clinic', fil: 'Klinika' },
+  contact_clinic: { en: 'Lustre Medical and Diagnostic Clinic', fil: 'Lustre Medical and Diagnostic Clinic' },
+  contact_address_label: { en: 'Address', fil: 'Address' },
+  contact_phone_label: { en: 'Phone', fil: 'Telepono' },
   loading: { en: 'Processing\u2026', fil: 'Pinoproseso\u2026' },
 };
 let _lang = localStorage.getItem('meLang') || 'en';

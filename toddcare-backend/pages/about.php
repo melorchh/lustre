@@ -56,6 +56,90 @@ if (isset($_SESSION["patient_id"])) {
   </div>
 </section>
 
+<!-- == CLINIC RULES AND REGULATIONS == -->
+<section class="page-section rules-section" id="rules">
+  <div class="section-header">
+    <div class="section-tag">Clinic Rules</div>
+    <h2 class="section-title">Clinic Rules and Regulations</h2>
+    <p class="section-sub">Please follow these guidelines for a safe and comfortable visit.</p>
+  </div>
+  <div class="rules-card">
+
+    <div class="rule-item">
+      <div class="rule-head"><span class="rule-num">1</span><h3 class="rule-title">Clinic Hours</h3></div>
+      <ul class="service-items">
+        <li>The clinic operates during designated hours. Patients are encouraged to arrive on time for their scheduled appointments.</li>
+        <li>Late arrivals may be rescheduled depending on availability.</li>
+      </ul>
+    </div>
+
+    <div class="rule-item">
+      <div class="rule-head"><span class="rule-num">2</span><h3 class="rule-title">Appointment Policy</h3></div>
+      <ul class="service-items">
+        <li>Patients must secure an appointment prior to consultation, except in emergency cases.</li>
+        <li>Cancellations must be made at least 24 hours before the scheduled appointment.</li>
+      </ul>
+    </div>
+
+    <div class="rule-item">
+      <div class="rule-head"><span class="rule-num">3</span><h3 class="rule-title">Patient Conduct</h3></div>
+      <ul class="service-items">
+        <li>Patients and companions must behave respectfully toward clinic staff and other patients.</li>
+        <li>Any form of harassment, violence, or disruptive behavior will not be tolerated.</li>
+      </ul>
+    </div>
+
+    <div class="rule-item">
+      <div class="rule-head"><span class="rule-num">4</span><h3 class="rule-title">Cleanliness and Safety</h3></div>
+      <ul class="service-items">
+        <li>Maintain cleanliness within the clinic premises.</li>
+        <li>Smoking, vaping, and bringing hazardous materials are strictly prohibited.</li>
+      </ul>
+    </div>
+
+    <div class="rule-item">
+      <div class="rule-head"><span class="rule-num">5</span><h3 class="rule-title">Confidentiality</h3></div>
+      <ul class="service-items">
+        <li>All patient information and medical records are strictly confidential.</li>
+        <li>Patients must provide accurate and complete medical information.</li>
+      </ul>
+    </div>
+
+    <div class="rule-item">
+      <div class="rule-head"><span class="rule-num">6</span><h3 class="rule-title">Payment Policy</h3></div>
+      <ul class="service-items">
+        <li>Payments must be settled after consultation or treatment unless prior arrangements have been made.</li>
+        <li>The clinic reserves the right to refuse service for unpaid balances.</li>
+      </ul>
+    </div>
+
+    <div class="rule-item">
+      <div class="rule-head"><span class="rule-num">7</span><h3 class="rule-title">Infection Control</h3></div>
+      <ul class="service-items">
+        <li>Patients with contagious symptoms must inform the clinic before arrival.</li>
+        <li>Wearing masks may be required when necessary to ensure safety.</li>
+      </ul>
+    </div>
+
+    <div class="rule-item">
+      <div class="rule-head"><span class="rule-num">8</span><h3 class="rule-title">Companion Policy</h3></div>
+      <ul class="service-items">
+        <li>Only one companion per patient is allowed unless special assistance is required.</li>
+        <li>Children must be supervised at all times.</li>
+      </ul>
+    </div>
+
+    <div class="rule-item">
+      <div class="rule-head"><span class="rule-num">9</span><h3 class="rule-title">Emergency Cases</h3></div>
+      <ul class="service-items">
+        <li>Emergency cases will be prioritized.</li>
+        <li>The clinic may refer patients to a hospital if the condition requires advanced care.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
 <!-- == FOOTER == -->
 <footer>
   <div class="footer-inner">
