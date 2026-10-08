@@ -7,7 +7,7 @@
   },
   "regions": ["sin1"],
   "routes": [
-    { "src": "/toddcare-backend/(.*)", "status": 404 },
+    { "src": "/lustre-backend/(.*)", "status": 404 },
     { "handle": "filesystem" },
     { "src": "/api/(.*)", "status": 404 },
     { "src": "/([^/]+\\.php)", "dest": "/api/router.php?page=$1" },

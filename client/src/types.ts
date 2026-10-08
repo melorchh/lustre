@@ -89,6 +89,6 @@ export interface InitialData {
 
 declare global {
   interface Window {
-    __MEDEXPERT__?: InitialData;
+    __Lustre__?: InitialData;
   }
 }

@@ -1,6 +1,6 @@
 <?php
 // ============================================================================
-// MedBot — server-side proxy for the Groq chat completions API.
+// LustreBot — server-side proxy for the Groq chat completions API.
 //
 // The landing-page chatbot previously called api.groq.com directly from the
 // browser with an embedded API key (a leaked secret). This proxy keeps the key
@@ -15,22 +15,22 @@
 header('Content-Type: application/json; charset=utf-8');
 
 // Local env fallback (env.local.php is gitignored; used for local XAMPP runs).
-$__mdc_env = __DIR__ . '/../env.local.php';
-if (is_file($__mdc_env)) {
-    $__mdc_vals = include $__mdc_env;
-    if (is_array($__mdc_vals)) {
-        foreach ($__mdc_vals as $__k => $__v) {
+$__LUSTRE_env = __DIR__ . '/../env.local.php';
+if (is_file($__LUSTRE_env)) {
+    $__LUSTRE_vals = include $__LUSTRE_env;
+    if (is_array($__LUSTRE_vals)) {
+        foreach ($__LUSTRE_vals as $__k => $__v) {
             if (!getenv($__k)) {
                 putenv($__k . '=' . $__v);
             }
             $_ENV[$__k] = $__v;
         }
     }
-    unset($__mdc_vals);
+    unset($__LUSTRE_vals);
 }
-unset($__mdc_env);
+unset($__LUSTRE_env);
 
-function medbot_env($key, $default = '')
+function LustreBot_env($key, $default = '')
 {
     $v = getenv($key);
     if ($v === false || $v === '') {
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$apiKey = medbot_env('GROQ_API_KEY');
+$apiKey = LustreBot_env('GROQ_API_KEY');
 if ($apiKey === '') {
     http_response_code(503);
     echo json_encode(['error' => 'AI assistant is not configured.']);
@@ -76,7 +76,7 @@ if (!is_array($input) || empty($input['messages']) || !is_array($input['messages
     exit;
 }
 
-$model = medbot_env('GROQ_MODEL', 'qwen/qwen3.8-27b');
+$model = LustreBot_env('GROQ_MODEL', 'qwen/qwen3.8-27b');
 
 $payload = array(
     'model'       => $model,

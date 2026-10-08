@@ -7,5 +7,5 @@ system_scope*
 plans/
 .vercel
 node_modules
-toddcare-backend/env.local.php
+lustre-backend/env.local.php
 backup/
