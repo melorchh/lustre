@@ -197,7 +197,7 @@ if (isset($_SESSION["patient_id"])) {
 
 <script>
 /* -- Navbar scroll -- */
-window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',scrollY>40));
+window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',scrollY>40),{passive:true});
 </script>
 <script src="admin_theme.js?v=<?= filemtime(__DIR__ . '/../../admin_theme.js') ?>"></script>
 </body>

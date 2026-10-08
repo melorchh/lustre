@@ -1,6 +1,7 @@
 node_modules/
 .vercel/
 client/node_modules/
+backup/
 lustre-backend/env.local.php
 *.sql
 *.log

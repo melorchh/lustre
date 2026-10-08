@@ -24,7 +24,7 @@ function BottomNav({ active }: { active: PageKey }) {
   const { t } = useLang();
   const NAV_ITEMS = NAV_KEYS.map((item) => ({ ...item, label: t(item.key) }));
   return (
-    <nav className="bottom-nav" aria-label="Primary">
+    <nav className="bottom-nav" aria-label="Primary" data-tour="nav">
       {NAV_ITEMS.map((item) => {
         const isActive = item.page === active;
         return (

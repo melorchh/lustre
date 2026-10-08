@@ -5235,3 +5235,142 @@ html[data-theme="dark"] .metric-badge--red {
   border-color: #b91c1c;
   color: #f0a3a3;
 }
+
+
+/* ═════════════════════════════════════════════════════════════════
+   FIRST-LOGIN TOUR (coach-marks)
+   Spotlight overlay + positioned tooltip card. Dark mode is handled
+   automatically via the flipped CSS custom properties above.
+   ═════════════════════════════════════════════════════════════════ */
+
+.tour-root {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+}
+.tour-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 22, 15, 0.62);
+}
+.tour-ring {
+  position: fixed;
+  z-index: 5001;
+  border-radius: 14px;
+  border: 2.5px solid var(--green-light, #2dd4bf);
+  box-shadow: 0 0 0 100vmax rgba(8, 22, 15, 0.62);
+  pointer-events: none;
+  transition: top 0.28s var(--ease, ease), left 0.28s var(--ease, ease), width 0.28s var(--ease, ease), height 0.28s var(--ease, ease);
+}
+.tour-card {
+  position: fixed;
+  z-index: 5002;
+  width: 340px;
+  max-width: calc(100vw - 24px);
+  background: var(--white);
+  color: var(--gray-800);
+  border-radius: 18px;
+  box-shadow: var(--shadow-lg);
+  border: 1.5px solid var(--gray-200);
+  padding: 1.2rem 1.3rem 1.1rem;
+  pointer-events: auto;
+}
+.tour-card--center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.tour-step-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--green-deep);
+  margin-bottom: 0.4rem;
+}
+.tour-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.06rem;
+  font-weight: 800;
+  color: var(--gray-800);
+}
+.tour-msg {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--gray-600);
+}
+.tour-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.tour-dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.tour-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gray-200);
+  transition: background-color 0.2s ease, width 0.2s ease;
+}
+.tour-dot.active {
+  width: 18px;
+  border-radius: 6px;
+  background: var(--green);
+}
+.tour-btns {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+.tour-btn {
+  appearance: none;
+  border: 1.5px solid var(--gray-200);
+  background: var(--white);
+  color: var(--gray-800);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.5rem 0.95rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.18s var(--ease, ease), border-color 0.18s var(--ease, ease), color 0.18s var(--ease, ease), transform 0.18s var(--ease, ease);
+}
+.tour-btn:hover {
+  background: var(--green-pale);
+  border-color: var(--green-pale2);
+  transform: translateY(-1px);
+}
+.tour-btn--primary {
+  background: linear-gradient(135deg, var(--green-dark), var(--green));
+  border: none;
+  color: var(--white);
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3);
+}
+.tour-btn--primary:hover {
+  background: linear-gradient(135deg, var(--green-dark), var(--green));
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.4);
+}
+
+/* Mobile: tooltip becomes a bottom sheet, ring still highlights the target */
+@media (max-width: 768px) {
+  .tour-card--sheet {
+    top: auto !important;
+    bottom: 12px;
+    left: 10px !important;
+    right: 10px;
+    width: auto !important;
+    border-radius: 16px 16px 12px 12px;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+  .tour-card--sheet .tour-controls {
+    justify-content: space-between;
+  }
+}

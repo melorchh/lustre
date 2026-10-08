@@ -49,11 +49,11 @@ if (isset($_SESSION["patient_id"])) {
 
 <!-- == HERO (slideshow) == -->
 <section class="hero" id="hero">
-  <div class="slide-layer" data-img="images/1.jpg" style="opacity:1"></div>
-  <div class="slide-layer" data-img="images/2.jpg"></div>
-  <div class="slide-layer" data-img="images/3.jpg"></div>
-  <div class="slide-layer" data-img="images/4.jpg"></div>
-  <div class="slide-layer" data-img="images/5.jpg"></div>
+  <div class="slide-layer" data-img="images/1.jpg?v=<?= filemtime(__DIR__ . '/../../images/1.jpg') ?>" style="opacity:1"></div>
+  <div class="slide-layer" data-img="images/2.jpg?v=<?= filemtime(__DIR__ . '/../../images/2.jpg') ?>"></div>
+  <div class="slide-layer" data-img="images/3.jpg?v=<?= filemtime(__DIR__ . '/../../images/3.jpg') ?>"></div>
+  <div class="slide-layer" data-img="images/4.jpg?v=<?= filemtime(__DIR__ . '/../../images/4.jpg') ?>"></div>
+  <div class="slide-layer" data-img="images/5.jpg?v=<?= filemtime(__DIR__ . '/../../images/5.jpg') ?>"></div>
   <div class="hero-img-overlay"></div>
   <div class="hero-blob blob-1"></div>
   <div class="hero-blob blob-2"></div>
@@ -426,7 +426,7 @@ if (isset($_SESSION["patient_id"])) {
 
 <script>
 /* -- Navbar scroll -- */
-window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',scrollY>40));
+window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',scrollY>40),{passive:true});
 
 /* -- Slideshow (GPU-friendly crossfade with preloaded images) -- */
 const layers=Array.from(document.querySelectorAll('.slide-layer'));
@@ -438,9 +438,12 @@ layers.forEach(l=>{
   l.style.backgroundImage='url('+l.getAttribute('data-img')+')';
   l.style.backgroundSize='cover';
   l.style.backgroundPosition='center';
-  // Preload the image so there are no flashes on first cycle
-  const pre=new Image();
-  pre.src=l.getAttribute('data-img');
+});
+// Preload slide 1 right away so the first paint has an image;
+// defer slides 2-5 until the page is done loading.
+const pre1=new Image();pre1.src=layers[0].getAttribute('data-img');
+window.addEventListener('load',()=>{
+  layers.slice(1).forEach(l=>{const pre=new Image();pre.src=l.getAttribute('data-img');});
 });
 
 function goSlide(n){
@@ -488,7 +491,7 @@ document.getElementById('loginForm').addEventListener('submit',function(e){
   if(ident.indexOf('@')>=0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ident)){hideLoading();err.textContent=(TL.login_email_invalid&&TL.login_email_invalid[_lang])||'That does not look like a valid email address.';err.classList.add('show');return;}
   fetch('login.php',{method:'POST',body:new FormData(this)}).then(r=>r.text()).then(res=>{hideLoading();
     res=res.trim();
-    if(res==='success:new'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php',900);}
+    if(res==='success:new'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php?tour=1',900);}
     else if(res==='success'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php',900);}
     else if(res==='success:doctor'){showToast('Welcome back, Doctor!','success');setTimeout(()=>location.href='doctor_dashboard.php',900);}
     else if(res==='success:admin'){showToast('Welcome back!','success');setTimeout(()=>location.href='admin_dashboard.php',900);}
@@ -1345,7 +1348,7 @@ applyLang(_lang);
   }
   if(vv){
     vv.addEventListener('resize',syncViewport);
-    vv.addEventListener('scroll',syncViewport);
+    vv.addEventListener('scroll',syncViewport,{passive:true});
   }
   window.addEventListener('orientationchange',()=>{setTimeout(syncViewport,250);});
   inp.addEventListener('focus',syncViewport);
@@ -1398,7 +1401,7 @@ applyLang(_lang);
   inp.addEventListener('keypress',e=>{if(e.key==='Enter')sendMsg();});
 })();
 </script>
-<script src="admin_components.js"></script>
+<script src="admin_components.js?v=<?= filemtime(__DIR__ . '/../../admin_components.js') ?>"></script>
 <script src="admin_theme.js?v=<?= filemtime(__DIR__ . '/../../admin_theme.js') ?>"></script>
 </body>
 </html>
