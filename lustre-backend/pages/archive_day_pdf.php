@@ -63,17 +63,18 @@ switch ($tab) {
     case 'appointments':
         $cols = $apptCols;
         $q = $conn->query("
-            SELECT a.appointment_date, a.appointment_time, a.status, a.payment_status,
+            SELECT a.appointment_date, a.appointment_time, a.status, a.payment_status, a.updated_at,
                    p.name AS patient_name, p.email AS patient_email,
                    d.name AS doctor_name
             FROM appointments a
             JOIN patients p ON a.patient_id = p.id
             JOIN doctors  d ON a.doctor_id  = d.id
-            WHERE a.status IN ('completed','cancelled') AND DATE(a.updated_at) = '" . $conn->real_escape_string($day) . "'
+            WHERE a.status IN ('completed','cancelled')
             ORDER BY a.appointment_time ASC
         ");
         if ($q) {
             while ($r = $q->fetch_assoc()) {
+                if (date('Y-m-d', strtotime($r['updated_at'])) !== $day) continue;
                 $rows[] = [
                     $r['patient_name'],
                     'Dr. ' . $r['doctor_name'],
@@ -88,16 +89,17 @@ switch ($tab) {
     case 'labtests':
         $cols = $labCols;
         $q = $conn->query("
-            SELECT lt.test_type, lt.priority, lt.status, lt.scheduled_date,
+            SELECT lt.test_type, lt.priority, lt.status, lt.scheduled_date, lt.updated_at,
                    p.name AS patient_name, d.name AS doctor_name
             FROM lab_tests lt
             JOIN patients p ON lt.patient_id = p.id
             JOIN doctors  d ON lt.doctor_id  = d.id
-            WHERE lt.status IN ('completed','cancelled') AND DATE(lt.updated_at) = '" . $conn->real_escape_string($day) . "'
+            WHERE lt.status IN ('completed','cancelled')
             ORDER BY lt.test_type ASC
         ");
         if ($q) {
             while ($r = $q->fetch_assoc()) {
+                if (date('Y-m-d', strtotime($r['updated_at'])) !== $day) continue;
                 $rows[] = [
                     $r['patient_name'],
                     'Dr. ' . $r['doctor_name'],
@@ -113,15 +115,15 @@ switch ($tab) {
     case 'vitals':
         $cols = $vitalCols;
         $q = $conn->query("
-            SELECT v.visit_date, v.weight_kg, v.blood_pressure, v.heart_rate, v.fundal_height, v.notes,
+            SELECT v.visit_date, v.weight_kg, v.blood_pressure, v.heart_rate, v.fundal_height, v.notes, v.created_at,
                    p.name AS patient_name
             FROM vitals v
             JOIN patients p ON v.patient_id = p.id
-            WHERE DATE(v.created_at) = '" . $conn->real_escape_string($day) . "'
             ORDER BY v.visit_date DESC
         ");
         if ($q) {
             while ($r = $q->fetch_assoc()) {
+                if (date('Y-m-d', strtotime($r['created_at'])) !== $day) continue;
                 $rows[] = [
                     $r['patient_name'],
                     date('M j, Y', strtotime($r['visit_date'])),
@@ -137,15 +139,15 @@ switch ($tab) {
     case 'vaccinations':
         $cols = $vaccCols;
         $q = $conn->query("
-            SELECT va.vaccine_name, va.dose_label, va.administered_date, va.next_due_date, va.notes,
+            SELECT va.vaccine_name, va.dose_label, va.administered_date, va.next_due_date, va.notes, va.created_at,
                    p.name AS patient_name
             FROM vaccinations va
             JOIN patients p ON va.patient_id = p.id
-            WHERE DATE(va.created_at) = '" . $conn->real_escape_string($day) . "'
             ORDER BY va.administered_date DESC
         ");
         if ($q) {
             while ($r = $q->fetch_assoc()) {
+                if (date('Y-m-d', strtotime($r['created_at'])) !== $day) continue;
                 $rows[] = [
                     $r['patient_name'],
                     $r['vaccine_name'],
@@ -285,6 +287,11 @@ function cellLines($val, $w) {
 $dayLabel = date('F j, Y', strtotime($day));
 newPage($pages, $stream, $cols, $titles[$tab], $dayLabel);
 
+if (!$rows) {
+    pdftxt($stream, $M, $Y + 6, 'No archived records were found for ' . $titles[$tab] . ' on ' . $dayLabel . '.', 'R', 9.5, $gray_mid);
+    $Y += 22;
+}
+
 $lastBottom = $pageH - $M;
 $rowIdx = 0;
 
@@ -384,6 +391,9 @@ for ($i = 1; $i < $count; $i++) {
 $pdf .= "trailer\n<< /Size $count /Root 1 0 R >>\nstartxref\n$xref_pos\n%%EOF";
 
 $fname = 'Archive_' . $titles[$tab] . '_' . str_replace('-', '_', $day) . '.pdf';
+
+while (ob_get_level() > 0) { ob_end_clean(); }
+
 header('Content-Type: application/pdf');
 header('Content-Disposition: attachment; filename="' . $fname . '"');
 header('Cache-Control: private, max-age=0, must-revalidate');
