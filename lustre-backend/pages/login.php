@@ -20,13 +20,13 @@ if ($email === '' || $password === '') {
 }
 
 /* 1) Patient account (lookup by email) */
-$stmt = $conn->prepare("SELECT id, password FROM patients WHERE email = ?");
+$stmt = $conn->prepare("SELECT id, password, created_at FROM patients WHERE email = ?");
 $stmt->bind_param("s", $email);
 $stmt->execute();
 $stmt->store_result();
 
 if ($stmt->num_rows > 0) {
-    $stmt->bind_result($id, $hashed_password);
+    $stmt->bind_result($id, $hashed_password, $created_at);
     $stmt->fetch();
     $stmt->close();
 
@@ -34,7 +34,10 @@ if ($stmt->num_rows > 0) {
         unset($_SESSION['doctor_account_id'], $_SESSION['doctor_id'], $_SESSION['doctor_name'], $_SESSION['doctor_username']);
         unset($_SESSION['admin_id'], $_SESSION['admin_name'], $_SESSION['admin_username'], $_SESSION['admin_must_change']);
         $_SESSION['patient_id'] = $id;
-        $is_new = !empty($_SESSION['just_registered']);
+        // First login: session flag right after register, or account created within the last 24 h
+        // (covers a lost session between registering and the first sign-in).
+        $is_new = !empty($_SESSION['just_registered'])
+            || ($created_at !== null && strtotime($created_at) > time() - 86400);
         unset($_SESSION['just_registered']);
         $_SESSION['last_login'] = time();
         echo $is_new ? "success:new" : "success";

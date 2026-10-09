@@ -49,11 +49,11 @@ if (isset($_SESSION["patient_id"])) {
 
 <!-- == HERO (slideshow) == -->
 <section class="hero" id="hero">
-  <div class="slide-layer" data-img="images/1.jpg" style="opacity:1"></div>
-  <div class="slide-layer" data-img="images/2.jpg"></div>
-  <div class="slide-layer" data-img="images/3.jpg"></div>
-  <div class="slide-layer" data-img="images/4.jpg"></div>
-  <div class="slide-layer" data-img="images/5.jpg"></div>
+  <div class="slide-layer" data-img="images/1.jpg?v=<?= filemtime(__DIR__ . '/../../images/1.jpg') ?>" style="opacity:1"></div>
+  <div class="slide-layer" data-img="images/2.jpg?v=<?= filemtime(__DIR__ . '/../../images/2.jpg') ?>"></div>
+  <div class="slide-layer" data-img="images/3.jpg?v=<?= filemtime(__DIR__ . '/../../images/3.jpg') ?>"></div>
+  <div class="slide-layer" data-img="images/4.jpg?v=<?= filemtime(__DIR__ . '/../../images/4.jpg') ?>"></div>
+  <div class="slide-layer" data-img="images/5.jpg?v=<?= filemtime(__DIR__ . '/../../images/5.jpg') ?>"></div>
   <div class="hero-img-overlay"></div>
   <div class="hero-blob blob-1"></div>
   <div class="hero-blob blob-2"></div>
@@ -128,31 +128,37 @@ if (isset($_SESSION["patient_id"])) {
     <div class="service-card">
       <div class="service-icon icon-blue"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12h.01"/><path d="M15 12h.01"/><path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/></svg></div>
       <div class="service-title" data-t="svc_peds">Pediatric Consultation</div>
+      <div class="service-desc" data-t="svc_peds_d">Checkups, growth monitoring, and treatment for infants, children, and teens.</div>
     </div>
 
     <div class="service-card">
       <div class="service-icon icon-cyan"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
       <div class="service-title" data-t="svc_adult">Adult Consultation</div>
+      <div class="service-desc" data-t="svc_adult_d">Consultation for common illnesses, maintenance care, and everyday health concerns.</div>
     </div>
 
     <div class="service-card">
       <div class="service-icon icon-rose"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M12 14v7"/><path d="M9 18h6"/></svg></div>
       <div class="service-title" data-t="svc_obgyn_c">OB-Gyn Consultation (by appointment)</div>
+      <div class="service-desc" data-t="svc_obgyn_d">Women's reproductive health, prenatal care, and family planning with our specialists.</div>
     </div>
 
     <div class="service-card">
       <div class="service-icon icon-purple"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m18 2 4 4"/><path d="m17 7 3-3"/><path d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5"/><path d="m9 11 4 4"/><path d="m5 19-3 3"/><path d="m14 4 6 6"/></svg></div>
       <div class="service-title" data-t="svc_vaccine">Pediatric and Adult Vaccination</div>
+      <div class="service-desc" data-t="svc_vaccine_d">Complete immunization schedules for children and routine vaccines for adults.</div>
     </div>
 
     <div class="service-card">
       <div class="service-icon icon-amber"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></svg></div>
       <div class="service-title" data-t="svc_medcert">Medical Certification</div>
+      <div class="service-desc" data-t="svc_medcert_d">Official medical certificates for school, work, and other official requirements.</div>
     </div>
 
     <div class="service-card">
       <div class="service-icon icon-green"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></div>
       <div class="service-title" data-t="svc_physexam">Physical Examination / Fit to Work Certification</div>
+      <div class="service-desc" data-t="svc_physexam_d">Pre-employment, annual, and school physical exams with a fit-to-work certificate.</div>
     </div>
   </div>
 </section>
@@ -420,7 +426,7 @@ if (isset($_SESSION["patient_id"])) {
 
 <script>
 /* -- Navbar scroll -- */
-window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',scrollY>40));
+window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',scrollY>40),{passive:true});
 
 /* -- Slideshow (GPU-friendly crossfade with preloaded images) -- */
 const layers=Array.from(document.querySelectorAll('.slide-layer'));
@@ -432,9 +438,12 @@ layers.forEach(l=>{
   l.style.backgroundImage='url('+l.getAttribute('data-img')+')';
   l.style.backgroundSize='cover';
   l.style.backgroundPosition='center';
-  // Preload the image so there are no flashes on first cycle
-  const pre=new Image();
-  pre.src=l.getAttribute('data-img');
+});
+// Preload slide 1 right away so the first paint has an image;
+// defer slides 2-5 until the page is done loading.
+const pre1=new Image();pre1.src=layers[0].getAttribute('data-img');
+window.addEventListener('load',()=>{
+  layers.slice(1).forEach(l=>{const pre=new Image();pre.src=l.getAttribute('data-img');});
 });
 
 function goSlide(n){
@@ -482,7 +491,7 @@ document.getElementById('loginForm').addEventListener('submit',function(e){
   if(ident.indexOf('@')>=0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ident)){hideLoading();err.textContent=(TL.login_email_invalid&&TL.login_email_invalid[_lang])||'That does not look like a valid email address.';err.classList.add('show');return;}
   fetch('login.php',{method:'POST',body:new FormData(this)}).then(r=>r.text()).then(res=>{hideLoading();
     res=res.trim();
-    if(res==='success:new'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php',900);}
+    if(res==='success:new'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php?tour=1',900);}
     else if(res==='success'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php',900);}
     else if(res==='success:doctor'){showToast('Welcome back, Doctor!','success');setTimeout(()=>location.href='doctor_dashboard.php',900);}
     else if(res==='success:admin'){showToast('Welcome back!','success');setTimeout(()=>location.href='admin_dashboard.php',900);}
@@ -1255,6 +1264,12 @@ const TL = {
   svc_vaccine: { en: 'Pediatric and Adult Vaccination', fil: 'Pediatrikong at Pang-adultong Bakuna' },
   svc_medcert: { en: 'Medical Certification', fil: 'Medical na Sertipikasyon' },
   svc_physexam: { en: 'Physical Examination / Fit to Work Certification', fil: 'Physical Examination / Fit to Work Certification' },
+  svc_peds_d: { en: 'Checkups, growth monitoring, and treatment for infants, children, and teens.', fil: 'Mga check-up, pagsubaybay sa paglaki, at paggamot para sa sanggol, bata, at teen.' },
+  svc_adult_d: { en: 'Consultation for common illnesses, maintenance care, and everyday health concerns.', fil: 'Konsultasyon para sa karaniwang karamdaman, maintenance care, at pang-araw-araw na alalahanin sa kalusugan.' },
+  svc_obgyn_d: { en: "Women's reproductive health, prenatal care, and family planning with our specialists.", fil: 'Reproduktibong kalusugan ng kababaihan, prenatal care, at family planning kasama ang aming mga espesyalista.' },
+  svc_vaccine_d: { en: 'Complete immunization schedules for children and routine vaccines for adults.', fil: 'Kumpletong iskedyul ng imunesasyon para sa mga bata at rutinang bakuna para sa mga adult.' },
+  svc_medcert_d: { en: 'Official medical certificates for school, work, and other official requirements.', fil: 'Opisyal na medical certificate para sa paaralan, trabaho, at iba pang opisyal na kinakailangan.' },
+  svc_physexam_d: { en: 'Pre-employment, annual, and school physical exams with a fit-to-work certificate.', fil: 'Pre-employment, taunang, at pisikal na eksaminasyon na may fit-to-work certificate.' },
   svc_header: { en: 'Everything You Need, Right Here', fil: 'Lahat ng Kailangan Mo, Dito Lang' },
   contact_tag: { en: 'Contact', fil: 'Contact' },
   contact_title: { en: 'Get In Touch', fil: 'Makipag-ugnayan Ka' },
@@ -1333,7 +1348,7 @@ applyLang(_lang);
   }
   if(vv){
     vv.addEventListener('resize',syncViewport);
-    vv.addEventListener('scroll',syncViewport);
+    vv.addEventListener('scroll',syncViewport,{passive:true});
   }
   window.addEventListener('orientationchange',()=>{setTimeout(syncViewport,250);});
   inp.addEventListener('focus',syncViewport);
@@ -1386,7 +1401,7 @@ applyLang(_lang);
   inp.addEventListener('keypress',e=>{if(e.key==='Enter')sendMsg();});
 })();
 </script>
-<script src="admin_components.js"></script>
+<script src="admin_components.js?v=<?= filemtime(__DIR__ . '/../../admin_components.js') ?>"></script>
 <script src="admin_theme.js?v=<?= filemtime(__DIR__ . '/../../admin_theme.js') ?>"></script>
 </body>
 </html>

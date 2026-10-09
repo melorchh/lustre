@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import type { Appointment, LabTest, Vaccination } from '../types';
 import { getInitialData, formatLongDate, formatTime12h, formatStamp, initials } from '../api';
 import Shell from '../shell';
+import Tour from '../components/Tour';
 import { useLang } from '../lang';
 import {
   SvgActivity,
@@ -282,6 +284,31 @@ export default function DashboardApp() {
   } = getInitialData();
   const { t, lang } = useLang();
 
+  // First-login walkthrough: ?tour=1 from the login flow (new accounts only).
+  // The param stays in the URL while the tour runs (so a refresh restarts it),
+  // and is stripped once the tour is finished or skipped.
+  const [showTour, setShowTour] = useState(() => {
+    try {
+      return (
+        new URLSearchParams(window.location.search).get('tour') === '1' &&
+        !localStorage.getItem('lustre_tour_done')
+      );
+    } catch {
+      return false;
+    }
+  });
+  const endTour = () => {
+    try {
+      localStorage.setItem('lustre_tour_done', '1');
+    } catch {
+      /* storage unavailable */
+    }
+    setShowTour(false);
+    if (window.location.search) {
+      history.replaceState(null, '', window.location.pathname);
+    }
+  };
+
   const firstName = (patientName || 'Patient').split(' ')[0];
   const activeAppts = appointments.filter((a) => ['pending', 'confirmed'].includes(statusOf(a.status)));
   const totalAppts = appointments.length;
@@ -293,7 +320,7 @@ export default function DashboardApp() {
   return (
     <Shell page="home" title={t('dash_title')} patientName={patientName}>
       <main className="page-content">
-        <section className="hero hero--dash">
+        <section className="hero hero--dash" data-tour="hero">
           <div className="hero-blob hero-blob--1" aria-hidden="true" />
           <div className="hero-blob hero-blob--2" aria-hidden="true" />
           <div className="hero-content">
@@ -310,7 +337,7 @@ export default function DashboardApp() {
 
         <VaccineAlert vaccinations={vaccinations} />
 
-        <div className="db-stats">
+        <div className="db-stats" data-tour="stats">
           <StatCard
             href="my_appointments.php"
             tone="green"
@@ -346,7 +373,7 @@ export default function DashboardApp() {
         </div>
 
         <div className="db-grid">
-          <section className="db-panel db-next">
+          <section className="db-panel db-next" data-tour="next">
             <div className="db-panel-head">
               <h2><SvgFlag size={18} /> {t('dash_panel_next')}</h2>
               <a href="index.php" className="db-panel-link">{t('dash_book_new')} <SvgArrowRight size={14} /></a>
@@ -362,7 +389,7 @@ export default function DashboardApp() {
             )}
           </section>
 
-          <section className="db-panel db-quick-panel">
+          <section className="db-panel db-quick-panel" data-tour="quick">
             <div className="db-panel-head">
               <h2><SvgClipboard size={18} /> {t('dash_quick')}</h2>
             </div>
@@ -407,6 +434,7 @@ export default function DashboardApp() {
 
         <AppointmentResults appointments={appointments} />
       </main>
+      <Tour active={showTour} onDone={endTour} />
     </Shell>
   );
 }

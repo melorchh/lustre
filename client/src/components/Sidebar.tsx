@@ -88,6 +88,7 @@ export default function Sidebar({ patientName, open, pinned, active, onClose, on
       <div className={`sidebar-overlay ${open ? 'active' : ''}`} onClick={onClose} aria-hidden="true" />
       <aside
         className={`sidebar ${open ? 'open' : ''} ${pinned ? 'pinned' : ''}`}
+        data-tour="nav"
         onMouseEnter={onHoverStart}
         onMouseLeave={onHoverEnd}
       >
