@@ -176,9 +176,9 @@ $conn->close();
         .pdf-cal-col{display:flex;flex-direction:column;gap:.55rem}
         .pdf-cal-head{display:flex;align-items:center;justify-content:space-between;gap:.4rem}
         .pdf-cal-sels{display:inline-flex;align-items:center;gap:.35rem}
-        .pdf-cal-select{font-family:inherit;font-size:.76rem;font-weight:700;color:var(--gray-800);background:var(--white);border:1.5px solid var(--gray-100);border-radius:var(--radius-xs);padding:.34rem .42rem;cursor:pointer;transition:border-color .15s,box-shadow .15s;max-width:100%}
-        .pdf-cal-select:hover{border-color:var(--green-mid)}
-        .pdf-cal-select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.14)}
+        .pdf-cal-select{font-family:inherit;font-size:.8rem;font-weight:600;color:var(--gray-800);min-height:36px;padding:.5rem 2.1rem .5rem .85rem;border:2px solid var(--gray-100);border-radius:12px;background:var(--white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2316a34a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right .75rem center;appearance:none;-webkit-appearance:none;cursor:pointer;transition:border-color .2s;max-width:100%}
+        .pdf-cal-select:hover{border-color:var(--green)}
+        .pdf-cal-select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 4px rgba(22,163,74,.12)}
         .pdf-cal-arrow{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:1.5px solid var(--gray-100);background:var(--white);color:var(--gray-800);border-radius:var(--radius-xs);cursor:pointer;font-size:1.05rem;line-height:1;transition:border-color .15s,background .15s,color .15s}
         .pdf-cal-arrow:hover:not(:disabled){border-color:var(--green);color:var(--green);background:var(--green-pale)}
         .pdf-cal-arrow:disabled{opacity:.4;cursor:not-allowed;border-color:var(--gray-100);color:var(--gray-400);background:var(--white)}
@@ -240,9 +240,9 @@ $conn->close();
         [data-theme="dark"] .pdf-type-btn.active{background:linear-gradient(135deg,#0b5c3a,#0d7546);box-shadow:0 2px 8px rgba(11,92,58,.4)}
         [data-theme="dark"] .pdf-cal-arrow{background:var(--white);border-color:var(--gray-100);color:var(--gray-800)}
         [data-theme="dark"] .pdf-cal-arrow:hover:not(:disabled){border-color:var(--green-mid);background:var(--green-pale);color:var(--green-light)}
-        [data-theme="dark"] .pdf-cal-select{background:var(--white);border-color:var(--gray-100);color:var(--gray-800)}
+        [data-theme="dark"] .pdf-cal-select{background:var(--white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234ade80' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right .75rem center;border-color:var(--gray-100);color:var(--gray-800)}
         [data-theme="dark"] .pdf-cal-select:hover{border-color:var(--green-mid)}
-        [data-theme="dark"] .pdf-cal-select:focus{border-color:var(--green-mid);box-shadow:0 0 0 3px rgba(34,197,94,.18)}
+        [data-theme="dark"] .pdf-cal-select:focus{border-color:var(--green-mid);box-shadow:0 0 0 4px rgba(34,197,94,.18)}
         [data-theme="dark"] .pdf-cal-cell{color:var(--gray-800)}
         [data-theme="dark"] .pdf-cal-cell:hover{background:var(--green-pale)}
         [data-theme="dark"] .pdf-cal-cell.today{color:var(--green-light);box-shadow:inset 0 0 0 1.5px rgba(74,222,128,.45)}
