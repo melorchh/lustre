@@ -174,11 +174,14 @@ $conn->close();
         .pdf-type-btn.active{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.35)}
         .pdf-panel-body{display:grid;grid-template-columns:minmax(240px,288px) minmax(220px,1fr) minmax(195px,240px);gap:1.15rem;padding:1.25rem 1.3rem 1.4rem}
         .pdf-cal-col{display:flex;flex-direction:column;gap:.55rem}
-        .pdf-cal-head{display:flex;align-items:center;justify-content:space-between;gap:.4rem}
-        .pdf-cal-sels{display:inline-flex;align-items:center;gap:.35rem}
-        .pdf-cal-arrow{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:46px;height:42px;border:2px solid var(--gray-100);background:var(--white);color:var(--green);border-radius:12px;cursor:pointer;font-size:1.4rem;line-height:1;transition:border-color .15s,background .15s,color .15s}
+        .pdf-cal-head{display:flex;align-items:center;gap:10px}
+        .pdf-cal-sels{display:inline-flex;align-items:center;gap:10px}
+        .pdf-cal-arrow{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:42px;height:42px;padding:0;border:2px solid var(--gray-100);background:var(--white);color:var(--green);border-radius:12px;cursor:pointer;font-size:1.35rem;line-height:1;transition:border-color .15s,background .15s,color .15s}
         .pdf-cal-arrow:hover:not(:disabled){border-color:var(--green);color:var(--green);background:var(--green-pale)}
         .pdf-cal-arrow:disabled{opacity:.4;cursor:not-allowed;border-color:var(--gray-100);color:var(--gray-400);background:var(--white)}
+        .pdf-cal-sels .cust-dropdown.cd-action{height:42px;width:auto;min-width:0}
+        .pdf-cal-sels .cust-dropdown.cd-action .cd-btn{height:100%;min-height:0;padding-left:.9rem;padding-right:2.4rem}
+        html:not([data-theme="dark"]) .pdf-cal-sels .cust-dropdown .cd-btn{color:#000}
         .pdf-cal-week{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
         .pdf-cal-week span{font-size:.6rem;font-weight:800;color:var(--gray-400);text-align:center;text-transform:uppercase;letter-spacing:.06em;padding:.15rem 0}
         .pdf-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
@@ -226,7 +229,7 @@ $conn->close();
             .pdf-type-switch{width:100%;border-radius:var(--radius-sm);overflow-x:auto}
             .pdf-type-btn{flex:1 0 auto;text-align:center;font-size:.72rem;padding:.4rem .6rem}
             .pdf-panel-body{padding:1rem}
-            .pdf-cal-head{flex-wrap:wrap;justify-content:space-between;row-gap:.5rem;column-gap:.35rem}
+            .pdf-cal-head{flex-wrap:wrap;row-gap:.5rem;column-gap:10px}
             .pdf-cal-sels{flex:1 1 100%;justify-content:space-between}
             .pdf-cal-sels .cust-dropdown{flex:1 1 0;width:auto;min-width:0}
             .pdf-cal-sels .cd-btn{min-width:0}
