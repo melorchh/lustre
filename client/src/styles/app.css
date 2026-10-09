@@ -151,7 +151,8 @@ input {
   align-items: stretch;
   padding: 1rem 0.75rem;
   transform: translateX(calc(-1 * var(--sidebar-w) - 1.5rem));
-  transition: transform 0.32s var(--ease), width 0.32s var(--ease);
+  box-shadow: 0 0 0 rgba(20, 83, 45, 0);
+  transition: transform 0.32s var(--ease), width 0.32s var(--ease), box-shadow 0.35s var(--ease);
 }
 
 .sidebar.open {
@@ -303,6 +304,7 @@ input {
   .sidebar:hover,
   .sidebar.pinned {
     width: var(--sidebar-w);
+    box-shadow: 0 0 40px rgba(20, 83, 45, 0.2);
   }
 
   .rail-top,
