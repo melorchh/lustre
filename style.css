@@ -28,7 +28,7 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: var(--light);
     color: var(--dark);
     line-height: 1.6;
@@ -1414,7 +1414,7 @@ tr:hover {
     bottom: 28px;
     right: 28px;
     z-index: 9999;
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Roboto', 'Segoe UI', system-ui, sans-serif;
 }
 
 #chatbotButton {
@@ -2162,7 +2162,7 @@ to {
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Roboto', sans-serif;
             background: var(--slate-50);
             color: var(--slate-800);
             min-height: 100vh;
@@ -2221,7 +2221,7 @@ to {
             background: rgba(255,255,255,.04);
         }
         .page-hero h1 {
-            font-family: 'DM Serif Display', serif;
+            font-family: 'Roboto', sans-serif;
             font-size: 2.25rem;
             font-weight: 400;
             letter-spacing: -.01em;
@@ -2821,7 +2821,7 @@ to {
 }
 html{scroll-behavior:smooth}
 body{
-  font-family:'Source Sans 3',sans-serif;
+  font-family:'Roboto',sans-serif;
   background:var(--white);
   color:var(--text);
   overflow-x:hidden;
@@ -2845,17 +2845,17 @@ body{
   width:42px;height:42px;border-radius:50%;
   background:linear-gradient(135deg,var(--blue),var(--cyan));
   display:flex;align-items:center;justify-content:center;
-  font-family:'Lora',serif;font-weight:900;font-size:1.1rem;color:var(--white);
+  font-family:'Roboto', sans-serif;font-weight:900;font-size:1.1rem;color:var(--white);
   flex-shrink:0;box-shadow:0 4px 12px rgba(37,99,235,.3);
 }
 .nav-brand-text{display:flex;flex-direction:column;line-height:1.1}
-.nav-brand-text span:first-child{font-family:'Lora',serif;font-weight:700;font-size:1.15rem;color:var(--navy);letter-spacing:.02em}
+.nav-brand-text span:first-child{font-family:'Roboto', sans-serif;font-weight:700;font-size:1.15rem;color:var(--navy);letter-spacing:.02em}
 .nav-brand-text span:last-child{font-size:.68rem;color:var(--blue-mid);letter-spacing:.12em;text-transform:uppercase;font-weight:600}
 .nav-actions{display:flex;align-items:center;gap:.75rem}
 .nav-btn{
   padding:.6rem 1.4rem;border-radius:50px;font-size:.88rem;font-weight:600;
   cursor:pointer;text-decoration:none;border:none;transition:all .25s;
-  display:inline-flex;align-items:center;min-height:40px;font-family:'Source Sans 3',sans-serif;
+  display:inline-flex;align-items:center;min-height:40px;font-family:'Roboto',sans-serif;
 }
 .nav-btn-ghost{background:transparent;color:var(--blue);border:1.5px solid var(--blue-pale2)}
 .nav-btn-ghost:hover{background:var(--blue-pale);border-color:var(--blue)}
@@ -2914,7 +2914,7 @@ body{
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
 .hero-title{
-  font-family:'Lora',serif;
+  font-family:'Roboto', sans-serif;
   font-size:clamp(2.4rem,6vw,4rem);
   font-weight:900;line-height:1.1;
   margin-bottom:1.25rem;
@@ -2933,7 +2933,7 @@ body{
 .hero-btn{
   padding:.9rem 2.2rem;border-radius:50px;font-size:1rem;font-weight:700;
   cursor:pointer;text-decoration:none;border:none;transition:all .3s;
-  font-family:'Source Sans 3',sans-serif;display:inline-flex;align-items:center;gap:.5rem;
+  font-family:'Roboto',sans-serif;display:inline-flex;align-items:center;gap:.5rem;
 }
 .hero-btn-primary{
   background:var(--blue);color:var(--white);
@@ -2956,7 +2956,7 @@ body{
   display:flex;gap:2.5rem;justify-content:center;flex-wrap:wrap;
   padding-top:2rem;border-top:1px solid rgba(255,255,255,.2);
 }
-.hero-stat-num{font-family:'Lora',serif;font-size:2rem;font-weight:700;color:#93c5fd}
+.hero-stat-num{font-family:'Roboto', sans-serif;font-size:2rem;font-weight:700;color:#93c5fd}
 .hero-stat-label{font-size:.72rem;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
 
 .scroll-hint{
@@ -2981,7 +2981,7 @@ body{
 .trust-inner{max-width:900px;margin:0 auto;text-align:center;position:relative}
 .trust-label{font-size:.72rem;color:rgba(255,255,255,.7);letter-spacing:.12em;text-transform:uppercase;font-weight:600;margin-bottom:1.5rem}
 .trust-items{display:flex;gap:2.5rem;justify-content:center;flex-wrap:wrap}
-.trust-num{font-family:'Lora',serif;font-size:1.8rem;font-weight:700;color:var(--white)}
+.trust-num{font-family:'Roboto', sans-serif;font-size:1.8rem;font-weight:700;color:var(--white)}
 .trust-txt{font-size:.72rem;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
 
 /* ── SERVICES ── */
@@ -2997,7 +2997,7 @@ body{
 .section-header{text-align:center;margin-bottom:4rem}
 .section-tag{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:.75rem;display:block}
 .section-title{
-  font-family:'Lora',serif;
+  font-family:'Roboto', sans-serif;
   font-size:clamp(1.8rem,4vw,2.6rem);font-weight:700;
   color:var(--navy);margin-bottom:.75rem;
 }
@@ -3028,7 +3028,7 @@ body{
   display:flex;align-items:center;justify-content:center;
   margin-bottom:1.1rem;font-size:1.4rem;flex-shrink:0;
 }
-.service-title{font-family:'Lora',serif;font-size:1.05rem;font-weight:700;margin-bottom:.5rem;color:var(--navy)}
+.service-title{font-family:'Roboto', sans-serif;font-size:1.05rem;font-weight:700;margin-bottom:.5rem;color:var(--navy)}
 .service-desc{font-size:.83rem;color:var(--text-muted);margin-bottom:1.1rem;line-height:1.6}
 .service-items{list-style:none}
 .service-items li{
@@ -3090,14 +3090,14 @@ footer a:hover{text-decoration:underline}
   transition:background .2s;
 }
 .modal-close:hover{background:var(--gray-100);color:var(--navy)}
-.modal-title{font-family:'Lora',serif;font-size:1.5rem;font-weight:700;color:var(--navy);margin-bottom:.25rem}
+.modal-title{font-family:'Roboto', sans-serif;font-size:1.5rem;font-weight:700;color:var(--navy);margin-bottom:.25rem}
 .modal-sub{font-size:.85rem;color:var(--text-muted);margin-bottom:1.75rem}
 .field{margin-bottom:1rem}
 .field label{display:block;font-size:.78rem;font-weight:700;color:var(--gray-600);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.4rem}
 .field input{
   width:100%;padding:.875rem 1rem;
   background:var(--gray-50);border:1.5px solid var(--gray-100);
-  border-radius:12px;color:var(--text);font-size:.95rem;font-family:'Source Sans 3',sans-serif;
+  border-radius:12px;color:var(--text);font-size:.95rem;font-family:'Roboto',sans-serif;
   transition:border-color .2s,background .2s;outline:none;
 }
 .field input::placeholder{color:var(--gray-400)}
@@ -3110,7 +3110,7 @@ footer a:hover{text-decoration:underline}
 .submit-btn{
   width:100%;padding:1rem;border:none;border-radius:12px;
   background:var(--blue);color:var(--white);
-  font-size:1rem;font-weight:700;cursor:pointer;font-family:'Source Sans 3',sans-serif;
+  font-size:1rem;font-weight:700;cursor:pointer;font-family:'Roboto',sans-serif;
   transition:all .25s;margin-top:.5rem;box-shadow:0 4px 12px rgba(37,99,235,.25);
 }
 .submit-btn:hover{background:var(--navy);transform:translateY(-1px);box-shadow:0 8px 20px rgba(37,99,235,.35)}
@@ -3167,13 +3167,13 @@ footer a:hover{text-decoration:underline}
     --shadow-md:0 4px 20px rgba(37,99,235,.10);
   }
   html{scroll-behavior:smooth}
-  body{font-family:'Source Sans 3',sans-serif;background:var(--off-white);color:var(--gray-800);line-height:1.6;overflow-x:hidden}
+  body{font-family:'Roboto',sans-serif;background:var(--off-white);color:var(--gray-800);line-height:1.6;overflow-x:hidden}
 
   /* SIDEBAR */
   .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--white);border-right:1.5px solid var(--gray-100);box-shadow:2px 0 20px rgba(37,99,235,.07);z-index:900;display:flex;flex-direction:column;transform:translateX(0);transition:transform .3s cubic-bezier(.22,1,.36,1);}
   .sidebar.closed{transform:translateX(calc(-1 * var(--sidebar-w)))}
   .sidebar-brand{padding:1.75rem 1.5rem 1.25rem;border-bottom:1.5px solid var(--gray-100);display:flex;align-items:center;gap:.75rem;}
-  .brand-text span:first-child{display:block;font-family:'Lora',serif;font-weight:700;font-size:1.05rem;color:var(--navy)}
+  .brand-text span:first-child{display:block;font-family:'Roboto', sans-serif;font-weight:700;font-size:1.05rem;color:var(--navy)}
   .brand-text span:last-child{font-size:.7rem;color:var(--blue-mid);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
   .sidebar-user{margin:1.25rem 1rem;padding:1rem;background:var(--blue-pale);border:1.5px solid var(--blue-pale2);border-radius:14px;}
   .sidebar-user-label{font-size:.7rem;color:var(--blue-mid);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.25rem}
@@ -3199,7 +3199,7 @@ footer a:hover{text-decoration:underline}
   .topbar-left{display:flex;align-items:center;gap:1rem}
   .menu-btn{background:none;border:none;cursor:pointer;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--gray-600);font-size:1.3rem;transition:background .2s;}
   .menu-btn:hover{background:var(--off-white)}
-  .topbar-title{font-family:'Lora',serif;font-size:1.25rem;font-weight:700;color:var(--navy)}
+  .topbar-title{font-family:'Roboto', sans-serif;font-size:1.25rem;font-weight:700;color:var(--navy)}
   .topbar-welcome{font-size:.875rem;color:var(--gray-600);font-weight:500}
   .topbar-welcome strong{color:var(--navy)}
 
@@ -3210,12 +3210,12 @@ footer a:hover{text-decoration:underline}
   .page-hero{background:linear-gradient(135deg,var(--blue) 0%,var(--navy) 100%);border-radius:24px;padding:2.5rem;margin-bottom:2rem;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(37,99,235,.25);}
   .page-hero::before{content:'';position:absolute;right:-60px;top:-60px;width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,.06);}
   .page-hero-tag{display:inline-block;background:rgba(255,255,255,.15);color:rgba(255,255,255,.9);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.35rem .9rem;border-radius:50px;margin-bottom:.9rem;border:1px solid rgba(255,255,255,.2);}
-  .page-hero h1{font-family:'Lora',serif;font-size:2rem;font-weight:700;color:var(--white);margin-bottom:.5rem;line-height:1.2;}
+  .page-hero h1{font-family:'Roboto', sans-serif;font-size:2rem;font-weight:700;color:var(--white);margin-bottom:.5rem;line-height:1.2;}
   .page-hero p{color:rgba(255,255,255,.8);font-size:.95rem;position:relative;z-index:1}
 
   /* SECTION */
   .section-hdr{margin-bottom:1.25rem}
-  .section-hdr h2{font-family:'Lora',serif;font-size:1.2rem;font-weight:700;color:var(--navy);margin-bottom:.25rem}
+  .section-hdr h2{font-family:'Roboto', sans-serif;font-size:1.2rem;font-weight:700;color:var(--navy);margin-bottom:.25rem}
   .section-hdr p{font-size:.85rem;color:var(--gray-400)}
 
   /* STEP INDICATOR */
@@ -3282,7 +3282,7 @@ footer a:hover{text-decoration:underline}
   .success-card{background:var(--white);border:2px solid #d1fae5;border-radius:18px;padding:2.5rem;text-align:center;display:none;}
   .success-card.visible{display:block;}
   .success-icon{width:64px;height:64px;border-radius:50%;background:#d1fae5;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;color:var(--success);}
-  .success-card h3{font-family:'Lora',serif;font-size:1.4rem;font-weight:700;color:var(--navy);margin-bottom:.5rem}
+  .success-card h3{font-family:'Roboto', sans-serif;font-size:1.4rem;font-weight:700;color:var(--navy);margin-bottom:.5rem}
   .success-card p{color:var(--gray-600);font-size:.95rem;margin-bottom:1.5rem}
   .back-home-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.85rem 1.75rem;background:var(--blue);color:var(--white);border-radius:12px;text-decoration:none;font-weight:700;font-size:.9rem;transition:all .2s;}
   .back-home-btn:hover{background:var(--navy);}
@@ -3440,7 +3440,7 @@ footer a:hover{text-decoration:underline}
     border-radius:18px;box-shadow:var(--shadow-sm);
   }
   .empty-state .icon{font-size:3rem;margin-bottom:1rem}
-  .empty-state h3{font-family:'Lora',serif;font-size:1.25rem;font-weight:700;color:var(--navy);margin-bottom:.4rem}
+  .empty-state h3{font-family:'Roboto', sans-serif;font-size:1.25rem;font-weight:700;color:var(--navy);margin-bottom:.4rem}
   .empty-state p{font-size:.9rem;color:var(--gray-400)}
   .btn-primary{
     display:inline-block;margin-top:1.25rem;
@@ -3466,7 +3466,7 @@ footer a:hover{text-decoration:underline}
     text-align:center;
   }
   .cancel-modal-card .icon{font-size:2.5rem;margin-bottom:.75rem}
-  .cancel-modal-card h3{font-family:'Lora',serif;font-size:1.35rem;font-weight:700;color:var(--navy);margin-bottom:.4rem}
+  .cancel-modal-card h3{font-family:'Roboto', sans-serif;font-size:1.35rem;font-weight:700;color:var(--navy);margin-bottom:.4rem}
   .cancel-modal-card p{font-size:.875rem;color:var(--gray-600);margin-bottom:1.25rem}
   .cancel-appt-info{
     background:var(--gray-50);border:1.5px solid var(--gray-100);
@@ -3555,7 +3555,7 @@ footer a:hover{text-decoration:underline}
     --shadow-lg:0 12px 40px rgba(37,99,235,.14);
   }
   html{scroll-behavior:smooth}
-  body{font-family:'Source Sans 3',sans-serif;background:var(--off-white);color:var(--gray-800);line-height:1.6;overflow-x:hidden}
+  body{font-family:'Roboto',sans-serif;background:var(--off-white);color:var(--gray-800);line-height:1.6;overflow-x:hidden}
 
   /* ── SIDEBAR ── */
   .sidebar{
@@ -3576,10 +3576,10 @@ footer a:hover{text-decoration:underline}
   .brand-icon{
     width:42px;height:42px;border-radius:12px;
     display:flex;align-items:center;justify-content:center;
-    font-family:'Lora',serif;font-weight:900;font-size:1.1rem;color:var(--white);
+    font-family:'Roboto', sans-serif;font-weight:900;font-size:1.1rem;color:var(--white);
     flex-shrink:0;box-shadow:0 4px 12px rgba(37,99,235,.3);
   }
-  .brand-text span:first-child{display:block;font-family:'Lora',serif;font-weight:700;font-size:1.05rem;color:var(--navy)}
+  .brand-text span:first-child{display:block;font-family:'Roboto', sans-serif;font-weight:700;font-size:1.05rem;color:var(--navy)}
   .brand-text span:last-child{font-size:.7rem;color:var(--blue-mid);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
 
   /* User card in sidebar */
@@ -3647,7 +3647,7 @@ footer a:hover{text-decoration:underline}
     color:var(--gray-600);font-size:1.3rem;transition:background .2s;
   }
   .menu-btn:hover{background:var(--gray-50)}
-  .topbar-title{font-family:'Lora',serif;font-size:1.25rem;font-weight:700;color:var(--navy)}
+  .topbar-title{font-family:'Roboto', sans-serif;font-size:1.25rem;font-weight:700;color:var(--navy)}
   .topbar-actions{display:flex;align-items:center;gap:.75rem}
   .topbar-welcome{font-size:.875rem;color:var(--gray-600);font-weight:500}
   .topbar-welcome strong{color:var(--navy)}
@@ -3680,14 +3680,14 @@ footer a:hover{text-decoration:underline}
     border:1px solid rgba(255,255,255,.2);
   }
   .booking-hero h1{
-    font-family:'Lora',serif;font-size:2rem;font-weight:700;
+    font-family:'Roboto', sans-serif;font-size:2rem;font-weight:700;
     color:var(--white);margin-bottom:.5rem;line-height:1.2;
   }
   .booking-hero p{color:rgba(255,255,255,.8);font-size:.95rem;position:relative;z-index:1}
 
   /* Section headers */
   .section-hdr{margin-bottom:1.25rem}
-  .section-hdr h2{font-family:'Lora',serif;font-size:1.3rem;font-weight:700;color:var(--navy);margin-bottom:.25rem}
+  .section-hdr h2{font-family:'Roboto', sans-serif;font-size:1.3rem;font-weight:700;color:var(--navy);margin-bottom:.25rem}
   .section-hdr p{font-size:.85rem;color:var(--gray-400)}
 
   /* ── DOCTOR CARDS ── */
@@ -3771,7 +3771,7 @@ footer a:hover{text-decoration:underline}
     display:flex;align-items:center;justify-content:center;transition:background .2s;
   }
   .modal-close-btn:hover{background:var(--gray-100)}
-  .modal-title{font-family:'Lora',serif;font-size:1.35rem;font-weight:700;color:var(--navy);margin-bottom:.25rem}
+  .modal-title{font-family:'Roboto', sans-serif;font-size:1.35rem;font-weight:700;color:var(--navy);margin-bottom:.25rem}
   .modal-sub{font-size:.85rem;color:var(--gray-400);margin-bottom:1.5rem}
 
   /* Date & Time pickers */
@@ -3844,7 +3844,7 @@ html:has(.admin-layout),
 body:has(.admin-layout) {
     height: 100vh !important;
     overflow: hidden !important;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
     background: #1e293b !important;
     color: #1e293b !important;
 }

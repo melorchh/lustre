@@ -66,7 +66,7 @@ if ($walkins) {
     <link rel="icon" href="images/Lustre.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
     <script>try{if(localStorage.getItem('meTheme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}</script>
 <link rel="stylesheet" href="admin.css?v=<?= filemtime(__DIR__ . '/../../admin.css') ?>">
     <style>
@@ -144,7 +144,7 @@ if ($walkins) {
                     [$doc_name, $doc_spec] = explode('|', $docinfo, 2);
                 ?>
                 <div class="walkin-doctor-group" style="margin-top:18px">
-                    <h3 style="margin:0 0 8px;font-family:var(--font-heading,'Lora',serif);color:#0f172a;">Dr. <?php echo htmlspecialchars($doc_name); ?> <small style="color:#64748b;font-weight:400">(<?php echo htmlspecialchars($doc_spec); ?>)</small></h3>
+                    <h3 style="margin:0 0 8px;font-family:var(--font-heading,'Roboto',sans-serif);color:#0f172a;">Dr. <?php echo htmlspecialchars($doc_name); ?> <small style="color:#64748b;font-weight:400">(<?php echo htmlspecialchars($doc_spec); ?>)</small></h3>
                     <div class="table-scroll">
                         <table>
                             <thead><tr><th>Queue</th><th>Patient</th><th>Type</th><th>Arrival</th><th>Test / Procedure</th><th>Status</th><th>Actions</th></tr></thead>

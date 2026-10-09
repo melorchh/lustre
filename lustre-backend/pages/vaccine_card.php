@@ -63,7 +63,7 @@ $v_css = is_file(__DIR__ . '/../../' . $asset_css) ? filemtime(__DIR__ . '/../..
     <link rel="icon" href="images/Lustre.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
     <title>Vaccination Card &mdash; LustreMDC</title>
     <style>
         :root{
@@ -73,7 +73,7 @@ $v_css = is_file(__DIR__ . '/../../' . $asset_css) ? filemtime(__DIR__ . '/../..
             --amber:#d97706;--amber-deep:#92400e;--amber-pale:#fffbeb;
         }
         *{box-sizing:border-box}
-        body{margin:0;font-family:'Source Sans 3',sans-serif;background:#f4f7f5;color:var(--ink);
+        body{margin:0;font-family:'Roboto',sans-serif;background:#f4f7f5;color:var(--ink);
             min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
             padding:24px 16px}
         .vc-wrap{width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center;gap:18px}
@@ -90,7 +90,7 @@ $v_css = is_file(__DIR__ . '/../../' . $asset_css) ? filemtime(__DIR__ . '/../..
         .vax-head-svg{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.18);
             display:flex;align-items:center;justify-content:center;flex-shrink:0}
         .vax-head-text{flex:1;min-width:0}
-        .vax-head-title{font-family:'Lora',serif;font-weight:700;font-size:1.02rem;letter-spacing:.04em}
+        .vax-head-title{font-family:'Roboto',sans-serif;font-weight:700;font-size:1.02rem;letter-spacing:.04em}
         .vax-head-sub{font-size:.72rem;opacity:.85;margin-top:1px}
         .vax-head-ref{text-align:right;flex-shrink:0}
         .vax-head-ref span{display:block;font-size:.58rem;letter-spacing:.14em;opacity:.75;text-transform:uppercase}

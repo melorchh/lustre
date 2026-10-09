@@ -65,7 +65,7 @@ $v_css = is_file(__DIR__ . '/../../' . $asset_css) ? filemtime(__DIR__ . '/../..
     <link rel="stylesheet" href="<?php echo $asset_css; ?>?v=<?php echo $v_css; ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
     <title>Appointment Result &mdash; LustreMDC</title>
     <style>
         :root{
@@ -73,15 +73,15 @@ $v_css = is_file(__DIR__ . '/../../' . $asset_css) ? filemtime(__DIR__ . '/../..
             --ink:#1a2e20;--gray-mid:#52604f;--gray-light:#94a3b8;--line:#e7ece8;--bg:#f4f7f5;
         }
         *{box-sizing:border-box}
-        body{margin:0;font-family:'Source Sans 3',sans-serif;background:var(--bg);color:var(--ink)}
+        body{margin:0;font-family:'Roboto',sans-serif;background:var(--bg);color:var(--ink)}
         .cf-page{max-width:640px;margin:0 auto;padding:28px 16px 48px}
         .cf-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:12px}
-        .cf-brand{display:flex;align-items:center;gap:10px;font-family:'Lora',serif;font-weight:700;color:var(--green-deep);font-size:1.05rem}
+        .cf-brand{display:flex;align-items:center;gap:10px;font-family:'Roboto',sans-serif;font-weight:700;color:var(--green-deep);font-size:1.05rem}
         .cf-brand img{width:36px;height:36px;border-radius:50%}
         .cf-back{color:var(--green-dark);text-decoration:none;font-weight:600;font-size:0.92rem}
         .cf-card{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 12px 34px rgba(20,83,45,.10);border:1px solid var(--line)}
         .cf-head{background:linear-gradient(135deg,var(--green-dark),var(--green-deep));color:#fff;padding:22px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px}
-        .cf-head h1{font-family:'Lora',serif;font-size:1.2rem;margin:0 0 4px;color:#fff}
+        .cf-head h1{font-family:'Roboto',sans-serif;font-size:1.2rem;margin:0 0 4px;color:#fff}
         .cf-head p{margin:0;font-size:.88rem;opacity:.88}
         .cf-ref{text-align:right}
         .cf-ref-label{font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;opacity:.75;display:block}
@@ -92,7 +92,7 @@ $v_css = is_file(__DIR__ . '/../../' . $asset_css) ? filemtime(__DIR__ . '/../..
         .cf-info{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;margin:22px 0}
         .cf-field .cf-lbl{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gray-light);margin-bottom:3px;font-weight:700}
         .cf-field .cf-val{font-size:1rem;font-weight:600;color:var(--ink);word-break:break-word}
-        .cf-field .cf-val.cf-doctor{font-family:'Lora',serif;font-size:1.1rem;color:var(--green-deep)}
+        .cf-field .cf-val.cf-doctor{font-family:'Roboto',sans-serif;font-size:1.1rem;color:var(--green-deep)}
         .cf-full{grid-column:1 / -1}
         .cf-result{margin:8px 0 4px}
         .cf-result-lbl{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gray-light);margin-bottom:6px;font-weight:700}
