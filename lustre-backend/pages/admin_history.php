@@ -176,7 +176,7 @@ $conn->close();
         .pdf-cal-col{display:flex;flex-direction:column;gap:.55rem}
         .pdf-cal-head{display:flex;align-items:center;justify-content:space-between;gap:.4rem}
         .pdf-cal-sels{display:inline-flex;align-items:center;gap:.35rem}
-        .pdf-cal-arrow{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border:2px solid var(--gray-100);background:var(--white);color:var(--gray-800);border-radius:12px;cursor:pointer;font-size:1.35rem;line-height:1;transition:border-color .15s,background .15s,color .15s}
+        .pdf-cal-arrow{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:46px;height:42px;border:2px solid var(--gray-100);background:var(--white);color:var(--green);border-radius:12px;cursor:pointer;font-size:1.4rem;line-height:1;transition:border-color .15s,background .15s,color .15s}
         .pdf-cal-arrow:hover:not(:disabled){border-color:var(--green);color:var(--green);background:var(--green-pale)}
         .pdf-cal-arrow:disabled{opacity:.4;cursor:not-allowed;border-color:var(--gray-100);color:var(--gray-400);background:var(--white)}
         .pdf-cal-week{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
@@ -223,9 +223,13 @@ $conn->close();
         }
         @media (max-width:480px){
             .pdf-panel-top{flex-direction:column;align-items:stretch}
-            .pdf-type-switch{width:100%;border-radius:var(--radius-sm)}
-            .pdf-type-btn{flex:1;text-align:center}
+            .pdf-type-switch{width:100%;border-radius:var(--radius-sm);overflow-x:auto}
+            .pdf-type-btn{flex:1 0 auto;text-align:center;font-size:.72rem;padding:.4rem .6rem}
             .pdf-panel-body{padding:1rem}
+            .pdf-cal-head{flex-wrap:wrap;justify-content:space-between;row-gap:.5rem;column-gap:.35rem}
+            .pdf-cal-sels{flex:1 1 100%;justify-content:space-between}
+            .pdf-cal-sels .cust-dropdown{flex:1 1 0;width:auto;min-width:0}
+            .pdf-cal-sels .cd-btn{min-width:0}
         }
 
         /* Dark: archive PDF panel */
@@ -235,7 +239,8 @@ $conn->close();
         [data-theme="dark"] .pdf-type-btn{color:var(--gray-600)}
         [data-theme="dark"] .pdf-type-btn:hover{color:var(--gray-800)}
         [data-theme="dark"] .pdf-type-btn.active{background:linear-gradient(135deg,#0b5c3a,#0d7546);box-shadow:0 2px 8px rgba(11,92,58,.4)}
-        [data-theme="dark"] .pdf-cal-arrow{background:var(--white);border-color:var(--gray-100);color:var(--gray-800)}
+        [data-theme="dark"] .pdf-cal-arrow{background:var(--white);border-color:var(--gray-100);color:var(--green-light)}
+        [data-theme="dark"] .pdf-cal-arrow:disabled{color:var(--gray-400)}
         [data-theme="dark"] .pdf-cal-arrow:hover:not(:disabled){border-color:var(--green-mid);background:var(--green-pale);color:var(--green-light)}
         [data-theme="dark"] .pdf-cal-cell{color:var(--gray-800)}
         [data-theme="dark"] .pdf-cal-cell:hover{background:var(--green-pale)}
