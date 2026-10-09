@@ -176,7 +176,7 @@ $conn->close();
         .pdf-cal-col{display:flex;flex-direction:column;gap:.55rem}
         .pdf-cal-head{display:flex;align-items:center;justify-content:space-between;gap:.4rem}
         .pdf-cal-sels{display:inline-flex;align-items:center;gap:.35rem}
-        .pdf-cal-arrow{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:1.5px solid var(--gray-100);background:var(--white);color:var(--gray-800);border-radius:var(--radius-xs);cursor:pointer;font-size:1.05rem;line-height:1;transition:border-color .15s,background .15s,color .15s}
+        .pdf-cal-arrow{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border:2px solid var(--gray-100);background:var(--white);color:var(--gray-800);border-radius:12px;cursor:pointer;font-size:1.35rem;line-height:1;transition:border-color .15s,background .15s,color .15s}
         .pdf-cal-arrow:hover:not(:disabled){border-color:var(--green);color:var(--green);background:var(--green-pale)}
         .pdf-cal-arrow:disabled{opacity:.4;cursor:not-allowed;border-color:var(--gray-100);color:var(--gray-400);background:var(--white)}
         .pdf-cal-week{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
