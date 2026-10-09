@@ -447,7 +447,6 @@ input {
   gap: 1rem;
   flex: 1;
   min-width: 0;
-  padding-right: 200px;
 }
 
 .menu-btn {
@@ -644,10 +643,6 @@ input {
 }
 
 .topbar-actions {
-  position: absolute;
-  right: 1.4rem;
-  top: 50%;
-  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: 0.65rem;
