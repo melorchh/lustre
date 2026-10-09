@@ -3042,6 +3042,16 @@ body::-webkit-scrollbar {
   }
 }
 
+@media (max-width: 768px) {
+  .tab-nav { flex-wrap: wrap; }
+  .tab-btn { flex: 1 1 40%; min-height: 44px; padding: 0.6rem 0.5rem; white-space: nowrap; }
+  .tab-btn svg { flex: 0 0 auto; }
+}
+@media (max-width: 480px) {
+  .tab-btn { font-size: 0.78rem; gap: 0.3rem; }
+  .tab-count { font-size: 0.66rem; padding: 0.1rem 0.45rem; }
+}
+
 /* ─── Doctor tests / procedures chips ─── */
 .doctor-procs {
   display: flex;
