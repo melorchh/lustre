@@ -2714,8 +2714,8 @@ body::-webkit-scrollbar {
 }
 [data-theme="dark"] body {
   background:
-    radial-gradient(1200px 500px at 85% -10%, rgba(22, 163, 74, 0.12), transparent 60%),
-    radial-gradient(900px 420px at -10% 30%, rgba(5, 150, 105, 0.10), transparent 55%),
+    radial-gradient(1200px 500px at 85% -10%, rgba(22, 163, 74, 0.06), transparent 60%),
+    radial-gradient(900px 420px at -10% 30%, rgba(5, 150, 105, 0.05), transparent 55%),
     var(--off-white);
 }
 [data-theme="dark"] .modal-overlay,
@@ -2792,6 +2792,50 @@ body::-webkit-scrollbar {
 }
 [data-theme="dark"] .nav-item.active svg {
   color: #ffffff;
+}
+
+/* ── Night-eye comfort ──────────────────────────────
+   Dial bright green fills, chips and glows down in dark
+   mode so buttons and surfaces stop glaring. Text colors
+   are left alone: labels and words keep their brightness. */
+[data-theme="dark"] .btn-primary,
+[data-theme="dark"] .btn-add,
+[data-theme="dark"] .tab-btn.active,
+[data-theme="dark"] .admin-cal .cal-btn.active,
+[data-theme="dark"] .admin-cal .cal-legend-dot {
+  background: linear-gradient(135deg, #0b5c3a, #0d7546);
+}
+[data-theme="dark"] .btn-walkin {
+  background: linear-gradient(135deg, #0c5f30, #0b6b36, #177a45);
+}
+[data-theme="dark"] .cd-opt.sel,
+[data-theme="dark"] .slip-head {
+  background: #0b6b36;
+}
+[data-theme="dark"] .avatar {
+  background: linear-gradient(135deg, #1e7a4f, #0b6b36);
+}
+[data-theme="dark"] .nav-item.active {
+  background: linear-gradient(135deg, #0b6b62, #0f877a);
+  box-shadow: 0 4px 14px rgba(20, 184, 166, 0.22);
+}
+[data-theme="dark"] .nav-item.active::before {
+  background: linear-gradient(#1f9d85, #5fc9ae);
+}
+[data-theme="dark"] .nav-item:hover {
+  box-shadow: 0 3px 12px rgba(45, 212, 191, 0.12);
+}
+[data-theme="dark"] .qa-btn--apt {
+  border-color: #3d439e;
+}
+[data-theme="dark"] .qa-btn--apt:hover {
+  border-color: #6a74d8;
+}
+[data-theme="dark"] .qa-btn--walkin {
+  border-color: #0e8a7d;
+}
+[data-theme="dark"] .qa-btn--walkin:hover {
+  border-color: #22b5a5;
 }
 
 /* Dark: badges */

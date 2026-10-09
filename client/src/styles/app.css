@@ -4444,8 +4444,8 @@ html[data-theme="dark"] {
 
 html[data-theme="dark"] body {
   background:
-    radial-gradient(1200px 500px at 85% -10%, rgba(13, 148, 136, 0.12), transparent 60%),
-    radial-gradient(900px 420px at -10% 30%, rgba(20, 184, 166, 0.08), transparent 55%),
+    radial-gradient(1200px 500px at 85% -10%, rgba(13, 148, 136, 0.06), transparent 60%),
+    radial-gradient(900px 420px at -10% 30%, rgba(20, 184, 166, 0.04), transparent 55%),
     var(--off-white);
   color: var(--gray-800);
 }
@@ -4823,6 +4823,83 @@ html[data-theme="dark"] .lang-toggle {
 html[data-theme="dark"] .lang-toggle:hover {
   background: var(--green-pale);
   box-shadow: 0 6px 20px rgba(45, 212, 191, 0.35);
+}
+
+/* ── Night-eye comfort ──────────────────────────────
+   Dial bright green/teal fills, chips and glows down in dark
+   mode so buttons and surfaces stop glaring. Text colors are
+   left alone: labels and words keep their crisp brightness. */
+html[data-theme="dark"] .avatar--sm,
+html[data-theme="dark"] .avatar--lg,
+html[data-theme="dark"] .avatar--topbar {
+  background: linear-gradient(135deg, #0c5b52, #187a6f);
+}
+html[data-theme="dark"] .btn-primary,
+html[data-theme="dark"] .btn-confirm,
+html[data-theme="dark"] .submit-btn,
+html[data-theme="dark"] .proceed-btn,
+html[data-theme="dark"] .cta-btn,
+html[data-theme="dark"] .tab-btn.active,
+html[data-theme="dark"] .date-btn.active,
+html[data-theme="dark"] .time-btn.active,
+html[data-theme="dark"] .cal-btn.active,
+html[data-theme="dark"] .cal-legend-dot,
+html[data-theme="dark"] .check-mark,
+html[data-theme="dark"] .step-pill-dot,
+html[data-theme="dark"] .step.active .step-num,
+html[data-theme="dark"] .step.done .step-num,
+html[data-theme="dark"] .step-line.done,
+html[data-theme="dark"] .test-chip.selected,
+html[data-theme="dark"] .fd-opt.sel,
+html[data-theme="dark"] .priority-opt.selected,
+html[data-theme="dark"] .db-appt-date,
+html[data-theme="dark"] .db-result-pdf,
+html[data-theme="dark"] .lab-download-btn,
+html[data-theme="dark"] .profile-success-icon,
+html[data-theme="dark"] .bmi-icon,
+html[data-theme="dark"] .tour-btn--primary,
+html[data-theme="dark"] .tour-btn--primary:hover,
+html[data-theme="dark"] .btn-confirm:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0b5b54, #0d6f66);
+}
+html[data-theme="dark"] .hero-avatar {
+  background: linear-gradient(135deg, #17907d, #0a6b62);
+}
+html[data-theme="dark"] .conf-card-head {
+  background: linear-gradient(135deg, #0a5a53, #1a7a5f);
+}
+html[data-theme="dark"] .db-alert-action,
+html[data-theme="dark"] .btn-result-appt {
+  background: #0a5a4e;
+}
+html[data-theme="dark"] .btn-result-appt:hover {
+  background: #1a7a63;
+}
+html[data-theme="dark"] .stripe-confirmed,
+html[data-theme="dark"] .stripe-vital {
+  background: #0d7a6d;
+}
+html[data-theme="dark"] .stripe-completed {
+  background: #16695f;
+}
+html[data-theme="dark"] .nav-item.active {
+  background: linear-gradient(135deg, #0b6f66, #108f81);
+  box-shadow: 0 4px 14px rgba(20, 184, 166, 0.22);
+}
+html[data-theme="dark"] .nav-item:hover {
+  box-shadow: 0 3px 12px rgba(45, 212, 191, 0.12);
+}
+html[data-theme="dark"] .theme-toggle,
+html[data-theme="dark"] .lang-toggle {
+  box-shadow: 0 4px 14px rgba(45, 212, 191, 0.1);
+}
+html[data-theme="dark"] .theme-toggle:hover,
+html[data-theme="dark"] .lang-toggle:hover {
+  box-shadow: 0 6px 20px rgba(45, 212, 191, 0.2);
+}
+html[data-theme="dark"] .nav-icon svg,
+html[data-theme="dark"] .brand-icon img {
+  filter: drop-shadow(0 2px 4px rgba(13, 148, 136, 0.15));
 }
 
 /* ═══════════════════════════════════════════════════
