@@ -142,11 +142,6 @@ $conn->close();
         .archive-day-label{font-weight:700;color:#0f172a;font-size:.9rem;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .archive-day-count{color:#64748b;font-size:.78rem;margin-left:.6rem;flex:0 0 auto;white-space:nowrap}
         .archive-day-arrow{float:right;color:#94a3b8;transition:transform .2s ease;flex:0 0 auto;display:inline-flex;line-height:0;margin-top:.2rem}
-        .daypdf-btn{display:inline-flex;align-items:center;gap:.32rem;height:30px;padding:0 .72rem 0 .52rem;border:1px solid #16a34a;background:#16a34a;color:#fff;border-radius:999px;cursor:pointer;font-family:inherit;font-size:.72rem;font-weight:700;white-space:nowrap;letter-spacing:.03em;line-height:1;box-shadow:0 2px 6px rgba(22,163,74,.3);transition:background .15s ease,transform .15s ease,box-shadow .15s ease}
-        .daypdf-btn:hover{background:#15803d;transform:translateY(-1px);box-shadow:0 3px 10px rgba(22,163,74,.45)}
-        .daypdf-btn.active{background:#0f766e;border-color:#0f766e;outline:2px solid #99f6e4;outline-offset:2px;box-shadow:0 2px 8px rgba(15,118,110,.4)}
-        .daypdf-btn svg{display:block}
-        .daypdf-group{margin-left:auto;display:inline-flex;align-items:center;gap:.5rem;flex-wrap:wrap}
         .archive-day-row.collapsed .archive-day-arrow{transform:rotate(-90deg)}
         .archive-day-row.collapsed .archive-day-cell{background:#f1f5f9 !important;border-left-color:#94a3b8;box-shadow:inset 0 -1px 0 #e2e8f0}
         .archive-day-row.collapsed .archive-day-label{color:#64748b}
@@ -160,7 +155,6 @@ $conn->close();
             .archive-day-label{font-size:.86rem}
             .archive-day-count{font-size:.72rem;margin-left:.15rem}
             .archive-day-arrow{float:none;margin-left:.35rem;margin-top:0}
-            .daypdf-group{margin-left:0;flex-wrap:nowrap;max-width:100%;overflow-x:auto;padding-bottom:.25rem;-webkit-overflow-scrolling:touch}
         }
         @media (max-width:380px){
             .archive-day-count{display:none}
@@ -180,11 +174,14 @@ $conn->close();
         .pdf-type-btn.active{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.35)}
         .pdf-panel-body{display:grid;grid-template-columns:minmax(240px,288px) minmax(220px,1fr) minmax(195px,240px);gap:1.15rem;padding:1.25rem 1.3rem 1.4rem}
         .pdf-cal-col{display:flex;flex-direction:column;gap:.55rem}
-        .pdf-cal-head{display:flex;align-items:center;justify-content:space-between}
+        .pdf-cal-head{display:flex;align-items:center;justify-content:space-between;gap:.4rem}
+        .pdf-cal-sels{display:inline-flex;align-items:center;gap:.35rem}
+        .pdf-cal-select{font-family:inherit;font-size:.76rem;font-weight:700;color:var(--gray-800);background:var(--white);border:1.5px solid var(--gray-100);border-radius:var(--radius-xs);padding:.34rem .42rem;cursor:pointer;transition:border-color .15s,box-shadow .15s;max-width:100%}
+        .pdf-cal-select:hover{border-color:var(--green-mid)}
+        .pdf-cal-select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.14)}
         .pdf-cal-arrow{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:1.5px solid var(--gray-100);background:var(--white);color:var(--gray-800);border-radius:var(--radius-xs);cursor:pointer;font-size:1.05rem;line-height:1;transition:border-color .15s,background .15s,color .15s}
         .pdf-cal-arrow:hover:not(:disabled){border-color:var(--green);color:var(--green);background:var(--green-pale)}
         .pdf-cal-arrow:disabled{opacity:.4;cursor:not-allowed;border-color:var(--gray-100);color:var(--gray-400);background:var(--white)}
-        .pdf-cal-label{font-size:.8rem;font-weight:800;color:var(--gray-800);letter-spacing:.01em}
         .pdf-cal-week{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
         .pdf-cal-week span{font-size:.6rem;font-weight:800;color:var(--gray-400);text-align:center;text-transform:uppercase;letter-spacing:.06em;padding:.15rem 0}
         .pdf-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
@@ -243,6 +240,9 @@ $conn->close();
         [data-theme="dark"] .pdf-type-btn.active{background:linear-gradient(135deg,#0b5c3a,#0d7546);box-shadow:0 2px 8px rgba(11,92,58,.4)}
         [data-theme="dark"] .pdf-cal-arrow{background:var(--white);border-color:var(--gray-100);color:var(--gray-800)}
         [data-theme="dark"] .pdf-cal-arrow:hover:not(:disabled){border-color:var(--green-mid);background:var(--green-pale);color:var(--green-light)}
+        [data-theme="dark"] .pdf-cal-select{background:var(--white);border-color:var(--gray-100);color:var(--gray-800)}
+        [data-theme="dark"] .pdf-cal-select:hover{border-color:var(--green-mid)}
+        [data-theme="dark"] .pdf-cal-select:focus{border-color:var(--green-mid);box-shadow:0 0 0 3px rgba(34,197,94,.18)}
         [data-theme="dark"] .pdf-cal-cell{color:var(--gray-800)}
         [data-theme="dark"] .pdf-cal-cell:hover{background:var(--green-pale)}
         [data-theme="dark"] .pdf-cal-cell.today{color:var(--green-light);box-shadow:inset 0 0 0 1.5px rgba(74,222,128,.45)}
@@ -260,6 +260,16 @@ $conn->close();
         [data-theme="dark"] .pdf-selected-label{color:var(--green-light)}
         [data-theme="dark"] .pdf-dl-btn{background:linear-gradient(135deg,#0b5c3a,#0d7546);box-shadow:0 4px 14px rgba(11,92,58,.5)}
         [data-theme="dark"] .pdf-dl-btn:hover:not(:disabled){filter:brightness(1.1)}
+
+        /* Dark: archive day folder rows */
+        [data-theme="dark"] .archive-day-cell{background:#243047 !important;border-left-color:#37a56d}
+        [data-theme="dark"] .archive-day-row:hover .archive-day-cell{background:#31405a !important}
+        [data-theme="dark"] .archive-day-label{color:#e6ecf4}
+        [data-theme="dark"] .archive-day-count{color:#a9b7cc}
+        [data-theme="dark"] .archive-day-arrow{color:#8b9bb3}
+        [data-theme="dark"] .archive-day-ic{color:#4ade80}
+        [data-theme="dark"] .archive-day-row.collapsed .archive-day-cell{background:#202b3a !important;border-left-color:#8b9bb3;box-shadow:inset 0 -1px 0 #31405a}
+        [data-theme="dark"] .archive-day-row.collapsed .archive-day-label{color:#8b9bb3}
     </style>
     <title>Archives &mdash; LustreMDC Admin</title>
 </head>
@@ -330,7 +340,10 @@ $conn->close();
                 <div class="pdf-cal-col">
                     <div class="pdf-cal-head">
                         <button type="button" class="pdf-cal-arrow" id="pdfCalPrev" onclick="pdfMonth(-1)" aria-label="Previous month">&#8249;</button>
-                        <span class="pdf-cal-label" id="pdfCalLabel">Loading&#8230;</span>
+                        <div class="pdf-cal-sels">
+                            <select id="pdfCalMonth" class="pdf-cal-select" aria-label="Month" onchange="pdfCalChange()"></select>
+                            <select id="pdfCalYear" class="pdf-cal-select" aria-label="Year" onchange="pdfCalChange()"></select>
+                        </div>
                         <button type="button" class="pdf-cal-arrow" id="pdfCalNext" onclick="pdfMonth(1)" aria-label="Next month">&#8250;</button>
                     </div>
                     <div class="pdf-cal-week">
@@ -430,11 +443,6 @@ $conn->close();
                         <option value="paid">Paid</option>
                         <option value="pending">Unpaid</option>
                     </select>
-                    <span class="daypdf-group">
-                        <?php foreach ($apt_groups as $gday => $apts): ?>
-                            <button type="button" class="daypdf-btn" data-day="<?php echo $gday; ?>" title="Download <?php echo date('M j, Y', strtotime($gday)); ?> as PDF" onclick="downloadDayPdf('archive_day_pdf.php?tab=appointments&day=<?php echo $gday; ?>')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span><?php echo date('M j', strtotime($gday)); ?></span></button>
-                        <?php endforeach; ?>
-                    </span>
                     <span class="result-count" id="aptResultCount"></span>
                 </div>
                 <div class="table-scroll">
@@ -574,11 +582,6 @@ $conn->close();
                         <option value="urgent">Urgent</option>
                         <option value="stat">STAT</option>
                     </select>
-                    <span class="daypdf-group">
-                        <?php foreach ($lab_groups as $gday => $labrows): ?>
-                            <button type="button" class="daypdf-btn" data-day="<?php echo $gday; ?>" title="Download <?php echo date('M j, Y', strtotime($gday)); ?> as PDF" onclick="downloadDayPdf('archive_day_pdf.php?tab=labtests&day=<?php echo $gday; ?>')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span><?php echo date('M j', strtotime($gday)); ?></span></button>
-                        <?php endforeach; ?>
-                    </span>
                     <span class="result-count" id="labResultCount"></span>
                 </div>
                 <div class="table-scroll">
@@ -671,11 +674,6 @@ $conn->close();
             <div class="content-card">
                 <div class="search-filter-bar">
                     <input type="search" id="vitalSearch" placeholder="Search patient name&#8230;" oninput="filterVitals()">
-                    <span class="daypdf-group">
-                        <?php foreach ($vital_groups as $gday => $vitrows): ?>
-                            <button type="button" class="daypdf-btn" data-day="<?php echo $gday; ?>" title="Download <?php echo date('M j, Y', strtotime($gday)); ?> as PDF" onclick="downloadDayPdf('archive_day_pdf.php?tab=vitals&day=<?php echo $gday; ?>')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span><?php echo date('M j', strtotime($gday)); ?></span></button>
-                        <?php endforeach; ?>
-                    </span>
                     <span class="result-count" id="vitalResultCount"></span>
                 </div>
                 <div class="table-scroll">
@@ -753,11 +751,6 @@ $conn->close();
                     <input type="search" id="vaccSearchPatient" placeholder="Search patient..." oninput="filterVaccinations()">
                     <input type="search" id="vaccSearchVaccine" placeholder="Search vaccine..." oninput="filterVaccinations()">
                     <input type="search" id="vaccSearchDose" placeholder="Search dose..." oninput="filterVaccinations()">
-                    <span class="daypdf-group">
-                        <?php foreach ($vacc_groups as $gday => $vacrows): ?>
-                            <button type="button" class="daypdf-btn" data-day="<?php echo $gday; ?>" title="Download <?php echo date('M j, Y', strtotime($gday)); ?> as PDF" onclick="downloadDayPdf('archive_day_pdf.php?tab=vaccinations&day=<?php echo $gday; ?>')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span><?php echo date('M j', strtotime($gday)); ?></span></button>
-                        <?php endforeach; ?>
-                    </span>
                     <span class="result-count" id="vaccResultCount"></span>
                 </div>
                 <div class="table-scroll">
@@ -897,8 +890,6 @@ $conn->close();
     }
     function showToast(msg,type=''){try{if(!window.__noFlash){clearTimeout(window.__flashT);localStorage.setItem('lustreAdminFlash',JSON.stringify({m:String(msg),t:type||''}));window.__flashT=setTimeout(function(){try{localStorage.removeItem('lustreAdminFlash')}catch(e){}},2500);}}catch(e){}const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(type?' '+type:'');setTimeout(()=>t.className='toast',3200);}
 
-    function downloadDayPdf(url){showToast('PDF downloaded','success');window.location.href=url;}
-
     /* ── Archive PDF downloader panel ── */
     var ARCHIVE_DAYS = <?php echo $archive_days_json; ?>;
     var pdfState={type:'appointments',month:null,day:null,search:''};
@@ -925,6 +916,36 @@ $conn->close();
         if(nm>pdfNowIndex())nm=pdfNowIndex();
         pdfState.month=nm;renderCal();
     }
+    var PDF_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    function pdfYearRange(){
+        var ys=[],now=new Date().getFullYear(),t,k;
+        for(t in ARCHIVE_DAYS){
+            if(!ARCHIVE_DAYS.hasOwnProperty(t))continue;
+            for(k in ARCHIVE_DAYS[t]){
+                if(!ARCHIVE_DAYS[t].hasOwnProperty(k))continue;
+                var yy=parseInt(k.substring(0,4),10);
+                if(ys.indexOf(yy)===-1)ys.push(yy);
+            }
+        }
+        var min=ys.length?Math.min.apply(null,ys):now;
+        var max=ys.length?Math.max.apply(null,ys):now;
+        return {min:Math.min(min,now),max:Math.max(max,now)};
+    }
+    function pdfBuildSelects(){
+        var mSel=document.getElementById('pdfCalMonth'),html='',i;
+        for(i=0;i<12;i++)html+='<option value="'+i+'">'+PDF_MONTHS[i]+'</option>';
+        mSel.innerHTML=html;
+        var r=pdfYearRange(),ySel=document.getElementById('pdfCalYear');html='';
+        for(i=r.max;i>=r.min;i--)html+='<option value="'+i+'">'+i+'</option>';
+        ySel.innerHTML=html;
+    }
+    function pdfCalChange(){
+        var m=parseInt(document.getElementById('pdfCalMonth').value,10);
+        var y=parseInt(document.getElementById('pdfCalYear').value,10);
+        var idx=y*12+m;
+        if(idx>pdfNowIndex())idx=pdfNowIndex();
+        pdfState.month=idx;renderCal();
+    }
     function pdfPickDay(k){
         pdfState.day=k;
         var d=new Date(k+'T00:00:00');
@@ -933,7 +954,8 @@ $conn->close();
     }
     function renderCal(){
         var y=Math.floor(pdfState.month/12),m=pdfState.month%12;
-        document.getElementById('pdfCalLabel').textContent=new Date(y,m,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+        document.getElementById('pdfCalMonth').value=m;
+        document.getElementById('pdfCalYear').value=y;
         document.getElementById('pdfCalPrev').disabled=(pdfState.month<=0);
         document.getElementById('pdfCalNext').disabled=(pdfState.month>=pdfNowIndex());
         var firstDow=new Date(y,m,1).getDay();
@@ -996,7 +1018,7 @@ $conn->close();
         var days=pdfDaysFor('appointments');
         var t=pdfDayKey(now);
         pdfState.day=(days.length&&days[0]<=t)?days[0]:t;
-        renderCal();renderDayList();pdfSummary();
+        pdfBuildSelects();renderCal();renderDayList();pdfSummary();
     }
 
     function switchTab(name,btn){
@@ -1014,11 +1036,6 @@ btn.classList.add('active');
             else sib.style.display='none';
             sib=sib.nextElementSibling;
         }
-        const day=header.dataset.day;
-        if(day){
-            const tbl=header.closest('tbody');
-            tbl.querySelectorAll('.daypdf-btn[data-day]').forEach(b=>b.classList.toggle('active', !collapsed && b.dataset.day===day));
-        }
     }
     function expandAllDays(tbody){
         tbody.querySelectorAll('.archive-day-row').forEach(h=>{
@@ -1026,7 +1043,6 @@ btn.classList.add('active');
             let sib=h.nextElementSibling;
             while(sib&&!sib.classList.contains('archive-day-row')){ sib.style.display=''; sib=sib.nextElementSibling; }
         });
-        tbody.querySelectorAll('.daypdf-btn.active').forEach(b=>b.classList.remove('active'));
     }
     function syncDayHeaders(tbody){
         let header=null, visible=0;
