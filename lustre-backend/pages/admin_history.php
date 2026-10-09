@@ -172,7 +172,7 @@ $conn->close();
         .pdf-type-btn{border:0;background:transparent;padding:.4rem .85rem;border-radius:var(--radius-pill);font-family:inherit;font-size:.75rem;font-weight:700;color:var(--gray-600);cursor:pointer;white-space:nowrap;transition:background .15s,color .15s,box-shadow .15s}
         .pdf-type-btn:hover{color:var(--gray-800)}
         .pdf-type-btn.active{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.35)}
-        .pdf-panel-body{display:grid;grid-template-columns:minmax(340px,1.35fr) minmax(200px,1fr) minmax(180px,1fr);gap:1.15rem;padding:1.25rem 1.3rem 1.4rem}
+        .pdf-panel-body{display:grid;grid-template-columns:minmax(330px,1.1fr) minmax(220px,1fr) minmax(180px,1fr);gap:1.15rem;padding:1.25rem 1.3rem 1.4rem}
         .pdf-cal-col{display:flex;flex-direction:column;gap:.55rem}
         .pdf-cal-head{display:flex;flex-direction:row;align-items:center;gap:12px;flex-wrap:wrap}
         .pdf-cal-sels{display:flex;align-items:center;gap:10px;flex:0 0 auto}
@@ -184,11 +184,11 @@ $conn->close();
         .pdf-cal-sels select#pdfCalMonth + .cust-dropdown{min-width:118px}
         .pdf-cal-sels select#pdfCalYear + .cust-dropdown{min-width:88px}
         html:not([data-theme="dark"]) .pdf-cal-sels .cust-dropdown .cd-btn{color:#000}
-        .pdf-cal-search{position:relative;flex:1 1 220px;min-width:150px}
-        .pdf-cal-search svg{position:absolute;left:.65rem;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none}
-        .pdf-cal-search input{width:100%;height:44px;padding:.8rem .75rem .8rem 1.95rem;border:2px solid var(--gray-100);border-radius:12px;background:var(--white);color:var(--gray-800);font-family:inherit;font-size:.85rem;font-weight:500;outline:none;transition:border-color .15s,box-shadow .15s}
-        .pdf-cal-search input::placeholder{color:var(--gray-400)}
-        .pdf-cal-search input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.14)}
+        .pdf-list-search{position:relative}
+        .pdf-list-search svg{position:absolute;left:.65rem;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none}
+        .pdf-list-search input{width:100%;padding:.55rem .75rem .55rem 1.95rem;border:1.5px solid var(--gray-100);border-radius:var(--radius-sm);background:var(--white);color:var(--gray-800);font-family:inherit;font-size:.8rem;font-weight:600;outline:none;transition:border-color .15s,box-shadow .15s}
+        .pdf-list-search input::placeholder{color:var(--gray-400)}
+        .pdf-list-search input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.14)}
         .pdf-cal-week{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
         .pdf-cal-week span{font-size:.6rem;font-weight:800;color:var(--gray-400);text-align:center;text-transform:uppercase;letter-spacing:.06em;padding:.15rem 0}
         .pdf-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
@@ -237,7 +237,6 @@ $conn->close();
             .pdf-cal-sels .cust-dropdown.cd-action{height:40px}
             .pdf-cal-sels select#pdfCalMonth + .cust-dropdown{min-width:100px}
             .pdf-cal-sels select#pdfCalYear + .cust-dropdown{min-width:74px}
-            .pdf-cal-search{flex:1 1 100%;min-width:0}
         }
 
         /* Dark: archive PDF panel */
@@ -257,8 +256,8 @@ $conn->close();
         [data-theme="dark"] .pdf-cal-cell.sel{background:linear-gradient(135deg,#0b5c3a,#0d7546);color:#fff;box-shadow:0 2px 10px rgba(11,92,58,.5)}
         [data-theme="dark"] .pdf-cal-cell.sel.has::after{background:#fff}
         [data-theme="dark"] .pdf-cal-cell.sel.today{color:#fff}
-        [data-theme="dark"] .pdf-cal-search input{background:var(--white);border-color:var(--gray-100);color:var(--gray-800)}
-        [data-theme="dark"] .pdf-cal-search input:focus{border-color:var(--green-mid);box-shadow:0 0 0 3px rgba(34,197,94,.18)}
+        [data-theme="dark"] .pdf-list-search input{background:var(--white);border-color:var(--gray-100);color:var(--gray-800)}
+        [data-theme="dark"] .pdf-list-search input:focus{border-color:var(--green-mid);box-shadow:0 0 0 3px rgba(34,197,94,.18)}
         [data-theme="dark"] .pdf-day-item{background:var(--white);border-color:var(--gray-100)}
         [data-theme="dark"] .pdf-day-item:hover{border-color:var(--green-mid);background:var(--green-pale)}
         [data-theme="dark"] .pdf-day-item.sel{border-color:var(--green-mid);background:var(--green-pale)}
@@ -352,10 +351,6 @@ $conn->close();
                             <select id="pdfCalYear" class="action-select" aria-label="Year" onchange="pdfCalChange()"></select>
                             <button type="button" class="pdf-cal-arrow" id="pdfCalNext" onclick="pdfMonth(1)" aria-label="Next month">&#8250;</button>
                         </div>
-                        <div class="pdf-cal-search">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                            <input type="search" id="pdfDaySearch" placeholder="Search archive days&hellip;" aria-label="Search archive days" oninput="pdfSearch(this.value)" autocomplete="off">
-                        </div>
                     </div>
                     <div class="pdf-cal-week">
                         <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
@@ -364,6 +359,10 @@ $conn->close();
                     <div class="pdf-cal-legend"><span class="pdf-legend-dot"></span>Archived record days</div>
                 </div>
                 <div class="pdf-list-col">
+                    <div class="pdf-list-search">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="search" id="pdfDaySearch" placeholder="Search archive days&hellip;" aria-label="Search archive days" oninput="pdfSearch(this.value)" autocomplete="off">
+                    </div>
                     <div class="pdf-day-list" id="pdfDayList"></div>
                 </div>
                 <div class="pdf-actions-col">
