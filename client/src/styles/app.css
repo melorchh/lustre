@@ -65,7 +65,7 @@ html::-webkit-scrollbar {
 }
 
 body {
-  font-family: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Roboto', 'Segoe UI', system-ui, sans-serif;
   font-size: 17px;
   background:
     radial-gradient(1200px 500px at 85% -10%, rgba(13, 148, 136, 0.07), transparent 60%),
@@ -256,7 +256,7 @@ input {
 }
 
 .rail-brand .rail-label {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -427,7 +427,7 @@ input {
 }
 
 .topbar-title {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.7rem;
   font-weight: 700;
   color: var(--green-deep);
@@ -796,7 +796,7 @@ input {
 }
 
 .hero h1 {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 2.1rem;
   font-weight: 700;
   color: var(--white);
@@ -825,7 +825,7 @@ input {
   margin-bottom: 1rem;
 }
 .section-hdr h2 {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--green-deep);
@@ -1253,7 +1253,7 @@ input {
   padding-right: 2.25rem;
 }
 .modal-title {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.45rem;
   font-weight: 700;
   color: var(--green-deep);
@@ -1467,7 +1467,7 @@ input {
   margin-bottom: 0.9rem;
 }
 .cal-month {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-weight: 700;
   font-size: 1.05rem;
   color: var(--green-deep);
@@ -1815,7 +1815,7 @@ input {
   }
 }
 .success-title {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.5rem;
   color: var(--green-deep);
   margin-bottom: 0.6rem;
@@ -1864,7 +1864,7 @@ input {
   opacity: 0.8;
 }
 .conf-card-title {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.05rem;
   font-weight: 700;
 }
@@ -2597,7 +2597,7 @@ body.page-leaving {
   gap: 1rem;
 }
 .health-section-title {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.15rem;
   color: var(--green-deep);
   margin: 0.4rem 0 0.2rem;
@@ -2755,7 +2755,7 @@ html[data-theme="dark"] .modal-alert-icon {
   color: #f0a3a3;
 }
 .modal-alert-title {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.3rem;
   color: var(--green-deep);
   margin: 0 0 0.45rem;
@@ -2793,7 +2793,7 @@ html[data-theme="dark"] .modal-alert-icon--ok {
   color: var(--green-dark);
 }
 .modal-center-title h3 {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.35rem;
   color: var(--green-deep);
   margin-bottom: 0.35rem;
@@ -3527,7 +3527,7 @@ html[data-theme="dark"] .modal-alert-icon--ok {
   animation: successPop 0.55s var(--spring) both;
 }
 .success-card h3 {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.5rem;
   color: var(--green-deep);
   margin-bottom: 0.6rem;
@@ -3954,7 +3954,7 @@ html[data-theme="dark"] .modal-alert-icon--ok {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--green-deep);
@@ -4860,7 +4860,7 @@ html[data-theme="dark"] .lang-toggle:hover {
   gap: 0.75rem;
 }
 .db-result-doctor {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-weight: 700;
   color: var(--green-deep);
   font-size: 1.05rem;
@@ -4976,7 +4976,7 @@ html[data-theme="dark"] .db-result-note {
   border-radius: 50%;
   background: linear-gradient(135deg, var(--green) 0%, var(--blue) 100%);
   color: #ffffff;
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-weight: 700;
   font-size: 1.6rem;
   display: flex;
@@ -4988,7 +4988,7 @@ html[data-theme="dark"] .db-result-note {
   min-width: 0;
 }
 .profile-summary-info h2 {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.35rem;
   color: var(--gray-800);
   margin: 0 0 0.2rem;
@@ -5065,7 +5065,7 @@ html[data-theme="dark"] .db-result-note {
   box-shadow: var(--shadow-sm);
 }
 .profile-card .section-hdr h2 {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
 }
 .profile-form-grid {
   display: grid;
@@ -5148,7 +5148,7 @@ html[data-theme="dark"] .db-result-note {
 }
 .bmi-info strong {
   font-size: 1.4rem;
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   color: var(--gray-800);
 }
 .metric-badge {

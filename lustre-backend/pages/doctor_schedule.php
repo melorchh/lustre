@@ -31,7 +31,7 @@ function me_time($t){ return (new DateTime($t))->format('g:i A'); }
     <link rel="icon" href="images/Lustre.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
     <script>try{if(localStorage.getItem('meTheme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}</script>
 <link rel="stylesheet" href="admin.css?v=<?= filemtime(__DIR__ . '/../../admin.css') ?>">
     <link rel="stylesheet" href="doctor.css?v=<?= filemtime(__DIR__ . '/../../doctor.css') ?>">
@@ -42,7 +42,7 @@ function me_time($t){ return (new DateTime($t))->format('g:i A'); }
         .day-card.active-ok { border-top:3px solid var(--green); }
         .day-card.inactive { opacity:.72; }
         .day-card-head { display:flex; align-items:center; justify-content:space-between; }
-        .day-card-head h3 { margin:0; font-size:1rem; font-family:'Lora',serif; }
+        .day-card-head h3 { margin:0; font-size:1rem; font-family:'Roboto',sans-serif; }
         .switch { position:relative; width:42px; height:24px; flex-shrink:0; }
         .switch input { opacity:0; width:0; height:0; }
         .switch .slider { position:absolute; inset:0; background:#cbd5e1; border-radius:24px; cursor:pointer; transition:.2s; }

@@ -56,7 +56,7 @@ html::-webkit-scrollbar {
 }
 
 body {
-  font-family: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Roboto', 'Segoe UI', system-ui, sans-serif;
   font-size: 17px;
   background:
     radial-gradient(1200px 500px at 85% -10%, rgba(22, 163, 74, 0.07), transparent 60%),
@@ -90,7 +90,7 @@ textarea {
 h1,
 h2,
 h3 {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   color: var(--green-deep);
 }
 
@@ -384,7 +384,7 @@ h3 {
 }
 .brand-text span:first-child {
   display: block;
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-weight: 700;
   font-size: 1.1rem;
   color: var(--green-deep);
@@ -637,7 +637,7 @@ h3 {
   box-shadow: var(--shadow-md);
 }
 .stat-number {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.9rem;
   font-weight: 700;
   color: var(--green-deep);
@@ -1449,7 +1449,7 @@ table small {
   }
 }
 .confirm-box h2 {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.12rem;
   color: var(--green-deep);
   margin-bottom: 0.35rem;
@@ -2123,7 +2123,7 @@ table small {
   margin-bottom: 0.15rem;
 }
 .summary-chip strong {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.25rem;
   color: var(--green-deep);
   font-weight: 700;
@@ -2296,7 +2296,7 @@ body::-webkit-scrollbar {
   margin-bottom: 0.9rem;
 }
 .admin-cal .cal-month {
-  font-family: 'Lora', serif;
+  font-family: 'Roboto', sans-serif;
   font-weight: 700;
   font-size: 1.05rem;
   color: var(--green-deep);
