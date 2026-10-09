@@ -111,6 +111,14 @@ if ($vaccinations) {
 }
 krsort($vacc_groups);
 
+// Archive-day index (day => record count) for the calendar PDF downloader
+$archive_days_json = json_encode([
+    'appointments' => array_map('count', $apt_groups),
+    'labtests'     => array_map('count', $lab_groups),
+    'vitals'       => array_map('count', $vital_groups),
+    'vaccinations' => array_map('count', $vacc_groups),
+]);
+
 $conn->close();
 ?>
 <!DOCTYPE html>
@@ -160,6 +168,98 @@ $conn->close();
         @media (hover:none){
             .archive-day-row{cursor:default}
         }
+
+        /* ── Archive PDF downloader panel ── */
+        .pdf-panel{margin-bottom:1.4rem;background:var(--white);border:1.5px solid var(--gray-100);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden}
+        .pdf-panel-top{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;padding:1rem 1.3rem;border-bottom:1.5px solid var(--gray-100);background:linear-gradient(180deg,var(--green-pale),rgba(255,255,255,0))}
+        .pdf-panel-title{display:inline-flex;align-items:center;gap:.55rem;font-size:.95rem;font-weight:800;color:var(--gray-800)}
+        .pdf-panel-title svg{color:var(--green)}
+        .pdf-type-switch{display:inline-flex;gap:2px;padding:3px;background:var(--off-white);border:1.5px solid var(--gray-100);border-radius:var(--radius-pill)}
+        .pdf-type-btn{border:0;background:transparent;padding:.4rem .85rem;border-radius:var(--radius-pill);font-family:inherit;font-size:.75rem;font-weight:700;color:var(--gray-600);cursor:pointer;white-space:nowrap;transition:background .15s,color .15s,box-shadow .15s}
+        .pdf-type-btn:hover{color:var(--gray-800)}
+        .pdf-type-btn.active{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.35)}
+        .pdf-panel-body{display:grid;grid-template-columns:minmax(240px,288px) minmax(220px,1fr) minmax(195px,240px);gap:1.15rem;padding:1.25rem 1.3rem 1.4rem}
+        .pdf-cal-col{display:flex;flex-direction:column;gap:.55rem}
+        .pdf-cal-head{display:flex;align-items:center;justify-content:space-between}
+        .pdf-cal-arrow{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:1.5px solid var(--gray-100);background:var(--white);color:var(--gray-800);border-radius:var(--radius-xs);cursor:pointer;font-size:1.05rem;line-height:1;transition:border-color .15s,background .15s,color .15s}
+        .pdf-cal-arrow:hover:not(:disabled){border-color:var(--green);color:var(--green);background:var(--green-pale)}
+        .pdf-cal-arrow:disabled{opacity:.4;cursor:not-allowed;border-color:var(--gray-100);color:var(--gray-400);background:var(--white)}
+        .pdf-cal-label{font-size:.8rem;font-weight:800;color:var(--gray-800);letter-spacing:.01em}
+        .pdf-cal-week{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+        .pdf-cal-week span{font-size:.6rem;font-weight:800;color:var(--gray-400);text-align:center;text-transform:uppercase;letter-spacing:.06em;padding:.15rem 0}
+        .pdf-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+        .pdf-cal-cell{position:relative;display:inline-flex;align-items:center;justify-content:center;height:34px;border:0;border-radius:var(--radius-xs);background:transparent;color:var(--gray-800);font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;transition:background .12s,color .12s,box-shadow .12s}
+        .pdf-cal-cell:hover{background:var(--green-pale)}
+        .pdf-cal-cell.blank{cursor:default}
+        .pdf-cal-cell.today{color:var(--green);box-shadow:inset 0 0 0 1.5px rgba(22,163,74,.45)}
+        .pdf-cal-cell.has::after{content:'';position:absolute;left:50%;bottom:5px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--green)}
+        .pdf-cal-cell.sel{background:var(--green);color:#fff;font-weight:800;box-shadow:0 2px 10px rgba(22,163,74,.45);z-index:1}
+        .pdf-cal-cell.sel.has::after{background:#fff}
+        .pdf-cal-cell.sel.today{color:#fff;box-shadow:0 2px 10px rgba(22,163,74,.45)}
+        .pdf-cal-legend{display:inline-flex;align-items:center;gap:.4rem;font-size:.68rem;font-weight:600;color:var(--gray-400)}
+        .pdf-legend-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+        .pdf-list-col{display:flex;flex-direction:column;gap:.55rem;min-width:0}
+        .pdf-list-search{position:relative}
+        .pdf-list-search svg{position:absolute;left:.65rem;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none}
+        .pdf-list-search input{width:100%;padding:.55rem .75rem .55rem 1.95rem;border:1.5px solid var(--gray-100);border-radius:var(--radius-sm);background:var(--white);color:var(--gray-800);font-family:inherit;font-size:.8rem;outline:none;transition:border-color .15s,box-shadow .15s}
+        .pdf-list-search input::placeholder{color:var(--gray-400)}
+        .pdf-list-search input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.14)}
+        .pdf-day-list{max-height:208px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding-right:2px}
+        .pdf-day-list::-webkit-scrollbar{width:6px}
+        .pdf-day-list::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:999px}
+        .pdf-day-item{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.5rem .65rem;border:1.5px solid var(--gray-100);border-radius:var(--radius-sm);background:var(--white);cursor:pointer;transition:border-color .12s,background .12s}
+        .pdf-day-item:hover{border-color:var(--green-mid);background:var(--green-pale)}
+        .pdf-day-item.sel{border-color:var(--green);background:var(--green-pale);box-shadow:0 0 0 1px rgba(22,163,74,.18)}
+        .pdf-day-name{font-size:.78rem;font-weight:700;color:var(--gray-800)}
+        .pdf-day-count{flex:0 0 auto;padding:.16rem .5rem;border-radius:var(--radius-pill);background:var(--green-pale2);color:var(--green-dark);font-size:.64rem;font-weight:800;white-space:nowrap}
+        .pdf-list-empty{padding:.9rem 1rem;text-align:center;border:1.5px dashed var(--gray-100);border-radius:var(--radius-sm);color:var(--gray-400);font-size:.74rem}
+        .pdf-actions-col{display:flex;flex-direction:column;justify-content:space-between;gap:.9rem;min-width:0}
+        .pdf-selected{padding:.9rem 1rem;border:1.5px solid var(--gray-100);border-radius:var(--radius-sm);background:linear-gradient(180deg,var(--green-pale),rgba(255,255,255,0))}
+        .pdf-selected-label{display:block;font-size:.62rem;font-weight:800;color:var(--green);letter-spacing:.06em;text-transform:uppercase}
+        .pdf-selected-day{display:block;margin-top:.25rem;font-size:.95rem;font-weight:800;color:var(--gray-800)}
+        .pdf-selected-meta{display:block;margin-top:.2rem;font-size:.72rem;color:var(--gray-400)}
+        .pdf-dl-btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border:0;padding:.8rem 1rem;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;font-family:inherit;font-size:.86rem;font-weight:800;letter-spacing:.02em;cursor:pointer;box-shadow:0 4px 14px rgba(22,163,74,.35);transition:transform .12s,box-shadow .12s,filter .12s,opacity .12s}
+        .pdf-dl-btn:hover:not(:disabled){filter:brightness(1.07);box-shadow:0 6px 18px rgba(22,163,74,.45)}
+        .pdf-dl-btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+        .pdf-dl-btn svg{display:block}
+
+        @media (max-width:900px){
+            .pdf-panel-body{grid-template-columns:1fr}
+            .pdf-day-list{max-height:190px}
+        }
+        @media (max-width:480px){
+            .pdf-panel-top{flex-direction:column;align-items:stretch}
+            .pdf-type-switch{width:100%;border-radius:var(--radius-sm)}
+            .pdf-type-btn{flex:1;text-align:center}
+            .pdf-panel-body{padding:1rem}
+        }
+
+        /* Dark: archive PDF panel */
+        [data-theme="dark"] .pdf-panel{background:var(--white);border-color:var(--gray-100)}
+        [data-theme="dark"] .pdf-panel-top{background:linear-gradient(180deg,var(--green-pale),rgba(0,0,0,0))}
+        [data-theme="dark"] .pdf-type-switch{background:var(--off-white);border-color:var(--gray-100)}
+        [data-theme="dark"] .pdf-type-btn{color:var(--gray-600)}
+        [data-theme="dark"] .pdf-type-btn:hover{color:var(--gray-800)}
+        [data-theme="dark"] .pdf-type-btn.active{background:linear-gradient(135deg,#0b5c3a,#0d7546);box-shadow:0 2px 8px rgba(11,92,58,.4)}
+        [data-theme="dark"] .pdf-cal-arrow{background:var(--white);border-color:var(--gray-100);color:var(--gray-800)}
+        [data-theme="dark"] .pdf-cal-arrow:hover:not(:disabled){border-color:var(--green-mid);background:var(--green-pale);color:var(--green-light)}
+        [data-theme="dark"] .pdf-cal-cell{color:var(--gray-800)}
+        [data-theme="dark"] .pdf-cal-cell:hover{background:var(--green-pale)}
+        [data-theme="dark"] .pdf-cal-cell.today{color:var(--green-light);box-shadow:inset 0 0 0 1.5px rgba(74,222,128,.45)}
+        [data-theme="dark"] .pdf-cal-cell.has::after{background:var(--green-light)}
+        [data-theme="dark"] .pdf-cal-cell.sel{background:linear-gradient(135deg,#0b5c3a,#0d7546);color:#fff;box-shadow:0 2px 10px rgba(11,92,58,.5)}
+        [data-theme="dark"] .pdf-cal-cell.sel.has::after{background:#fff}
+        [data-theme="dark"] .pdf-cal-cell.sel.today{color:#fff}
+        [data-theme="dark"] .pdf-list-search input{background:var(--white);border-color:var(--gray-100);color:var(--gray-800)}
+        [data-theme="dark"] .pdf-list-search input:focus{border-color:var(--green-mid);box-shadow:0 0 0 3px rgba(34,197,94,.18)}
+        [data-theme="dark"] .pdf-day-item{background:var(--white);border-color:var(--gray-100)}
+        [data-theme="dark"] .pdf-day-item:hover{border-color:var(--green-mid);background:var(--green-pale)}
+        [data-theme="dark"] .pdf-day-item.sel{border-color:var(--green-mid);background:var(--green-pale)}
+        [data-theme="dark"] .pdf-day-count{background:var(--green-pale2);color:var(--green-deep)}
+        [data-theme="dark"] .pdf-selected{background:linear-gradient(180deg,var(--green-pale),rgba(0,0,0,0));border-color:var(--gray-100)}
+        [data-theme="dark"] .pdf-selected-label{color:var(--green-light)}
+        [data-theme="dark"] .pdf-dl-btn{background:linear-gradient(135deg,#0b5c3a,#0d7546);box-shadow:0 4px 14px rgba(11,92,58,.5)}
+        [data-theme="dark"] .pdf-dl-btn:hover:not(:disabled){filter:brightness(1.1)}
     </style>
     <title>Archives &mdash; LustreMDC Admin</title>
 </head>
@@ -215,6 +315,50 @@ $conn->close();
             <p>Complete archive of all completed and cancelled appointments and lab tests.</p>
         </div>
 
+        <!-- -- Download Day Archive PDF -- -->
+        <div class="pdf-panel">
+            <div class="pdf-panel-top">
+                <div class="pdf-panel-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download Day Archive PDF</div>
+                <div class="pdf-type-switch">
+                    <button type="button" class="pdf-type-btn active" data-type="appointments" onclick="switchTab('appointments',document.getElementById('aptTab'));setPdfType('appointments')">Appointments</button>
+                    <button type="button" class="pdf-type-btn" data-type="labtests" onclick="switchTab('labtests',document.getElementById('labTab'));setPdfType('labtests')">Lab Tests</button>
+                    <button type="button" class="pdf-type-btn" data-type="vitals" onclick="switchTab('vitals',document.getElementById('vitTab'));setPdfType('vitals')">Vitals</button>
+                    <button type="button" class="pdf-type-btn" data-type="vaccinations" onclick="switchTab('vaccinations',document.getElementById('vacTab'));setPdfType('vaccinations')">Vaccinations</button>
+                </div>
+            </div>
+            <div class="pdf-panel-body">
+                <div class="pdf-cal-col">
+                    <div class="pdf-cal-head">
+                        <button type="button" class="pdf-cal-arrow" id="pdfCalPrev" onclick="pdfMonth(-1)" aria-label="Previous month">&#8249;</button>
+                        <span class="pdf-cal-label" id="pdfCalLabel">Loading&#8230;</span>
+                        <button type="button" class="pdf-cal-arrow" id="pdfCalNext" onclick="pdfMonth(1)" aria-label="Next month">&#8250;</button>
+                    </div>
+                    <div class="pdf-cal-week">
+                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                    </div>
+                    <div class="pdf-cal-grid" id="pdfCalGrid"></div>
+                    <div class="pdf-cal-legend"><span class="pdf-legend-dot"></span>Archived record days</div>
+                </div>
+                <div class="pdf-list-col">
+                    <div class="pdf-list-search">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="search" id="pdfDaySearch" placeholder="Search archive days&hellip;" oninput="pdfSearch(this.value)" autocomplete="off">
+                    </div>
+                    <div class="pdf-day-list" id="pdfDayList"></div>
+                </div>
+                <div class="pdf-actions-col">
+                    <div class="pdf-selected" id="pdfSelected">
+                        <span class="pdf-selected-label">Selected Day</span>
+                        <span class="pdf-selected-day" id="pdfSelectedDay">&mdash;</span>
+                        <span class="pdf-selected-meta" id="pdfSelectedMeta"></span>
+                    </div>
+                    <button type="button" class="pdf-dl-btn" id="pdfDlBtn" onclick="pdfDownload()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- -- Stats -- -->
         <div class="stats-grid">
             <div class="stat-card">
@@ -249,19 +393,19 @@ $conn->close();
 
         <!-- -- Tabs -- -->
         <div class="tab-nav">
-            <button class="tab-btn active" onclick="switchTab('appointments',this)">
+            <button class="tab-btn active" id="aptTab" onclick="switchTab('appointments',this);setPdfType('appointments')">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Appointments
                 <span class="tab-count" id="aptCount">0</span>
             </button>
-<button class="tab-btn" onclick="switchTab('labtests',this)">
+<button class="tab-btn" id="labTab" onclick="switchTab('labtests',this);setPdfType('labtests')">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v6.3L4.5 17a2.5 2.5 0 0 0 2 4h11a2.5 2.5 0 0 0 2-4L14 8.3V2"/><path d="M8.5 2h7"/><path d="M7 15h10"/></svg> Lab Tests
                 <span class="tab-count" id="labCount">0</span>
             </button>
-            <button class="tab-btn" onclick="switchTab('vitals',this)">
+            <button class="tab-btn" id="vitTab" onclick="switchTab('vitals',this);setPdfType('vitals')">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Vitals
                 <span class="tab-count" id="vitalCount">0</span>
             </button>
-            <button class="tab-btn" onclick="switchTab('vaccinations',this)">
+            <button class="tab-btn" id="vacTab" onclick="switchTab('vaccinations',this);setPdfType('vaccinations')">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0L11.5 5.85 9.9 4.25a5.4 5.4 0 0 0-7.65 7.65l1.6 1.6-6.4 6.4a1 1 0 0 0 0 1.41l2.83 2.83a1 1 0 0 0 1.41 0l6.4-6.4 1.6 1.6a5.4 5.4 0 0 0 7.65-7.65l-1.6-1.6 1.27-1.27a5.4 5.4 0 0 0 0-7.65z"/></svg> Vaccinations
                 <span class="tab-count" id="vaccCount">0</span>
             </button>
@@ -755,6 +899,106 @@ $conn->close();
 
     function downloadDayPdf(url){showToast('PDF downloaded','success');window.location.href=url;}
 
+    /* ── Archive PDF downloader panel ── */
+    var ARCHIVE_DAYS = <?php echo $archive_days_json; ?>;
+    var pdfState={type:'appointments',month:null,day:null,search:''};
+
+    function p2(n){return (n<10?'0':'')+n;}
+    function pdfNowIndex(){var d=new Date();return d.getFullYear()*12+d.getMonth();}
+    function pdfDayKey(d){return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());}
+    function pdfDaysFor(t){var o=ARCHIVE_DAYS[t]||{};return Object.keys(o).sort().reverse();}
+    function pdfDayLabel(k){var d=new Date(k+'T00:00:00');return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});}
+
+    function setPdfType(name){
+        pdfState.type=name;
+        document.querySelectorAll('.pdf-type-btn').forEach(function(b){b.classList.toggle('active',b.dataset.type===name);});
+        var days=pdfDaysFor(name);
+        if(days.length&&ARCHIVE_DAYS[name][pdfState.day]===undefined){
+            var d=new Date(days[0]+'T00:00:00');
+            pdfState.day=days[0];
+            pdfState.month=d.getFullYear()*12+d.getMonth();
+        }
+        renderCal();renderDayList();pdfSummary();
+    }
+    function pdfMonth(delta){
+        var nm=pdfState.month+delta;
+        if(nm>pdfNowIndex())nm=pdfNowIndex();
+        pdfState.month=nm;renderCal();
+    }
+    function pdfPickDay(k){
+        pdfState.day=k;
+        var d=new Date(k+'T00:00:00');
+        pdfState.month=d.getFullYear()*12+d.getMonth();
+        renderCal();renderDayList();pdfSummary();
+    }
+    function renderCal(){
+        var y=Math.floor(pdfState.month/12),m=pdfState.month%12;
+        document.getElementById('pdfCalLabel').textContent=new Date(y,m,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+        document.getElementById('pdfCalPrev').disabled=(pdfState.month<=0);
+        document.getElementById('pdfCalNext').disabled=(pdfState.month>=pdfNowIndex());
+        var firstDow=new Date(y,m,1).getDay();
+        var dim=new Date(y,m+1,0).getDate();
+        var days=ARCHIVE_DAYS[pdfState.type]||{};
+        var today=pdfDayKey(new Date());
+        var html='',i;
+        for(i=0;i<firstDow;i++)html+='<span class="pdf-cal-cell blank"></span>';
+        for(i=1;i<=dim;i++){
+            var k=y+'-'+p2(m+1)+'-'+p2(i);
+            var cls='pdf-cal-cell';
+            if(days[k])cls+=' has';
+            if(k===pdfState.day)cls+=' sel';
+            if(k===today)cls+=' today';
+            html+='<button type="button" class="'+cls+'" data-day="'+k+'" onclick="pdfPickDay(\''+k+'\')">'+i+'</button>';
+        }
+        document.getElementById('pdfCalGrid').innerHTML=html;
+    }
+    function pdfSearch(v){pdfState.search=v.trim().toLowerCase();renderDayList();}
+    function renderDayList(){
+        var list=document.getElementById('pdfDayList');
+        var days=pdfDaysFor(pdfState.type);
+        if(!days.length){
+            list.innerHTML='<div class="pdf-list-empty">No archive days for this record type yet.</div>';
+            return;
+        }
+        var html='';
+        days.forEach(function(k){
+            var label=pdfDayLabel(k);
+            if(pdfState.search&&label.toLowerCase().indexOf(pdfState.search)===-1)return;
+            var n=ARCHIVE_DAYS[pdfState.type][k];
+            html+='<div class="pdf-day-item'+(k===pdfState.day?' sel':'')+'" onclick="pdfPickDay(\''+k+'\')">'+
+                '<span class="pdf-day-name">'+label+'</span>'+
+                '<span class="pdf-day-count">'+n+' record'+(n===1?'':'s')+'</span></div>';
+        });
+        if(!html)html='<div class="pdf-list-empty">No archive days match your search.</div>';
+        list.innerHTML=html;
+        if(list.scrollHeight>list.clientHeight){
+            var sel=list.querySelector('.sel');
+            if(sel)sel.scrollIntoView({block:'nearest'});
+        }
+    }
+    function pdfSummary(){
+        document.getElementById('pdfSelectedDay').textContent=pdfState.day?pdfDayLabel(pdfState.day):'\u2014';
+        var meta=document.getElementById('pdfSelectedMeta');
+        var btn=document.getElementById('pdfDlBtn');
+        if(!pdfState.day){meta.textContent='Pick an archive day.';btn.disabled=true;return;}
+        var n=ARCHIVE_DAYS[pdfState.type][pdfState.day];
+        if(n){meta.textContent=n+' record'+(n===1?'':'s')+' archived on this day.';btn.disabled=false;}
+        else{meta.textContent='No records on this day for the selected type.';btn.disabled=true;}
+    }
+    function pdfDownload(){
+        if(!pdfState.day||ARCHIVE_DAYS[pdfState.type][pdfState.day]===undefined)return;
+        showToast('PDF downloaded','success');
+        window.location.href='archive_day_pdf.php?tab='+pdfState.type+'&day='+pdfState.day;
+    }
+    function initPdfPanel(){
+        var now=new Date();
+        pdfState.month=now.getFullYear()*12+now.getMonth();
+        var days=pdfDaysFor('appointments');
+        var t=pdfDayKey(now);
+        pdfState.day=(days.length&&days[0]<=t)?days[0]:t;
+        renderCal();renderDayList();pdfSummary();
+    }
+
     function switchTab(name,btn){
         document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
@@ -949,6 +1193,8 @@ function filterLab(){
         document.getElementById('vitalResultCount').textContent=v+' record'+(v!==1?'s':'')+' shown';
         document.getElementById('vaccResultCount').textContent=x+' record'+(x!==1?'s':'')+' shown';
     })();
+
+    initPdfPanel();
 
     /* -- Smooth Transitions &mdash; same as every other admin page -- */
     (function(){
