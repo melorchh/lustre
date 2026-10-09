@@ -174,13 +174,15 @@ $conn->close();
         .pdf-type-btn.active{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.35)}
         .pdf-panel-body{display:grid;grid-template-columns:minmax(240px,288px) minmax(220px,1fr) minmax(195px,240px);gap:1.15rem;padding:1.25rem 1.3rem 1.4rem}
         .pdf-cal-col{display:flex;flex-direction:column;gap:.55rem}
-        .pdf-cal-head{display:flex;align-items:center;gap:10px}
+        .pdf-cal-head{display:flex;flex-direction:row;align-items:center;gap:10px}
         .pdf-cal-sels{display:inline-flex;align-items:center;gap:10px}
-        .pdf-cal-arrow{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:42px;height:42px;padding:0;border:2px solid var(--gray-100);background:var(--white);color:var(--green);border-radius:12px;cursor:pointer;font-size:1.35rem;line-height:1;transition:border-color .15s,background .15s,color .15s}
-        .pdf-cal-arrow:hover:not(:disabled){border-color:var(--green);color:var(--green);background:var(--green-pale)}
+        .pdf-cal-arrow{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:44px;height:44px;padding:0;border:2px solid var(--gray-100);background:var(--white);color:var(--green);border-radius:12px;cursor:pointer;font-size:1.45rem;line-height:1;-webkit-tap-highlight-color:transparent;transition:border-color .15s,background .15s,color .15s}
+        .pdf-cal-arrow:hover:not(:disabled){border-color:var(--green);background:var(--green-pale)}
         .pdf-cal-arrow:disabled{opacity:.4;cursor:not-allowed;border-color:var(--gray-100);color:var(--gray-400);background:var(--white)}
-        .pdf-cal-sels .cust-dropdown.cd-action{height:42px;width:auto;min-width:0}
-        .pdf-cal-sels .cust-dropdown.cd-action .cd-btn{height:100%;min-height:0;padding-left:.9rem;padding-right:2.4rem}
+        .pdf-cal-sels .cust-dropdown.cd-action{height:44px;width:auto;min-width:0}
+        .pdf-cal-sels .cust-dropdown.cd-action .cd-btn{height:100%;min-height:0;padding-left:.95rem;padding-right:.95rem;font-size:.9rem}
+        .pdf-cal-sels select#pdfCalMonth + .cust-dropdown{min-width:118px}
+        .pdf-cal-sels select#pdfCalYear + .cust-dropdown{min-width:88px}
         html:not([data-theme="dark"]) .pdf-cal-sels .cust-dropdown .cd-btn{color:#000}
         .pdf-cal-week{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
         .pdf-cal-week span{font-size:.6rem;font-weight:800;color:var(--gray-400);text-align:center;text-transform:uppercase;letter-spacing:.06em;padding:.15rem 0}
