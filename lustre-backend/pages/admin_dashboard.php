@@ -654,11 +654,19 @@ $conn->close();
         // Walk-in submit
         function bindWalkin(){var f=document.getElementById('walkinForm');if(!f||f.dataset.bound)return;f.dataset.bound='1';
             f.addEventListener('submit',function(e){
-                e.preventDefault();showLoading();var fd=new FormData(this);
+                e.preventDefault();var fd=new FormData(this);
+                var proc=String(fd.get('test_procedure')||'').trim();
                 var other=document.getElementById('walkinOtherInput');
-                if(fd.get('test_procedure')==='Other (specify below)' && other && other.value.trim()){
-                    fd.set('test_procedure', other.value.trim());
+                if(!proc){
+                    showToast('Please select a test / procedure','error');
+                    return;
                 }
+                if(proc==='Other (specify below)'){
+                    var spec=other?other.value.trim():'';
+                    if(!spec){showToast('Please specify the test / procedure','error');return;}
+                    fd.set('test_procedure',spec);
+                }
+                showLoading();
                 fd.append('action','add_walkin');
                 fetch('admin_walkin_action.php',{method:'POST',body:fd})
                     .then(function(r){return r.text();})
