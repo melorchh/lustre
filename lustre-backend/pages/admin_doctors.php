@@ -23,7 +23,7 @@ $conn->query("CREATE TABLE IF NOT EXISTS app_settings (
 )");
 $__seeded = $conn->query("SELECT sval FROM app_settings WHERE skey = 'default_test_procedures_seeded'");
 if (!$__seeded || (int)$__seeded->num_rows === 0) {
-    $__default_tests = "General Consultation\nFollow-up Consultation";
+    $__default_tests = "General Consultation\nFollow-up Consultation\nDiagnostic Procedure\nOther (specify below)";
     $__seed_stmt = $conn->prepare("UPDATE doctors SET test_procedures = ? WHERE test_procedures IS NULL OR test_procedures = ''");
     $__seed_stmt->bind_param("s", $__default_tests);
     $__seed_stmt->execute();
@@ -426,7 +426,7 @@ $conn->close();
         // -- Add ----------------------------------------------
         function openAddModal(){
             document.getElementById('addForm').reset();
-            tpSetFrom(tpAdd, "General Consultation\nFollow-up Consultation");
+            tpSetFrom(tpAdd, "General Consultation\nFollow-up Consultation\nDiagnostic Procedure\nOther (specify below)");
             openModal('addModal');
         }
 

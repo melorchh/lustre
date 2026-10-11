@@ -21,15 +21,12 @@ html {
   outline-offset: 2px;
 }
 
-/* ---------- Layout: calm, centered content ---------- */
+/* ---------- Layout: fluid content that fills the space left by the rail ---- */
 .doctor-page .admin-content {
   padding: 1.8rem 2rem 2.5rem;
-}
-@media (min-width: 1360px) {
-  .doctor-page .admin-content {
-    max-width: 1240px;
-    margin-inline: auto;
-  }
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
 }
 
 /* ---------- Sidebar / navigation ---------- */
