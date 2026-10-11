@@ -959,6 +959,12 @@ table small {
 .form-group {
   margin-bottom: 1.1rem;
 }
+/* Grid items default to min-width:auto, so a long single-line value (e.g. a
+   doctor dropdown label) can force the column wider than its 1fr share and
+   push content out past the modal's right edge. Let columns shrink instead. */
+.form-grid > .form-group {
+  min-width: 0;
+}
 .form-group label {
   display: block;
   font-size: 0.8rem;
@@ -1258,6 +1264,16 @@ table small {
   font-size:1rem;
   min-height:52px;
   color:var(--gray-800);
+  height:auto;
+}
+/* Form dropdowns can hold long option text (e.g. "Dr. Name (Specialty)").
+   Let the selected label wrap instead of clipping it with an ellipsis. */
+.cust-dropdown.cd-form .cd-label{
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  line-height:1.35;
+  word-break:break-word;
 }
 .cd-menu.fd-form{
   min-width:0;
