@@ -80,6 +80,10 @@ export const dict: Record<string, Record<Lang, string>> = {
   book_selected: { en: 'Selected', fil: 'Napili' },
   book_select_hint: { en: 'Select a doctor to continue', fil: 'Pumili ng doktor para magpatuloy' },
   book_continue: { en: 'Continue', fil: 'Magpatuloy' },
+  book_info_section: {
+    en: "This is the doctor list. Select the specialist you want, then tap Continue to choose a service, date and time.",
+    fil: 'Ito ang listahan ng doktor. Piliin ang espesyalistang gusto mo, pagkatapos i-tap ang Magpatuloy para pumili ng serbisyo, petsa at oras.',
+  },
 
   // Doctor card
   doc_yrs_exp: { en: '{y} yrs exp', fil: '{y} taon exp' },
@@ -102,16 +106,28 @@ export const dict: Record<string, Record<Lang, string>> = {
   bm_redirecting: { en: 'Redirecting to your appointments…', fil: 'Nililipat sa iyong mga appointment…' },
   bm_step1: { en: 'Step 1 of 3 · Choose your service', fil: 'Hakbang 1 sa 3 · Pumili ng serbisyo' },
   bm_need: { en: 'What do you need?', fil: 'Ano ang kailangan mo?' },
+  bm_info_need: {
+    en: "Step 1 of 3 — What do you need? Choose the test or procedure you're booking for. Pick “Other” to type a custom one.",
+    fil: 'Hakbang 1 sa 3 — Ano ang kailangan mo? Piliin ang test o procedure na ipa-book mo. Piliin ang “Other” para mag-type ng sarili.',
+  },
   bm_select_service: { en: 'Select a test / procedure…', fil: 'Pumili ng test / procedure…' },
   bm_other_ph: { en: 'Type the specific test / procedure you need', fil: 'I-type ang specific test / procedure na kailangan mo' },
   bm_hint: { en: 'Need a specific one? Pick "Other" and type it below.', fil: 'May partikular kang kailangan? Pumili ng "Other" at i-type sa ibaba.' },
   bm_step2: { en: 'Step 2 of 3 · Pick date & time', fil: 'Hakbang 2 sa 3 · Pumili ng petsa at oras' },
   bm_dates: { en: 'Available Dates', fil: 'Available na Petsa' },
+  bm_info_dates: {
+    en: 'Step 2 of 3 — Available Dates. Highlighted days are open for booking. Tap a date to load its time slots.',
+    fil: 'Hakbang 2 sa 3 — Available na Petsa. Ang mga naka-highlight na araw ay bukas para sa booking. I-tap ang petsa para makita ang mga oras.',
+  },
   bm_dates_err: { en: "Couldn't load dates. Please close and try again.", fil: 'Hindi ma-load ang mga petsa. Pakisara at subukan muli.' },
   bm_no_dates: { en: 'No available dates at this time.', fil: 'Walang available na petsa sa ngayon.' },
   bm_cal_legend: { en: 'Available dates — tap a day to select', fil: 'Available na petsa — i-tap ang araw para pumili' },
   bm_cal_selected: { en: 'Selected: {d}', fil: 'Napili: {d}' },
   bm_times: { en: 'Available Times', fil: 'Available na Oras' },
+  bm_info_times: {
+    en: 'Step 3 of 3 — Available Times. Pick the slot that suits you, then tap Confirm Appointment to book.',
+    fil: 'Hakbang 3 sa 3 — Available na Oras. Piliin ang slot na bagay sa iyo, pagkatapos i-tap ang I-confirm ang Appointment para mag-book.',
+  },
   bm_select_date_first: { en: 'Select a date first', fil: 'Pumili muna ng petsa' },
   bm_times_err: { en: "Couldn't load times. Try another date.", fil: 'Hindi ma-load ang mga oras. Subukan ang ibang petsa.' },
   bm_no_times: { en: 'No available times for this date.', fil: 'Walang available na oras sa petsang ito.' },

@@ -46,6 +46,51 @@ function rectOf(el: Element): RingRect {
   };
 }
 
+/** Fixed/sticky elements (bottom nav, sidebar) can't be scrolled to. */
+function isFixed(el: Element): boolean {
+  let node: Element | null = el;
+  while (node && node !== document.body) {
+    const pos = getComputedStyle(node).position;
+    if (pos === 'fixed' || pos === 'sticky') return true;
+    node = node.parentElement;
+  }
+  return false;
+}
+
+interface ScrollPlan {
+  scroller: HTMLElement | Window;
+  top: number;
+}
+
+/** Where to scroll so a target sits in the middle of the visible area. */
+function scrollPlan(el: Element, mobile: boolean, sheetH: number): ScrollPlan {
+  const r = el.getBoundingClientRect();
+  if (mobile) {
+    // Leave room for the sticky top bar and the bottom-sheet card.
+    const topBar = 84;
+    const visibleH = Math.max(140, window.innerHeight - sheetH - 16 - topBar);
+    const mid = window.scrollY + r.top + r.height / 2;
+    return { scroller: window, top: Math.max(0, mid - (topBar + visibleH / 2)) };
+  }
+  const scroller = document.querySelector<HTMLElement>('.page-content');
+  if (!scroller) {
+    const mid = window.scrollY + r.top + r.height / 2;
+    return { scroller: window, top: Math.max(0, mid - window.innerHeight / 2) };
+  }
+  const sr = scroller.getBoundingClientRect();
+  const mid = scroller.scrollTop + (r.top - sr.top) + r.height / 2;
+  return { scroller, top: Math.max(0, mid - scroller.clientHeight / 2) };
+}
+
+function currentTop(scroller: HTMLElement | Window): number {
+  return 'scrollTop' in scroller ? scroller.scrollTop : window.scrollY;
+}
+
+function scrollToTop(scroller: HTMLElement | Window, top: number, behavior: ScrollBehavior): void {
+  if ('scrollTop' in scroller) scroller.scrollTo({ top, behavior });
+  else window.scrollTo({ top, behavior });
+}
+
 interface TourProps {
   active: boolean;
   onDone: () => void;
@@ -101,31 +146,54 @@ export default function Tour({ active, onDone }: TourProps) {
     setPos((prev) => (prev && prev.top === top && prev.left === left ? prev : { top, left }));
   }, [index]);
 
-  // New step: scroll the target into view, then lock; focus the primary button.
+  // New step: release the scroll lock so the page can move. On mobile the
+  // window itself scrolls, and a locked (fixed-position) body can't be
+  // scrolled programmatically — which is why later steps never auto-scrolled
+  // on phones before.
   useEffect(() => {
     if (!active) return;
-    const sel = resolveSelector(STEPS[index]);
-    const el = sel ? document.querySelector(sel) : null;
-    if (el) el.scrollIntoView({ block: 'center', behavior: 'auto' });
-    update();
-    const timer = window.setTimeout(() => setLocked(true), 250);
-    const focusTimer = window.setTimeout(() => nextBtnRef.current?.focus(), 60);
-    return () => {
-      window.clearTimeout(timer);
-      window.clearTimeout(focusTimer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setLocked(false);
   }, [active, index]);
 
-  // Keep ring/card in sync while anything scrolls or resizes.
+  // Once unlocked, scroll this step's target into view, then re-lock.
+  useEffect(() => {
+    if (!active || locked) return;
+    const sel = resolveSelector(STEPS[index]);
+    const el = sel ? document.querySelector(sel) : null;
+    update();
+
+    const mobile = isMobile();
+    const sheetH = mobile ? cardRef.current?.offsetHeight ?? 0 : 0;
+    const plan = el && !isFixed(el) ? scrollPlan(el, mobile, sheetH) : null;
+
+    if (plan && Math.abs(currentTop(plan.scroller) - plan.top) > 1) {
+      scrollToTop(plan.scroller, plan.top, 'smooth');
+    }
+
+    const timer = window.setTimeout(() => {
+      // Snap to the exact position so locking the body mid-scroll can't
+      // strand the target off-screen.
+      if (plan) scrollToTop(plan.scroller, plan.top, 'instant');
+      update();
+      setLocked(true);
+      nextBtnRef.current?.focus();
+    }, 380);
+    return () => window.clearTimeout(timer);
+  }, [active, index, locked, update]);
+
+  // Keep ring/card in sync while anything scrolls or resizes. Desktop scrolls
+  // inside .page-content (whose scroll event doesn't reach window).
   useEffect(() => {
     if (!active) return;
     const onMove = () => update();
+    const scroller = document.querySelector<HTMLElement>('.page-content');
     window.addEventListener('scroll', onMove, { passive: true });
     window.addEventListener('resize', onMove, { passive: true });
+    scroller?.addEventListener('scroll', onMove, { passive: true });
     return () => {
       window.removeEventListener('scroll', onMove);
       window.removeEventListener('resize', onMove);
+      scroller?.removeEventListener('scroll', onMove);
     };
   }, [active, update]);
 
@@ -162,6 +230,8 @@ export default function Tour({ active, onDone }: TourProps) {
   const step = STEPS[index];
   const last = index === STEPS.length - 1;
   const centered = !step.target || (!ring && !mobile);
+  // The bottom nav is fixed and sits under the mobile sheet — lift the card.
+  const navTarget = mobile && resolveSelector(step) === '.bottom-nav';
 
   const next = () => {
     if (last) {
@@ -184,7 +254,7 @@ export default function Tour({ active, onDone }: TourProps) {
       )}
       <div
         ref={cardRef}
-        className={`tour-card ${mobile ? 'tour-card--sheet' : centered ? 'tour-card--center' : ''}`}
+        className={`tour-card ${mobile ? 'tour-card--sheet' : centered ? 'tour-card--center' : ''} ${navTarget ? 'tour-card--above-nav' : ''}`}
         style={
           !mobile && pos
             ? { top: pos.top, left: pos.left, width: Math.min(CARD_W, window.innerWidth - 24) }

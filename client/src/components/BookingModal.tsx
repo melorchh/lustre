@@ -3,6 +3,7 @@ import type { Doctor, MedicalDate } from '../types';
 import { fetchAvailableDates, fetchAvailableTimes, bookAppointment, formatTime12h, formatLongDate, initials } from '../api';
 import { DEFAULT_SERVICES, OTHER_SERVICE } from '../services';
 import Select from './Select';
+import InfoTip from './InfoTip';
 import { useLang } from '../lang';
 
 interface BookingModalProps {
@@ -338,7 +339,10 @@ export default function BookingModal({ doctor, onClose }: BookingModalProps) {
             </div>
 
             <div className="picker-block">
-              <span className="picker-label">{t('bm_need')}</span>
+              <div className="label-row">
+                <span className="picker-label">{t('bm_need')}</span>
+                <InfoTip text={t('bm_info_need')} />
+              </div>
               <Select
                 value={service}
                 onChange={setService}
@@ -370,7 +374,10 @@ placeholder={t('bm_other_ph')}
             </div>
 
             <div className="picker-block">
-              <span className="picker-label">{t('bm_dates')}</span>
+              <div className="label-row">
+                <span className="picker-label">{t('bm_dates')}</span>
+                <InfoTip text={t('bm_info_dates')} />
+              </div>
               {datesLoading ? (
                 <div className="dates-grid" onKeyDown={(e) => e.stopPropagation()}>
                   <SkeletonChips count={6} />
@@ -385,7 +392,10 @@ placeholder={t('bm_other_ph')}
             </div>
 
             <div className="picker-block">
-              <span className="picker-label">{t('bm_times')}</span>
+              <div className="label-row">
+                <span className="picker-label">{t('bm_times')}</span>
+                <InfoTip text={t('bm_info_times')} />
+              </div>
               <div className="times-grid">
                 {!selectedDate ? (
                   <div className="muted-msg wrap">{t('bm_select_date_first')}</div>

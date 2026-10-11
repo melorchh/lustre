@@ -5,6 +5,7 @@ import Shell from '../shell';
 import Hero from '../components/Hero';
 import DoctorCard from '../components/DoctorCard';
 import BookingModal from '../components/BookingModal';
+import InfoTip from '../components/InfoTip';
 import { useScrollLock } from '../hooks';
 import { useLang } from '../lang';
 
@@ -39,7 +40,10 @@ export default function BookApp() {
         />
 
         <div className="section-hdr">
-          <h2>{t('book_section')}</h2>
+          <div className="label-row">
+            <h2>{t('book_section')}</h2>
+            <InfoTip text={t('book_info_section')} />
+          </div>
           <p>{t('book_section_sub')}</p>
         </div>
 
