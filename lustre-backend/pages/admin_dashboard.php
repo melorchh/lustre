@@ -57,22 +57,40 @@ $walkin_specs = [];
 $conn->query("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS test_procedures TEXT NOT NULL DEFAULT ''");
 $conn->query("ALTER TABLE walk_ins ADD COLUMN IF NOT EXISTS test_procedure TEXT NOT NULL DEFAULT ''");
 
-// One-time: give every pre-existing doctor the default consultation services.
-// Flagged so removing them later via Edit stays removed.
+// One-time (v2): make sure every doctor offers the default consultation services
+// (General / Follow-up / Diagnostic) and drop the "Other (specify below)" sentinel
+// that the client and walk-in forms append automatically.
+// Flagged so later removals via Edit stay removed.
 $conn->query("CREATE TABLE IF NOT EXISTS app_settings (
     skey VARCHAR(64) PRIMARY KEY,
     sval VARCHAR(255) NOT NULL DEFAULT ''
 )");
-$__seeded = $conn->query("SELECT sval FROM app_settings WHERE skey = 'default_test_procedures_seeded'");
+$__seeded = $conn->query("SELECT sval FROM app_settings WHERE skey = 'default_test_procedures_v2'");
 if (!$__seeded || (int)$__seeded->num_rows === 0) {
-    $__default_tests = "General Consultation\nFollow-up Consultation\nDiagnostic Procedure\nOther (specify below)";
-    $__seed_stmt = $conn->prepare("UPDATE doctors SET test_procedures = ? WHERE test_procedures IS NULL OR test_procedures = ''");
-    $__seed_stmt->bind_param("s", $__default_tests);
-    $__seed_stmt->execute();
-    $__seed_stmt->close();
-    $conn->query("INSERT INTO app_settings (skey, sval) VALUES ('default_test_procedures_seeded', '1') ON CONFLICT (skey) DO NOTHING");
+    $__other    = 'Other (specify below)';
+    $__defaults = array('General Consultation', 'Follow-up Consultation', 'Diagnostic Procedure');
+    $__rows     = $conn->query("SELECT id, test_procedures FROM doctors");
+    if ($__rows) {
+        $__upd = $conn->prepare("UPDATE doctors SET test_procedures = ? WHERE id = ?");
+        while ($__row = $__rows->fetch_assoc()) {
+            $__orig    = array_values(array_filter(array_map('trim', explode("\n", (string)(isset($__row['test_procedures']) ? $__row['test_procedures'] : '')))));
+            $__lines   = array_values(array_filter($__orig, function ($x) use ($__other) { return $x !== $__other; }));
+            $__changed = count($__lines) !== count($__orig);
+            foreach ($__defaults as $__d) {
+                if (!in_array($__d, $__lines, true)) { $__lines[] = $__d; $__changed = true; }
+            }
+            if ($__changed) {
+                $__val = implode("\n", $__lines);
+                $__id  = (int)$__row['id'];
+                $__upd->bind_param("si", $__val, $__id);
+                $__upd->execute();
+            }
+        }
+        $__upd->close();
+    }
+    $conn->query("INSERT INTO app_settings (skey, sval) VALUES ('default_test_procedures_v2', '1') ON CONFLICT (skey) DO NOTHING");
 }
-unset($__seeded, $__default_tests, $__seed_stmt);
+unset($__seeded, $__defaults, $__other, $__rows, $__upd, $__row, $__orig, $__lines, $__changed, $__val, $__id);
 
 $wl_doc = $conn->query("SELECT id, name, specialty, test_procedures FROM doctors ORDER BY name");
 if ($wl_doc) {
@@ -389,6 +407,7 @@ $conn->close();
                     <select name="test_procedure" class="form-dropdown" data-searchable disabled>
                         <option value="">Select a doctor first</option>
                     </select>
+                    <input type="text" id="walkinOtherInput" placeholder="Specify test / procedure..." autocomplete="off" style="display:none;margin-top:.55rem">
                 </div>
                 <div class="form-group">
                     <label>Arrival Time</label>
@@ -580,11 +599,23 @@ $conn->close();
                     ln=ln.trim();
                     if(ln && !seen[ln]){ seen[ln]=1; html+='<option value="'+__walkinEsc(ln)+'">'+__walkinEsc(ln)+'</option>'; }
                 });
+                var __otherOpt='Other (specify below)';
+                if(!seen[__otherOpt]){ html+='<option value="'+__walkinEsc(__otherOpt)+'">'+__walkinEsc(__otherOpt)+'</option>'; }
                 procSel.disabled=false;
                 procSel.innerHTML=html;
             }
             procSel.value='';
             if(window.__fdResync) window.__fdResync(procSel);
+            __walkinToggleOther();
+        }
+        function __walkinToggleOther(){
+            var f=document.getElementById('walkinForm'); if(!f) return;
+            var procSel=f.querySelector('select[name="test_procedure"]');
+            var other=document.getElementById('walkinOtherInput');
+            if(!procSel||!other) return;
+            var on=procSel.value==='Other (specify below)';
+            other.style.display=on?'':'none';
+            if(!on) other.value='';
         }
         function __rebuildWalkinDocs(){
             var f=document.getElementById('walkinForm'); if(!f) return;
@@ -615,13 +646,20 @@ $conn->close();
                 if(specSel){ specSel.value = d?d.specialty:''; }
                 __rebuildWalkinProcs();
             });
+            var procSel=f.querySelector('select[name="test_procedure"]');
+            if(procSel) procSel.addEventListener('change', __walkinToggleOther);
             f.addEventListener('reset', function(){ setTimeout(__rebuildWalkinDocs, 0); });
         })();
 
         // Walk-in submit
         function bindWalkin(){var f=document.getElementById('walkinForm');if(!f||f.dataset.bound)return;f.dataset.bound='1';
             f.addEventListener('submit',function(e){
-                e.preventDefault();showLoading();var fd=new FormData(this);fd.append('action','add_walkin');
+                e.preventDefault();showLoading();var fd=new FormData(this);
+                var other=document.getElementById('walkinOtherInput');
+                if(fd.get('test_procedure')==='Other (specify below)' && other && other.value.trim()){
+                    fd.set('test_procedure', other.value.trim());
+                }
+                fd.append('action','add_walkin');
                 fetch('admin_walkin_action.php',{method:'POST',body:fd})
                     .then(function(r){return r.text();})
                     .then(function(res){hideLoading();var t=res.trim();
