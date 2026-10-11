@@ -214,11 +214,14 @@ $conn->close();
             .report-toolbar .btn-primary,.report-toolbar .btn-secondary{width:100%}
         }
         @media print {
-            body>*{display:none !important}
+            .sidebar-overlay,.admin-sidebar,.topbar,.report-filters,
+            #loadingScreen,#toast,.chart-chip,.chart-switch{display:none !important}
+            .admin-layout,.admin-content{display:block !important;overflow:visible !important;width:auto !important;padding:0 !important;margin:0 !important}
             .report-printable{display:block !important}
-            body{background:#fff}
-            .chart-chip,.chart-switch{display:none !important}
-            .chart-box{height:260px}
+            .report-sheet{box-shadow:none !important;border:0 !important;border-radius:0 !important;margin:0 !important;padding:0 !important;background:#fff !important}
+            .table-scroll{overflow:visible !important}
+            body{background:#fff !important}
+            .chart-box{height:300px}
         }
     </style>
 </head>
@@ -324,7 +327,7 @@ $conn->close();
                     <button type="submit" class="btn-primary">Generate Report</button>
                 </div>
                 <div class="field">
-                    <button type="button" class="btn-secondary" onclick="window.print()">Print / PDF</button>
+                    <button type="button" class="btn-secondary" onclick="printReport()">Print / PDF</button>
                 </div>
             </form>
         </div>
@@ -439,6 +442,19 @@ $conn->close();
         sb.classList.add('open');
         if(window.matchMedia('(max-width: 900px)').matches){document.getElementById('sidebarOverlay').classList.add('active');document.body.style.overflow='hidden';}
       }
+    }
+
+    function printReport(){
+        var root=document.documentElement;
+        var prev=root.getAttribute('data-theme')||'light';
+        if(prev!=='light'){root.setAttribute('data-theme','light');}
+        var restore=function(){
+            if(prev!=='light'){root.setAttribute('data-theme',prev);}
+            window.removeEventListener('afterprint',restore);
+        };
+        window.addEventListener('afterprint',restore);
+        window.print();
+        setTimeout(restore,1000);
     }
 
     (function(){

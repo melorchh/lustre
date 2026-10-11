@@ -1244,6 +1244,12 @@ table small {
   background:var(--green);
   color:#fff;
 }
+.cd-opt.cd-opt-disabled{
+  color:var(--gray-400);
+  font-weight:500;
+  cursor:default;
+  pointer-events:none;
+}
 .cd-search-wrap{
   padding:.35rem;
   border-bottom:1px solid var(--gray-100);
