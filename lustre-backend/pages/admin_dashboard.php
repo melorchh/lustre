@@ -405,7 +405,7 @@ $conn->close();
                 <div class="form-group">
                     <label>Test / Procedure</label>
                     <select name="test_procedure" class="form-dropdown" data-searchable disabled>
-                        <option value="">Select a doctor first</option>
+                        <option value="" disabled selected>Select a doctor first</option>
                     </select>
                     <input type="text" id="walkinOtherInput" placeholder="Specify test / procedure..." autocomplete="off" style="display:none;margin-top:.55rem">
                 </div>
@@ -591,9 +591,9 @@ $conn->close();
             var d=__walkinDoc(did);
             if(!did || !d){
                 procSel.disabled=true;
-                procSel.innerHTML='<option value="">Select a doctor first</option>';
+                procSel.innerHTML='<option value="" disabled selected>Select a doctor first</option>';
             } else {
-                var html='<option value="">Select Test / Procedure</option>';
+                var html='<option value="" disabled selected>Select Test / Procedure</option>';
                 var seen={};
                 String(d.tests).split('\n').forEach(function(ln){
                     ln=ln.trim();

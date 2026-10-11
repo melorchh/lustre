@@ -80,15 +80,23 @@
         var text = option.textContent;
         if (filter && text.toLowerCase().indexOf(filter) === -1) return;
 
+        var disabled = !!option.disabled;
         var o = document.createElement('div');
         var optCls = 'cd-opt';
         if (kind === 'cd-form') optCls += ' fd-opt';
         else if (kind === 'cd-action') optCls += ' fd-act';
-        o.className = optCls + (idx === sel.selectedIndex ? ' sel' : '');
+        if (disabled) optCls += ' cd-opt-disabled';
+        else if (idx === sel.selectedIndex) optCls += ' sel';
+        o.className = optCls;
         o.textContent = text;
         o.setAttribute('role', 'option');
-        o.setAttribute('aria-selected', idx === sel.selectedIndex);
+        o.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+        o.setAttribute('aria-selected', !disabled && idx === sel.selectedIndex);
         o.setAttribute('tabindex', '-1');
+        if (disabled) {
+          optionsContainer.appendChild(o);
+          return;
+        }
         o.addEventListener('click', function(ev){
           ev.stopPropagation();
           sel.selectedIndex = idx;
