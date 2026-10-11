@@ -15,22 +15,40 @@ $conn->query("CREATE TABLE IF NOT EXISTS doctor_accounts (
 
 $conn->query("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS test_procedures TEXT NOT NULL DEFAULT ''");
 
-// One-time: give every pre-existing doctor the default consultation services.
-// Flagged so removing them later via Edit stays removed.
+// One-time (v2): make sure every doctor offers the default consultation services
+// (General / Follow-up / Diagnostic) and drop the "Other (specify below)" sentinel
+// that the client and walk-in forms append automatically.
+// Flagged so later removals via Edit stay removed.
 $conn->query("CREATE TABLE IF NOT EXISTS app_settings (
     skey VARCHAR(64) PRIMARY KEY,
     sval VARCHAR(255) NOT NULL DEFAULT ''
 )");
-$__seeded = $conn->query("SELECT sval FROM app_settings WHERE skey = 'default_test_procedures_seeded'");
+$__seeded = $conn->query("SELECT sval FROM app_settings WHERE skey = 'default_test_procedures_v2'");
 if (!$__seeded || (int)$__seeded->num_rows === 0) {
-    $__default_tests = "General Consultation\nFollow-up Consultation\nDiagnostic Procedure\nOther (specify below)";
-    $__seed_stmt = $conn->prepare("UPDATE doctors SET test_procedures = ? WHERE test_procedures IS NULL OR test_procedures = ''");
-    $__seed_stmt->bind_param("s", $__default_tests);
-    $__seed_stmt->execute();
-    $__seed_stmt->close();
-    $conn->query("INSERT INTO app_settings (skey, sval) VALUES ('default_test_procedures_seeded', '1') ON CONFLICT (skey) DO NOTHING");
+    $__other    = 'Other (specify below)';
+    $__defaults = array('General Consultation', 'Follow-up Consultation', 'Diagnostic Procedure');
+    $__rows     = $conn->query("SELECT id, test_procedures FROM doctors");
+    if ($__rows) {
+        $__upd = $conn->prepare("UPDATE doctors SET test_procedures = ? WHERE id = ?");
+        while ($__row = $__rows->fetch_assoc()) {
+            $__orig    = array_values(array_filter(array_map('trim', explode("\n", (string)(isset($__row['test_procedures']) ? $__row['test_procedures'] : '')))));
+            $__lines   = array_values(array_filter($__orig, function ($x) use ($__other) { return $x !== $__other; }));
+            $__changed = count($__lines) !== count($__orig);
+            foreach ($__defaults as $__d) {
+                if (!in_array($__d, $__lines, true)) { $__lines[] = $__d; $__changed = true; }
+            }
+            if ($__changed) {
+                $__val = implode("\n", $__lines);
+                $__id  = (int)$__row['id'];
+                $__upd->bind_param("si", $__val, $__id);
+                $__upd->execute();
+            }
+        }
+        $__upd->close();
+    }
+    $conn->query("INSERT INTO app_settings (skey, sval) VALUES ('default_test_procedures_v2', '1') ON CONFLICT (skey) DO NOTHING");
 }
-unset($__seeded, $__default_tests, $__seed_stmt);
+unset($__seeded, $__defaults, $__other, $__rows, $__upd, $__row, $__orig, $__lines, $__changed, $__val, $__id);
 
 $doctors = $conn->query("SELECT d.id, d.name, d.specialty, d.schedule, d.experience, d.created_at, d.test_procedures, COUNT(a.id) as appointment_count FROM doctors d LEFT JOIN appointments a ON d.id=a.doctor_id GROUP BY d.id, d.name, d.specialty, d.schedule, d.experience, d.created_at, d.test_procedures ORDER BY d.name");
 $accounts = $conn->query("SELECT da.id AS account_id, da.username, da.created_at, d.id AS doctor_id, d.name AS doctor_name, d.specialty FROM doctor_accounts da JOIN doctors d ON da.doctor_id=d.id ORDER BY d.name");
@@ -426,7 +444,7 @@ $conn->close();
         // -- Add ----------------------------------------------
         function openAddModal(){
             document.getElementById('addForm').reset();
-            tpSetFrom(tpAdd, "General Consultation\nFollow-up Consultation\nDiagnostic Procedure\nOther (specify below)");
+            tpSetFrom(tpAdd, "General Consultation\nFollow-up Consultation\nDiagnostic Procedure");
             openModal('addModal');
         }
 

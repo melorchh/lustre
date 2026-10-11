@@ -152,9 +152,10 @@ export default function BookingModal({ doctor, onClose }: BookingModalProps) {
       .split('\n')
       .map((p) => p.trim())
       .filter((p) => p && p !== OTHER_SERVICE);
+    const base = doctorProcs.length > 0 ? doctorProcs : DEFAULT_SERVICES;
     const seen = new Set<string>();
     const merged: string[] = [];
-    for (const s of [...DEFAULT_SERVICES, ...doctorProcs]) {
+    for (const s of base) {
       if (s && !seen.has(s)) {
         seen.add(s);
         merged.push(s);
