@@ -28,6 +28,7 @@ html {
 @media (min-width: 1360px) {
   .doctor-page .admin-content {
     max-width: 1240px;
+    margin-inline: auto;
   }
 }
 

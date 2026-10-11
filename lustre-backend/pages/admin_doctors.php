@@ -13,10 +13,28 @@ $conn->query("CREATE TABLE IF NOT EXISTS doctor_accounts (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 )");
 
+$conn->query("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS test_procedures TEXT NOT NULL DEFAULT ''");
+
+// One-time: give every pre-existing doctor the default consultation services.
+// Flagged so removing them later via Edit stays removed.
+$conn->query("CREATE TABLE IF NOT EXISTS app_settings (
+    skey VARCHAR(64) PRIMARY KEY,
+    sval VARCHAR(255) NOT NULL DEFAULT ''
+)");
+$__seeded = $conn->query("SELECT sval FROM app_settings WHERE skey = 'default_test_procedures_seeded'");
+if (!$__seeded || (int)$__seeded->num_rows === 0) {
+    $__default_tests = "General Consultation\nFollow-up Consultation";
+    $__seed_stmt = $conn->prepare("UPDATE doctors SET test_procedures = ? WHERE test_procedures IS NULL OR test_procedures = ''");
+    $__seed_stmt->bind_param("s", $__default_tests);
+    $__seed_stmt->execute();
+    $__seed_stmt->close();
+    $conn->query("INSERT INTO app_settings (skey, sval) VALUES ('default_test_procedures_seeded', '1') ON CONFLICT (skey) DO NOTHING");
+}
+unset($__seeded, $__default_tests, $__seed_stmt);
+
 $doctors = $conn->query("SELECT d.id, d.name, d.specialty, d.schedule, d.experience, d.created_at, d.test_procedures, COUNT(a.id) as appointment_count FROM doctors d LEFT JOIN appointments a ON d.id=a.doctor_id GROUP BY d.id, d.name, d.specialty, d.schedule, d.experience, d.created_at, d.test_procedures ORDER BY d.name");
 $accounts = $conn->query("SELECT da.id AS account_id, da.username, da.created_at, d.id AS doctor_id, d.name AS doctor_name, d.specialty FROM doctor_accounts da JOIN doctors d ON da.doctor_id=d.id ORDER BY d.name");
 $doctors_options = $conn->query("SELECT id, name, specialty FROM doctors ORDER BY name");
-$conn->query("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS test_procedures TEXT NOT NULL DEFAULT ''");
 $conn->close();
 ?><!DOCTYPE html>
 <html lang="en">
@@ -408,7 +426,7 @@ $conn->close();
         // -- Add ----------------------------------------------
         function openAddModal(){
             document.getElementById('addForm').reset();
-            tpClear(tpAdd);
+            tpSetFrom(tpAdd, "General Consultation\nFollow-up Consultation");
             openModal('addModal');
         }
 

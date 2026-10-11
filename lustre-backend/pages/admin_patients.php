@@ -12,6 +12,24 @@ if (!$patients) {
 $walkin_doc_options = '';
 $walkin_docs_json = [];
 $conn->query("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS test_procedures TEXT NOT NULL DEFAULT ''");
+
+// One-time: give every pre-existing doctor the default consultation services.
+// Flagged so removing them later via Edit stays removed.
+$conn->query("CREATE TABLE IF NOT EXISTS app_settings (
+    skey VARCHAR(64) PRIMARY KEY,
+    sval VARCHAR(255) NOT NULL DEFAULT ''
+)");
+$__seeded = $conn->query("SELECT sval FROM app_settings WHERE skey = 'default_test_procedures_seeded'");
+if (!$__seeded || (int)$__seeded->num_rows === 0) {
+    $__default_tests = "General Consultation\nFollow-up Consultation";
+    $__seed_stmt = $conn->prepare("UPDATE doctors SET test_procedures = ? WHERE test_procedures IS NULL OR test_procedures = ''");
+    $__seed_stmt->bind_param("s", $__default_tests);
+    $__seed_stmt->execute();
+    $__seed_stmt->close();
+    $conn->query("INSERT INTO app_settings (skey, sval) VALUES ('default_test_procedures_seeded', '1') ON CONFLICT (skey) DO NOTHING");
+}
+unset($__seeded, $__default_tests, $__seed_stmt);
+
 $wl_doc = $conn->query("SELECT id, name, specialty, test_procedures FROM doctors ORDER BY name");
 if ($wl_doc) {
     while ($wd = $wl_doc->fetch_assoc()) {
@@ -251,18 +269,19 @@ $conn->close();
             if(!procSel) return;
             var did=docSel?Number(docSel.value)||0:0;
             var d=__walkinDoc(did);
-            var html;
-            if(!did){ html='<option value="">Select a doctor first</option>'; procSel.disabled=true; }
-            else{
-                html='<option value="">Select Test / Procedure</option>';
+            if(!did || !d){
+                procSel.disabled=true;
+                procSel.innerHTML='<option value="">Select a doctor first</option>';
+            } else {
+                var html='<option value="">Select Test / Procedure</option>';
                 var seen={};
-                (String(d?d.tests:'').split('\n')||[]).forEach(function(ln){
+                String(d.tests).split('\n').forEach(function(ln){
                     ln=ln.trim();
                     if(ln && !seen[ln]){ seen[ln]=1; html+='<option value="'+__walkinEsc(ln)+'">'+__walkinEsc(ln)+'</option>'; }
                 });
                 procSel.disabled=false;
+                procSel.innerHTML=html;
             }
-            procSel.innerHTML=html;
             procSel.value='';
             if(window.__fdResync) window.__fdResync(procSel);
         }
