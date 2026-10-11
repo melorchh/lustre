@@ -10,10 +10,13 @@ if (!$patients) {
 }
 
 $walkin_doc_options = '';
-$wl_doc = $conn->query("SELECT id, name, specialty FROM doctors ORDER BY name");
+$walkin_docs_json = [];
+$conn->query("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS test_procedures TEXT NOT NULL DEFAULT ''");
+$wl_doc = $conn->query("SELECT id, name, specialty, test_procedures FROM doctors ORDER BY name");
 if ($wl_doc) {
     while ($wd = $wl_doc->fetch_assoc()) {
         $walkin_doc_options .= '<option value="' . (int)$wd['id'] . '">Dr. ' . htmlspecialchars($wd['name']) . ' (' . htmlspecialchars($wd['specialty']) . ')</option>';
+        $walkin_docs_json[] = ['id' => (int)$wd['id'], 'name' => $wd['name'], 'specialty' => $wd['specialty'], 'tests' => (string)($wd['test_procedures'] ?? '')];
     }
 }
 $conn->close();
@@ -138,6 +141,12 @@ $conn->close();
                     <input type="time" name="arrival_time" value="<?php echo date('H:i'); ?>">
                 </div>
             </div>
+            <div class="form-group">
+                <label>Test / Procedure</label>
+                <select name="test_procedure" class="form-dropdown" data-searchable disabled>
+                    <option value="">Select a doctor first</option>
+                </select>
+            </div>
 <div class="form-grid">
                 <div class="form-group">
                     <label>Full Name *</label>
@@ -225,11 +234,45 @@ $conn->close();
         function hideLoading(){document.getElementById('loadingScreen').classList.remove('active');}
         function openModal(id){document.getElementById(id).classList.add('active');document.body.style.overflow='hidden';}
         function closeModal(id){document.getElementById(id).classList.remove('active');document.body.style.overflow='';}
-        function openWalkinModal(){document.getElementById('walkinForm').reset();openModal('walkinModal');}
+        function openWalkinModal(){document.getElementById('walkinForm').reset();if(typeof __rebuildWalkinProcs==='function')__rebuildWalkinProcs();openModal('walkinModal');}
 
         document.querySelectorAll('.modal-overlay').forEach(function(overlay){
             overlay.addEventListener('click',function(e){if(e.target===this)closeModal(this.id);});
         });
+
+        // ---- Test / Procedure linked to the selected doctor's offerings ----
+        var __walkinDocs = <?php echo json_encode($walkin_docs_json); ?>;
+        function __walkinEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+        function __walkinDoc(doctorId){doctorId=Number(doctorId)||0;for(var i=0;i<__walkinDocs.length;i++){if(__walkinDocs[i].id===doctorId)return __walkinDocs[i];}return null;}
+        function __rebuildWalkinProcs(){
+            var f=document.getElementById('walkinForm'); if(!f) return;
+            var docSel=f.querySelector('select[name="doctor_id"]');
+            var procSel=f.querySelector('select[name="test_procedure"]');
+            if(!procSel) return;
+            var did=docSel?Number(docSel.value)||0:0;
+            var d=__walkinDoc(did);
+            var html;
+            if(!did){ html='<option value="">Select a doctor first</option>'; procSel.disabled=true; }
+            else{
+                html='<option value="">Select Test / Procedure</option>';
+                var seen={};
+                (String(d?d.tests:'').split('\n')||[]).forEach(function(ln){
+                    ln=ln.trim();
+                    if(ln && !seen[ln]){ seen[ln]=1; html+='<option value="'+__walkinEsc(ln)+'">'+__walkinEsc(ln)+'</option>'; }
+                });
+                procSel.disabled=false;
+            }
+            procSel.innerHTML=html;
+            procSel.value='';
+            if(window.__fdResync) window.__fdResync(procSel);
+        }
+        (function(){
+            var f=document.getElementById('walkinForm'); if(!f||f.dataset.docBound) return;
+            f.dataset.docBound='1';
+            var docSel=f.querySelector('select[name="doctor_id"]');
+            if(docSel) docSel.addEventListener('change', __rebuildWalkinProcs);
+            f.addEventListener('reset', function(){ setTimeout(__rebuildWalkinProcs, 0); });
+        })();
 
         document.getElementById('walkinForm').addEventListener('submit',function(e){
             e.preventDefault();
