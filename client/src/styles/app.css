@@ -152,7 +152,7 @@ input {
   padding: 1rem 0.75rem;
   transform: translateX(calc(-1 * var(--sidebar-w) - 1.5rem));
   box-shadow: 0 0 0 rgba(20, 83, 45, 0);
-  transition: transform 0.32s var(--ease), width 0.32s var(--ease), box-shadow 0.35s var(--ease);
+  transition: transform 0.32s var(--ease), width 0.32s var(--ease) 0.06s, box-shadow 0.35s var(--ease);
 }
 
 .sidebar.open {
@@ -305,6 +305,7 @@ input {
   .sidebar.pinned {
     width: var(--sidebar-w);
     box-shadow: 0 0 40px rgba(20, 83, 45, 0.2);
+    transition: transform 0.32s var(--ease), width 0.32s var(--ease), box-shadow 0.35s var(--ease);
   }
 
   .rail-top,
@@ -318,16 +319,17 @@ input {
   }
 
   .rail-label {
-    max-height: 0;
+    flex: 1 1 auto;
+    min-width: 0;
     opacity: 0;
     overflow: hidden;
     white-space: nowrap;
-    transition: max-height 0.3s var(--ease), opacity 0.18s ease;
+    transition: opacity 0.2s ease;
   }
   .sidebar:hover .rail-label,
   .sidebar.pinned .rail-label {
-    max-height: 120px;
     opacity: 1;
+    transition-delay: 0.06s;
   }
 
   /* icons anchored at the 38px rail-center column */
@@ -404,6 +406,8 @@ input {
   .main {
     margin-left: calc(var(--rail-w) + 1.25rem);
   }
+  .sidebar:hover ~ .main,
+  .sidebar.pinned ~ .main,
   .app.rail-expanded .main {
     margin-left: calc(var(--sidebar-w) + 1.25rem);
   }
@@ -493,6 +497,8 @@ input {
 }
 /* shorten the search bar when the sidebar expands (hover/pin) */
 @media (min-width: 769px) {
+  .sidebar:hover ~ .main .topbar-search,
+  .sidebar.pinned ~ .main .topbar-search,
   .app.rail-expanded .topbar-search {
     max-width: 260px;
   }
