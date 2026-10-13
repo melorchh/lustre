@@ -10,6 +10,10 @@ require_once __DIR__ . '/../src/db.php';
 
 $conn->query("ALTER TABLE walk_ins ADD COLUMN IF NOT EXISTS test_procedure TEXT NOT NULL DEFAULT ''");
 
+// Ensure the patient_type CHECK includes the 'child' type on existing databases.
+$conn->query("ALTER TABLE patients DROP CONSTRAINT IF EXISTS patients_patient_type_check");
+$conn->query("ALTER TABLE patients ADD CONSTRAINT patients_patient_type_check CHECK (patient_type IN ('newborn','infant','child','adolescent','adult','elderly'))");
+
 $action = $_POST['action'] ?? '';
 
 if ($action === 'add_walkin') {
@@ -51,11 +55,12 @@ if ($action === 'add_walkin') {
     }
 
     // Validate patient type against allowed values
-    $allowedTypes = ['newborn','infant','adolescent','adult','elderly'];
+    $allowedTypes = ['newborn','infant','child','adolescent','adult','elderly'];
     if ($type !== '' && !in_array($type, $allowedTypes)) {
         echo 'Invalid patient type.';
         exit;
     }
+    $typeExplicit = ($type !== '');
     if ($type === '') $type = 'adult';
 
     // Validate gender against allowed values
@@ -69,6 +74,31 @@ if ($action === 'add_walkin') {
     if ($age !== '' && (!is_numeric($age) || (int)$age < 0 || (int)$age > 150)) {
         echo 'Invalid age.';
         exit;
+    }
+
+    // Enforce the age band that belongs to the selected patient type
+    $ageBands = [
+        'newborn'    => [0, 0],
+        'infant'     => [1, 2],
+        'child'      => [3, 12],
+        'adolescent' => [13, 17],
+        'adult'      => [18, 59],
+        'elderly'    => [60, 150],
+    ];
+    $band = $ageBands[$type];
+    if ($typeExplicit && $age === '') {
+        echo 'Age is required for patient type ' . ucfirst($type) . '.';
+        exit;
+    }
+    if ($age !== '') {
+        $ageInt = (int)$age;
+        if ($ageInt < $band[0] || $ageInt > $band[1]) {
+            $expected = ($band[0] === $band[1])
+                ? $band[0] . ' year'
+                : $band[0] . '-' . (($band[1] >= 150) ? 'above' : $band[1]) . ' years';
+            echo ucfirst($type) . ' must be ' . $expected . ' old.';
+            exit;
+        }
     }
 
     // Auto-generate email if not provided

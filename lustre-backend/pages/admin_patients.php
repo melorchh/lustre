@@ -215,6 +215,7 @@ $conn->close();
                         <option value="">Select Type</option>
                         <option value="newborn">Newborn</option>
                         <option value="infant">Infant</option>
+                        <option value="child">Child</option>
                         <option value="adolescent">Adolescent</option>
                         <option value="adult">Adult</option>
                         <option value="elderly">Elderly</option>
@@ -223,6 +224,7 @@ $conn->close();
                 <div class="form-group">
                     <label>Age</label>
                     <input type="number" name="age" min="0" max="150" placeholder="e.g. 32">
+                    <small class="age-band-hint" style="display:block;margin-top:.35rem;font-size:.78rem;color:#6b7280"></small>
                 </div>
             </div>
             <div class="form-grid">
@@ -326,8 +328,58 @@ $conn->close();
             f.addEventListener('reset', function(){ setTimeout(__rebuildWalkinProcs, 0); });
         })();
 
+        // ---- Patient type -> age band enforcement ----
+        var __ptAgeBands = {
+            newborn:    {min:0,  max:0,   label:'0 (under 1 year)'},
+            infant:     {min:1,  max:2,   label:'1-2 years'},
+            child:      {min:3,  max:12,  label:'3-12 years'},
+            adolescent: {min:13, max:17,  label:'13-17 years'},
+            adult:      {min:18, max:59,  label:'18-59 years'},
+            elderly:    {min:60, max:150, label:'60 years and above'}
+        };
+        function __ptAgeCheck(){
+            var f=document.getElementById('walkinForm'); if(!f) return true;
+            var typeSel=f.querySelector('select[name="patient_type"]');
+            var ageInput=f.querySelector('input[name="age"]');
+            var hint=f.querySelector('.age-band-hint');
+            if(!typeSel||!ageInput) return true;
+            var type=typeSel.value, band=__ptAgeBands[type], v=ageInput.value.trim();
+            if(hint){hint.style.color='#6b7280'; if(band) hint.textContent='Allowed: '+band.label+'.';}
+            if(!type) return true;
+            if(v===''){
+                if(hint){hint.textContent='Age is required for '+type+'.';hint.style.color='#dc2626';}
+                return false;
+            }
+            var n=Number(v);
+            if(band && (n<band.min||n>band.max)){
+                if(hint){hint.textContent='Age must be '+band.label+' for '+type+'.';hint.style.color='#dc2626';}
+                return false;
+            }
+            return true;
+        }
+        function __applyPtAgeBand(){
+            var f=document.getElementById('walkinForm'); if(!f) return;
+            var typeSel=f.querySelector('select[name="patient_type"]');
+            var ageInput=f.querySelector('input[name="age"]');
+            if(!typeSel||!ageInput) return;
+            var band=__ptAgeBands[typeSel.value];
+            ageInput.min=band?band.min:0; ageInput.max=band?band.max:150;
+            __ptAgeCheck();
+        }
+        (function(){
+            var f=document.getElementById('walkinForm'); if(!f||f.dataset.ptBandBound) return;
+            f.dataset.ptBandBound='1';
+            var typeSel=f.querySelector('select[name="patient_type"]');
+            var ageInput=f.querySelector('input[name="age"]');
+            if(typeSel) typeSel.addEventListener('change',__applyPtAgeBand);
+            if(ageInput) ageInput.addEventListener('input',__ptAgeCheck);
+            f.addEventListener('reset',function(){setTimeout(__applyPtAgeBand,0);});
+            __applyPtAgeBand();
+        })();
+
         document.getElementById('walkinForm').addEventListener('submit',function(e){
             e.preventDefault();
+            if(!__ptAgeCheck()){showToast('Please enter an age allowed for the selected patient type','error');return;}
             var fd=new FormData(this);
             var proc=String(fd.get('test_procedure')||'').trim();
             var other=document.getElementById('walkinOtherInput');
