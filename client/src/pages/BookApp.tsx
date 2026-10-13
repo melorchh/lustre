@@ -5,6 +5,7 @@ import Shell from '../shell';
 import Hero from '../components/Hero';
 import DoctorCard from '../components/DoctorCard';
 import BookingModal from '../components/BookingModal';
+import InfoTip from '../components/InfoTip';
 import { useScrollLock } from '../hooks';
 export default function BookApp() {
   const { patientName, doctors } = getInitialData();
@@ -36,7 +37,10 @@ export default function BookApp() {
         />
 
         <div className="section-hdr">
-          <h2>{"Our Specialists"}</h2>
+          <div className="label-row">
+            <h2>{"Our Specialists"}</h2>
+            <InfoTip text={"This is the doctor list. Select the specialist you want, then tap Continue to choose a service, date and time."} />
+          </div>
           <p>{"Select a doctor, then pick your preferred date and time."}</p>
         </div>
 

@@ -3,6 +3,7 @@ import type { Doctor, MedicalDate } from '../types';
 import { fetchAvailableDates, fetchAvailableTimes, bookAppointment, formatTime12h, formatLongDate, initials } from '../api';
 import { DEFAULT_SERVICES, OTHER_SERVICE } from '../services';
 import Select from './Select';
+import InfoTip from './InfoTip';
 
 interface BookingModalProps {
   doctor: Doctor;
@@ -335,7 +336,10 @@ export default function BookingModal({ doctor, onClose }: BookingModalProps) {
             </div>
 
             <div className="picker-block">
-              <span className="picker-label">{"What do you need?"}</span>
+              <div className="label-row">
+                <span className="picker-label">{"What do you need?"}</span>
+                <InfoTip text={"Step 1 of 3 — What do you need? Choose the test or procedure you're booking for. Pick “Other” to type a custom one."} />
+              </div>
               <Select
                 value={service}
                 onChange={setService}
@@ -367,7 +371,10 @@ placeholder={"Type the specific test / procedure you need"}
             </div>
 
             <div className="picker-block">
-              <span className="picker-label">{"Available Dates"}</span>
+              <div className="label-row">
+                <span className="picker-label">{"Available Dates"}</span>
+                <InfoTip text={"Step 2 of 3 — Available Dates. Highlighted days are open for booking. Tap a date to load its time slots."} />
+              </div>
               {datesLoading ? (
                 <div className="dates-grid" onKeyDown={(e) => e.stopPropagation()}>
                   <SkeletonChips count={6} />
@@ -382,7 +389,10 @@ placeholder={"Type the specific test / procedure you need"}
             </div>
 
             <div className="picker-block">
-              <span className="picker-label">{"Available Times"}</span>
+              <div className="label-row">
+                <span className="picker-label">{"Available Times"}</span>
+                <InfoTip text={"Step 3 of 3 — Available Times. Pick the slot that suits you, then tap Confirm Appointment to book."} />
+              </div>
               <div className="times-grid">
                 {!selectedDate ? (
                   <div className="muted-msg wrap">{"Select a date first"}</div>

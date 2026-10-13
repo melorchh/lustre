@@ -152,7 +152,7 @@ input {
   padding: 1rem 0.75rem;
   transform: translateX(calc(-1 * var(--sidebar-w) - 1.5rem));
   box-shadow: 0 0 0 rgba(20, 83, 45, 0);
-  transition: transform 0.32s var(--ease), width 0.32s var(--ease), box-shadow 0.35s var(--ease);
+  transition: transform 0.32s var(--ease), width 0.32s var(--ease) 0.06s, box-shadow 0.35s var(--ease);
 }
 
 .sidebar.open {
@@ -305,6 +305,7 @@ input {
   .sidebar.pinned {
     width: var(--sidebar-w);
     box-shadow: 0 0 40px rgba(20, 83, 45, 0.2);
+    transition: transform 0.32s var(--ease), width 0.32s var(--ease), box-shadow 0.35s var(--ease);
   }
 
   .rail-top,
@@ -318,16 +319,17 @@ input {
   }
 
   .rail-label {
-    max-height: 0;
+    flex: 1 1 auto;
+    min-width: 0;
     opacity: 0;
     overflow: hidden;
     white-space: nowrap;
-    transition: max-height 0.3s var(--ease), opacity 0.18s ease;
+    transition: opacity 0.2s ease;
   }
   .sidebar:hover .rail-label,
   .sidebar.pinned .rail-label {
-    max-height: 120px;
     opacity: 1;
+    transition-delay: 0.06s;
   }
 
   /* icons anchored at the 38px rail-center column */
@@ -404,6 +406,8 @@ input {
   .main {
     margin-left: calc(var(--rail-w) + 1.25rem);
   }
+  .sidebar:hover ~ .main,
+  .sidebar.pinned ~ .main,
   .app.rail-expanded .main {
     margin-left: calc(var(--sidebar-w) + 1.25rem);
   }
@@ -493,6 +497,8 @@ input {
 }
 /* shorten the search bar when the sidebar expands (hover/pin) */
 @media (min-width: 769px) {
+  .sidebar:hover ~ .main .topbar-search,
+  .sidebar.pinned ~ .main .topbar-search,
   .app.rail-expanded .topbar-search {
     max-width: 260px;
   }
@@ -5409,4 +5415,97 @@ html[data-theme="dark"] .metric-badge--red {
   .tour-card--sheet .tour-controls {
     justify-content: space-between;
   }
+  /* Bottom nav is fixed under the sheet — sit the card above it. */
+  .tour-card--above-nav {
+    bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ── Inline "i" help icon (booking pages) ─────────── */
+.info-tip {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+}
+.info-tip-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--green-light, #2dd4bf);
+  background: var(--green-pale, #ecfdf5);
+  color: var(--green-dark, #0f766e);
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: background-color 0.18s var(--ease, ease), color 0.18s var(--ease, ease), transform 0.18s var(--ease, ease);
+}
+.info-tip-btn:hover,
+.info-tip-btn.is-open {
+  background: var(--green);
+  color: var(--white);
+  transform: scale(1.06);
+}
+.info-tip-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.25);
+}
+.info-tip-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translate(-50%, 0);
+  z-index: 20;
+  width: max-content;
+  max-width: min(260px, 70vw);
+  background: var(--gray-800, #1f2937);
+  color: var(--white);
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.45;
+  text-transform: none;
+  letter-spacing: 0;
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg, 0 12px 30px rgba(0, 0, 0, 0.18));
+  animation: infoTipIn 0.16s var(--ease, ease) both;
+}
+.info-tip-pop::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  background: inherit;
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 2px;
+}
+@keyframes infoTipIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+.label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.section-hdr > .label-row h2 {
+  margin-bottom: 0;
+}
+.picker-block > .label-row {
+  margin-bottom: 0.6rem;
+}
+.label-row .picker-label {
+  margin-bottom: 0;
 }
