@@ -1,20 +1,6 @@
 import { useLang } from '../lang';
 import { useTheme } from '../hooks';
 
-export function LangToggle() {
-  const { lang, setLang, langLabel } = useLang();
-  return (
-    <button
-      className="lang-toggle"
-      onClick={() => setLang(lang === 'en' ? 'fil' : 'en')}
-      title={lang === 'en' ? 'Switch to Filipino' : 'Switch to English'}
-      aria-label={lang === 'en' ? 'Switch to Filipino' : 'Switch to English'}
-    >
-      {langLabel}
-    </button>
-  );
-}
-
 export function ThemeToggle() {
   const { t } = useLang();
   const { isDark, toggleTheme } = useTheme();

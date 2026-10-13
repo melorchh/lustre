@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { initials } from '../api';
 import type { PageKey } from '../types';
 import { useLang } from '../lang';
-import { LangToggle, ThemeToggle } from './Toggles';
+import { ThemeToggle } from './Toggles';
 
 interface SidebarProps {
   patientName: string;
@@ -116,7 +116,6 @@ export default function Sidebar({ patientName, open, pinned, active, onClose, on
 
         <div className="rail-bottom">
           <div className="rail-toggles">
-            <LangToggle />
             <ThemeToggle />
           </div>
           <NavItem href="landing.php" label={t('nav_home')} icon={<IconHome />} />

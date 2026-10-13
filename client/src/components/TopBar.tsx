@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getInitialData, initials } from '../api';
 import { useLang } from '../lang';
-import { LangToggle, ThemeToggle } from './Toggles';
+import { ThemeToggle } from './Toggles';
 
 interface TopBarProps {
   title: string;
@@ -228,7 +228,6 @@ export default function TopBar({ title, patientName, onMenu }: TopBarProps) {
       </div>
 
       <div className="topbar-actions">
-        <LangToggle />
         <ThemeToggle />
         <div className="client-card">
           <div className="topbar-hello">

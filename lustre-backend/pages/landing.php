@@ -34,9 +34,6 @@ if (isset($_SESSION["patient_id"])) {
       <a href="#contact" data-t="nav_contact">Contact</a>
     </div>
     <div class="nav-actions">
-      <button class="lang-toggle" type="button" id="langToggle" onclick="toggleLang()" title="Switch language">
-        <span id="langLabel">FIL</span>
-      </button>
       <button class="theme-toggle" type="button" aria-label="Toggle light/dark mode" title="Toggle dark mode">
         <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
         <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
@@ -488,7 +485,7 @@ function hideLoading(){document.getElementById('loadingScreen').classList.remove
 document.getElementById('loginForm').addEventListener('submit',function(e){
   e.preventDefault();const err=document.getElementById('loginError');err.classList.remove('show');showLoading();
   const ident=document.getElementById('loginId').value.trim();
-  if(ident.indexOf('@')>=0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ident)){hideLoading();err.textContent=(TL.login_email_invalid&&TL.login_email_invalid[_lang])||'That does not look like a valid email address.';err.classList.add('show');return;}
+  if(ident.indexOf('@')>=0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ident)){hideLoading();err.textContent='That does not look like a valid email address.';err.classList.add('show');return;}
   fetch('login.php',{method:'POST',body:new FormData(this)}).then(r=>r.text()).then(res=>{hideLoading();
     res=res.trim();
     if(res==='success:new'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php?tour=1',900);}
@@ -1192,119 +1189,6 @@ function resetRegisterOtp() {
 }
 // -- End Address Logic -------------------------------------------------
 
-// -- Language Toggle (EN / FIL) --
-const TL = {
-  nav_about: { en: 'About', fil: 'Tungkol' },
-  nav_contact: { en: 'Contact', fil: 'Makipag-ugnayan' },
-  nav_signin: { en: 'Sign In', fil: 'Mag-sign In' },
-  nav_register: { en: 'Register Free', fil: 'Mag-register Libre' },
-  hero_eyebrow: { en: 'Modern Healthcare, Simplified', fil: 'Modernong Kalusugan, Pinasimple' },
-  hero_title1: { en: 'Your Health,', fil: 'Ang Iyong Kalusugan,' },
-  hero_title2: { en: 'Expertly Cared For', fil: 'Maingat na Alagaan' },
-  hero_subtitle: { en: 'Comprehensive diagnostics, obstetrics & gynecology care, and laboratory services \u2014 all under one roof. Book your appointment in minutes.', fil: 'Kumpletong diagnostics, OB-GYN care, at laboratory services \u2014 lahat sa iisang bubong. Mag-book ng appointment sa loob ng ilang minuto.' },
-  hero_create: { en: 'Create Account', fil: 'Gumawa ng Account' },
-  hero_stat1: { en: 'Lab Tests', fil: 'Lab Tests' },
-  hero_stat2: { en: 'Specialists', fil: 'Espesyalista' },
-  hero_stat3: { en: 'Result Turnaround', fil: 'Resulta' },
-  hero_stat4: { en: 'Online Booking', fil: 'Online Booking' },
-  explore_services: { en: 'Explore Services', fil: 'Tuklasin ang Serbisyo' },
-  trust_label: { en: 'Trusted Diagnostic Services', fil: 'Mapagkakatiwalaang Diagnostic Services' },
-  login_title: { en: 'Welcome', fil: 'Maligayang Pagdating' },
-  login_sub: { en: 'Sign in to manage your appointments', fil: 'Mag-sign in para pamahalaan ang iyong mga appointment' },
-  login_email: { en: 'Email or username', fil: 'Email o username' },
-  login_hint: { en: 'Patients enter your email · Staff enter your username', fil: 'Ang mga pasyente ay maglagay ng email · Ang staff ay maglagay ng username' },
-  login_email_invalid: { en: 'That does not look like a valid email address.', fil: 'Mukhang hindi ito wastong email address.' },
-  login_password: { en: 'Password', fil: 'Password' },
-  login_btn: { en: 'Sign In', fil: 'Mag-sign In' },
-  login_forgot: { en: 'Forgot password?', fil: 'Nakalimutan ang password?' },
-  login_no_account: { en: "Don't have an account?", fil: 'Wala pang account?' },
-  login_register: { en: 'Register here', fil: 'Mag-register dito' },
-  fp_title: { en: 'Forgot Password', fil: 'Nakalimutan ang Password' },
-  fp_sub: { en: 'Enter your registered email to receive a verification code.', fil: 'Ilagay ang iyong email para makatanggap ng verification code.' },
-  fp_email_label: { en: 'Email address', fil: 'Email Address' },
-  fp_send: { en: 'Send Code', fil: 'Magpadala ng Code' },
-  fp_remembered: { en: 'Remembered it?', fil: 'Naalala mo na?' },
-  fp_back_login: { en: 'Back to login', fil: 'Bumalik sa login' },
-  fp_otp_title: { en: 'Enter Verification Code', fil: 'Ilagay ang Verification Code' },
-  fp_otp_sub: { en: 'We sent a 6-digit code to your email.', fil: 'Nagpadala kami ng 6-digit code sa iyong email.' },
-  fp_otp_label: { en: 'Verification code', fil: 'Verification Code' },
-  fp_verify: { en: 'Verify', fil: 'I-verify' },
-  fp_resend: { en: 'Resend code', fil: 'I-resend ang code' },
-  fp_reset_title: { en: 'Set New Password', fil: 'Itakda ang Bagong Password' },
-  fp_reset_sub: { en: 'Choose a strong password for your account.', fil: 'Pumili ng malakas na password para sa iyong account.' },
-  fp_new_pw: { en: 'New password', fil: 'Bagong Password' },
-  fp_confirm_pw: { en: 'Confirm new password', fil: 'Kumpirmahin ang bagong password' },
-  fp_reset_btn: { en: 'Reset Password', fil: 'I-reset ang Password' },
-  fp_back_login2: { en: 'Back to login', fil: 'Bumalik sa login' },
-  reg_title: { en: 'Create New Account', fil: 'Gumawa ng Bagong Account' },
-  reg_fullname: { en: 'Full Name', fil: 'Buong Pangalan' },
-  reg_select_gender: { en: 'Select Gender', fil: 'Pumili ng Kasarian' },
-  reg_male: { en: 'Male', fil: 'Lalaki' },
-  reg_female: { en: 'Female', fil: 'Babae' },
-  reg_address: { en: 'Address', fil: 'Address' },
-  reg_province: { en: 'Province', fil: 'Probinsya' },
-  reg_municipality: { en: 'Municipality / City', fil: 'Munisipalidad / Lungsod' },
-  reg_barangay: { en: 'Barangay', fil: 'Barangay' },
-  reg_street: { en: 'House No. / Street / Subdivision', fil: 'House No. / Kalsada / Subdivision' },
-  reg_street_ph: { en: 'e.g. 123 Rizal St., Sunset Subd.', fil: 'hal. 123 Rizal St., Sunset Subd.' },
-  reg_email: { en: 'Email Address', fil: 'Email Address' },
-  reg_contact: { en: 'Contact Number', fil: 'Contact Number' },
-  reg_password: { en: 'Password', fil: 'Password' },
-  reg_confirm: { en: 'Confirm Password', fil: 'Kumpirmahin ang Password' },
-  reg_btn: { en: 'Register', fil: 'Mag-register' },
-  reg_verify: { en: 'Verify & Create Account', fil: 'I-verify at Gumawa ng Account' },
-  reg_have_account: { en: 'Already have an account?', fil: 'May account na ba?' },
-  reg_login: { en: 'Login here', fil: 'Mag-login dito' },
-  footer_rights: { en: 'All rights reserved.', fil: 'Lahat ng karapatan ay reserved.' },
-  svc_title: { en: 'Clinic Services', fil: 'Mga Serbisyo sa Klinika' },
-  svc_sub: { en: 'Consultations, vaccinations, and medical certificates \u2014 all in one place.', fil: 'Mga konsultasyon, bakuna, at medical certificate \u2014 lahat sa isang lugar.' },
-  svc_peds: { en: 'Pediatric Consultation', fil: 'Pediatrikong Konsultasyon' },
-  svc_adult: { en: 'Adult Consultation', fil: 'Konsultasyong Pang-adulto' },
-  svc_obgyn_c: { en: 'OB-Gyn Consultation (by appointment)', fil: 'OB-Gyn Konsultasyon (sa pamamagitan ng appointment)' },
-  svc_vaccine: { en: 'Pediatric and Adult Vaccination', fil: 'Pediatrikong at Pang-adultong Bakuna' },
-  svc_medcert: { en: 'Medical Certification', fil: 'Medical na Sertipikasyon' },
-  svc_physexam: { en: 'Physical Examination / Fit to Work Certification', fil: 'Physical Examination / Fit to Work Certification' },
-  svc_peds_d: { en: 'Checkups, growth monitoring, and treatment for infants, children, and teens.', fil: 'Mga check-up, pagsubaybay sa paglaki, at paggamot para sa sanggol, bata, at teen.' },
-  svc_adult_d: { en: 'Consultation for common illnesses, maintenance care, and everyday health concerns.', fil: 'Konsultasyon para sa karaniwang karamdaman, maintenance care, at pang-araw-araw na alalahanin sa kalusugan.' },
-  svc_obgyn_d: { en: "Women's reproductive health, prenatal care, and family planning with our specialists.", fil: 'Reproduktibong kalusugan ng kababaihan, prenatal care, at family planning kasama ang aming mga espesyalista.' },
-  svc_vaccine_d: { en: 'Complete immunization schedules for children and routine vaccines for adults.', fil: 'Kumpletong iskedyul ng imunesasyon para sa mga bata at rutinang bakuna para sa mga adult.' },
-  svc_medcert_d: { en: 'Official medical certificates for school, work, and other official requirements.', fil: 'Opisyal na medical certificate para sa paaralan, trabaho, at iba pang opisyal na kinakailangan.' },
-  svc_physexam_d: { en: 'Pre-employment, annual, and school physical exams with a fit-to-work certificate.', fil: 'Pre-employment, taunang, at pisikal na eksaminasyon na may fit-to-work certificate.' },
-  svc_header: { en: 'Everything You Need, Right Here', fil: 'Lahat ng Kailangan Mo, Dito Lang' },
-  contact_tag: { en: 'Contact', fil: 'Contact' },
-  contact_title: { en: 'Get In Touch', fil: 'Makipag-ugnayan Ka' },
-  contact_sub: { en: 'Visit or call us \u2014 we are happy to help.', fil: 'Bisitahin o tawagan kami \u2014 handa kaming tumulong.' },
-  contact_clinic_label: { en: 'Clinic', fil: 'Klinika' },
-  contact_clinic: { en: 'Lustre Medical and Diagnostic Clinic', fil: 'Lustre Medical and Diagnostic Clinic' },
-  contact_address_label: { en: 'Address', fil: 'Address' },
-  contact_phone_label: { en: 'Phone', fil: 'Telepono' },
-  loading: { en: 'Processing\u2026', fil: 'Pinoproseso\u2026' },
-};
-let _lang = localStorage.getItem('meLang') || 'en';
-
-function applyLang(lang) {
-  _lang = lang;
-  localStorage.setItem('meLang', lang);
-  document.getElementById('langLabel').textContent = lang === 'en' ? 'FIL' : 'EN';
-  document.querySelectorAll('[data-t]').forEach(el => {
-    const key = el.getAttribute('data-t');
-    if (TL[key] && TL[key][lang]) el.textContent = TL[key][lang];
-  });
-  document.querySelectorAll('[data-t-ph]').forEach(el => {
-    const key = el.getAttribute('data-t-ph');
-    if (TL[key] && TL[key][lang]) el.placeholder = TL[key][lang];
-  });
-  // update loading text
-  const loadP = document.querySelector('#loadingScreen p');
-  if (loadP) loadP.textContent = TL.loading[lang];
-}
-
-function toggleLang() {
-  applyLang(_lang === 'en' ? 'fil' : 'en');
-}
-
-// Apply saved language on load
-applyLang(_lang);
 
 /* -- Chatbot -- */
 (function(){
