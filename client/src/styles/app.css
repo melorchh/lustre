@@ -284,7 +284,7 @@ input {
   color: var(--green-dark);
 }
 
-/* language + theme toggles inside the drawer (mobile only) */
+/* theme toggle inside the drawer (mobile only) */
 .rail-toggles {
   display: none;
 }
@@ -4353,8 +4353,7 @@ html[data-theme="dark"] .modal-alert-icon--ok {
     padding: 0 14px;
   }
   .topbar-actions {
-    /* the fil/eng + day/night toggles live in the sidenav drawer on mobile,
-       so their position can never shift with the chosen option */
+    /* the day/night toggle lives in the sidenav drawer on mobile */
     display: none;
   }
   .client-card {
@@ -4403,9 +4402,6 @@ html[data-theme="dark"] .modal-alert-icon--ok {
     gap: 0.6rem;
     width: 100%;
   }
-  /* both buttons split the row 50/50: identical width + height (46px),
-     so the row never shifts and the pair always looks uniform */
-  .rail-toggles .lang-toggle,
   .rail-toggles .theme-toggle {
     flex: 1 1 0;
     width: auto;
@@ -4789,42 +4785,6 @@ html[data-theme="dark"] .theme-toggle:hover {
   box-shadow: 0 6px 20px rgba(45, 212, 191, 0.35);
 }
 
-/* lang toggle button (topbar) */
-.lang-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 54px;
-  height: 46px;
-  padding: 0 1rem;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: var(--green-dark);
-  background: var(--green-pale);
-  border: 1.5px solid var(--green-pale2);
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.22);
-}
-.lang-toggle:hover {
-  background: var(--green-pale2);
-  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.35);
-  transform: translateY(-1px);
-}
-html[data-theme="dark"] .lang-toggle {
-  color: var(--green);
-  background: transparent;
-  border-color: rgba(45, 212, 191, 0.3);
-  box-shadow: 0 4px 14px rgba(45, 212, 191, 0.2);
-}
-html[data-theme="dark"] .lang-toggle:hover {
-  background: var(--green-pale);
-  box-shadow: 0 6px 20px rgba(45, 212, 191, 0.35);
-}
-
 /* ── Night-eye comfort ──────────────────────────────
    Dial bright green/teal fills, chips and glows down in dark
    mode so buttons and surfaces stop glaring. Text colors are
@@ -4889,12 +4849,10 @@ html[data-theme="dark"] .nav-item.active {
 html[data-theme="dark"] .nav-item:hover {
   box-shadow: 0 3px 12px rgba(45, 212, 191, 0.12);
 }
-html[data-theme="dark"] .theme-toggle,
-html[data-theme="dark"] .lang-toggle {
+html[data-theme="dark"] .theme-toggle {
   box-shadow: 0 4px 14px rgba(45, 212, 191, 0.1);
 }
-html[data-theme="dark"] .theme-toggle:hover,
-html[data-theme="dark"] .lang-toggle:hover {
+html[data-theme="dark"] .theme-toggle:hover {
   box-shadow: 0 6px 20px rgba(45, 212, 191, 0.2);
 }
 html[data-theme="dark"] .nav-icon svg,

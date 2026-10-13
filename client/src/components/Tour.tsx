@@ -1,21 +1,20 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useLang } from '../lang';
 import { useScrollLock } from '../hooks';
 
 interface TourStep {
   /** CSS selector, or 'nav' for the matchMedia-picked sidebar/bottom-nav */
   target: string | null;
-  titleKey: string;
-  msgKey: string;
+  title: string;
+  msg: string;
 }
 
 const STEPS: TourStep[] = [
-  { target: '[data-tour="hero"]', titleKey: 'tour_hero_title', msgKey: 'tour_hero_msg' },
-  { target: '[data-tour="stats"]', titleKey: 'tour_stats_title', msgKey: 'tour_stats_msg' },
-  { target: '[data-tour="next"]', titleKey: 'tour_next_title', msgKey: 'tour_next_msg' },
-  { target: '[data-tour="quick"]', titleKey: 'tour_quick_title', msgKey: 'tour_quick_msg' },
-  { target: 'nav', titleKey: 'tour_nav_title', msgKey: 'tour_nav_msg' },
-  { target: null, titleKey: 'tour_done_title', msgKey: 'tour_done_msg' },
+  { target: '[data-tour="hero"]', title: 'Welcome to your care hub', msg: 'This is your dashboard — everything about your care at LustreMDC lives here after you register.' },
+  { target: '[data-tour="stats"]', title: 'Your health at a glance', msg: 'Keep an eye on appointments, lab tests, vaccines, and health records — all counted here.' },
+  { target: '[data-tour="next"]', title: 'Upcoming appointment', msg: 'Your next visit appears here. Ready now? Use “Book new” to schedule with a specialist.' },
+  { target: '[data-tour="quick"]', title: 'Quick actions', msg: 'Book an appointment, open your records, request lab tests, or track vitals & vaccines — one tap away.' },
+  { target: 'nav', title: 'Find your way around', msg: 'Use the menu to jump between sections, open your profile, switch theme, and log out.' },
+  { target: null, title: "You're all set!", msg: 'That is everything you need to get started. Book your first appointment and take charge of your health.' },
 ];
 
 const GAP = 14;
@@ -52,7 +51,6 @@ interface TourProps {
 }
 
 export default function Tour({ active, onDone }: TourProps) {
-  const { t } = useLang();
   const [index, setIndex] = useState(0);
   const [ring, setRing] = useState<RingRect | null>(null);
   const [pos, setPos] = useState<CardPos>(null);
@@ -173,7 +171,7 @@ export default function Tour({ active, onDone }: TourProps) {
   };
 
   return (
-    <div className="tour-root" role="dialog" aria-modal="true" aria-label={t(step.titleKey)}>
+    <div className="tour-root" role="dialog" aria-modal="true" aria-label={step.title}>
       <div className="tour-scrim" aria-hidden="true" />
       {ring && (
         <div
@@ -192,8 +190,8 @@ export default function Tour({ active, onDone }: TourProps) {
         }
       >
         <div className="tour-step-label">{`${index + 1} / ${STEPS.length}`}</div>
-        <h3 className="tour-title">{t(step.titleKey)}</h3>
-        <p className="tour-msg">{t(step.msgKey)}</p>
+        <h3 className="tour-title">{step.title}</h3>
+        <p className="tour-msg">{step.msg}</p>
         <div className="tour-controls">
           <div className="tour-dots" aria-hidden="true">
             {STEPS.map((_, i) => (
@@ -202,11 +200,11 @@ export default function Tour({ active, onDone }: TourProps) {
           </div>
           <div className="tour-btns">
             <button type="button" className="tour-btn" onClick={finish}>
-              {t('tour_skip')}
+              {"Skip"}
             </button>
             {index > 0 && (
               <button type="button" className="tour-btn" onClick={() => setIndex(index - 1)}>
-                {t('tour_back')}
+                {"Back"}
               </button>
             )}
             <button
@@ -215,7 +213,7 @@ export default function Tour({ active, onDone }: TourProps) {
               className="tour-btn tour-btn--primary"
               onClick={next}
             >
-              {last ? t('tour_finish') : t('tour_next_btn')}
+              {last ? "Book my first appointment" : "Next"}
             </button>
           </div>
         </div>

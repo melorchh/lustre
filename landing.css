@@ -233,7 +233,6 @@ select {
   align-items: center;
 }
 .nav-actions > .nav-btn,
-.nav-actions > .lang-toggle,
 .nav-actions > .theme-toggle {
   flex: 0 0 auto;
   height: 48px;
@@ -252,42 +251,15 @@ select {
   font-weight: 700;
 }
 .nav-actions > .nav-btn-ghost,
-.nav-actions > .lang-toggle,
 .nav-actions > .theme-toggle {
   border-color: var(--green-pale2);
 }
 .nav-actions > .nav-btn-solid {
   border-color: transparent;
 }
-.nav-actions > .lang-toggle {
-  min-width: 56px;
-  padding: 0 0.9rem;
-  font-weight: 400;
-}
 .nav-actions > .theme-toggle {
   width: 48px;
   padding: 0;
-}
-.lang-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 54px;
-  min-height: 48px;
-  padding: 0 1rem;
-  border-radius: 12px;
-  font-size: 0.9rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: var(--green-dark);
-  background: var(--green-pale);
-  border: 1.5px solid var(--green-pale2);
-  cursor: pointer;
-  transition: background-color 0.25s var(--ease), transform 0.25s var(--ease);
-}
-.lang-toggle:hover {
-  background: var(--green-pale2);
-  transform: translateY(-1px);
 }
 
 /* ══ HERO (slideshow) ══ */
@@ -2148,7 +2120,6 @@ footer .footer-copy {
   }
   /* keep all four navbar controls on the same 42px metrics */
   .nav-actions > .nav-btn,
-  .nav-actions > .lang-toggle,
   .nav-actions > .theme-toggle {
     height: 42px;
     min-height: 42px;
@@ -2157,10 +2128,6 @@ footer .footer-copy {
   }
   .nav-actions > .nav-btn {
     padding: 0 0.9rem;
-  }
-  .nav-actions > .lang-toggle {
-    min-width: 48px;
-    padding: 0 0.55rem;
   }
   .nav-actions > .theme-toggle {
     width: 42px;
@@ -2204,7 +2171,6 @@ footer .footer-copy {
     gap: 0.35rem;
   }
   .nav-actions > .nav-btn,
-  .nav-actions > .lang-toggle,
   .nav-actions > .theme-toggle {
     height: 40px;
     min-height: 40px;
@@ -2212,10 +2178,6 @@ footer .footer-copy {
   }
   .nav-actions > .nav-btn {
     padding: 0 0.7rem;
-  }
-  .nav-actions > .lang-toggle {
-    min-width: 44px;
-    padding: 0 0.45rem;
   }
   .nav-actions > .theme-toggle {
     width: 40px;

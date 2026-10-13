@@ -7,8 +7,6 @@ import DatePicker from '../components/DatePicker';
 import Select from '../components/Select';
 import { SvgFlask, SvgUser, SvgCalendar } from '../components/icons';
 import { useToast } from '../hooks';
-import { useLang } from '../lang';
-
 const PRIORITIES = [
   { value: 'normal', label: 'Normal', desc: 'Standard turnaround' },
   { value: 'urgent', label: 'Urgent', desc: 'Expedited processing' },
@@ -22,11 +20,10 @@ interface StepBarProps {
 }
 
 function StepBar({ step }: StepBarProps) {
-  const { t } = useLang();
   const steps = [
-    { n: 1, label: t('lab_choose_test') },
-    { n: 2, label: t('lab_doctor_notes') },
-    { n: 3, label: t('lab_confirm') },
+    { n: 1, label: "Choose Test" },
+    { n: 2, label: "Doctor & Notes" },
+    { n: 3, label: "Confirm" },
   ];
   return (
     <div className="steps">
@@ -49,7 +46,6 @@ function StepBar({ step }: StepBarProps) {
 export default function LabApp() {
   const { patientName, doctors = [], categories = {}, patientId } = getInitialData();
   const { showToast } = useToast();
-  const { t } = useLang();
 
   const categoryNames = useMemo(() => Object.keys(categories).filter((c) => c !== 'Other'), [categories]);
   const hasOther = useMemo(() => !!categories['Other'], [categories]);
@@ -100,11 +96,11 @@ export default function LabApp() {
 
   const submit = async () => {
     if (!doctorId) {
-      showToast(t('lab_need_doctor'), 'error');
+      showToast("Please select a requesting doctor.", 'error');
       return;
     }
     if (!patientId) {
-      showToast(t('lab_need_login'), 'error');
+      showToast("Please login again.", 'error');
       return;
     }
     setSubmitting(true);
@@ -120,24 +116,24 @@ export default function LabApp() {
       const text = await res.text();
       if (text.trim() === 'success') {
         setStep(3);
-        showToast(t('lab_submitted_ok'), 'success');
+        showToast("Lab request submitted.", 'success');
       } else {
-        showToast(text.trim() || t('lab_submit_failed'), 'error');
+        showToast(text.trim() || "Submission failed. Please try again.", 'error');
       }
     } catch (err) {
-      showToast(t('lab_network_err'), 'error');
+      showToast("Network error. Please try again.", 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <Shell page="lab" title={t('lab_title')} patientName={patientName}>
+    <Shell page="lab" title={"Laboratory Tests"} patientName={patientName}>
       <main className="page-content">
         <Hero
-          tag={t('lab_tag')}
-          title={t('lab_hero_title')}
-          sub={t('lab_hero_sub')}
+          tag={"Lab Request"}
+          title={"Request a Lab Test"}
+          sub={"Choose from our available laboratory services and submit a request. Our staff will confirm your schedule."}
         />
 
         <StepBar step={step} />
@@ -149,38 +145,38 @@ export default function LabApp() {
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
-            <h3>{t('lab_submitted')}</h3>
+            <h3>{"Request Submitted!"}</h3>
             <p>
-              {t('lab_submitted_sub')}
+              {"Your lab test request has been received. Our staff will review it and contact you to confirm the schedule."}
             </p>
             <div className="success-summary">
               <div className="row">
                 <span><SvgFlask size={18} /></span>
-                <span className="lbl">{t('lab_test')}</span>
+                <span className="lbl">{"Test"}</span>
                 <strong>{selectedTest}</strong>
               </div>
               <div className="row">
                 <span><SvgUser size={18} /></span>
-                <span className="lbl">{t('bm_doctor')}</span>
+                <span className="lbl">{"Doctor"}</span>
                 <strong>{doctors.find((d) => String(d.id) === doctorId)?.name || '—'}</strong>
               </div>
               {scheduledDate && (
                 <div className="row">
                   <span><SvgCalendar size={18} /></span>
-                  <span className="lbl">{t('lab_preferred_date_lbl')}</span>
+                  <span className="lbl">{"Preferred date"}</span>
                   <strong>{new Date(`${scheduledDate}T00:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong>
                 </div>
               )}
             </div>
             <a href="my_appointments.php" className="btn-primary">
-              {t('dash_view_all')}
+              {"View all records"}
             </a>
           </div>
         ) : step === 2 ? (
           <div className="lab-step">
             <div className="selected-summary">
               <div>
-                <div className="selected-label">{t('lab_selected_test')}</div>
+                <div className="selected-label">{"Selected Test"}</div>
                 <div className="selected-test-name">{selectedTest}</div>
               </div>
               <button
@@ -194,28 +190,28 @@ export default function LabApp() {
                   scrollToTop();
                 }}
               >
-                {t('lab_change')}
+                {"Change"}
               </button>
             </div>
 
             <div className="section-hdr">
-              <h2>{t('lab_req_doctor')}</h2>
-              <p>{t('lab_req_doctor_sub')}</p>
+              <h2>{"Requesting Doctor"}</h2>
+              <p>{"Select the doctor who is ordering this lab test."}</p>
             </div>
             <div className="field-block">
-              <label className="field-label">{t('bm_doctor')}</label>
+              <label className="field-label">{"Doctor"}</label>
               <div className="select-wrap">
                 <Select
                   value={doctorId}
                   onChange={(v) => setDoctorId(v)}
-                  placeholder={t('lab_select_doctor')}
+                  placeholder={"Select a doctor"}
                   icon={
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 5v14M5 12h14" />
                     </svg>
                   }
                   options={[
-                    { value: '', label: t('lab_select_doctor') },
+                    { value: '', label: "Select a doctor" },
                     ...doctors.map((d: Doctor) => ({
                       value: String(d.id),
                       label: `Dr. ${d.name} — ${d.specialty}`,
@@ -226,8 +222,8 @@ export default function LabApp() {
             </div>
 
             <div className="section-hdr">
-              <h2>{t('lab_priority')}</h2>
-              <p>{t('lab_priority_sub')}</p>
+              <h2>{"Priority"}</h2>
+              <p>{"How urgent is this request?"}</p>
             </div>
             <div className="priority-grid">
               {PRIORITIES.map((p) => (
@@ -244,23 +240,23 @@ export default function LabApp() {
             </div>
 
             <div className="section-hdr">
-              <h2>{t('lab_preferred_schedule')}</h2>
-              <p>{t('lab_preferred_schedule_sub')}</p>
+              <h2>{"Preferred Schedule"}</h2>
+              <p>{"Optional — let us know your preferred date."}</p>
             </div>
             <div className="field-block field-block--date">
-              <label className="field-label">{t('lab_preferred_date')}</label>
+              <label className="field-label">{"Preferred Date (optional)"}</label>
               <DatePicker value={scheduledDate} onChange={setScheduledDate} min={today} />
             </div>
 
             <div className="section-hdr">
-              <h2>{t('lab_clinical_notes')}</h2>
-              <p>{t('lab_clinical_notes_sub')}</p>
+              <h2>{"Clinical Notes"}</h2>
+              <p>{"Describe your symptoms or reason for requesting this test."}</p>
             </div>
             <div className="notes-wrap">
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder={t('lab_notes_ph')}
+                placeholder={"e.g. Feeling dizzy, doctor recommended CBC..."}
                 rows={4}
               />
             </div>
@@ -273,7 +269,7 @@ export default function LabApp() {
                   <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <polyline points="22 2 15 22 11 13 2 9 22 2" />
                   </svg>
-                  {t('lab_submit')}
+                  {"Submit Lab Request"}
                 </>
               )}
             </button>
@@ -281,8 +277,8 @@ export default function LabApp() {
         ) : view.kind === 'categories' ? (
           <>
             <div className="section-hdr">
-              <h2>{t('lab_category_hdr')}</h2>
-              <p>{t('lab_category_sub')}</p>
+              <h2>{"Select a Test Category"}</h2>
+              <p>{"Choose a category then pick the specific test you need."}</p>
             </div>
             <div className="categories-grid">
               {categoryNames.map((cat, i) => (
@@ -316,8 +312,8 @@ export default function LabApp() {
                       <path d="M12 5v14M5 12h14" />
                     </svg>
                   </span>
-                  <span className="cat-name">{t('lab_other')}</span>
-                  <span className="cat-count">{t('lab_custom_test')}</span>
+                  <span className="cat-name">{"Other"}</span>
+                  <span className="cat-count">{"Custom test"}</span>
                 </button>
               )}
             </div>
@@ -326,11 +322,11 @@ export default function LabApp() {
           <>
             <div className="tests-panel-head">
               <button type="button" className="back-to-cats" onClick={() => setView({ kind: 'categories', category: '' })}>
-                {t('lab_all_categories')}
+                {"← All Categories"}
               </button>
               <div className="section-hdr">
                 <h2>{view.category}</h2>
-                <p>{t('lab_select_one')}</p>
+                <p>{"Select one test to continue."}</p>
               </div>
             </div>
             <div className="tests-list">
@@ -350,7 +346,7 @@ export default function LabApp() {
               <div className="custom-input-wrap visible">
                 <input
                   type="text"
-                  placeholder={t('lab_custom_ph')}
+                  placeholder={"Enter the name of the test..."}
                   value={customTest}
                   onChange={(e) => setCustomTest(e.target.value)}
                 />
@@ -360,13 +356,13 @@ export default function LabApp() {
                   onClick={() => {
                     const val = customTest.trim();
                     if (!val) {
-                      showToast(t('lab_enter_test_name'), 'error');
+                      showToast("Please enter the test name.", 'error');
                       return;
                     }
                     goToStep2(val);
                   }}
                 >
-                  {t('lab_continue_test')}
+                  {"Continue with this test →"}
                 </button>
               </div>
             )}

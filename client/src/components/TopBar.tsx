@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getInitialData, initials } from '../api';
-import { useLang } from '../lang';
-import { LangToggle, ThemeToggle } from './Toggles';
+import { ThemeToggle } from './Toggles';
 
 interface TopBarProps {
   title: string;
@@ -155,7 +154,6 @@ export default function TopBar({ title, patientName, onMenu }: TopBarProps) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
-  const { t } = useLang();
 
   const results = useMemo(() => (open ? buildResults(query) : []), [query, open]);
 
@@ -189,18 +187,18 @@ export default function TopBar({ title, patientName, onMenu }: TopBarProps) {
         </button>
 
         <div className="topbar-search" ref={boxRef}>
-          <span className="topbar-search-label">{t('tb_search')}</span>
+          <span className="topbar-search-label">{"Search"}</span>
           <input
             className="topbar-search-input"
             type="text"
-            placeholder={t('tb_search_ph')}
+            placeholder={"Type here..."}
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
               setOpen(true);
             }}
             onFocus={() => setOpen(true)}
-            aria-label={t('tb_search')}
+            aria-label={"Search"}
           />
 
           {showDropdown && (
@@ -221,18 +219,17 @@ export default function TopBar({ title, patientName, onMenu }: TopBarProps) {
                   ))}
                 </div>
               ))}
-              {noResults && <div className="search-dropdown-empty">{t('tb_noresults', { q: query.trim() })}</div>}
+              {noResults && <div className="search-dropdown-empty">{`No results found for “${query.trim()}”`}</div>}
             </div>
           )}
         </div>
       </div>
 
       <div className="topbar-actions">
-        <LangToggle />
         <ThemeToggle />
         <div className="client-card">
           <div className="topbar-hello">
-            <span className="topbar-hello-label">{t('tb_hello')}</span>
+            <span className="topbar-hello-label">{"Hello,"}</span>
             <strong>{patientName.split(' ')[0] || patientName}</strong>
           </div>
           <div className="avatar avatar--topbar">{initials(patientName)}</div>

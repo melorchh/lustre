@@ -6,11 +6,8 @@ import Hero from '../components/Hero';
 import DoctorCard from '../components/DoctorCard';
 import BookingModal from '../components/BookingModal';
 import { useScrollLock } from '../hooks';
-import { useLang } from '../lang';
-
 export default function BookApp() {
   const { patientName, doctors } = getInitialData();
-  const { t } = useLang();
 
   const [search, setSearch] = useState('');
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
@@ -30,17 +27,17 @@ export default function BookApp() {
   }, [doctors, search]);
 
   return (
-    <Shell page="book" title={t('book_title')} patientName={patientName}>
+    <Shell page="book" title={"Book an Appointment"} patientName={patientName}>
       <main className="page-content">
         <Hero
-          tag={t('book_tag')}
-          title={t('book_hero_title')}
-          sub={t('book_hero_sub')}
+          tag={"Online Booking"}
+          title={"Choose Your Doctor"}
+          sub={"Select a specialist below to check available schedules and book your appointment in just a few clicks."}
         />
 
         <div className="section-hdr">
-          <h2>{t('book_section')}</h2>
-          <p>{t('book_section_sub')}</p>
+          <h2>{"Our Specialists"}</h2>
+          <p>{"Select a doctor, then pick your preferred date and time."}</p>
         </div>
 
         <div className="search-box">
@@ -51,7 +48,7 @@ export default function BookApp() {
           <input
             type="text"
             className="search-input"
-            placeholder={t('book_search_ph')}
+            placeholder={"Search by doctor or specialty…"}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -65,8 +62,8 @@ export default function BookApp() {
                 <path d="m21 21-4.35-4.35" />
               </svg>
             </span>
-            <h3>{t('book_no_doctors')}</h3>
-            <p>{t('book_no_doctors_sub')}</p>
+            <h3>{"No doctors found"}</h3>
+            <p>{"Try a different name or specialty."}</p>
           </div>
         ) : (
           <div className="doctors-grid">
@@ -87,11 +84,11 @@ export default function BookApp() {
         <div className="cta-bar-info">
           {selectedDoctor ? (
             <>
-              <span className="cta-bar-label">{t('book_selected')}</span>
+              <span className="cta-bar-label">{"Selected"}</span>
               <span className="cta-bar-doctor">Dr. {selectedDoctor.name}</span>
             </>
           ) : (
-            <span className="cta-bar-label cta-bar-hint">{t('book_select_hint')}</span>
+            <span className="cta-bar-label cta-bar-hint">{"Select a doctor to continue"}</span>
           )}
         </div>
         <button
@@ -99,7 +96,7 @@ export default function BookApp() {
           disabled={!selectedDoctor}
           onClick={() => selectedDoctor && setModalDoctor(selectedDoctor)}
         >
-          {t('book_continue')}
+          {"Continue"}
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 12h14M13 6l6 6-6 6" />
           </svg>

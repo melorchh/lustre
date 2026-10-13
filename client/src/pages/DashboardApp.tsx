@@ -4,7 +4,6 @@ import type { Appointment, LabTest, Vaccination } from '../types';
 import { getInitialData, formatLongDate, formatTime12h, formatStamp, initials } from '../api';
 import Shell from '../shell';
 import Tour from '../components/Tour';
-import { useLang } from '../lang';
 import {
   SvgActivity,
   SvgCalendar,
@@ -20,11 +19,11 @@ import {
   SvgDownload,
 } from '../components/icons';
 
-function greeting(lang: string): string {
+function greeting(): string {
   const h = new Date().getHours();
-  if (h < 12) return lang === 'fil' ? 'Magandang umaga' : 'Good morning';
-  if (h < 18) return lang === 'fil' ? 'Magandang hapon' : 'Good afternoon';
-  return lang === 'fil' ? 'Magandang gabi' : 'Good evening';
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening';
 }
 
 function statusOf(value: string): string {
@@ -36,12 +35,11 @@ interface NextApptProps {
 }
 
 function NextAppointmentCard({ apt }: NextApptProps) {
-  const { t } = useLang();
   const s = statusOf(apt.status);
   return (
     <div className="db-card db-appt-card">
       <div className="db-card-head">
-        <span className="db-card-label">{t('dash_upcoming')}</span>
+        <span className="db-card-label">{"Upcoming Appointment"}</span>
         <span className={`status-pill pill-${s}`}>{apt.status}</span>
       </div>
       <div className="db-appt-main">
@@ -59,11 +57,11 @@ function NextAppointmentCard({ apt }: NextApptProps) {
       </div>
       <div className="db-card-links">
         <a className="db-card-link" href={`appointment_confirmation.php?id=${apt.id}`}>
-          <SvgFileText size={15} /> {t('dash_proof')}
+          <SvgFileText size={15} /> {"Proof card"}
         </a>
         <span className="db-card-link-sep" />
         <a className="db-card-link" href="my_appointments.php">
-          {t('dash_view_details')} <SvgArrowRight size={15} />
+          {"View details"} <SvgArrowRight size={15} />
         </a>
       </div>
     </div>
@@ -151,13 +149,12 @@ function QuickAction({
 }
 
 function RecentLab({ tests }: { tests: LabTest[] }) {
-  const { t } = useLang();
   const recent = [...tests].slice(0, 3);
   if (recent.length === 0) {
     return (
       <div className="db-empty">
         <SvgFlask size={28} />
-        <p dangerouslySetInnerHTML={{ __html: t('dash_no_lab') }} />
+        <p dangerouslySetInnerHTML={{ __html: "No lab tests yet.<br/>Your results will appear here once ordered." }} />
       </div>
     );
   }
@@ -181,7 +178,7 @@ function RecentLab({ tests }: { tests: LabTest[] }) {
               </span>
             </div>
             <span className={`db-recent-pill ${s}`}>
-              {hasResult ? <>{t('dash_result')}</> : (s)}
+              {hasResult ? <>{"Result"}</> : (s)}
             </span>
           </a>
         );
@@ -191,7 +188,6 @@ function RecentLab({ tests }: { tests: LabTest[] }) {
 }
 
 function VaccineAlert({ vaccinations }: { vaccinations: Vaccination[] }) {
-  const { t } = useLang();
   const next = nextVaccine(vaccinations);
   if (!next || !next.next_due_date) return null;
   const days = dueInfo(next.next_due_date);
@@ -204,7 +200,7 @@ function VaccineAlert({ vaccinations }: { vaccinations: Vaccination[] }) {
       <span className="db-alert-icon"><SvgSyringe size={22} /></span>
       <div className="db-alert-body">
         <div className="db-alert-title">
-          {overdue ? t('dash_vax_overdue') : soon ? t('dash_vax_due') : t('dash_vax_upcoming')}
+          {overdue ? "Vaccine dose overdue" : soon ? "Vaccination due soon" : "Upcoming vaccination"}
         </div>
         <div className="db-alert-text">
           {next.vaccine_name} ({next.dose_label}) {overdue ? 'was due' : 'is scheduled'} {formatLongDate(next.next_due_date)}.
@@ -212,14 +208,13 @@ function VaccineAlert({ vaccinations }: { vaccinations: Vaccination[] }) {
         </div>
       </div>
       <a href="my_appointments.php#health" className="db-alert-action">
-        {t('dash_vax_view')}
+        {"View"}
       </a>
     </div>
   );
 }
 
 function AppointmentResults({ appointments }: { appointments: Appointment[] }) {
-  const { t } = useLang();
   const results = appointments.filter(
     (a) => statusOf(a.status) === 'completed' && a.result && a.result.trim() !== '',
   );
@@ -228,11 +223,11 @@ function AppointmentResults({ appointments }: { appointments: Appointment[] }) {
     return (
       <section className="db-panel db-results">
         <div className="db-panel-head">
-          <h2><SvgFileText size={18} /> {t('dash_appt_results')}</h2>
+          <h2><SvgFileText size={18} /> {"Appointment Results"}</h2>
         </div>
         <div className="db-empty">
           <SvgClipboard size={28} />
-          <p dangerouslySetInnerHTML={{ __html: t('dash_no_results') }} />
+          <p dangerouslySetInnerHTML={{ __html: "No appointment results yet.<br/>Your doctor's notes will appear here once your visit is complete." }} />
         </div>
       </section>
     );
@@ -241,8 +236,8 @@ function AppointmentResults({ appointments }: { appointments: Appointment[] }) {
   return (
     <section className="db-panel db-results">
       <div className="db-panel-head">
-        <h2><SvgFileText size={18} /> {t('dash_appt_results')}</h2>
-        <a href="my_appointments.php" className="db-panel-link">{t('dash_view_all')} <SvgArrowRight size={14} /></a>
+        <h2><SvgFileText size={18} /> {"Appointment Results"}</h2>
+        <a href="my_appointments.php" className="db-panel-link">{"View all records"} <SvgArrowRight size={14} /></a>
       </div>
       <div className="db-results-grid">
         {results.map((a) => (
@@ -261,10 +256,10 @@ function AppointmentResults({ appointments }: { appointments: Appointment[] }) {
             <hr className="db-result-divider" />
             <div className="db-result-footer">
               <span className="db-result-by">
-                {t('dash_recorded', { d: a.result_date ? formatStamp(a.result_date) : '' })}
+                {`Recorded ${a.result_date ? formatStamp(a.result_date) : ''}`}
               </span>
               <a className="db-result-pdf" href={`appointment_result_pdf.php?id=${a.id}`}>
-                <SvgDownload size={15} /> {t('dash_download_pdf')}
+                <SvgDownload size={15} /> {"Download PDF"}
               </a>
             </div>
           </div>
@@ -282,7 +277,6 @@ export default function DashboardApp() {
     vitals = [],
     vaccinations = [],
   } = getInitialData();
-  const { t, lang } = useLang();
 
   // First-login walkthrough: ?tour=1 from the login flow (new accounts only).
   // The param stays in the URL while the tour runs (so a refresh restarts it),
@@ -318,7 +312,7 @@ export default function DashboardApp() {
   const healthCount = vitals.length + vaccinations.length;
 
   return (
-    <Shell page="home" title={t('dash_title')} patientName={patientName}>
+    <Shell page="home" title={"My Dashboard"} patientName={patientName}>
       <main className="page-content">
         <section className="hero hero--dash" data-tour="hero">
           <div className="hero-blob hero-blob--1" aria-hidden="true" />
@@ -328,9 +322,9 @@ export default function DashboardApp() {
               <span className="hero-avatar">{initials(patientName)}</span>
             </div>
             <div>
-              <span className="hero-tag">{t('dash_tag')}</span>
-              <h1>{greeting(lang)}, {firstName}</h1>
-              <p>{t('dash_hero_sub')}</p>
+              <span className="hero-tag">{"Patient Portal"}</span>
+              <h1>{greeting()}, {firstName}</h1>
+              <p>{"Here's what's happening with your health at LustreMDC today."}</p>
             </div>
           </div>
         </section>
@@ -341,93 +335,93 @@ export default function DashboardApp() {
           <StatCard
             href="my_appointments.php"
             tone="green"
-            label={t('dash_stat_appts')}
+            label={"Total Appointments"}
             value={String(totalAppts)}
             icon={<SvgCalendar size={22} />}
-            sub={activeAppts.length ? t('dash_stat_appts_sub_up', { n: activeAppts.length }) : t('dash_stat_appts_sub_book')}
+            sub={activeAppts.length ? `${activeAppts.length} upcoming` : "Book one today"}
           />
           <StatCard
             href="lab_request.php"
             tone="blue"
-            label={t('dash_stat_pending_labs')}
+            label={"Pending Lab Tests"}
             value={String(pendingLabs.length)}
             icon={<SvgFlask size={22} />}
-            sub={pendingLabs.length ? t('dash_stat_pending_labs_sub') : t('dash_stat_pending_labs_sub2')}
+            sub={pendingLabs.length ? "In the lab" : "All results in"}
           />
           <StatCard
             href="my_appointments.php"
             tone="rose"
-            label={t('dash_stat_vax')}
+            label={"Vaccines Tracked"}
             value={String(vaccinations.length)}
             icon={<SvgSyringe size={22} />}
-            sub={nextVax?.next_due_date ? t('dash_stat_vax_sub', { d: formatLongDate(nextVax.next_due_date) }) : t('dash_stat_vax_sub2')}
+            sub={nextVax?.next_due_date ? `Next due ${formatLongDate(nextVax.next_due_date)}` : "Up to date"}
           />
           <StatCard
             href="my_appointments.php"
             tone="amber"
-            label={t('dash_stat_records')}
+            label={"Health Records"}
             value={String(healthCount)}
             icon={<SvgActivity size={22} />}
-            sub={t('dash_stat_records_sub')}
+            sub={"Vitals & checkups"}
           />
         </div>
 
         <div className="db-grid">
           <section className="db-panel db-next" data-tour="next">
             <div className="db-panel-head">
-              <h2><SvgFlag size={18} /> {t('dash_panel_next')}</h2>
-              <a href="index.php" className="db-panel-link">{t('dash_book_new')} <SvgArrowRight size={14} /></a>
+              <h2><SvgFlag size={18} /> {"Next Appointment"}</h2>
+              <a href="index.php" className="db-panel-link">{"Book new"} <SvgArrowRight size={14} /></a>
             </div>
             {next ? (
               <NextAppointmentCard apt={next} />
             ) : (
               <div className="db-empty">
                 <SvgCalendar size={28} />
-                <p dangerouslySetInnerHTML={{ __html: t('dash_panel_next_empty') }} />
-                <a href="index.php" className="btn-primary">{t('dash_book_btn')}</a>
+                <p dangerouslySetInnerHTML={{ __html: "No upcoming appointments.<br/>Book a visit with one of our specialists today." }} />
+                <a href="index.php" className="btn-primary">{"Book an Appointment"}</a>
               </div>
             )}
           </section>
 
           <section className="db-panel db-quick-panel" data-tour="quick">
             <div className="db-panel-head">
-              <h2><SvgClipboard size={18} /> {t('dash_quick')}</h2>
+              <h2><SvgClipboard size={18} /> {"Quick Actions"}</h2>
             </div>
             <QuickAction
               href="index.php"
               tone="green"
               icon={<SvgCalendar size={22} />}
-              title={t('dash_quick_book')}
-              sub={t('dash_quick_book_sub')}
+              title={"Book Appointment"}
+              sub={"Pick a specialist and schedule"}
             />
             <QuickAction
               href="my_appointments.php"
               tone="blue"
               icon={<SvgFileText size={22} />}
-              title={t('dash_quick_records')}
-              sub={t('dash_quick_records_sub')}
+              title={"My Records"}
+              sub={"Appointments, results & vaccines"}
             />
             <QuickAction
               href="lab_request.php"
               tone="rose"
               icon={<SvgFlask size={22} />}
-              title={t('dash_quick_lab')}
-              sub={t('dash_quick_lab_sub')}
+              title={"Lab Tests"}
+              sub={"View results & request status"}
             />
             <QuickAction
               href="my_appointments.php#health"
               tone="amber"
               icon={<SvgActivity size={22} />}
-              title={t('dash_quick_vax')}
-              sub={t('dash_quick_vax_sub')}
+              title={"Vitals & Vaccines"}
+              sub={"Track health measurements"}
             />
           </section>
         </div>
 
         <section className="db-panel db-labs">
           <div className="db-panel-head">
-            <h2><SvgFlask size={18} /> {t('dash_recent_lab')}</h2>
-            <a href="lab_request.php" className="db-panel-link">{t('dash_all_tests')} <SvgArrowRight size={14} /></a>
+            <h2><SvgFlask size={18} /> {"Recent Lab Activity"}</h2>
+            <a href="lab_request.php" className="db-panel-link">{"All tests"} <SvgArrowRight size={14} /></a>
           </div>
           <RecentLab tests={labTests} />
         </section>

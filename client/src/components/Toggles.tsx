@@ -1,29 +1,13 @@
-import { useLang } from '../lang';
 import { useTheme } from '../hooks';
 
-export function LangToggle() {
-  const { lang, setLang, langLabel } = useLang();
-  return (
-    <button
-      className="lang-toggle"
-      onClick={() => setLang(lang === 'en' ? 'fil' : 'en')}
-      title={lang === 'en' ? 'Switch to Filipino' : 'Switch to English'}
-      aria-label={lang === 'en' ? 'Switch to Filipino' : 'Switch to English'}
-    >
-      {langLabel}
-    </button>
-  );
-}
-
 export function ThemeToggle() {
-  const { t } = useLang();
   const { isDark, toggleTheme } = useTheme();
   return (
     <button
       className="theme-toggle"
       onClick={toggleTheme}
-      aria-label={isDark ? t('tb_light') : t('tb_dark')}
-      title={isDark ? t('tb_light') : t('tb_dark')}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
     >
       <svg className="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="4" />

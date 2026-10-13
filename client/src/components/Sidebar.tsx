@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
 import { initials } from '../api';
 import type { PageKey } from '../types';
-import { useLang } from '../lang';
-import { LangToggle, ThemeToggle } from './Toggles';
+import { ThemeToggle } from './Toggles';
 
 interface SidebarProps {
   patientName: string;
@@ -82,7 +81,6 @@ function NavItem({ href, active, label, icon }: { href: string; active?: boolean
 }
 
 export default function Sidebar({ patientName, open, pinned, active, onClose, onTogglePin, onHoverStart, onHoverEnd }: SidebarProps) {
-  const { t } = useLang();
   return (
     <>
       <div className={`sidebar-overlay ${open ? 'active' : ''}`} onClick={onClose} aria-hidden="true" />
@@ -99,7 +97,7 @@ export default function Sidebar({ patientName, open, pinned, active, onClose, on
             onClick={onTogglePin}
             aria-label={pinned ? 'Collapse menu' : 'Expand menu'}
             aria-expanded={pinned}
-            data-tip={t('nav_menu')}
+            data-tip={"Menu"}
           >
             <span className="brand-icon">
               <img src="images/Lustre.png" alt="Logo" width="42" height="42" />
@@ -107,31 +105,30 @@ export default function Sidebar({ patientName, open, pinned, active, onClose, on
             <span className="rail-label">LUSTRE MDC</span>
           </button>
           <nav className="rail-nav">
-            <NavItem href="dashboard.php" active={active === 'home'} label={t('nav_dashboard')} icon={<IconDashboard />} />
-            <NavItem href="index.php" active={active === 'book'} label={t('nav_book')} icon={<IconCal />} />
-            <NavItem href="my_appointments.php" active={active === 'records'} label={t('nav_records')} icon={<IconClipboard />} />
-            <NavItem href="lab_request.php" active={active === 'lab'} label={t('nav_lab')} icon={<IconFlask />} />
+            <NavItem href="dashboard.php" active={active === 'home'} label={"Dashboard"} icon={<IconDashboard />} />
+            <NavItem href="index.php" active={active === 'book'} label={"Book Appointment"} icon={<IconCal />} />
+            <NavItem href="my_appointments.php" active={active === 'records'} label={"My Appointments"} icon={<IconClipboard />} />
+            <NavItem href="lab_request.php" active={active === 'lab'} label={"Lab Tests"} icon={<IconFlask />} />
           </nav>
         </div>
 
         <div className="rail-bottom">
           <div className="rail-toggles">
-            <LangToggle />
             <ThemeToggle />
           </div>
-          <NavItem href="landing.php" label={t('nav_home')} icon={<IconHome />} />
+          <NavItem href="landing.php" label={"Home"} icon={<IconHome />} />
           <a
             href="my_profile.php"
             className={`rail-user ${active === 'profile' ? 'active' : ''}`}
-            data-tip={t('nav_profile')}
-            aria-label={t('nav_profile')}
+            data-tip={"My Profile"}
+            aria-label={"My Profile"}
           >
             <span className="avatar avatar--sm">{initials(patientName)}</span>
             <span className="rail-label">{patientName}</span>
           </a>
-          <a href="logout.php" className="rail-logout" data-tip={t('nav_logout')} aria-label={t('nav_logout')}>
+          <a href="logout.php" className="rail-logout" data-tip={"Log Out"} aria-label={"Log Out"}>
             <span className="nav-icon">{<IconLogout />}</span>
-            <span className="rail-label">{t('nav_logout')}</span>
+            <span className="rail-label">{"Log Out"}</span>
           </a>
         </div>
       </aside>

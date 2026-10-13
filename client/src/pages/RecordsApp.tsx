@@ -22,7 +22,6 @@ import {
   SvgSyringe,
 } from '../components/icons';
 import { useScrollLock, useToast } from '../hooks';
-import { useLang } from '../lang';
 
 type Tab = 'appointments' | 'labtests' | 'health';
 
@@ -35,7 +34,6 @@ function dueInfo(dueDate: string) {
 }
 
 function VitalCard({ v }: { v: Vital }) {
-  const { t } = useLang();
   return (
     <div className="appt-card">
       <div className="appt-stripe stripe-vital" />
@@ -44,29 +42,29 @@ function VitalCard({ v }: { v: Vital }) {
           <SvgActivity size={22} />
         </div>
         <div className="appt-main">
-          <div className="appt-doctor">{t('rec_prenatal')}</div>
-          <div className="appt-specialty">{t('rec_vitals_record')}</div>
+          <div className="appt-doctor">{"Prenatal Checkup"}</div>
+          <div className="appt-specialty">{"Vitals Log"}</div>
           <div className="appt-meta">
             <span className="meta-chip"><SvgCalendar size={13} /> {formatLongDate(v.visit_date)}</span>
           </div>
           <div className="vital-grid">
             {v.weight_kg != null && (
-              <span className="vital-chip"><strong>{v.weight_kg} kg</strong><label>{t('rec_weight')}</label></span>
+              <span className="vital-chip"><strong>{v.weight_kg} kg</strong><label>{"Weight"}</label></span>
             )}
             {v.blood_pressure && (
-              <span className="vital-chip"><strong>{v.blood_pressure}</strong><label>{t('rec_bp')}</label></span>
+              <span className="vital-chip"><strong>{v.blood_pressure}</strong><label>{"Blood Pressure"}</label></span>
             )}
             {v.heart_rate != null && (
-              <span className="vital-chip"><strong>{v.heart_rate} bpm</strong><label>{t('rec_hr')}</label></span>
+              <span className="vital-chip"><strong>{v.heart_rate} bpm</strong><label>{"Heart Rate"}</label></span>
             )}
             {v.fundal_height != null && (
-              <span className="vital-chip"><strong>{v.fundal_height} cm</strong><label>{t('rec_fundal')}</label></span>
+              <span className="vital-chip"><strong>{v.fundal_height} cm</strong><label>{"Fundal Height"}</label></span>
             )}
           </div>
-          {v.notes && <p className="health-note"><span>{t('rec_note')}</span>{v.notes}</p>}
+          {v.notes && <p className="health-note"><span>{"Note"}</span>{v.notes}</p>}
         </div>
         <div className="appt-right">
-          <span className="status-pill pill-confirmed">{t('rec_vitals')}</span>
+          <span className="status-pill pill-confirmed">{"Vitals"}</span>
         </div>
       </div>
     </div>
@@ -74,14 +72,13 @@ function VitalCard({ v }: { v: Vital }) {
 }
 
 function VaccineCard({ v }: { v: Vaccination }) {
-  const { t } = useLang();
   const due = v.next_due_date ? dueInfo(v.next_due_date) : null;
   const dueText = (() => {
     if (!due) return '';
-    if (due.kind === 'overdue') return t('rec_due_overdue', { d: formatLongDate(v.next_due_date!) });
-    if (due.kind === 'due') return t('rec_due_today');
-    if (due.kind === 'soon') return t('rec_due_soon', { d: formatLongDate(v.next_due_date!), n: due.diff });
-    return t('rec_due_later', { d: formatLongDate(v.next_due_date!) });
+    if (due.kind === 'overdue') return `was overdue (${formatLongDate(v.next_due_date!)})`;
+    if (due.kind === 'due') return "is due today";
+    if (due.kind === 'soon') return `is due ${formatLongDate(v.next_due_date!)} (in ${due.diff} days)`;
+    return `is due ${formatLongDate(v.next_due_date!)}`;
   })();
   return (
     <div className="appt-card">
@@ -92,26 +89,26 @@ function VaccineCard({ v }: { v: Vaccination }) {
         </div>
         <div className="appt-main">
           <div className="appt-doctor">{v.vaccine_name}</div>
-          <div className="appt-specialty">{t('rec_vax_record')}</div>
+          <div className="appt-specialty">{"Vaccination Record"}</div>
           <div className="appt-meta">
-            <span className="meta-chip"><SvgCalendar size={13} /> {t('rec_given_on', { d: formatLongDate(v.administered_date) })}</span>
+            <span className="meta-chip"><SvgCalendar size={13} /> {`Given on ${formatLongDate(v.administered_date)}`}</span>
             <span className="meta-chip"><SvgClock size={13} /> {v.dose_label}</span>
           </div>
           {due && (
             <div className={`vax-due vax-due--${due.kind}`}>
               {due.kind === 'overdue' || due.kind === 'due' || due.kind === 'soon' ? <SvgView size={13} /> : <SvgCalendar size={13} />}
-              {t('rec_next_dose', { v: v.vaccine_name, d: dueText })}
+              {`Next dose: ${v.vaccine_name} — ${dueText}`}
             </div>
           )}
-          {v.notes && <p className="health-note"><span>{t('rec_note')}</span>{v.notes}</p>}
+          {v.notes && <p className="health-note"><span>{"Note"}</span>{v.notes}</p>}
           <div className="appt-actions">
             <a className="btn-proof-appt" href={`vaccine_card.php?id=${v.id}`}>
-              <SvgView size={14} /> {t('rec_view_card')}
+              <SvgView size={14} /> {"View Card"}
             </a>
           </div>
         </div>
         <div className="appt-right">
-          <span className="status-pill pill-completed">{t('rec_completed')}</span>
+          <span className="status-pill pill-completed">{"Completed"}</span>
         </div>
       </div>
     </div>
@@ -137,7 +134,6 @@ function statusOf(value: string) {
 }
 
 function AppointmentCard({ apt, onCancel, onResched }: { apt: Appointment; onCancel: (a: Appointment) => void; onResched: (a: Appointment) => void }) {
-  const { t } = useLang();
   const s = statusOf(apt.status);
   const meta = STATUS_META[s] ?? { icon: <SvgClipboard size={22} />, label: apt.status };
   const cancellable = s === 'pending' || s === 'confirmed';
@@ -153,30 +149,30 @@ function AppointmentCard({ apt, onCancel, onResched }: { apt: Appointment; onCan
           <div className="appt-meta">
             <span className="meta-chip"><SvgCalendar size={13} /> {formatLongDate(apt.appointment_date)}</span>
             <span className="meta-chip"><SvgClock size={13} /> {formatTime12h(apt.appointment_time)}</span>
-            <span className="meta-chip"><SvgClipboard size={13} /> {t('rec_booked_on', { d: formatStamp(apt.created_at) })}</span>
+            <span className="meta-chip"><SvgClipboard size={13} /> {`Booked ${formatStamp(apt.created_at)}`}</span>
           </div>
           {(cancellable || reschedulable) && (
             <div className="appt-actions">
               {reschedulable && (
                 <button type="button" className="btn-resched-appt" onClick={() => onResched(apt)}>
-                  <SvgCalendar size={14} /> {t('rec_reschedule')}
+                  <SvgCalendar size={14} /> {"Reschedule"}
                 </button>
               )}
               {cancellable && (
                 <button type="button" className="btn-cancel-appt" onClick={() => onCancel(apt)}>
-                  {t('rec_cancel_apt')}
+                  {"Cancel Appointment"}
                 </button>
               )}
             </div>
           )}
           {s !== 'cancelled' && (
             <a className="btn-proof-appt" href={`appointment_confirmation.php?id=${apt.id}`}>
-              <SvgDownload size={14} /> {t('rec_view_proof')}
+              <SvgDownload size={14} /> {"View Proof"}
             </a>
           )}
           {s === 'completed' && apt.result && (
             <a className="btn-result-appt" href={`appointment_result.php?id=${apt.id}`}>
-              <SvgFileText size={14} /> {t('rec_view_result')}
+              <SvgFileText size={14} /> {"View Result"}
             </a>
           )}
         </div>
@@ -184,7 +180,7 @@ function AppointmentCard({ apt, onCancel, onResched }: { apt: Appointment; onCan
           <span className={`status-pill pill-${s}`}>{meta.label}</span>
           {apt.payment_status && (
             <span className={`payment-pill payment-${statusOf(apt.payment_status)}`}>
-              {apt.payment_status === 'paid' ? <><SvgCreditCard size={13} /> {t('rec_paid')}</> : <>{t('rec_unpaid')}</>}
+              {apt.payment_status === 'paid' ? <><SvgCreditCard size={13} /> {"Paid"}</> : <>{"Unpaid"}</>}
             </span>
           )}
         </div>
@@ -194,7 +190,6 @@ function AppointmentCard({ apt, onCancel, onResched }: { apt: Appointment; onCan
 }
 
 function LabCard({ test, index }: { test: LabTest; index: number }) {
-  const { t } = useLang();
   const [open, setOpen] = useState(false);
   const s = statusOf(test.status);
   const meta = LAB_META[s] ?? { icon: <SvgFlask size={22} />, label: test.status };
@@ -216,7 +211,7 @@ function LabCard({ test, index }: { test: LabTest; index: number }) {
             <span className={`priority-badge prio-${prio}`}>{prio.toUpperCase()}</span>
           )}
           <span className={`lab-status-pill ls-${s}`}>{meta.label}</span>
-          {hasResult && <span className="result-tag"><SvgFileText size={13} /> {t('rec_result_tag')}</span>}
+          {hasResult && <span className="result-tag"><SvgFileText size={13} /> {"Result"}</span>}
           <span className="lab-chevron">▾</span>
         </div>
       </button>
@@ -224,27 +219,27 @@ function LabCard({ test, index }: { test: LabTest; index: number }) {
       <div className="lab-result-panel">
         <div className="result-grid">
           <div className="result-item">
-            <label>{t('rec_requesting_doc')}</label>
+            <label>{"Requesting Doctor"}</label>
             <span>Dr. {test.doctor_name}</span>
           </div>
           <div className="result-item">
-            <label>{t('bm_specialty')}</label>
+            <label>{"Specialty"}</label>
             <span>{test.specialty}</span>
           </div>
           <div className="result-item">
-            <label>{t('rec_requested_on')}</label>
+            <label>{"Requested On"}</label>
             <span>{formatLongDate(test.created_at.slice(0, 10))}</span>
           </div>
           <div className="result-item">
-            <label>{t('rec_scheduled_date')}</label>
+            <label>{"Scheduled Date"}</label>
             <span>{test.scheduled_date ? formatLongDate(test.scheduled_date) : '—'}</span>
           </div>
           <div className="result-item">
-            <label>{t('rec_priority')}</label>
+            <label>{"Priority"}</label>
             <span>{test.priority ? test.priority.charAt(0).toUpperCase() + test.priority.slice(1) : '—'}</span>
           </div>
           <div className="result-item">
-            <label>{t('rec_status')}</label>
+            <label>{"Status"}</label>
             <span>{meta.label}</span>
           </div>
         </div>
@@ -252,12 +247,12 @@ function LabCard({ test, index }: { test: LabTest; index: number }) {
         <div className="lab-actions">
           {s !== 'cancelled' && (
             <a className="btn-proof-appt" href={`lab_confirmation.php?id=${test.id}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(`lab_confirmation.php?id=${test.id}`, '_blank', 'noopener'); }}>
-              <SvgView size={14} /> {t('rec_view_proof')}
+              <SvgView size={14} /> {"View Proof"}
             </a>
           )}
           {s === 'completed' && hasResult && (
             <a className="btn-result-appt" href={`lab_result.php?id=${test.id}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(`lab_result.php?id=${test.id}`, '_blank', 'noopener'); }}>
-              <SvgFileText size={14} /> {t('rec_view_result')}
+              <SvgFileText size={14} /> {"View Result"}
             </a>
           )}
         </div>
@@ -265,15 +260,15 @@ function LabCard({ test, index }: { test: LabTest; index: number }) {
           <>
             <div className="completed-banner">
               <SvgCheckCircle size={20} />
-              {t('rec_result_ready')}
+              {"Your lab result is ready. Please also consult your doctor for interpretation."}
             </div>
             <div className="result-box">
-              <div className="result-box-label"><SvgClipboard size={15} /> {t('rec_findings')}</div>
+              <div className="result-box-label"><SvgClipboard size={15} /> {"Lab Result / Findings"}</div>
               <div className="result-content">{test.result}</div>
             </div>
             {hasNotes && (
               <div className="result-box">
-                <div className="result-box-label"><SvgStickyNote size={15} /> {t('rec_clinical_notes')}</div>
+                <div className="result-box-label"><SvgStickyNote size={15} /> {"Clinical Notes"}</div>
                 <div className="result-content">{test.notes}</div>
               </div>
             )}
@@ -281,9 +276,9 @@ function LabCard({ test, index }: { test: LabTest; index: number }) {
         ) : (
           <div className={`no-result-banner no-result--${s}`}>
             {s === 'processing' ? <SvgFlask size={20} /> : s === 'cancelled' ? <SvgXCircle size={20} /> : <SvgClock size={20} />}
-            {s === 'processing' && t('rec_being_processed')}
-            {s === 'cancelled' && t('rec_cancelled_lab')}
-            {s !== 'processing' && s !== 'cancelled' && t('rec_pending_lab')}
+            {s === 'processing' && "Your sample is currently being processed. Please check back soon."}
+            {s === 'cancelled' && "This lab test was cancelled. Please contact the clinic for more information."}
+            {s !== 'processing' && s !== 'cancelled' && "Your test is pending. Results will be available once processed by the lab."}
           </div>
         )}
       </div>
@@ -298,7 +293,6 @@ interface CancelModalProps {
 }
 
 function CancelModal({ apt, onClose, onConfirm }: CancelModalProps) {
-  const { t } = useLang();
   return (
     <div className="modal" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-sheet modal-sheet--sm" role="dialog" aria-modal="true">
@@ -308,32 +302,32 @@ function CancelModal({ apt, onClose, onConfirm }: CancelModalProps) {
         <div className="modal-handle" aria-hidden="true" />
         <div className="modal-center-title">
           <span className="modal-icon-big"><SvgCalendar size={34} /></span>
-          <h3>{t('rec_cancel_title')}</h3>
-          <p>{t('rec_cancel_sub')}</p>
+          <h3>{"Cancel Appointment?"}</h3>
+          <p>{"This action cannot be undone. Are you sure you want to cancel?"}</p>
         </div>
         <div className="cancel-appt-info">
           <div className="row">
             <span><SvgUser size={16} /></span>
-            <span className="lbl">{t('bm_doctor')}</span>
+            <span className="lbl">{"Doctor"}</span>
             <strong>Dr. {apt.doctor_name}</strong>
           </div>
           <div className="row">
             <span><SvgCalendar size={16} /></span>
-            <span className="lbl">{t('bm_date')}</span>
+            <span className="lbl">{"Date"}</span>
             <strong>{formatLongDate(apt.appointment_date)}</strong>
           </div>
           <div className="row">
             <span><SvgClock size={16} /></span>
-            <span className="lbl">{t('bm_time')}</span>
+            <span className="lbl">{"Time"}</span>
             <strong>{formatTime12h(apt.appointment_time)}</strong>
           </div>
         </div>
         <div className="modal-actions">
           <button className="btn-keep" onClick={onClose}>
-            {t('rec_keep')}
+            {"Keep Appointment"}
           </button>
           <button className="btn-cancel-confirm" onClick={onConfirm}>
-            {t('rec_yes_cancel')}
+            {"Yes, Cancel"}
           </button>
         </div>
       </div>
@@ -358,7 +352,6 @@ interface RescheduleModalProps {
 }
 
 function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) {
-  const { t } = useLang();
   const [dates, setDates] = useState<MedicalDate[]>([]);
   const [datesLoading, setDatesLoading] = useState(true);
   const [datesError, setDatesError] = useState(false);
@@ -422,7 +415,7 @@ function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) 
       const raw = e instanceof Error ? e.message : '';
       const usable =
         raw.length > 0 && raw.length <= 140 && !raw.includes('<') && raw.trim().charAt(0) !== '{';
-      setAlertMsg(usable ? raw : t('rec_resched_failed'));
+      setAlertMsg(usable ? raw : "Rescheduling failed. Please try again.");
       setSubmitting(false);
     }
   };
@@ -447,35 +440,35 @@ function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) 
 
         <div className="step-pill">
           <span className="step-pill-dot" />
-          {t('rec_resched_title')}
+          {"Reschedule · Pick a new date & time"}
         </div>
 
         <div className="picker-block">
-          <span className="picker-label">{t('bm_dates')}</span>
+          <span className="picker-label">{"Available Dates"}</span>
           {datesLoading ? (
             <div className="dates-grid" onKeyDown={(e) => e.stopPropagation()}>
               <ReschedSkeleton count={6} />
             </div>
           ) : datesError ? (
-            <div className="muted-msg wrap">{t('bm_dates_err')}</div>
+            <div className="muted-msg wrap">{"Couldn't load dates. Please close and try again."}</div>
           ) : dates.length === 0 ? (
-            <div className="muted-msg wrap">{t('bm_no_dates')}</div>
+            <div className="muted-msg wrap">{"No available dates at this time."}</div>
           ) : (
             <CalendarPicker dates={dates} selectedDate={selectedDate} onPick={pickDate} />
           )}
         </div>
 
         <div className="picker-block">
-          <span className="picker-label">{t('bm_times')}</span>
+          <span className="picker-label">{"Available Times"}</span>
           <div className="times-grid">
             {!selectedDate ? (
-              <div className="muted-msg wrap">{t('bm_select_date_first')}</div>
+              <div className="muted-msg wrap">{"Select a date first"}</div>
             ) : timesLoading ? (
               <ReschedSkeleton count={9} />
             ) : timesError ? (
-              <div className="muted-msg wrap">{t('bm_times_err')}</div>
+              <div className="muted-msg wrap">{"Couldn't load times. Try another date."}</div>
             ) : times.length === 0 ? (
-              <div className="muted-msg wrap">{t('bm_no_times')}</div>
+              <div className="muted-msg wrap">{"No available times for this date."}</div>
             ) : (
               times.map((t) => (
                 <button
@@ -496,7 +489,7 @@ function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) 
             <circle cx="12" cy="12" r="9" />
             <path d="M12 7v5l3 3" />
           </svg>
-          {t('bm_duration')}
+          {"Appointment duration: 2 hours"}
         </div>
 
         <button className="btn-confirm" disabled={!canConfirm} onClick={submit} data-anim={canConfirm ? 'pulse' : undefined}>
@@ -504,7 +497,7 @@ function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) 
             <span className="btn-spinner" aria-hidden="true" />
           ) : (
             <>
-              {t('rec_confirm_resched')}
+              {"Confirm Reschedule"}
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14M13 6l6 6-6 6" />
               </svg>
@@ -526,10 +519,10 @@ function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) 
                   <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
                 </svg>
               </span>
-              <h3 className="modal-alert-title">{t('rec_resched_error_title')}</h3>
+              <h3 className="modal-alert-title">{"Reschedule Didn't Go Through"}</h3>
               <p className="modal-alert-msg">{alertMsg}</p>
               <button className="btn-confirm" onClick={() => setAlertMsg(null)}>
-                {t('bm_error_ok')}
+                {"OK, got it"}
               </button>
             </div>
           </div>
@@ -542,7 +535,6 @@ function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) 
 export default function RecordsApp() {
   const { patientName, appointments = [], labTests = [], vitals = [], vaccinations = [] } = getInitialData();
   const { showToast } = useToast();
-  const { t } = useLang();
   const [tab, setTab] = useState<Tab>(() => {
     const h = window.location.hash.replace('#', '');
     if (h === 'labtests') return 'labtests';
@@ -558,7 +550,7 @@ export default function RecordsApp() {
 
   const confirmRescheduled = () => {
     setReschedTarget(null);
-    setDoneMsg(t('rec_rescheduled_ok'));
+    setDoneMsg("Appointment rescheduled.");
   };
 
   const confirmCancel = async () => {
@@ -573,13 +565,13 @@ export default function RecordsApp() {
       const text = await res.text();
       if (text.trim() === 'success') {
         setCancelTarget(null);
-        setDoneMsg(t('rec_cancelled_ok'));
+        setDoneMsg("Appointment cancelled.");
       } else {
         showToast(text, 'error');
         setCancelTarget(null);
       }
     } catch (err) {
-      showToast(t('rec_network_err'), 'error');
+      showToast("Network error. Please try again.", 'error');
       setCancelTarget(null);
     } finally {
       setCancelling(false);
@@ -593,7 +585,7 @@ export default function RecordsApp() {
       <p>{sub}</p>
       {ctaHref && (
         <a href={ctaHref} className="btn-primary">
-          {ctaHref === 'index.php' ? t('rec_book_now') : t('rec_request_lab')}
+          {ctaHref === 'index.php' ? "Book an Appointment" : "Request a Lab Test"}
         </a>
       )}
     </div>
@@ -602,12 +594,12 @@ export default function RecordsApp() {
   const healthCount = vitals.length + vaccinations.length;
 
   return (
-    <Shell page="records" title={t('rec_title')} patientName={patientName}>
+    <Shell page="records" title={"My Health Records"} patientName={patientName}>
       <main className="page-content">
         <Hero
-          tag={t('rec_tag')}
-          title={t('rec_hero_title')}
-          sub={t('rec_hero_sub')}
+          tag={"Health Records"}
+          title={"My Appointments & Lab Tests"}
+          sub={"View your appointments, health measurements and lab test results in one place."}
         />
 
         <div className="tab-nav" role="tablist">
@@ -619,7 +611,7 @@ export default function RecordsApp() {
             aria-selected={tab === 'appointments'}
           >
             <span className="tab-inline-icon"><SvgCalendar size={15} /></span>
-            {t('rec_tab_appts')}
+            {"Appointments"}
             <span className="tab-count">{appointments.length}</span>
           </button>
           <button
@@ -630,7 +622,7 @@ export default function RecordsApp() {
             aria-selected={tab === 'labtests'}
           >
             <span className="tab-inline-icon"><SvgFlask size={15} /></span>
-            {t('rec_tab_lab')}
+            {"Lab Tests"}
             <span className="tab-count">{labTests.length}</span>
           </button>
           <button
@@ -641,14 +633,14 @@ export default function RecordsApp() {
             aria-selected={tab === 'health'}
           >
             <span className="tab-inline-icon"><SvgActivity size={15} /></span>
-            {t('rec_tab_health')}
+            {"Vitals & Vaccines"}
             <span className="tab-count">{healthCount}</span>
           </button>
         </div>
 
         {tab === 'appointments' ? (
           appointments.length === 0 ? (
-            empty(<SvgCalendar size={40} />, t('rec_empty_appts'), t('rec_empty_appts_sub'), 'index.php')
+            empty(<SvgCalendar size={40} />, "No Appointments Yet", "You haven't booked any appointments.", 'index.php')
           ) : (
             <div className="appt-list">
               {appointments.map((apt) => (
@@ -658,7 +650,7 @@ export default function RecordsApp() {
           )
         ) : tab === 'labtests' ? (
           labTests.length === 0 ? (
-            empty(<SvgFlask size={40} />, t('rec_empty_lab'), t('rec_empty_lab_sub'), 'lab_request.php')
+            empty(<SvgFlask size={40} />, "No Lab Tests Yet", "Your lab test requests and results will appear here once ordered by your doctor.", 'lab_request.php')
           ) : (
             <div className="lab-list">
               {labTests.map((lt, i) => (
@@ -667,12 +659,12 @@ export default function RecordsApp() {
             </div>
           )
         ) : healthCount === 0 ? (
-          empty(<SvgActivity size={40} />, t('rec_empty_health'), t('rec_empty_health_sub'))
+          empty(<SvgActivity size={40} />, "No Health Records Yet", "Your vitals from prenatal checkups and vaccination schedule will appear here.")
         ) : (
           <div className="health-list">
             {vaccinations.length > 0 && (
               <>
-                <h2 className="health-section-title">{t('rec_vaccinations')}</h2>
+                <h2 className="health-section-title">{"Vaccinations"}</h2>
                 {vaccinations.map((vc) => (
                   <VaccineCard key={vc.id} v={vc} />
                 ))}
@@ -680,7 +672,7 @@ export default function RecordsApp() {
             )}
             {vitals.length > 0 && (
               <>
-                <h2 className="health-section-title">{t('rec_vitals_log')}</h2>
+                <h2 className="health-section-title">{"Vitals Log"}</h2>
                 {vitals.map((vk) => (
                   <VitalCard key={vk.id} v={vk} />
                 ))}
@@ -701,7 +693,7 @@ export default function RecordsApp() {
       {cancelling && (
         <div className="loading-screen active">
           <div className="spinner" />
-          <p>{t('rec_processing')}</p>
+          <p>{"Processing..."}</p>
         </div>
       )}
 
@@ -719,9 +711,9 @@ export default function RecordsApp() {
               </svg>
             </span>
             <h3 className="modal-alert-title">{doneMsg}</h3>
-            <p className="modal-alert-msg">{t('rec_done_msg')}</p>
+            <p className="modal-alert-msg">{"Your appointment has been updated."}</p>
             <button className="btn-confirm" onClick={() => window.location.reload()}>
-              {t('bm_error_ok')}
+              {"OK, got it"}
             </button>
           </div>
         </div>
