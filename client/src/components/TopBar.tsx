@@ -5,7 +5,6 @@ import { ThemeToggle } from './Toggles';
 interface TopBarProps {
   title: string;
   patientName: string;
-  onMenu: () => void;
 }
 
 type IconKind = 'doctor' | 'appt' | 'lab' | 'vital' | 'vaccine' | 'cat';
@@ -150,10 +149,12 @@ function buildResults(query: string): SearchResult[] {
   return res;
 }
 
-export default function TopBar({ title, patientName, onMenu }: TopBarProps) {
+export default function TopBar({ title, patientName }: TopBarProps) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const results = useMemo(() => (open ? buildResults(query) : []), [query, open]);
 
@@ -161,6 +162,7 @@ export default function TopBar({ title, patientName, onMenu }: TopBarProps) {
     const onDocClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
       if (target && boxRef.current && !boxRef.current.contains(target)) setOpen(false);
+      if (target && menuRef.current && !menuRef.current.contains(target)) setMenuOpen(false);
     };
     document.addEventListener('mousedown', onDocClick);
     return () => document.removeEventListener('mousedown', onDocClick);
@@ -180,12 +182,7 @@ export default function TopBar({ title, patientName, onMenu }: TopBarProps) {
       <h1 className="topbar-title">{title}</h1>
 
       <div className="topbar-left">
-        <button className="menu-btn" onClick={onMenu} aria-label="Open menu">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-
+        <ThemeToggle className="topbar-mobile-toggle" />
         <div className="topbar-search" ref={boxRef}>
           <span className="topbar-search-label">{"Search"}</span>
           <input
@@ -234,6 +231,31 @@ export default function TopBar({ title, patientName, onMenu }: TopBarProps) {
           </div>
           <div className="avatar avatar--topbar">{initials(patientName)}</div>
         </div>
+      </div>
+
+      <div className="client-menu" ref={menuRef}>
+        <button
+          type="button"
+          className="client-menu-btn"
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          aria-label="Account menu"
+        >
+          <span className="client-menu-name">{patientName.split(' ')[0] || patientName}</span>
+          <span className="avatar avatar--topbar">{initials(patientName)}</span>
+        </button>
+        {menuOpen && (
+          <div className="client-menu-pop" role="menu">
+            <a href="logout.php" className="client-menu-logout" role="menuitem">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <path d="M16 17l5-5-5-5M21 12H9" />
+              </svg>
+              {"Log Out"}
+            </a>
+          </div>
+        )}
       </div>
     </header>
   );
