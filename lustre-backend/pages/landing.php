@@ -30,16 +30,16 @@ if (isset($_SESSION["patient_id"])) {
       <span class="nav-clinic-name">LUSTRE MEDICAL DIAGNOSTIC CLINIC</span>
     </a>
     <div class="nav-links">
-      <a href="about.php" data-t="nav_about">About</a>
-      <a href="#contact" data-t="nav_contact">Contact</a>
+      <a href="about.php">About</a>
+      <a href="#contact">Contact</a>
     </div>
     <div class="nav-actions">
       <button class="theme-toggle" type="button" aria-label="Toggle light/dark mode" title="Toggle dark mode">
         <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
         <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
       </button>
-      <button class="nav-btn nav-btn-ghost" onclick="openModal('loginModal')" data-t="nav_signin">Sign In</button>
-      <button class="nav-btn nav-btn-solid" onclick="openModal('registerModal')" data-t="nav_register">Register Free</button>
+      <button class="nav-btn nav-btn-ghost" onclick="openModal('loginModal')">Sign In</button>
+      <button class="nav-btn nav-btn-solid" onclick="openModal('registerModal')">Register Free</button>
     </div>
   </div>
 </nav>
@@ -60,24 +60,24 @@ if (isset($_SESSION["patient_id"])) {
   <div class="hero-inner">
     <div class="hero-eyebrow">
       <span class="eyebrow-dot"></span>
-      <span data-t="hero_eyebrow">Modern Healthcare, Simplified</span>
+      <span>Modern Healthcare, Simplified</span>
     </div>
 
     <h1 class="hero-title">
-      <span data-t="hero_title1">Your Health,</span><br>
-      <span class="hero-title-accent" data-t="hero_title2">Expertly Cared For</span>
+      <span>Your Health,</span><br>
+      <span class="hero-title-accent">Expertly Cared For</span>
     </h1>
 
-    <p class="hero-subtitle" data-t="hero_subtitle">
+    <p class="hero-subtitle">
       Comprehensive diagnostics, obstetrics &amp; gynecology care, and laboratory services &mdash; all under one roof. Book your appointment in minutes.
     </p>
 
     <div class="hero-cta">
       <button class="hero-btn hero-btn-primary" onclick="openModal('registerModal')">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-        <span data-t="hero_create">Create Account</span>
+        <span>Create Account</span>
       </button>
-      <button class="hero-btn hero-btn-secondary" onclick="openModal('loginModal')"><span data-t="nav_signin">Sign In</span></button>
+      <button class="hero-btn hero-btn-secondary" onclick="openModal('loginModal')"><span>Sign In</span></button>
     </div>
 
     <div class="slide-dots" id="slideDots">
@@ -89,20 +89,20 @@ if (isset($_SESSION["patient_id"])) {
     </div>
 
     <div class="hero-stat-row">
-      <div class="hero-stat"><div class="hero-stat-num">20+</div><div class="hero-stat-label" data-t="hero_stat1">Lab Tests</div></div>
-      <div class="hero-stat"><div class="hero-stat-num">4</div><div class="hero-stat-label" data-t="hero_stat2">Specialists</div></div>
-      <div class="hero-stat"><div class="hero-stat-num">24h</div><div class="hero-stat-label" data-t="hero_stat3">Result Turnaround</div></div>
-      <div class="hero-stat"><div class="hero-stat-num">100%</div><div class="hero-stat-label" data-t="hero_stat4">Online Booking</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">20+</div><div class="hero-stat-label">Lab Tests</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">4</div><div class="hero-stat-label">Specialists</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">24h</div><div class="hero-stat-label">Result Turnaround</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">100%</div><div class="hero-stat-label">Online Booking</div></div>
     </div>
   </div>
 
-  <div class="scroll-hint"><span data-t="explore_services">Explore Services</span><div class="chevron"></div></div>
+  <div class="scroll-hint"><span>Explore Services</span><div class="chevron"></div></div>
 </section>
 
 <!-- == TRUST STRIP == -->
 <div class="trust">
   <div class="trust-inner">
-    <div class="trust-label" data-t="trust_label">Trusted Diagnostic Services</div>
+    <div class="trust-label">Trusted Diagnostic Services</div>
     <div class="trust-items">
       <div class="trust-item"><div class="trust-num">CBC</div><div class="trust-txt">Blood Count</div></div>
       <div class="trust-item"><div class="trust-num">OB-GYN</div><div class="trust-txt">Specialist Care</div></div>
@@ -116,46 +116,46 @@ if (isset($_SESSION["patient_id"])) {
 <!-- == SERVICES == -->
 <section class="services" id="services">
   <div class="section-header">
-    <div class="section-tag" data-t="svc_title">Clinic Services</div>
-    <h2 class="section-title" data-t="svc_header">Everything You Need,<br>Right Here</h2>
-    <p class="section-sub" data-t="svc_sub">Consultations, vaccinations, and medical certificates &mdash; all in one place.</p>
+    <div class="section-tag">Clinic Services</div>
+    <h2 class="section-title">Everything You Need, Right Here</h2>
+    <p class="section-sub">Consultations, vaccinations, and medical certificates &mdash; all in one place.</p>
   </div>
 
   <div class="services-grid">
     <div class="service-card">
       <div class="service-icon icon-blue"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12h.01"/><path d="M15 12h.01"/><path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/></svg></div>
-      <div class="service-title" data-t="svc_peds">Pediatric Consultation</div>
-      <div class="service-desc" data-t="svc_peds_d">Checkups, growth monitoring, and treatment for infants, children, and teens.</div>
+      <div class="service-title">Pediatric Consultation</div>
+      <div class="service-desc">Checkups, growth monitoring, and treatment for infants, children, and teens.</div>
     </div>
 
     <div class="service-card">
       <div class="service-icon icon-cyan"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-      <div class="service-title" data-t="svc_adult">Adult Consultation</div>
-      <div class="service-desc" data-t="svc_adult_d">Consultation for common illnesses, maintenance care, and everyday health concerns.</div>
+      <div class="service-title">Adult Consultation</div>
+      <div class="service-desc">Consultation for common illnesses, maintenance care, and everyday health concerns.</div>
     </div>
 
     <div class="service-card">
       <div class="service-icon icon-rose"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M12 14v7"/><path d="M9 18h6"/></svg></div>
-      <div class="service-title" data-t="svc_obgyn_c">OB-Gyn Consultation (by appointment)</div>
-      <div class="service-desc" data-t="svc_obgyn_d">Women's reproductive health, prenatal care, and family planning with our specialists.</div>
+      <div class="service-title">OB-Gyn Consultation (by appointment)</div>
+      <div class="service-desc">Women's reproductive health, prenatal care, and family planning with our specialists.</div>
     </div>
 
     <div class="service-card">
       <div class="service-icon icon-purple"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m18 2 4 4"/><path d="m17 7 3-3"/><path d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5"/><path d="m9 11 4 4"/><path d="m5 19-3 3"/><path d="m14 4 6 6"/></svg></div>
-      <div class="service-title" data-t="svc_vaccine">Pediatric and Adult Vaccination</div>
-      <div class="service-desc" data-t="svc_vaccine_d">Complete immunization schedules for children and routine vaccines for adults.</div>
+      <div class="service-title">Pediatric and Adult Vaccination</div>
+      <div class="service-desc">Complete immunization schedules for children and routine vaccines for adults.</div>
     </div>
 
     <div class="service-card">
       <div class="service-icon icon-amber"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></svg></div>
-      <div class="service-title" data-t="svc_medcert">Medical Certification</div>
-      <div class="service-desc" data-t="svc_medcert_d">Official medical certificates for school, work, and other official requirements.</div>
+      <div class="service-title">Medical Certification</div>
+      <div class="service-desc">Official medical certificates for school, work, and other official requirements.</div>
     </div>
 
     <div class="service-card">
       <div class="service-icon icon-green"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></div>
-      <div class="service-title" data-t="svc_physexam">Physical Examination / Fit to Work Certification</div>
-      <div class="service-desc" data-t="svc_physexam_d">Pre-employment, annual, and school physical exams with a fit-to-work certificate.</div>
+      <div class="service-title">Physical Examination / Fit to Work Certification</div>
+      <div class="service-desc">Pre-employment, annual, and school physical exams with a fit-to-work certificate.</div>
     </div>
   </div>
 </section>
@@ -163,24 +163,24 @@ if (isset($_SESSION["patient_id"])) {
 <!-- == CONTACT == -->
 <section class="page-section" id="contact">
   <div class="section-header">
-    <div class="section-tag" data-t="contact_tag">Contact</div>
-    <h2 class="section-title" data-t="contact_title">Get In Touch</h2>
-    <p class="section-sub" data-t="contact_sub">Visit or call us &mdash; we are happy to help.</p>
+    <div class="section-tag">Contact</div>
+    <h2 class="section-title">Get In Touch</h2>
+    <p class="section-sub">Visit or call us &mdash; we are happy to help.</p>
   </div>
   <div class="contact-grid">
     <div class="contact-card">
       <span class="contact-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/><path d="M12 7.5v5M9.5 10h5"/></svg></span>
-      <div class="contact-label" data-t="contact_clinic_label">Clinic</div>
-      <div class="contact-name" data-t="contact_clinic">Lustre Medical and Diagnostic Clinic</div>
+      <div class="contact-label">Clinic</div>
+      <div class="contact-name">Lustre Medical and Diagnostic Clinic</div>
     </div>
     <div class="contact-card">
       <span class="contact-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
-      <div class="contact-label" data-t="contact_address_label">Address</div>
+      <div class="contact-label">Address</div>
       <div class="contact-detail">111 Urbano Velasco Avenue, Brgy. Pinagbuhatan, Pasig City</div>
     </div>
     <div class="contact-card">
       <span class="contact-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 16.9v2.8a2 2 0 0 1-2.2 2 19.6 19.6 0 0 1-8.5-3 19.3 19.3 0 0 1-6-6 19.6 19.6 0 0 1-3-8.6 2 2 0 0 1 2-2.2h2.8a2 2 0 0 1 2 1.7c.13 1 .37 1.9.7 2.8a2 2 0 0 1-.49 2.1L8 9.9a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2.1-.5c.9.33 1.83.57 2.8.7a2 2 0 0 1 1.7 2.1Z"/></svg></span>
-      <div class="contact-label" data-t="contact_phone_label">Phone</div>
+      <div class="contact-label">Phone</div>
       <div class="contact-detail"><a href="tel:+639285996038">0928 599 6038</a></div>
     </div>
   </div>
@@ -189,7 +189,7 @@ if (isset($_SESSION["patient_id"])) {
 <!-- == FOOTER == -->
 <footer>
   <div class="footer-inner">
-    <p class="footer-copy">&copy; <?php echo date('Y'); ?> LustreMDC Clinics &amp; Diagnostics. <span data-t="footer_rights">All rights reserved.</span></p>
+    <p class="footer-copy">&copy; <?php echo date('Y'); ?> LustreMDC Clinics &amp; Diagnostics. <span>All rights reserved.</span></p>
   </div>
 </footer>
 
@@ -198,16 +198,16 @@ if (isset($_SESSION["patient_id"])) {
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <button class="modal-close" onclick="closeModal('loginModal')">&times;</button>
-    <div class="modal-title" data-t="login_title">Welcome</div>
-    <div class="modal-sub" data-t="login_sub">Sign in to manage your appointments</div>
+    <div class="modal-title">Welcome</div>
+    <div class="modal-sub">Sign in to manage your appointments</div>
     <div class="form-error" id="loginError"></div>
     <form id="loginForm">
-      <div class="field"><label data-t="login_email">Email or username</label><input type="text" id="loginId" name="email" placeholder="you@example.com or username" required autocomplete="username"><div class="field-hint" data-t="login_hint">Patients enter your email · Staff enter your username</div></div>
-      <div class="field"><label data-t="login_password">Password</label><div class="pw-field"><input type="password" name="password" id="loginPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required autocomplete="current-password"><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
-      <button type="submit" class="submit-btn"><span data-t="login_btn">Sign In</span> &rarr;</button>
+      <div class="field"><label>Email or username</label><input type="text" id="loginId" name="email" placeholder="you@example.com or username" required autocomplete="username"><div class="field-hint">Patients enter your email · Staff enter your username</div></div>
+      <div class="field"><label>Password</label><div class="pw-field"><input type="password" name="password" id="loginPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required autocomplete="current-password"><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+      <button type="submit" class="submit-btn"><span>Sign In</span> &rarr;</button>
     </form>
-    <a href="#" class="forgot-link" onclick="openForgotPassword()" data-t="login_forgot">Forgot password?</a>
-    <div class="modal-switch"><span data-t="login_no_account">Don't have an account?</span> <a href="#" onclick="switchModal('loginModal','registerModal')" data-t="login_register">Register here</a></div>
+    <a href="#" class="forgot-link" onclick="openForgotPassword()">Forgot password?</a>
+    <div class="modal-switch"><span>Don't have an account?</span> <a href="#" onclick="switchModal('loginModal','registerModal')">Register here</a></div>
   </div>
 </div>
 
@@ -219,34 +219,34 @@ if (isset($_SESSION["patient_id"])) {
 
     <!-- Step 1: email -->
     <div id="fpStepEmail">
-      <div class="modal-title" data-t="fp_title">Forgot Password</div>
-      <div class="modal-sub" data-t="fp_sub">Enter your registered email to receive a verification code.</div>
+      <div class="modal-title">Forgot Password</div>
+      <div class="modal-sub">Enter your registered email to receive a verification code.</div>
       <div class="form-error" id="fpEmailError"></div>
-      <div class="field"><label data-t="fp_email_label">Email address</label><input type="email" id="fpEmailInput" placeholder="you@example.com" required autocomplete="email"></div>
-      <button type="button" class="submit-btn" id="fpSendOtpBtn"><span data-t="fp_send">Send Code</span> &rarr;</button>
-      <div class="modal-switch"><span data-t="fp_remembered">Remembered it?</span> <a href="#" onclick="switchModal('forgotPasswordModal','loginModal')" data-t="fp_back_login">Back to login</a></div>
+      <div class="field"><label>Email address</label><input type="email" id="fpEmailInput" placeholder="you@example.com" required autocomplete="email"></div>
+      <button type="button" class="submit-btn" id="fpSendOtpBtn"><span>Send Code</span> &rarr;</button>
+      <div class="modal-switch"><span>Remembered it?</span> <a href="#" onclick="switchModal('forgotPasswordModal','loginModal')">Back to login</a></div>
     </div>
 
     <!-- Step 2: OTP -->
     <div id="fpStepOtp" style="display:none;">
-      <div class="modal-title" data-t="fp_otp_title">Enter Verification Code</div>
-      <div class="modal-sub" data-t="fp_otp_sub">We sent a 6-digit code to your email.</div>
+      <div class="modal-title">Enter Verification Code</div>
+      <div class="modal-sub">We sent a 6-digit code to your email.</div>
       <div class="otp-hint" id="fpOtpHint"></div>
-      <div class="field"><label data-t="fp_otp_label">Verification code</label><input type="text" id="fpOtpInput" placeholder="Enter 6-digit code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"></div>
+      <div class="field"><label>Verification code</label><input type="text" id="fpOtpInput" placeholder="Enter 6-digit code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"></div>
       <div class="form-error" id="fpOtpError"></div>
-      <button type="button" class="submit-btn" id="fpVerifyOtpBtn"><span data-t="fp_verify">Verify</span> &rarr;</button>
+      <button type="button" class="submit-btn" id="fpVerifyOtpBtn"><span>Verify</span> &rarr;</button>
       <div class="otp-resend">
-        <a href="#" id="fpResendLink" data-t="fp_resend">Resend code</a>
+        <a href="#" id="fpResendLink">Resend code</a>
         <span class="otp-timer" id="fpOtpTimer"></span>
       </div>
     </div>
 
     <!-- Step 3: new password -->
     <div id="fpStepReset" style="display:none;">
-      <div class="modal-title" data-t="fp_reset_title">Set New Password</div>
-      <div class="modal-sub" data-t="fp_reset_sub">Choose a strong password for your account.</div>
+      <div class="modal-title">Set New Password</div>
+      <div class="modal-sub">Choose a strong password for your account.</div>
       <div class="form-error" id="fpResetError"></div>
-      <div class="field"><label data-t="fp_new_pw">New password</label><div class="pw-field"><input type="password" id="fpNewPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required autocomplete="new-password" oninput="checkFpPasswordStrength(this.value)"><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+      <div class="field"><label>New password</label><div class="pw-field"><input type="password" id="fpNewPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required autocomplete="new-password" oninput="checkFpPasswordStrength(this.value)"><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
       <div id="fpPwStrengthBox" class="pw-strength-box">
         <div class="pw-strength-info">
           <div id="fpPwStrengthBar" class="pw-strength-bar">
@@ -259,9 +259,9 @@ if (isset($_SESSION["patient_id"])) {
         <div id="fpPwReq3" class="pw-req" data-text="One lowercase letter (a-z)"><span class="pw-ic" aria-hidden="true">&#10007;</span> One lowercase letter (a-z)</div>
         <div id="fpPwReq4" class="pw-req" data-text="One number (0-9)"><span class="pw-ic" aria-hidden="true">&#10007;</span> One number (0-9)</div>
       </div>
-      <div class="field"><label data-t="fp_confirm_pw">Confirm new password</label><div class="pw-field"><input type="password" id="fpConfirmPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required autocomplete="new-password"><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
-      <button type="button" class="submit-btn" id="fpUpdateBtn" data-t="fp_reset_btn">Reset Password</button>
-      <div class="modal-switch"><a href="#" onclick="switchModal('forgotPasswordModal','loginModal')" data-t="fp_back_login2">Back to login</a></div>
+      <div class="field"><label>Confirm new password</label><div class="pw-field"><input type="password" id="fpConfirmPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required autocomplete="new-password"><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+      <button type="button" class="submit-btn" id="fpUpdateBtn">Reset Password</button>
+      <div class="modal-switch"><a href="#" onclick="switchModal('forgotPasswordModal','loginModal')">Back to login</a></div>
     </div>
   </div>
 </div>
@@ -270,13 +270,13 @@ if (isset($_SESSION["patient_id"])) {
 <div id="registerModal" class="register-modal">
     <div class="register-sheet">
         <span class="modal-close" onclick="closeModal('registerModal')">&times;</span>
-        <h2 data-t="reg_title">Create New Account</h2>
+        <h2>Create New Account</h2>
         <form id="registerForm">
-            <input type="text" name="name" placeholder="Full Name" data-t-ph="reg_fullname" required>
+            <input type="text" name="name" placeholder="Full Name" required>
             <select name="gender" class="form-dropdown" id="regGender" required>
-                <option value="" disabled selected data-t="reg_select_gender">Select Gender</option>
-                <option value="male" data-t="reg_male">Male</option>
-                <option value="female" data-t="reg_female">Female</option>
+                <option value="" disabled selected>Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
             </select>
             <div class="reg-datepicker" id="regDatepicker">
                 <div class="reg-dp-field">
@@ -292,34 +292,34 @@ if (isset($_SESSION["patient_id"])) {
 
             <!-- -- Philippine Address Fields -- -->
             <div class="address-group">
-                <div class="address-group-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> <span data-t="reg_address">Address</span></div>
+                <div class="address-group-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> <span>Address</span></div>
 
-                <span class="address-label" data-t="reg_province">Province</span>
+                <span class="address-label">Province</span>
                 <select name="province_name" id="regProvince" class="form-dropdown" data-searchable required onchange="loadMunicipalities()">
                     <option value="">Select Province</option>
                 </select>
 
-    <span class="address-label" data-t="reg_municipality">Municipality / City</span>
+    <span class="address-label">Municipality / City</span>
                 <select name="municipality_name" id="regMunicipality" class="form-dropdown" required onchange="loadBarangays()" disabled>
                     <option value="">Select Municipality / City</option>
                 </select>
 
-                <span class="address-label" data-t="reg_barangay">Barangay</span>
+                <span class="address-label">Barangay</span>
                 <select name="barangay_name" id="regBarangay" class="form-dropdown" required disabled onchange="updateFullAddress()">
                     <option value="">Select Barangay</option>
                 </select>
 
                 <span class="address-label">House No. / Street / Subdivision</span>
-                <input type="text" name="street" id="regStreet" placeholder="e.g. 123 Rizal St., Sunset Subd." data-t-ph="reg_street_ph" required oninput="updateFullAddress()">
+                <input type="text" name="street" id="regStreet" placeholder="e.g. 123 Rizal St., Sunset Subd." required oninput="updateFullAddress()">
             </div>
 
             <!-- Hidden field that holds the combined address sent to register.php -->
             <input type="hidden" name="address" id="regFullAddress">
             <!-- -- End Address Fields -- -->
 
-            <input type="email" name="email" id="regEmail" placeholder="Email Address" data-t-ph="reg_email" required>
-            <input type="text" name="contact" maxlength="11" placeholder="Contact Number" data-t-ph="reg_contact" required>
-            <div class="pw-field"><input type="password" name="password" id="regPassword" placeholder="Password" data-t-ph="reg_password" required oninput="checkPasswordStrength(this.value)"><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+            <input type="email" name="email" id="regEmail" placeholder="Email Address" required>
+            <input type="text" name="contact" maxlength="11" placeholder="Contact Number" required>
+            <div class="pw-field"><input type="password" name="password" id="regPassword" placeholder="Password" required oninput="checkPasswordStrength(this.value)"><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
             <div id="pwStrengthBox" class="pw-strength-box">
                 <div class="pw-strength-info">
                     <div id="pwStrengthBar" class="pw-strength-bar">
@@ -332,8 +332,8 @@ if (isset($_SESSION["patient_id"])) {
                 <div id="pwReq3" class="pw-req" data-text="One lowercase letter (a-z)"><span class="pw-ic" aria-hidden="true">&#10007;</span> One lowercase letter (a-z)</div>
                 <div id="pwReq4" class="pw-req" data-text="One number (0-9)"><span class="pw-ic" aria-hidden="true">&#10007;</span> One number (0-9)</div>
             </div>
-            <div class="pw-field"><input type="password" name="confirm_password" id="regConfirmPassword" placeholder="Confirm Password" data-t-ph="reg_confirm" required><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
-            <button type="submit" class="btn-primary btn-full" data-t="reg_btn">Register</button>
+            <div class="pw-field"><input type="password" name="confirm_password" id="regConfirmPassword" placeholder="Confirm Password" required><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+            <button type="submit" class="btn-primary btn-full">Register</button>
         </form>
 
         <!-- -- OTP verification step (shown after email is sent) -- -->
@@ -342,7 +342,7 @@ if (isset($_SESSION["patient_id"])) {
             <div class="pw-field">
                 <input type="text" id="regOtpInput" placeholder="Enter 6-digit code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
             </div>
-            <button type="button" id="regOtpVerify" class="btn-primary btn-full" data-t="reg_verify">Verify &amp; Create Account</button>
+            <button type="button" id="regOtpVerify" class="btn-primary btn-full">Verify &amp; Create Account</button>
             <div class="otp-resend">
                 <a href="#" id="regResendLink">Resend code</a>
                 <span class="otp-timer" id="regOtpTimer"></span>
@@ -350,7 +350,7 @@ if (isset($_SESSION["patient_id"])) {
             <div class="form-error" id="regOtpError" style="display:none;margin-top:.6rem;"></div>
         </div>
         <button type="button" id="regBackToForm" class="reg-back-link" style="display:none;">&larr; Back to form</button>
-        <p class="modal-footer"><span data-t="reg_have_account">Already have an account?</span> <a href="#" onclick="switchModal('registerModal', 'loginModal')" data-t="reg_login">Login here</a></p>
+        <p class="modal-footer"><span>Already have an account?</span> <a href="#" onclick="switchModal('registerModal', 'loginModal')">Login here</a></p>
     </div>
 </div>
 
@@ -485,7 +485,7 @@ function hideLoading(){document.getElementById('loadingScreen').classList.remove
 document.getElementById('loginForm').addEventListener('submit',function(e){
   e.preventDefault();const err=document.getElementById('loginError');err.classList.remove('show');showLoading();
   const ident=document.getElementById('loginId').value.trim();
-  if(ident.indexOf('@')>=0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ident)){hideLoading();err.textContent='That does not look like a valid email address.';err.classList.add('show');return;}
+  if(ident.indexOf('@')>=0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ident)){hideLoading();err.textContent = 'That does not look like a valid email address.';err.classList.add('show');return;}
   fetch('login.php',{method:'POST',body:new FormData(this)}).then(r=>r.text()).then(res=>{hideLoading();
     res=res.trim();
     if(res==='success:new'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php?tour=1',900);}

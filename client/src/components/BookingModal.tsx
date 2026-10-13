@@ -4,7 +4,6 @@ import { fetchAvailableDates, fetchAvailableTimes, bookAppointment, formatTime12
 import { DEFAULT_SERVICES, OTHER_SERVICE } from '../services';
 import Select from './Select';
 import InfoTip from './InfoTip';
-import { useLang } from '../lang';
 
 interface BookingModalProps {
   doctor: Doctor;
@@ -37,7 +36,6 @@ export function CalendarPicker({
   const first = useMemo(() => new Date(`${dates[0].date}T00:00:00`), [dates]);
   const last = useMemo(() => new Date(`${dates[dates.length - 1].date}T00:00:00`), [dates]);
   const [view, setView] = useState(() => ({ y: first.getFullYear(), m: first.getMonth() }));
-  const { t } = useLang();
 
   const canPrev =
     view.y > first.getFullYear() || (view.y === first.getFullYear() && view.m > first.getMonth());
@@ -115,9 +113,9 @@ export function CalendarPicker({
 
       <div className="cal-legend">
         <span className="cal-legend-dot" />
-        <span>{t('bm_cal_legend')}</span>
+        <span>{"Available dates — tap a day to select"}</span>
         {selectedDate && (
-          <span className="cal-picked">{t('bm_cal_selected', { d: formatLongDate(selectedDate) })}</span>
+          <span className="cal-picked">{`Selected: ${formatLongDate(selectedDate)}`}</span>
         )}
       </div>
     </div>
@@ -146,7 +144,6 @@ export default function BookingModal({ doctor, onClose }: BookingModalProps) {
     date: string;
     time: string;
   } | null>(null);
-  const { t } = useLang();
 
   const serviceOptions = useMemo(() => {
     const doctorProcs = (doctor.test_procedures || '')
@@ -259,41 +256,41 @@ export default function BookingModal({ doctor, onClose }: BookingModalProps) {
                   <path d="M20 6 9 17l-5-5" />
                 </svg>
               </div>
-              <h2 className="success-title">{t('bm_success_title')}</h2>
+              <h2 className="success-title">{"Appointment Requested!"}</h2>
               <p className="success-sub">
-                <span dangerouslySetInnerHTML={{ __html: t('bm_success_sub', { n: doctor.name }) }} />
+                <span dangerouslySetInnerHTML={{ __html: `Your booking with <strong>Dr. ${doctor.name}</strong> is pending review.` }} />
               </p>
 
               <div className="conf-card">
                 <div className="conf-card-head">
                   <div>
                     <span className="conf-card-label">LustreMDC Clinics &amp; Diagnostics</span>
-                    <span className="conf-card-title">{t('bm_apt_details')}</span>
+                    <span className="conf-card-title">{"Appointment Details"}</span>
                   </div>
                 </div>
                 <div className="conf-card-row">
-                  <span className="conf-card-key">{t('bm_doctor')}</span>
+                  <span className="conf-card-key">{"Doctor"}</span>
                   <span className="conf-card-val">Dr. {doctor.name}</span>
                 </div>
                 <div className="conf-card-row">
-                  <span className="conf-card-key">{t('bm_specialty')}</span>
+                  <span className="conf-card-key">{"Specialty"}</span>
                   <span className="conf-card-val">{doctor.specialty}</span>
                 </div>
                 <div className="conf-card-row">
-                  <span className="conf-card-key">{t('bm_service')}</span>
+                  <span className="conf-card-key">{"Service"}</span>
                   <span className="conf-card-val">{serviceValue}</span>
                 </div>
                 <div className="conf-card-row">
-                  <span className="conf-card-key">{t('bm_date')}</span>
+                  <span className="conf-card-key">{"Date"}</span>
                   <span className="conf-card-val">{formatLongDate(selectedDate)}</span>
                 </div>
                 <div className="conf-card-row">
-                  <span className="conf-card-key">{t('bm_time')}</span>
+                  <span className="conf-card-key">{"Time"}</span>
                   <span className="conf-card-val">{formatTime12h(selectedTime)}</span>
                 </div>
                 <div className="conf-card-row">
-                  <span className="conf-card-key">{t('bm_status')}</span>
-                  <span className="conf-card-val conf-card-status">{t('bm_pending')}</span>
+                  <span className="conf-card-key">{"Status"}</span>
+                  <span className="conf-card-val conf-card-status">{"Pending"}</span>
                 </div>
               </div>
 
@@ -301,12 +298,12 @@ export default function BookingModal({ doctor, onClose }: BookingModalProps) {
                 {bookedApptId > 0 ? (
                   <>
                     <a className="btn-confirm" href={`appointment_confirmation.php?id=${bookedApptId}`} data-anim="pulse">
-                      {t('bm_view_confirm')}
+                      {"View Confirmation Card"}
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                     </a>
                     <a className="btn-confirm btn-confirm--ghost" href={`appointment_confirmation_pdf.php?id=${bookedApptId}`}>
                       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                      {t('bm_download_proof')}
+                      {"Download Proof"}
                     </a>
                   </>
                 ) : (
@@ -315,7 +312,7 @@ export default function BookingModal({ doctor, onClose }: BookingModalProps) {
                   </button>
                 )}
               </div>
-              <p className="success-sub success-sub--small">{t('bm_redirecting')}</p>
+              <p className="success-sub success-sub--small">{"Redirecting to your appointments…"}</p>
             </div>
           </>
         ) : (
@@ -335,19 +332,19 @@ export default function BookingModal({ doctor, onClose }: BookingModalProps) {
 
             <div className="step-pill">
               <span className="step-pill-dot" />
-              {t('bm_step1')}
+              {"Step 1 of 3 · Choose your service"}
             </div>
 
             <div className="picker-block">
               <div className="label-row">
-                <span className="picker-label">{t('bm_need')}</span>
-                <InfoTip text={t('bm_info_need')} />
+                <span className="picker-label">{"What do you need?"}</span>
+                <InfoTip text={"Step 1 of 3 — What do you need? Choose the test or procedure you're booking for. Pick “Other” to type a custom one."} />
               </div>
               <Select
                 value={service}
                 onChange={setService}
                 options={serviceOptions.map((s) => ({ value: s, label: s }))}
-                placeholder={t('bm_select_service')}
+                placeholder={"Select a test / procedure…"}
                 icon={
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m14-4v4M5 12h14" />
@@ -358,34 +355,34 @@ export default function BookingModal({ doctor, onClose }: BookingModalProps) {
                 <input
                   type="text"
                   className="service-other"
-placeholder={t('bm_other_ph')}
+placeholder={"Type the specific test / procedure you need"}
                   value={serviceOther}
                   onChange={(e) => setServiceOther(e.target.value)}
                 />
               )}
               {serviceOptions.length > 1 && (
-                <span className="picker-hint">{t('bm_hint')}</span>
+                <span className="picker-hint">{"Need a specific one? Pick \"Other\" and type it below."}</span>
               )}
             </div>
 
             <div className="step-pill step-pill--muted">
               <span className="step-pill-dot" />
-              {t('bm_step2')}
+              {"Step 2 of 3 · Pick date & time"}
             </div>
 
             <div className="picker-block">
               <div className="label-row">
-                <span className="picker-label">{t('bm_dates')}</span>
-                <InfoTip text={t('bm_info_dates')} />
+                <span className="picker-label">{"Available Dates"}</span>
+                <InfoTip text={"Step 2 of 3 — Available Dates. Highlighted days are open for booking. Tap a date to load its time slots."} />
               </div>
               {datesLoading ? (
                 <div className="dates-grid" onKeyDown={(e) => e.stopPropagation()}>
                   <SkeletonChips count={6} />
                 </div>
               ) : datesError ? (
-                <div className="muted-msg wrap">{t('bm_dates_err')}</div>
+                <div className="muted-msg wrap">{"Couldn't load dates. Please close and try again."}</div>
               ) : dates.length === 0 ? (
-                <div className="muted-msg wrap">{t('bm_no_dates')}</div>
+                <div className="muted-msg wrap">{"No available dates at this time."}</div>
               ) : (
                 <CalendarPicker dates={dates} selectedDate={selectedDate} onPick={pickDate} />
               )}
@@ -393,18 +390,18 @@ placeholder={t('bm_other_ph')}
 
             <div className="picker-block">
               <div className="label-row">
-                <span className="picker-label">{t('bm_times')}</span>
-                <InfoTip text={t('bm_info_times')} />
+                <span className="picker-label">{"Available Times"}</span>
+                <InfoTip text={"Step 3 of 3 — Available Times. Pick the slot that suits you, then tap Confirm Appointment to book."} />
               </div>
               <div className="times-grid">
                 {!selectedDate ? (
-                  <div className="muted-msg wrap">{t('bm_select_date_first')}</div>
+                  <div className="muted-msg wrap">{"Select a date first"}</div>
                 ) : timesLoading ? (
                   <SkeletonChips count={9} />
                 ) : timesError ? (
-                  <div className="muted-msg wrap">{t('bm_times_err')}</div>
+                  <div className="muted-msg wrap">{"Couldn't load times. Try another date."}</div>
                 ) : times.length === 0 ? (
-                  <div className="muted-msg wrap">{t('bm_no_times')}</div>
+                  <div className="muted-msg wrap">{"No available times for this date."}</div>
                 ) : (
                   times.map((time) => (
                     <button
@@ -425,7 +422,7 @@ placeholder={t('bm_other_ph')}
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 7v5l3 3" />
               </svg>
-              {t('bm_duration')}
+              {"Appointment duration: 2 hours"}
             </div>
 
             <button className="btn-confirm" disabled={!canConfirm} onClick={submit} data-anim={canConfirm ? 'pulse' : undefined}>
@@ -433,7 +430,7 @@ placeholder={t('bm_other_ph')}
                 <span className="btn-spinner" aria-hidden="true" />
               ) : (
                 <>
-                  {t('bm_confirm')}
+                  {"Confirm Appointment"}
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14M13 6l6 6-6 6" />
                   </svg>
@@ -459,18 +456,15 @@ placeholder={t('bm_other_ph')}
               </svg>
             </span>
             <h3 className="modal-alert-title">
-              {bookingError.conflict ? t('bm_conflict_title') : t('bm_error_title')}
+              {bookingError.conflict ? "Time Slot Already Booked" : "Booking Didn't Go Through"}
             </h3>
             <p className="modal-alert-msg">
               {bookingError.conflict
-                ? t('bm_conflict_msg', {
-                    d: formatLongDate(bookingError.date),
-                    time: formatTime12h(bookingError.time),
-                  })
+                ? `Someone else just booked ${formatLongDate(bookingError.date)} at ${formatTime12h(bookingError.time)}, so this slot is no longer available. Please pick another time.`
                 : bookingError.detail}
             </p>
             <button className="btn-confirm" onClick={() => setBookingError(null)}>
-              {t('bm_error_ok')}
+              {"OK, got it"}
             </button>
           </div>
         </div>

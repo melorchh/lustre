@@ -1,6 +1,5 @@
 import type { Doctor } from '../types';
 import { initials } from '../api';
-import { useLang } from '../lang';
 
 interface DoctorCardProps {
   doctor: Doctor;
@@ -19,7 +18,6 @@ const gradients = [
 ];
 
 export default function DoctorCard({ doctor, index, selected, onSelect }: DoctorCardProps) {
-  const { t } = useLang();
   const g = gradients[index % gradients.length];
   return (
     <button
@@ -46,14 +44,14 @@ export default function DoctorCard({ doctor, index, selected, onSelect }: Doctor
         <div className="doctor-card-specialty">{doctor.specialty}</div>
         <div className="doctor-card-meta">
           {doctor.experience != null && doctor.experience > 0 && (
-            <span className="doctor-chip">{t('doc_yrs_exp', { y: doctor.experience })}</span>
+            <span className="doctor-chip">{`${doctor.experience} yrs exp`}</span>
           )}
           <span className="doctor-schedule">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2" />
               <path d="M16 2v4M8 2v4M3 10h18" />
             </svg>
-            {doctor.schedule || t('doc_schedule_varies')}
+            {doctor.schedule || "Schedule varies"}
           </span>
         </div>
       </div>
