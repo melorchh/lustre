@@ -1,10 +1,10 @@
 import { useTheme } from '../hooks';
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const { isDark, toggleTheme } = useTheme();
   return (
     <button
-      className="theme-toggle"
+      className={`theme-toggle${className ? ` ${className}` : ''}`}
       onClick={toggleTheme}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}

@@ -455,26 +455,6 @@ input {
   min-width: 0;
 }
 
-.menu-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
-  color: var(--gray-600);
-  transition: all 0.2s ease;
-}
-.menu-btn:hover {
-  background: var(--green-pale);
-  color: var(--green-dark);
-}
-@media (min-width: 769px) {
-  .menu-btn {
-    display: none;
-  }
-}
-
 .topbar-search {
   position: relative;
   display: flex;
@@ -669,6 +649,78 @@ input {
   box-shadow: 0 4px 14px rgba(13, 148, 136, 0.08);
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+/* theme toggle injected at the old burger spot (left of search) — mobile only */
+.theme-toggle.topbar-mobile-toggle {
+  display: none;
+}
+
+/* mobile account card: first name + avatar, opens a log-out menu */
+.client-menu {
+  display: none;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.client-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.4rem 0.35rem 0.9rem;
+  border: 1.5px solid var(--gray-100);
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.08);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.client-menu-btn:hover,
+.client-menu-btn[aria-expanded='true'] {
+  background: var(--green-pale);
+  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.18);
+}
+
+.client-menu-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--green-deep);
+  max-width: 10ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.client-menu-pop {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 168px;
+  padding: 0.4rem;
+  background: var(--white);
+  border: 1.5px solid var(--gray-100);
+  border-radius: 14px;
+  box-shadow: 0 14px 34px rgba(13, 148, 136, 0.22);
+  z-index: 900;
+}
+
+.client-menu-logout {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 10px;
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 0.92rem;
+  text-decoration: none;
+  transition: background 0.18s ease;
+}
+
+.client-menu-logout:hover {
+  background: #fde8e8;
 }
 
 .topbar-hello {
@@ -4359,11 +4411,19 @@ html[data-theme="dark"] .modal-alert-icon--ok {
     padding: 0 14px;
   }
   .topbar-actions {
-    /* the day/night toggle lives in the sidenav drawer on mobile */
+    /* theme toggle + client card are re-homed on mobile */
     display: none;
   }
   .client-card {
     display: none !important;
+  }
+  .theme-toggle.topbar-mobile-toggle {
+    display: flex;
+  }
+  .client-menu {
+    display: block;
+    order: 0;
+    margin-left: auto;
   }
 }
 

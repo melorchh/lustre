@@ -116,7 +116,7 @@ export default function Shell({ page, title, patientName, children }: ShellProps
 
       <div className="main">
         <div className="top-row">
-          <TopBar title={title} patientName={patientName} onMenu={() => setSidebarOpen((v) => !v)} />
+          <TopBar title={title} patientName={patientName} />
         </div>
         <ToastCtx.Provider value={{ showToast }}>{children}</ToastCtx.Provider>
       </div>
