@@ -3061,13 +3061,13 @@ body::-webkit-scrollbar {
 
 @media (max-width: 768px) {
   #patientsTable th:nth-child(1),
-  #patientsTable td:nth-child(1),
+  #patientsTable tbody tr:not(.client-detail) > td:nth-child(1),
   #patientsTable th:nth-child(6),
-  #patientsTable td:nth-child(6),
+  #patientsTable tbody tr:not(.client-detail) > td:nth-child(6),
   #patientsTable th:nth-child(7),
-  #patientsTable td:nth-child(7),
+  #patientsTable tbody tr:not(.client-detail) > td:nth-child(7),
   #patientsTable th:nth-child(10),
-  #patientsTable td:nth-child(10) {
+  #patientsTable tbody tr:not(.client-detail) > td:nth-child(10) {
     display: none !important;
   }
   #patientsTable th,
