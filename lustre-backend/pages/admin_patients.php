@@ -2,9 +2,11 @@
 require __DIR__ . '/../src/session.php';
 if (!isset($_SESSION["admin_id"])) { header("Location: admin_login.php"); exit; }
 require_once __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/unique_ids.php';
+ensure_unique_ids($conn);
 $admin_name = $_SESSION["admin_name"];
 
-$patients = $conn->query("SELECT p.id, p.name, p.email, p.contact, p.address, p.is_walk_in, p.weight_kg, p.height_cm, p.patient_type, p.age, p.created_at, COUNT(a.id) as appointment_count, MAX(a.appointment_date) as last_appointment FROM patients p LEFT JOIN appointments a ON p.id=a.patient_id GROUP BY p.id, p.name, p.email, p.contact, p.address, p.is_walk_in, p.weight_kg, p.height_cm, p.patient_type, p.age, p.created_at ORDER BY p.created_at DESC");
+$patients = $conn->query("SELECT p.id, p.unique_code, p.name, p.email, p.contact, p.address, p.is_walk_in, p.weight_kg, p.height_cm, p.patient_type, p.age, p.created_at, COUNT(a.id) as appointment_count, MAX(a.appointment_date) as last_appointment FROM patients p LEFT JOIN appointments a ON p.id=a.patient_id GROUP BY p.id, p.unique_code, p.name, p.email, p.contact, p.address, p.is_walk_in, p.weight_kg, p.height_cm, p.patient_type, p.age, p.created_at ORDER BY p.created_at DESC");
 if (!$patients) {
     die("Query failed: " . $conn->error);
 }
@@ -127,15 +129,15 @@ $conn->close();
     </div>
     <div class="table-scroll">
         <table id="patientsTable">
-            <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Patient</th><th>Age</th><th>Weight</th><th>Height</th><th>Contact</th><th>Address</th><th>Appointments</th><th>Last Visit</th><th>Registered</th></tr></thead>
+            <thead><tr><th>Client ID</th><th>Name</th><th>Type</th><th>Patient</th><th>Age</th><th>Weight</th><th>Height</th><th>Contact</th><th>Address</th><th>Appointments</th><th>Last Visit</th><th>Registered</th></tr></thead>
        <tbody>
 <?php while ($p = $patients->fetch_assoc()): 
     $created = !empty($p['created_at']) ? new DateTime($p['created_at']) : null;
     $last_apt = !empty($p['last_appointment']) ? new DateTime($p['last_appointment']) : null;
 ?>
 <tr data-name="<?php echo htmlspecialchars(strtolower($p['name']), ENT_QUOTES); ?>" data-address="<?php echo htmlspecialchars(strtolower($p['address']), ENT_QUOTES); ?>" data-age="<?php echo (int)$p['age']; ?>">
-    <td><?php echo htmlspecialchars($p['id']); ?></td>
-    <td><strong><?php echo htmlspecialchars($p['name']); ?></strong></td>
+    <td><strong><?php echo htmlspecialchars($p['unique_code'] ?? ('CL-' . str_pad((string)$p['id'], 6, '0', STR_PAD_LEFT))); ?></strong></td>
+    <td><a href="client_profile.php?id=<?php echo (int)$p['id']; ?>" style="color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px"><?php echo htmlspecialchars($p['name']); ?></a></td>
     <td><?php if (!empty($p['is_walk_in'])): ?><span class="badge badge-urgent">Walk-In</span><?php else: ?><span class="badge badge-active">Registered</span><?php endif; ?></td>
     <td><?php echo $p['patient_type'] ? '<span class="badge badge-normal">' . htmlspecialchars(ucfirst($p['patient_type'])) . '</span>' : '&mdash;'; ?></td>
     <td><?php echo $p['age'] !== null ? $p['age'] . ' yrs' : '&mdash;'; ?></td>

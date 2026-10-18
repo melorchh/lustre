@@ -6,6 +6,8 @@ if (!isset($_SESSION["patient_id"])) {
 }
 
 require_once __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/unique_ids.php';
+ensure_unique_ids($conn);
 
 $patient_id = $_SESSION["patient_id"];
 $doctor_id = isset($_POST["doctor_id"]) ? intval($_POST["doctor_id"]) : 0;

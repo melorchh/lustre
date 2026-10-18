@@ -66,6 +66,11 @@ $conn->close();
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
     <script>try{if(localStorage.getItem('meTheme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}</script>
 <link rel="stylesheet" href="admin.css?v=<?= filemtime(__DIR__ . '/../../admin.css') ?>">
+    <style>
+        .test-type-checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.45rem .9rem;max-height:270px;overflow-y:auto;padding:.5rem .65rem;border:1px solid rgba(100,116,139,.25);border-radius:10px;background:rgba(100,116,139,.04)}
+        .test-type-check{display:flex;align-items:flex-start;gap:.5rem;font-weight:400;font-size:.88rem;cursor:pointer;line-height:1.35;text-transform:none;letter-spacing:0;margin:0;color:inherit}
+        .test-type-check input[type="checkbox"]{margin-top:.15rem;accent-color:#16a34a;width:15px;height:15px;flex:0 0 auto}
+    </style>
     <title>Laboratory - LustreMDC Admin</title>
 </head>
 <body>
@@ -161,18 +166,19 @@ $conn->close();
                             <?php endwhile; ?>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>Test Type</label>
-                        <select name="test_type" class="form-dropdown" required onchange="toggleOther(this)">
-                            <option value="">Select Test Type</option>
+                    <div class="form-group" style="grid-column:1 / -1">
+                        <label>Test Type <span style="font-weight:400;text-transform:none;letter-spacing:0">(select one or more)</span></label>
+                        <div class="test-type-checks">
                             <?php foreach ($test_types as $t): ?>
-                            <option value="<?php echo htmlspecialchars($t); ?>"><?php echo htmlspecialchars($t); ?></option>
+                            <label class="test-type-check">
+                                <input type="checkbox" name="test_type[]" value="<?php echo htmlspecialchars($t); ?>"<?php echo $t === 'Other' ? ' id="testTypeOtherCb" onchange="toggleOther(this)"' : ''; ?>>
+                                <span><?php echo htmlspecialchars($t); ?></span>
+                            </label>
                             <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="form-group" id="otherTypeGroup" style="display:none">
-                        <label>Specify Test Name</label>
-                        <input type="text" name="test_type_other" placeholder="Enter custom test name">
+                        </div>
+                        <div id="otherTypeGroup" style="display:none;margin-top:.55rem">
+                            <input type="text" name="test_type_other" id="testTypeOther" placeholder="Enter custom test name" autocomplete="off">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Priority</label>
@@ -396,25 +402,32 @@ $conn->close();
     });
 
     /* -- Toggle "Other" field -- */
-    function toggleOther(sel){
-        document.getElementById('otherTypeGroup').style.display = sel.value === 'Other' ? '' : 'none';
+    function toggleOther(cb){
+        var g = document.getElementById('otherTypeGroup');
+        g.style.display = cb.checked ? '' : 'none';
+        if(!cb.checked){ var i = document.getElementById('testTypeOther'); if(i) i.value=''; }
     }
 
     /* -- Add Lab Test -- */
     document.getElementById('addLabForm').addEventListener('submit', function(e){
         e.preventDefault();
-        const fd = new FormData(this);
-        // If "Other" selected, override test_type with custom value
-        if(fd.get('test_type') === 'Other'){
-            const custom = fd.get('test_type_other').trim();
+        var types = Array.prototype.slice.call(this.querySelectorAll('input[name="test_type[]"]:checked')).map(function(c){ return c.value; });
+        if(!types.length){ showToast('Please select at least one test type.','error'); return; }
+        if(types.indexOf('Other') !== -1){
+            var custom = (document.getElementById('testTypeOther').value || '').trim();
             if(!custom){ showToast('Please enter the custom test name.','error'); return; }
-            fd.set('test_type', custom);
+            types = types.filter(function(t){ return t !== 'Other'; });
+            types.push(custom);
         }
+        const fd = new FormData(this);
+        fd.delete('test_type[]');
+        fd.delete('test_type_other');
+        types.forEach(function(t){ fd.append('test_type[]', t); });
         showLoading();
         fetch('lab_action.php?action=add', { method:'POST', body:fd })
         .then(r=>r.text()).then(res=>{
             hideLoading();
-            if(res.trim()==='success'){ showToast('Lab test requested!','success'); document.body.classList.add('__leaving');setTimeout(()=>location.reload(),215); }
+            if(res.trim()==='success'){ showToast(types.length > 1 ? types.length + ' lab tests requested!' : 'Lab test requested!','success'); document.body.classList.add('__leaving');setTimeout(()=>location.reload(),215); }
             else showToast(res,'error');
         }).catch(()=>{ hideLoading(); showToast('Network error','error'); });
     });

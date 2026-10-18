@@ -16,13 +16,22 @@ $action = isset($_GET['action']) ? trim($_GET['action']) : '';
 if ($action === 'add') {
     $patient_id     = isset($_POST['patient_id'])     ? intval($_POST['patient_id'])           : 0;
     $doctor_id      = isset($_POST['doctor_id'])      ? intval($_POST['doctor_id'])             : 0;
-    $test_type      = isset($_POST['test_type'])      ? trim($_POST['test_type'])               : '';
+    $test_type      = isset($_POST['test_type'])      ? $_POST['test_type']                     : '';
     $priority       = isset($_POST['priority'])       ? trim($_POST['priority'])                : 'normal';
     $scheduled_date = isset($_POST['scheduled_date']) ? trim($_POST['scheduled_date'])          : null;
     $notes          = isset($_POST['notes'])          ? trim($_POST['notes'])                   : '';
 
-    if (empty($patient_id) || empty($doctor_id) || empty($test_type)) {
-        echo "error: Patient, doctor, and test type are required";
+    // Accept one test type (legacy single value) or several (checkbox group).
+    if (is_string($test_type)) {
+        $test_type = ($test_type === '') ? array() : array($test_type);
+    }
+    if (!is_array($test_type)) {
+        $test_type = array();
+    }
+    $test_type = array_values(array_unique(array_filter(array_map('trim', $test_type), function ($t) { return $t !== ''; })));
+
+    if (empty($patient_id) || empty($doctor_id) || count($test_type) === 0) {
+        echo "error: Patient, doctor, and at least one test type are required";
         $conn->close(); exit;
     }
 
@@ -47,21 +56,29 @@ if ($action === 'add') {
 
     $scheduled_date_val = (!empty($scheduled_date)) ? $scheduled_date : null;
 
+    // One lab_tests row per selected test type.
     $stmt = $conn->prepare("
         INSERT INTO lab_tests 
             (patient_id, doctor_id, test_type, priority, scheduled_date, notes, status, result)
         VALUES (?, ?, ?, ?, ?, ?, 'pending', NULL)
     ");
-    $stmt->bind_param("iissss",
-        $patient_id, $doctor_id, $test_type, $priority, $scheduled_date_val, $notes
-    );
 
-    if ($stmt->execute()) {
-        echo "success";
-    } else {
-        echo "error: Failed to add lab test â€” " . $stmt->error;
+    $added = 0;
+    foreach ($test_type as $one_test) {
+        $stmt->bind_param("iissss",
+            $patient_id, $doctor_id, $one_test, $priority, $scheduled_date_val, $notes
+        );
+        if ($stmt->execute()) {
+            $added++;
+        }
     }
     $stmt->close();
+
+    if ($added === count($test_type)) {
+        echo "success";
+    } else {
+        echo "error: Only $added of " . count($test_type) . " lab tests were added";
+    }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    UPDATE STATUS â€” inline status dropdown
