@@ -20,6 +20,8 @@ $patient_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $patient = null;
 $appointments = null;
 $vitals_list = null;
+$vitals_by_appt = [];
+$lab_tests = null;
 
 if ($patient_id > 0) {
     $stmt = $conn->prepare("SELECT * FROM patients WHERE id = ?");
@@ -38,6 +40,22 @@ if ($patient) {
         ORDER BY a.appointment_date DESC, a.appointment_time DESC
     ");
     $vitals_list = $conn->query("SELECT * FROM vitals WHERE patient_id = $patient_id ORDER BY visit_date DESC");
+
+    $vitals_by_appt = [];
+    $vres = $conn->query("SELECT appointment_id, COUNT(*) AS cnt FROM vitals WHERE patient_id = $patient_id AND appointment_id IS NOT NULL GROUP BY appointment_id");
+    if ($vres) {
+        while ($vr = $vres->fetch_assoc()) {
+            $vitals_by_appt[(int)$vr['appointment_id']] = (int)$vr['cnt'];
+        }
+    }
+
+    $lab_tests = $conn->query("
+        SELECT lt.*, d.name AS doctor_name
+        FROM lab_tests lt
+        JOIN doctors d ON lt.doctor_id = d.id
+        WHERE lt.patient_id = $patient_id
+        ORDER BY lt.created_at DESC
+    ");
 
     $created = !empty($patient['created_at']) ? new DateTime($patient['created_at']) : null;
     $last_visit = $conn->query("SELECT MAX(appointment_date) AS last_appt FROM appointments WHERE patient_id = $patient_id")->fetch_assoc();
@@ -80,12 +98,13 @@ $conn->close();
         <nav class="sidebar-nav">
             <a href="admin_dashboard.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="rail-label">Dashboard</span></a>
             <a href="admin_appointments.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span><span class="rail-label">Appointments</span></a>
-            <a href="admin_patients.php" class="nav-item active"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="rail-label">Patients</span></a>
+            <a href="admin_clients.php" class="nav-item active"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="rail-label">Clients</span></a>
+            <a href="admin_patients.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="rail-label">Patients</span></a>
             <a href="admin_walkins.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.7L18 9.3l-4.4 1.6L12 15.6l-1.6-4.7L6 9.3l4.4-1.6z" style="stroke-width:1.8"/><path d="M5 20h14"/></svg></span><span class="rail-label">Walk-ins</span></a>
             <a href="admin_doctors.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></span><span class="rail-label">Doctors</span></a>
             <a href="admin_schedules.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span class="rail-label">Schedules</span></a>
             <a href="admin_laboratory.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v6.3L4.5 17a2.5 2.5 0 0 0 2 4h11a2.5 2.5 0 0 0 2-4L14 8.3V2"/><path d="M8.5 2h7"/><path d="M7 15h10"/></svg></span><span class="rail-label">Laboratory</span></a>
-            <a href="admin_vitals.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span class="rail-label">Vitals &amp; Vaccines</span></a>
+            <a href="admin_vitals.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span class="rail-label">Vaccines</span></a>
             <a href="admin_reports.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15v-4"/><path d="M12 15V7"/><path d="M17 15v-6"/></svg></span><span class="rail-label">Reports</span></a>
             <a href="admin_history.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg></span><span class="rail-label">Archives</span></a>
         </nav>
@@ -193,6 +212,7 @@ $conn->close();
                             <th>Service</th>
                             <th>Status</th>
                             <th>Result / Findings</th>
+                            <th>Vitals</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -207,6 +227,8 @@ $conn->close();
                                 'completed'  => 'badge-completed',
                                 'cancelled'  => 'badge-cancelled',
                             ][$s] ?? 'badge-pending';
+                            $appt_id = (int)$ap['id'];
+                            $has_vitals = isset($vitals_by_appt[$appt_id]);
                     ?>
                         <tr>
                             <td><strong><?php echo htmlspecialchars($ap['unique_code'] ?? ('APT-' . str_pad((string)$ap['id'], 6, '0', STR_PAD_LEFT))); ?></strong><br><small style="color:#94a3b8">#<?php echo (int)$ap['id']; ?></small></td>
@@ -215,9 +237,58 @@ $conn->close();
                             <td><?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation'); ?></td>
                             <td><span class="badge <?php echo $status_badge; ?>"><?php echo ucfirst($s); ?></span></td>
                             <td><?php echo !empty($ap['result']) ? nl2br(htmlspecialchars($ap['result'])) : '<span style="color:#94a3b8;font-size:.82rem">No result yet</span>'; ?></td>
+                            <td>
+                                <?php if ($has_vitals): ?>
+                                    <button type="button" class="btn-sm" onclick="openApptVitals(<?php echo $appt_id; ?>, '<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>')" style="border:1px solid #cbd5e1;background:#fff;color:#0f172a;border-radius:8px;padding:.28rem .6rem;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap">View Vitals</button>
+        <!-- Lab Tests -->
+        <div class="content-card">
+            <h2>Lab Tests</h2>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Test Type</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Ordered By</th>
+                            <th>Scheduled</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php if ($lab_tests && $lab_tests->num_rows > 0):
+                        while ($lt = $lab_tests->fetch_assoc()):
+                            $priority_badge = ['normal' => 'badge-normal', 'urgent' => 'badge-urgent', 'stat' => 'badge-urgent'][$lt['priority']] ?? 'badge-normal';
+                            $lab_status_badge = [
+                                'pending'     => 'badge-pending',
+                                'processing'  => 'badge-active',
+                                'completed'   => 'badge-completed',
+                                'cancelled'   => 'badge-cancelled',
+                            ][$lt['status']] ?? 'badge-pending';
+                    ?>
+                        <tr>
+                            <td><strong><?php echo htmlspecialchars($lt['test_type']); ?></strong></td>
+                            <td><span class="badge <?php echo $priority_badge; ?>"><?php echo ucfirst($lt['priority']); ?></span></td>
+                            <td><span class="badge <?php echo $lab_status_badge; ?>"><?php echo ucfirst($lt['status']); ?></span></td>
+                            <td>Dr. <?php echo htmlspecialchars($lt['doctor_name']); ?></td>
+                            <td><?php echo !empty($lt['scheduled_date']) ? (new DateTime($lt['scheduled_date']))->format('M j, Y') : '&mdash;'; ?></td>
+                            <td><?php echo !empty($lt['result']) ? nl2br(htmlspecialchars($lt['result'])) : '<span style="color:#94a3b8;font-size:.82rem">No result yet</span>'; ?></td>
                         </tr>
                     <?php endwhile; else: ?>
-                        <tr><td colspan="6" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>No appointments recorded for this client yet.</td></tr>
+                        <tr><td colspan="6" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v6.3L4.5 17a2.5 2.5 0 0 0 2 4h11a2.5 2.5 0 0 0 2-4L14 8.3V2"/><path d="M8.5 2h7"/><path d="M7 15h10"/></svg></div>No lab tests ordered for this client yet.</td></tr>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <?php else: ?>
+                                    <span style="color:#94a3b8;font-size:.82rem">&mdash;</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endwhile; else: ?>
+                        <tr><td colspan="7" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>No appointments recorded for this client yet.</td></tr>
                     <?php endif; ?>
                     </tbody>
                 </table>
@@ -273,6 +344,16 @@ $conn->close();
     </main>
 </div>
 
+<!-- Appointment Vitals Modal -->
+<div class="modal-overlay" id="apptVitalsModal">
+    <div class="modal-box">
+        <button class="modal-close-btn" onclick="closeModal('apptVitalsModal')">&times;</button>
+        <h2>Vitals — <span id="apptVitalsCode">&nbsp;</span></h2>
+        <p id="apptVitalsMeta" style="margin:-.3rem 0 .8rem;color:#64748b;font-size:.85rem"></p>
+        <div id="apptVitalsBody" style="min-height:80px"><p style="color:#94a3b8">Loading…</p></div>
+    </div>
+</div>
+
 <script>
     function openSidebar(){document.getElementById('adminSidebar').classList.add('open');document.getElementById('sidebarOverlay').classList.add('active');document.body.style.overflow='hidden';}
     function closeSidebar(){document.getElementById('adminSidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('active');document.body.style.overflow='';}
@@ -289,6 +370,59 @@ $conn->close();
           document.body.style.overflow='hidden';
         }
       }
+    }
+
+    function openModal(id){document.getElementById(id).classList.add('active');document.body.style.overflow='hidden';}
+    function closeModal(id){document.getElementById(id).classList.remove('active');document.body.style.overflow='';}
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', function(e){ if(e.target === this) closeModal(this.id); });
+    });
+    document.addEventListener('keydown', function(e){
+        if(e.key === 'Escape') closeModal('apptVitalsModal');
+    });
+
+    function escapeHtml(s){
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+            return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+        });
+    }
+
+    function openApptVitals(appointmentId, code){
+        document.getElementById('apptVitalsCode').textContent = code || ('#' + appointmentId);
+        document.getElementById('apptVitalsMeta').textContent = '';
+        document.getElementById('apptVitalsBody').innerHTML = '<p style="color:#94a3b8">Loading…</p>';
+        openModal('apptVitalsModal');
+        fetch('client_vitals_api.php?appointment_id=' + encodeURIComponent(appointmentId))
+            .then(function(r){ return r.json(); })
+            .then(function(j){
+                var body = document.getElementById('apptVitalsBody');
+                if (!j || !j.ok) {
+                    body.innerHTML = '<p style="color:#dc2626">' + escapeHtml((j && j.error) || 'Failed to load vitals.') + '</p>';
+                    return;
+                }
+                var a = j.appointment;
+                document.getElementById('apptVitalsMeta').textContent =
+                    (a.appointment_date || '') + ' · ' + String(a.appointment_time || '').slice(0,5) + ' · Dr. ' + (a.doctor_name || '');
+                if (!j.vitals || !j.vitals.length) {
+                    body.innerHTML = '<p style="color:#94a3b8">No vitals were recorded for this consultation.</p>';
+                    return;
+                }
+                var rows = '';
+                j.vitals.forEach(function(v){
+                    rows +=
+                        '<tr><th style="width:180px">Visit Date</th><td>' + escapeHtml(v.visit_date) + '</td></tr>' +
+                        '<tr><th>Weight</th><td>' + (v.weight_kg ? escapeHtml(v.weight_kg) + ' kg' : '&mdash;') + '</td></tr>' +
+                        '<tr><th>Height</th><td>' + (v.height_cm ? escapeHtml(v.height_cm) + ' cm' : '&mdash;') + '</td></tr>' +
+                        '<tr><th>Blood Pressure</th><td><span class="badge badge-active">' + (v.blood_pressure ? escapeHtml(v.blood_pressure) : '&mdash;') + '</span></td></tr>' +
+                        '<tr><th>Heart Rate</th><td>' + (v.heart_rate ? escapeHtml(v.heart_rate) + ' bpm' : '&mdash;') + '</td></tr>' +
+                        '<tr><th>Fundal Height</th><td>' + (v.fundal_height ? escapeHtml(v.fundal_height) + ' cm' : '&mdash;') + '</td></tr>' +
+                        '<tr><th>Notes</th><td>' + (v.notes ? escapeHtml(v.notes) : '&mdash;') + '</td></tr>';
+                });
+                body.innerHTML = '<div class="table-scroll"><table><tbody>' + rows + '</tbody></table></div>';
+            })
+            .catch(function(){
+                document.getElementById('apptVitalsBody').innerHTML = '<p style="color:#dc2626">Network error.</p>';
+            });
     }
 
     /* -- LustreMDC Smooth Transitions -- */

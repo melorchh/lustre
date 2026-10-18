@@ -38,4 +38,8 @@ $fn$ LANGUAGE plpgsql");
 
     $conn->query("DROP TRIGGER IF EXISTS trg_appointments_unique_code ON appointments");
     $conn->query("CREATE TRIGGER trg_appointments_unique_code BEFORE INSERT ON appointments FOR EACH ROW EXECUTE FUNCTION assign_unique_code('APT', 'appointments_id_seq')");
+
+    // Vitals can belong to a specific appointment (consultation).
+    $conn->query("ALTER TABLE vitals ADD COLUMN IF NOT EXISTS appointment_id INTEGER REFERENCES appointments(id)");
+    $conn->query("CREATE INDEX IF NOT EXISTS idx_vitals_appointment ON vitals(appointment_id)");
 }
