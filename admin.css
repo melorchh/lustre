@@ -1860,6 +1860,38 @@ table small {
 }
 
 /* ═══════════════════════════════════════════════════
+   CLIENT PROFILE (shared admin/doctor view)
+   ═══════════════════════════════════════════════════ */
+.muted-sub {
+  color: var(--gray-400);
+  font-size: 0.82rem;
+}
+.findings-cell {
+  max-width: 340px;
+  white-space: normal;
+  word-break: break-word;
+}
+.btn-view-vitals {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  color: var(--gray-800);
+  border-radius: 8px;
+  padding: 0.28rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.btn-view-vitals:hover {
+  border-color: var(--green);
+  color: var(--green-dark);
+}
+
+/* ═══════════════════════════════════════════════════
    LOADING / TOAST
    ═══════════════════════════════════════════════════ */
 .loading-screen {

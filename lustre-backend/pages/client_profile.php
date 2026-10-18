@@ -11,7 +11,9 @@ if (!$is_admin && !$is_doctor) {
 
 require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/unique_ids.php';
+require_once __DIR__ . '/walkin_schema.php';
 ensure_unique_ids($conn);
+walkins_ensure_result_column($conn);
 
 $display_name = $is_admin ? $_SESSION['admin_name'] : $_SESSION['doctor_name'];
 
@@ -22,6 +24,7 @@ $appointments = null;
 $vitals_list = null;
 $vitals_by_appt = [];
 $lab_tests = null;
+$consultations = null;
 
 if ($patient_id > 0) {
     $stmt = $conn->prepare("SELECT * FROM patients WHERE id = ?");
@@ -58,8 +61,46 @@ if ($patient) {
     ");
 
     $created = !empty($patient['created_at']) ? new DateTime($patient['created_at']) : null;
-    $last_visit = $conn->query("SELECT MAX(appointment_date) AS last_appt FROM appointments WHERE patient_id = $patient_id")->fetch_assoc();
+    $last_visit = ['last_appt' => null];
+    $lv_res = $conn->query("SELECT MAX(appointment_date) AS last_appt FROM appointments WHERE patient_id = $patient_id");
+    if ($lv_res) {
+        $lv_row = $lv_res->fetch_assoc();
+        if ($lv_row) {
+            $last_visit = $lv_row;
+        }
+    }
     $last_visit_fmt = (!empty($last_visit['last_appt'])) ? (new DateTime($last_visit['last_appt']))->format('M j, Y') : 'Never';
+
+    // Past consultation findings (doctor view only): completed appointments and
+    // served walk-ins that already have a result/findings recorded. Read-only.
+    if ($is_doctor) {
+        $stmt = $conn->prepare("
+            SELECT visit_date, visit_time, doctor_name, specialty, service, findings, source FROM (
+                SELECT a.appointment_date AS visit_date, a.appointment_time AS visit_time,
+                       d.name AS doctor_name, d.specialty,
+                       a.service_requested AS service, a.result AS findings,
+                       'Appointment' AS source
+                FROM appointments a
+                JOIN doctors d ON a.doctor_id = d.id
+                WHERE a.patient_id = ? AND a.status = 'completed'
+                  AND a.result IS NOT NULL AND a.result <> ''
+                UNION ALL
+                SELECT w.arrival_date AS visit_date, w.arrival_time AS visit_time,
+                       d.name AS doctor_name, d.specialty,
+                       w.test_procedure AS service, w.result AS findings,
+                       'Walk-in' AS source
+                FROM walk_ins w
+                JOIN doctors d ON w.doctor_id = d.id
+                WHERE w.patient_id = ?
+                  AND w.result IS NOT NULL AND w.result <> ''
+            ) hist
+            ORDER BY visit_date DESC, visit_time DESC
+        ");
+        $stmt->bind_param("ii", $patient_id, $patient_id);
+        $stmt->execute();
+        $consultations = $stmt->get_result();
+        $stmt->close();
+    }
 } else {
     $patient_id = 0;
 }
@@ -198,6 +239,43 @@ $conn->close();
             </div>
         </div>
 
+        <?php if ($is_doctor): ?>
+        <!-- Past Consultation Findings (doctor view — read-only) -->
+        <div class="content-card">
+            <h2>Past Consultation Findings</h2>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date &amp; Time</th>
+                            <th>Type</th>
+                            <th>Doctor</th>
+                            <th>Service / Procedure</th>
+                            <th>Findings / Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php if ($consultations && $consultations->num_rows > 0):
+                        while ($c = $consultations->fetch_assoc()):
+                            $c_date = !empty($c['visit_date']) ? (new DateTime($c['visit_date']))->format('M j, Y') : '&mdash;';
+                            $c_time = !empty($c['visit_time']) ? date('g:i A', strtotime($c['visit_time'])) : '&mdash;';
+                    ?>
+                        <tr>
+                            <td><strong><?php echo $c_date; ?></strong><br><small class="cell-sub"><?php echo $c_time; ?></small></td>
+                            <td><span class="badge <?php echo $c['source'] === 'Walk-in' ? 'badge-urgent' : 'badge-active'; ?>"><?php echo htmlspecialchars($c['source']); ?></span></td>
+                            <td>Dr. <?php echo htmlspecialchars($c['doctor_name']); ?><br><small class="cell-sub"><?php echo htmlspecialchars($c['specialty']); ?></small></td>
+                            <td><?php echo htmlspecialchars($c['service'] ?: 'General consultation'); ?></td>
+                            <td class="findings-cell"><?php echo nl2br(htmlspecialchars($c['findings'])); ?></td>
+                        </tr>
+                    <?php endwhile; else: ?>
+                        <tr><td colspan="5" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></div>No past consultation findings recorded for this client yet.</td></tr>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <!-- Appointments -->
         <div class="content-card">
             <h2>Appointments</h2>
@@ -218,8 +296,8 @@ $conn->close();
                     <?php if ($appointments && $appointments->num_rows > 0):
                         while ($ap = $appointments->fetch_assoc()):
                             $s = $ap['status'];
-                            $date_fmt = (new DateTime($ap['appointment_date']))->format('M j, Y');
-                            $time_fmt = date('g:i A', strtotime($ap['appointment_time']));
+                            $date_fmt = !empty($ap['appointment_date']) ? (new DateTime($ap['appointment_date']))->format('M j, Y') : '&mdash;';
+                            $time_fmt = !empty($ap['appointment_time']) ? date('g:i A', strtotime($ap['appointment_time'])) : '&mdash;';
                             $status_badge = [
                                 'pending'    => 'badge-pending',
                                 'confirmed'  => 'badge-active',
@@ -230,15 +308,28 @@ $conn->close();
                             $has_vitals = isset($vitals_by_appt[$appt_id]);
                     ?>
                         <tr>
-                            <td><strong><?php echo htmlspecialchars($ap['unique_code'] ?? ('APT-' . str_pad((string)$ap['id'], 6, '0', STR_PAD_LEFT))); ?></strong><br><small style="color:#94a3b8">#<?php echo (int)$ap['id']; ?></small></td>
-                            <td><?php echo $date_fmt; ?><br><small style="color:#94a3b8"><?php echo $time_fmt; ?></small></td>
-                            <td>Dr. <?php echo htmlspecialchars($ap['doctor_name']); ?><br><small style="color:#64748b"><?php echo htmlspecialchars($ap['specialty']); ?></small></td>
+                            <td><strong><?php echo htmlspecialchars($ap['unique_code'] ?? ('APT-' . str_pad((string)$ap['id'], 6, '0', STR_PAD_LEFT))); ?></strong><br><small class="cell-sub">#<?php echo (int)$ap['id']; ?></small></td>
+                            <td><?php echo $date_fmt; ?><br><small class="cell-sub"><?php echo $time_fmt; ?></small></td>
+                            <td>Dr. <?php echo htmlspecialchars($ap['doctor_name']); ?><br><small class="cell-sub"><?php echo htmlspecialchars($ap['specialty']); ?></small></td>
                             <td><?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation'); ?></td>
                             <td><span class="badge <?php echo $status_badge; ?>"><?php echo ucfirst($s); ?></span></td>
-                            <td><?php echo !empty($ap['result']) ? nl2br(htmlspecialchars($ap['result'])) : '<span style="color:#94a3b8;font-size:.82rem">No result yet</span>'; ?></td>
+                            <td class="findings-cell"><?php echo !empty($ap['result']) ? nl2br(htmlspecialchars($ap['result'])) : '<span class="muted-sub">No result yet</span>'; ?></td>
                             <td>
                                 <?php if ($has_vitals): ?>
-                                    <button type="button" class="btn-sm" onclick="openApptVitals(<?php echo $appt_id; ?>, '<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>')" style="border:1px solid #cbd5e1;background:#fff;color:#0f172a;border-radius:8px;padding:.28rem .6rem;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap">View Vitals</button>
+                                    <button type="button" class="btn-view-vitals" onclick="openApptVitals(<?php echo $appt_id; ?>, '<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>')">View Vitals</button>
+                                <?php else: ?>
+                                    <span class="muted-sub">&mdash;</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endwhile; else: ?>
+                        <tr><td colspan="7" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>No appointments recorded for this client yet.</td></tr>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Lab Tests -->
         <div class="content-card">
             <h2>Lab Tests</h2>
@@ -271,23 +362,10 @@ $conn->close();
                             <td><span class="badge <?php echo $lab_status_badge; ?>"><?php echo ucfirst($lt['status']); ?></span></td>
                             <td>Dr. <?php echo htmlspecialchars($lt['doctor_name']); ?></td>
                             <td><?php echo !empty($lt['scheduled_date']) ? (new DateTime($lt['scheduled_date']))->format('M j, Y') : '&mdash;'; ?></td>
-                            <td><?php echo !empty($lt['result']) ? nl2br(htmlspecialchars($lt['result'])) : '<span style="color:#94a3b8;font-size:.82rem">No result yet</span>'; ?></td>
+                            <td class="findings-cell"><?php echo !empty($lt['result']) ? nl2br(htmlspecialchars($lt['result'])) : '<span class="muted-sub">No result yet</span>'; ?></td>
                         </tr>
                     <?php endwhile; else: ?>
                         <tr><td colspan="6" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v6.3L4.5 17a2.5 2.5 0 0 0 2 4h11a2.5 2.5 0 0 0 2-4L14 8.3V2"/><path d="M8.5 2h7"/><path d="M7 15h10"/></svg></div>No lab tests ordered for this client yet.</td></tr>
-                    <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <?php else: ?>
-                                    <span style="color:#94a3b8;font-size:.82rem">&mdash;</span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endwhile; else: ?>
-                        <tr><td colspan="7" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>No appointments recorded for this client yet.</td></tr>
                     <?php endif; ?>
                     </tbody>
                 </table>
@@ -313,10 +391,10 @@ $conn->close();
                     <tbody>
                     <?php if ($vitals_list && $vitals_list->num_rows > 0):
                         while ($v = $vitals_list->fetch_assoc()):
-                            $d = new DateTime($v['visit_date']);
+                            $d = !empty($v['visit_date']) ? new DateTime($v['visit_date']) : null;
                     ?>
                         <tr>
-                            <td><strong><?php echo $d->format('M j, Y'); ?></strong></td>
+                            <td><strong><?php echo $d ? $d->format('M j, Y') : '&mdash;'; ?></strong></td>
                             <td><?php echo $v['weight_kg'] ? $v['weight_kg'] . ' kg' : '&mdash;'; ?></td>
                             <td><?php echo $v['height_cm'] ? $v['height_cm'] . ' cm' : '&mdash;'; ?></td>
                             <td><span class="badge badge-active"><?php echo $v['blood_pressure'] ? htmlspecialchars($v['blood_pressure']) : '&mdash;'; ?></span></td>
@@ -348,8 +426,8 @@ $conn->close();
     <div class="modal-box">
         <button class="modal-close-btn" onclick="closeModal('apptVitalsModal')">&times;</button>
         <h2>Vitals — <span id="apptVitalsCode">&nbsp;</span></h2>
-        <p id="apptVitalsMeta" style="margin:-.3rem 0 .8rem;color:#64748b;font-size:.85rem"></p>
-        <div id="apptVitalsBody" style="min-height:80px"><p style="color:#94a3b8">Loading…</p></div>
+        <p id="apptVitalsMeta" class="muted-sub" style="margin:-.3rem 0 .8rem;font-size:.85rem"></p>
+        <div id="apptVitalsBody" style="min-height:80px"><p class="muted-sub">Loading…</p></div>
     </div>
 </div>
 
@@ -389,7 +467,7 @@ $conn->close();
     function openApptVitals(appointmentId, code){
         document.getElementById('apptVitalsCode').textContent = code || ('#' + appointmentId);
         document.getElementById('apptVitalsMeta').textContent = '';
-        document.getElementById('apptVitalsBody').innerHTML = '<p style="color:#94a3b8">Loading…</p>';
+        document.getElementById('apptVitalsBody').innerHTML = '<p class="muted-sub">Loading…</p>';
         openModal('apptVitalsModal');
         fetch('client_vitals_api.php?appointment_id=' + encodeURIComponent(appointmentId))
             .then(function(r){ return r.json(); })
@@ -403,7 +481,7 @@ $conn->close();
                 document.getElementById('apptVitalsMeta').textContent =
                     (a.appointment_date || '') + ' · ' + String(a.appointment_time || '').slice(0,5) + ' · Dr. ' + (a.doctor_name || '');
                 if (!j.vitals || !j.vitals.length) {
-                    body.innerHTML = '<p style="color:#94a3b8">No vitals were recorded for this consultation.</p>';
+                    body.innerHTML = '<p class="muted-sub">No vitals were recorded for this consultation.</p>';
                     return;
                 }
                 var rows = '';
