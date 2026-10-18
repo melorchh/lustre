@@ -20,7 +20,7 @@ $count_pending_results = qc($conn, "SELECT COUNT(*) c FROM appointments WHERE do
 $active_days = qc($conn, "SELECT COUNT(DISTINCT day_of_week) c FROM doctor_schedules WHERE doctor_id=$doctor_id AND is_active=1");
 
 $pending_results_list = $conn->query("
-    SELECT a.id, a.patient_id, a.appointment_date, a.appointment_time, a.service_requested,
+    SELECT a.id, a.patient_id, a.unique_code, a.appointment_date, a.appointment_time, a.service_requested,
            p.name AS patient_name, p.email AS patient_email
     FROM appointments a JOIN patients p ON a.patient_id = p.id
     WHERE a.doctor_id = $doctor_id AND a.status='completed' AND (a.result IS NULL OR a.result = '')
@@ -35,7 +35,7 @@ $recent_tests = $conn->query("
 ");
 
 $upcoming_appts = $conn->query("
-    SELECT a.appointment_date, a.appointment_time, a.status, a.patient_id, p.name AS patient_name, a.service_requested
+    SELECT a.id, a.appointment_date, a.appointment_time, a.status, a.patient_id, a.unique_code, p.name AS patient_name, a.service_requested
     FROM appointments a JOIN patients p ON a.patient_id = p.id
     WHERE a.doctor_id = $doctor_id AND a.appointment_date >= CURRENT_DATE AND a.status IN ('pending','confirmed')
     ORDER BY a.appointment_date ASC, a.appointment_time ASC LIMIT 6
@@ -49,7 +49,11 @@ $queue_waiting = 0;
 $queue_today = date('Y-m-d');
 $walkins = $conn->query("
     SELECT w.id, w.arrival_time, w.status, w.result, w.test_procedure,
-           p.id AS patient_id, p.name AS patient_name, p.contact
+           p.id AS patient_id, p.name AS patient_name, p.contact,
+           (SELECT a.id FROM appointments a
+             WHERE a.patient_id = w.patient_id AND a.doctor_id = w.doctor_id
+               AND a.appointment_date = w.arrival_date
+             ORDER BY a.id DESC LIMIT 1) AS appointment_id
     FROM walk_ins w
     JOIN patients p ON w.patient_id = p.id
     WHERE w.doctor_id = $doctor_id AND w.arrival_date = '$queue_today'
@@ -64,6 +68,7 @@ if ($walkins) {
             'id'        => (int)$w['id'],
             'queue'     => $qn,
             'patient_id'=> (int)$w['patient_id'],
+            'appointment_id' => ($w['appointment_id'] !== null && $w['appointment_id'] !== '') ? (int)$w['appointment_id'] : null,
             'name'      => $w['patient_name'],
             'contact'   => $w['contact'],
             'arrival'   => date('g:i A', strtotime($w['arrival_time'])),
@@ -195,6 +200,9 @@ function fill_color($s) {
                                     <?php if ($w['status'] === 'served'): ?>
                                     <button type="button" class="btn-sm btn-edit" style="margin-left:6px" onclick="openWalkinResultModal(<?php echo (int)$w['id']; ?>, 'edit')"><?php echo ($w['result'] !== '') ? 'Result' : 'Add Result'; ?></button>
                                     <?php endif; ?>
+                                    <button type="button" class="btn-sm btn-vitals" style="margin-left:6px" title="View patient vitals" data-apt="<?php echo $w['appointment_id'] !== null ? (int)$w['appointment_id'] : ''; ?>" data-pid="<?php echo (int)$w['patient_id']; ?>" data-name="<?php echo htmlspecialchars($w['name'], ENT_QUOTES); ?>" data-label="Walk-in &middot; <?php echo htmlspecialchars($w['arrival'], ENT_QUOTES); ?>" onclick="openAptVitalsView(this)">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals
+                                    </button>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -228,7 +236,11 @@ function fill_color($s) {
                                 <td><?php echo date('g:i A', strtotime($ap['appointment_time'])); ?></td>
                                 <td><strong><a href="client_profile.php?id=<?php echo (int)$ap['patient_id']; ?>" style="color:inherit;text-decoration:underline;text-underline-offset:2px"><?php echo htmlspecialchars($ap['patient_name']); ?></a></strong></td>
                                 <td><?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation'); ?></td>
-                                <td><span class="badge" style="<?php echo $bc; ?>"><?php echo ucfirst($ap['status']); ?></span></td>
+                                <td style="white-space:nowrap"><span class="badge" style="<?php echo $bc; ?>"><?php echo ucfirst($ap['status']); ?></span>
+                                    <button type="button" class="btn-sm btn-vitals" style="margin-left:6px" title="View patient vitals" data-apt="<?php echo (int)$ap['id']; ?>" data-pid="<?php echo (int)$ap['patient_id']; ?>" data-name="<?php echo htmlspecialchars($ap['patient_name'], ENT_QUOTES); ?>" data-code="<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>" data-label="<?php echo htmlspecialchars(date('M j, Y', strtotime($ap['appointment_date'])), ENT_QUOTES); ?> &middot; <?php echo htmlspecialchars(date('g:i A', strtotime($ap['appointment_time'])), ENT_QUOTES); ?>" onclick="openAptVitalsView(this)">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals
+                                    </button>
+                                </td>
                             </tr>
                             <?php endwhile; ?>
                         <?php else: ?>
@@ -261,6 +273,9 @@ function fill_color($s) {
                                 <td style="white-space:nowrap">
                                     <button class="btn-sm btn-edit" onclick="openDashResultModal(<?php echo (int)$pr['id']; ?>, '<?php echo addslashes(htmlspecialchars($pr['patient_name'])); ?>', '<?php echo addslashes(htmlspecialchars($pr['service_requested'] ?: 'General consultation')); ?>')">
                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Write Result
+                                    </button>
+                                    <button type="button" class="btn-sm btn-vitals" style="margin-left:6px" title="View patient vitals" data-apt="<?php echo (int)$pr['id']; ?>" data-pid="<?php echo (int)$pr['patient_id']; ?>" data-name="<?php echo htmlspecialchars($pr['patient_name'], ENT_QUOTES); ?>" data-code="<?php echo htmlspecialchars($pr['unique_code'] ?? '', ENT_QUOTES); ?>" data-label="<?php echo htmlspecialchars(date('M j, Y', strtotime($pr['appointment_date'])), ENT_QUOTES); ?> &middot; <?php echo htmlspecialchars(date('g:i A', strtotime($pr['appointment_time'])), ENT_QUOTES); ?>" onclick="openAptVitalsView(this)">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals
                                     </button>
                                 </td>
                             </tr>
@@ -337,6 +352,19 @@ function fill_color($s) {
             <div style="display:flex;gap:.75rem;flex-wrap:wrap">
                 <button class="btn-primary" onclick="saveWalkinResult()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Save Result</button>
                 <button class="btn-secondary" onclick="closeWalkinResultModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Vitals Modal -->
+    <div class="modal-overlay" id="patientVitalsModal">
+        <div class="modal-box" style="width:min(760px,94vw)">
+            <button class="modal-close-btn" onclick="closeVitalsModal()">&times;</button>
+            <h2>Patient Vitals</h2>
+            <div id="pvWho" style="margin:-.35rem 0 .9rem;font-size:.92rem;color:var(--gray-600)"><!-- filled by JS --></div>
+            <div id="pvBody"><p style="color:#94a3b8">Loading vitals...</p></div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="closeVitalsModal()">Close</button>
             </div>
         </div>
     </div>
@@ -418,6 +446,7 @@ function fill_color($s) {
             const resultBtn = w.status==='served'
                 ? ' <button type="button" class="btn-sm btn-edit" style="margin-left:4px" onclick="openWalkinResultModal('+w.id+',\'edit\')">'+((w.result&&w.result.length)?'Result':'Add Result')+'</button>'
                 : '';
+            const vitalsBtn = ' <button type="button" class="btn-sm btn-vitals" style="margin-left:4px" title="View patient vitals" data-apt="'+(w.appointment_id==null?'':parseInt(w.appointment_id,10))+'" data-pid="'+parseInt(w.patient_id,10)+'" data-name="'+wqEsc(w.name)+'" data-label="Walk-in &middot; '+wqEsc(w.arrival)+'" onclick="openAptVitalsView(this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals</button>';
             return '<tr>' +
                 '<td><span class="badge" style="background:#16a34a;color:#fff;font-size:1rem;font-weight:800">#'+w.queue+'</span></td>' +
                 '<td><strong>'+(w.patient_id?'<a href="client_profile.php?id='+parseInt(w.patient_id,10)+'" style="color:inherit;text-decoration:underline;text-underline-offset:2px">':'')+wqEsc(w.name)+(w.patient_id?'</a>':'')+'</strong><br><small style="color:#64748b">'+wqEsc(w.contact)+'</small></td>' +
@@ -427,6 +456,7 @@ function fill_color($s) {
                     '<span class="badge" style="'+(WQ_COLORS[w.status]||'')+'">'+wqLabel(w.status)+'</span> ' +
                     '<select class="action-select" data-id="'+w.id+'" data-prev="'+wqEsc(w.status)+'" onchange="updateWalkinStatus(this)" aria-label="Queue status">'+opts+'</select>' +
                     resultBtn +
+                    vitalsBtn +
                 '</td></tr>';
         }
         let wqBusy = false, wqPending = false;
@@ -556,6 +586,65 @@ function fill_color($s) {
         document.getElementById('walkinResultModal').addEventListener('click', function(e){
             if(e.target === this) closeWalkinResultModal();
         });
+
+        /* -- Patient vitals viewer -- */
+        function pvEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+        function pvCell(val,suffix){
+            if(val===null||val===undefined||val==='')return '<td style="color:#94a3b8">&mdash;</td>';
+            return '<td>'+pvEsc(val)+(suffix||'')+'</td>';
+        }
+        function pvTable(list){
+            if(!list||!list.length)return '';
+            var h='<div class="table-scroll" style="margin-top:.4rem"><table><thead><tr><th>Visit Date</th><th>Weight</th><th>Height</th><th>Blood Pressure</th><th>Heart Rate</th><th>Fundal Height</th><th>Notes</th></tr></thead><tbody>';
+            for(var i=0;i<list.length;i++){
+                var v=list[i];
+                h+='<tr>'+pvCell(v.visit_date)+pvCell(v.weight_kg,' kg')+pvCell(v.height_cm,' cm')+pvCell(v.blood_pressure)+pvCell(v.heart_rate,' bpm')+pvCell(v.fundal_height,' cm')+pvCell(v.notes)+'</tr>';
+            }
+            return h+'</tbody></table></div>';
+        }
+        function closeVitalsModal(){
+            var m=document.getElementById('patientVitalsModal');
+            if(m)m.classList.remove('active');
+            document.body.style.overflow='';
+        }
+        function openAptVitalsView(src){
+            var d={
+                appointment_id: parseInt(src.getAttribute('data-apt')||'0',10)||0,
+                patient_id: parseInt(src.getAttribute('data-pid')||'0',10)||0,
+                name: src.getAttribute('data-name')||'',
+                code: src.getAttribute('data-code')||'',
+                label: src.getAttribute('data-label')||''
+            };
+            var m=document.getElementById('patientVitalsModal');
+            var body=document.getElementById('pvBody');
+            document.getElementById('pvWho').innerHTML='<strong>'+pvEsc(d.name)+'</strong> &middot; '+pvEsc(d.code||('#'+(d.appointment_id||d.patient_id)))+(d.label?' &middot; '+pvEsc(d.label):'');
+            body.innerHTML='<p style="color:#94a3b8">Loading vitals...</p>';
+            m.classList.add('active');
+            document.body.style.overflow='hidden';
+            function patientFallback(){
+                if(!d.patient_id){body.innerHTML='<p style="color:#94a3b8">No vitals recorded for this visit yet.</p>';return;}
+                fetch('client_vitals_api.php?patient_id='+encodeURIComponent(d.patient_id))
+                .then(function(r){return r.json();})
+                .then(function(j){
+                    if(j.ok&&j.vitals&&j.vitals.length){
+                        body.innerHTML='<p style="margin:0 0 .6rem;font-size:.87rem;color:#64748b">No vitals recorded for this visit &mdash; showing this patient&rsquo;s latest records instead:</p>'+pvTable(j.vitals);
+                    }else{
+                        body.innerHTML='<p style="color:#94a3b8">No vitals recorded for this patient yet.</p>';
+                    }
+                })
+                .catch(function(){body.innerHTML='<p style="color:#ef4444">Could not load vitals. Please try again.</p>';});
+            }
+            if(!d.appointment_id){patientFallback();return;}
+            fetch('client_vitals_api.php?appointment_id='+encodeURIComponent(d.appointment_id))
+            .then(function(r){return r.json();})
+            .then(function(j){
+                if(j.ok&&j.vitals&&j.vitals.length){body.innerHTML=pvTable(j.vitals);}
+                else{patientFallback();}
+            })
+            .catch(function(){body.innerHTML='<p style="color:#ef4444">Could not load vitals. Please try again.</p>';});
+        }
+        (function(){var m=document.getElementById('patientVitalsModal');if(m)m.addEventListener('click',function(e){if(e.target===this)closeVitalsModal();});})();
+
         setInterval(()=>{ if(!document.hidden) refreshQueue(); }, 20000);
         document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refreshQueue(); });
 

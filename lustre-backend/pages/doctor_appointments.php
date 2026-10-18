@@ -160,6 +160,9 @@ $conn->close();
                             <?php endif; ?>
                         </td>
                         <td style="white-space:nowrap">
+                            <button class="btn-sm btn-vitals" title="View patient vitals" data-apt="<?php echo (int)$ap['id']; ?>" data-pid="<?php echo (int)$ap['patient_id']; ?>" data-name="<?php echo htmlspecialchars($ap['patient_name'], ENT_QUOTES); ?>" data-code="<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>" data-label="<?php echo htmlspecialchars($date_fmt, ENT_QUOTES); ?> &middot; <?php echo htmlspecialchars($time_fmt, ENT_QUOTES); ?>" onclick="openAptVitalsView(this)">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals
+                            </button>
                             <?php if (in_array($s, ['pending', 'confirmed'])): ?>
                                 <button class="btn-sm btn-edit" onclick="openResultModal(<?php echo $ap['id']; ?>, '<?php echo addslashes(htmlspecialchars($ap['patient_name'])); ?>', '', false)">
                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Complete &amp; Result
@@ -206,6 +209,19 @@ $conn->close();
         <div style="display:flex;gap:.75rem;flex-wrap:wrap">
             <button class="btn-primary" onclick="saveResult()" id="saveResultBtn"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Save Result</button>
             <button class="btn-secondary" onclick="closeResultModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Patient Vitals Modal -->
+<div class="modal-overlay" id="patientVitalsModal">
+    <div class="modal-box" style="width:min(760px,94vw)">
+        <button class="modal-close-btn" onclick="closeVitalsModal()">&times;</button>
+        <h2>Patient Vitals</h2>
+        <div id="pvWho" style="margin:-.35rem 0 .9rem;font-size:.92rem;color:var(--gray-600)"><!-- filled by JS --></div>
+        <div id="pvBody"><p style="color:#94a3b8">Loading vitals...</p></div>
+        <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="closeVitalsModal()">Close</button>
         </div>
     </div>
 </div>
@@ -292,6 +308,64 @@ $conn->close();
         });
     }
     document.getElementById('searchInput').addEventListener('input', filterTable);
+
+    /* -- Patient vitals viewer -- */
+    function pvEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+    function pvCell(val,suffix){
+        if(val===null||val===undefined||val==='')return '<td style="color:#94a3b8">&mdash;</td>';
+        return '<td>'+pvEsc(val)+(suffix||'')+'</td>';
+    }
+    function pvTable(list){
+        if(!list||!list.length)return '';
+        var h='<div class="table-scroll" style="margin-top:.4rem"><table><thead><tr><th>Visit Date</th><th>Weight</th><th>Height</th><th>Blood Pressure</th><th>Heart Rate</th><th>Fundal Height</th><th>Notes</th></tr></thead><tbody>';
+        for(var i=0;i<list.length;i++){
+            var v=list[i];
+            h+='<tr>'+pvCell(v.visit_date)+pvCell(v.weight_kg,' kg')+pvCell(v.height_cm,' cm')+pvCell(v.blood_pressure)+pvCell(v.heart_rate,' bpm')+pvCell(v.fundal_height,' cm')+pvCell(v.notes)+'</tr>';
+        }
+        return h+'</tbody></table></div>';
+    }
+    function closeVitalsModal(){
+        var m=document.getElementById('patientVitalsModal');
+        if(m)m.classList.remove('active');
+        document.body.style.overflow='';
+    }
+    function openAptVitalsView(src){
+        var d={
+            appointment_id: parseInt(src.getAttribute('data-apt')||'0',10)||0,
+            patient_id: parseInt(src.getAttribute('data-pid')||'0',10)||0,
+            name: src.getAttribute('data-name')||'',
+            code: src.getAttribute('data-code')||'',
+            label: src.getAttribute('data-label')||''
+        };
+        var m=document.getElementById('patientVitalsModal');
+        var body=document.getElementById('pvBody');
+        document.getElementById('pvWho').innerHTML='<strong>'+pvEsc(d.name)+'</strong> &middot; '+pvEsc(d.code||('#'+(d.appointment_id||d.patient_id)))+(d.label?' &middot; '+pvEsc(d.label):'');
+        body.innerHTML='<p style="color:#94a3b8">Loading vitals...</p>';
+        m.classList.add('active');
+        document.body.style.overflow='hidden';
+        function patientFallback(){
+            if(!d.patient_id){body.innerHTML='<p style="color:#94a3b8">No vitals recorded for this visit yet.</p>';return;}
+            fetch('client_vitals_api.php?patient_id='+encodeURIComponent(d.patient_id))
+            .then(function(r){return r.json();})
+            .then(function(j){
+                if(j.ok&&j.vitals&&j.vitals.length){
+                    body.innerHTML='<p style="margin:0 0 .6rem;font-size:.87rem;color:#64748b">No vitals recorded for this visit &mdash; showing this patient&rsquo;s latest records instead:</p>'+pvTable(j.vitals);
+                }else{
+                    body.innerHTML='<p style="color:#94a3b8">No vitals recorded for this patient yet.</p>';
+                }
+            })
+            .catch(function(){body.innerHTML='<p style="color:#ef4444">Could not load vitals. Please try again.</p>';});
+        }
+        if(!d.appointment_id){patientFallback();return;}
+        fetch('client_vitals_api.php?appointment_id='+encodeURIComponent(d.appointment_id))
+        .then(function(r){return r.json();})
+        .then(function(j){
+            if(j.ok&&j.vitals&&j.vitals.length){body.innerHTML=pvTable(j.vitals);}
+            else{patientFallback();}
+        })
+        .catch(function(){body.innerHTML='<p style="color:#ef4444">Could not load vitals. Please try again.</p>';});
+    }
+    (function(){var m=document.getElementById('patientVitalsModal');if(m)m.addEventListener('click',function(e){if(e.target===this)closeVitalsModal();});})();
 
     /* -- LustreMDC Smooth Transitions -- */
     (function(){
