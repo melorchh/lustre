@@ -2053,6 +2053,10 @@ table small {
   color: var(--green);
   transform: translateY(-1px);
 }
+.vitals-check {
+  color: var(--green);
+  font-weight: 800;
+}
 
 /* ── Appointment slip modal content ── */
 .slip-body {
