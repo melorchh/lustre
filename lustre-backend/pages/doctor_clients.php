@@ -44,7 +44,7 @@ $conn->close();
             <nav class="sidebar-nav">
                 <a href="doctor_dashboard.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="rail-label">Dashboard</span></a>
                 <a href="doctor_appointments.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 18l3 3 3-3"/></svg></span><span class="rail-label">Appointments</span></a>
-                <a href="doctor_clients.php" class="nav-item active"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="rail-label">Clients</span></a>
+                <a href="doctor_clients.php" class="nav-item active"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="rail-label">Clients</span></a>
                 <a href="doctor_laboratory.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v6.3L4.5 17a2.5 2.5 0 0 0 2 4h11a2.5 2.5 0 0 0 2-4L14 8.3V2"/><path d="M8.5 2h7"/><path d="M7 15h10"/></svg></span><span class="rail-label">Laboratory</span></a>
                 <a href="doctor_schedule.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span class="rail-label">Availability</span></a>
             </nav>
@@ -76,30 +76,45 @@ $conn->close();
     </div>
     <div class="table-scroll">
         <table id="patientsTable">
-            <thead><tr><th>Client ID</th><th>Name</th><th>Type</th><th>Patient</th><th>Age</th><th>Weight</th><th>Height</th><th>Contact</th><th>Address</th><th>Appointments</th><th>Last Visit</th><th>Registered</th></tr></thead>
+            <thead><tr><th>Client ID</th><th>Name</th><th>Type</th><th>Address</th></tr></thead>
        <tbody>
 <?php while ($p = $patients->fetch_assoc()):
     $created = !empty($p['created_at']) ? new DateTime($p['created_at']) : null;
     $last_apt = !empty($p['last_appointment']) ? new DateTime($p['last_appointment']) : null;
     $client_code = $p['unique_code'] ?? ('CL-' . str_pad((string)$p['id'], 6, '0', STR_PAD_LEFT));
+    $pid = (int)$p['id'];
+    $age_txt = $p['age'] !== null ? $p['age'] . ' yrs' : '—';
+    $weight_txt = $p['weight_kg'] !== null ? $p['weight_kg'] . ' kg' : '—';
+    $height_txt = $p['height_cm'] !== null ? $p['height_cm'] . ' cm' : '—';
+    $appt_txt = $p['appointment_count'] . ($p['appointment_count'] == 1 ? ' appointment' : ' appointments');
+    $last_txt = $last_apt ? $last_apt->format('M j, Y') : 'Never';
+    $reg_txt = $created ? $created->format('M j, Y') : '—';
 ?>
-<tr data-name="<?php echo htmlspecialchars(strtolower($p['name']), ENT_QUOTES); ?>" data-address="<?php echo htmlspecialchars(strtolower($p['address']), ENT_QUOTES); ?>" data-age="<?php echo (int)$p['age']; ?>">
+<tr class="client-row" data-pid="<?php echo $pid; ?>" data-name="<?php echo htmlspecialchars(strtolower($p['name']), ENT_QUOTES); ?>" data-address="<?php echo htmlspecialchars(strtolower($p['address']), ENT_QUOTES); ?>" data-age="<?php echo (int)$p['age']; ?>" onclick="toggleClientDetails(<?php echo $pid; ?>)" title="Click to view details">
     <td><strong><?php echo htmlspecialchars($client_code); ?></strong></td>
-    <td><a href="client_profile.php?id=<?php echo (int)$p['id']; ?>" style="color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px"><?php echo htmlspecialchars($p['name']); ?></a></td>
+    <td><span class="client-name"><span><?php echo htmlspecialchars($p['name']); ?></span><svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></td>
     <td><?php if (!empty($p['is_walk_in'])): ?><span class="badge badge-urgent">Walk-In</span><?php else: ?><span class="badge badge-active">Registered</span><?php endif; ?></td>
-    <td><?php echo $p['patient_type'] ? '<span class="badge badge-normal">' . htmlspecialchars(ucfirst($p['patient_type'])) . '</span>' : '&mdash;'; ?></td>
-    <td><?php echo $p['age'] !== null ? $p['age'] . ' yrs' : '&mdash;'; ?></td>
-    <td><?php echo $p['weight_kg'] !== null ? $p['weight_kg'] . ' kg' : '&mdash;'; ?></td>
-    <td><?php echo $p['height_cm'] !== null ? $p['height_cm'] . ' cm' : '&mdash;'; ?></td>
-    <td><?php echo htmlspecialchars($p['contact']); ?></td>
-    <td><?php echo htmlspecialchars($p['address']); ?></td>
-    <td><span class="badge badge-active"><?php echo $p['appointment_count']; ?></span></td>
-    <td><?php echo $last_apt ? $last_apt->format('M j, Y') : 'Never'; ?></td>
-    <td><?php echo $created ? $created->format('M j, Y') : '&mdash;'; ?></td>
+    <td><?php echo $p['address'] !== '' && $p['address'] !== null ? htmlspecialchars($p['address']) : '&mdash;'; ?></td>
+</tr>
+<tr class="client-detail" id="client-detail-<?php echo $pid; ?>" style="display:none">
+    <td colspan="4">
+        <div class="cd-grid">
+            <div class="cd-item"><label>Email</label><span><?php echo htmlspecialchars($p['email']); ?></span></div>
+            <div class="cd-item"><label>Contact</label><span><?php echo htmlspecialchars($p['contact']); ?></span></div>
+            <div class="cd-item"><label>Age</label><span><?php echo $age_txt; ?></span></div>
+            <div class="cd-item"><label>Patient Type</label><span><?php echo $p['patient_type'] ? htmlspecialchars(ucfirst($p['patient_type'])) : '—'; ?></span></div>
+            <div class="cd-item"><label>Weight</label><span><?php echo $weight_txt; ?></span></div>
+            <div class="cd-item"><label>Height</label><span><?php echo $height_txt; ?></span></div>
+            <div class="cd-item"><label>Appointments</label><span><?php echo $appt_txt; ?></span></div>
+            <div class="cd-item"><label>Last Visit</label><span><?php echo $last_txt; ?></span></div>
+            <div class="cd-item"><label>Registered</label><span><?php echo $reg_txt; ?></span></div>
+        </div>
+        <a class="cd-profile-link" href="client_profile.php?id=<?php echo $pid; ?>" onclick="event.stopPropagation()">View full profile &rarr;</a>
+    </td>
 </tr>
 <?php endwhile; ?>
 <?php if ($patients->num_rows === 0): ?>
-<tr><td colspan="12" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>No clients found.</td></tr>
+<tr><td colspan="4" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></div>No clients found.</td></tr>
 <?php endif; ?>
 </tbody>
         </table>
@@ -125,15 +140,31 @@ $conn->close();
             }
           }
         }
+        function toggleClientDetails(pid){
+            var det=document.getElementById('client-detail-'+pid);
+            if(!det)return;
+            var open=det.style.display!=='none';
+            det.style.display=open?'none':'table-row';
+            var chev=document.querySelector('.client-row[data-pid="'+pid+'"] .chev');
+            if(chev)chev.style.transform=open?'':'rotate(90deg)';
+        }
+        function closeClientDetails(pid){
+            var det=document.getElementById('client-detail-'+pid);
+            if(det)det.style.display='none';
+            var chev=document.querySelector('.client-row[data-pid="'+pid+'"] .chev');
+            if(chev)chev.style.transform='';
+        }
         function filterPatients(){
             const name=document.getElementById('searchName').value.toLowerCase().trim();
             const addr=document.getElementById('searchAddr').value.toLowerCase().trim();
             const age=document.getElementById('searchAge').value.trim();
-            document.querySelectorAll('#patientsTable tbody tr[data-name]').forEach(r=>{
+            document.querySelectorAll('#patientsTable tbody tr.client-row[data-name]').forEach(r=>{
                 const nameOk=!name||(r.dataset.name||'').indexOf(name)!==-1;
                 const addrOk=!addr||(r.dataset.address||'').indexOf(addr)!==-1;
                 const ageOk=!age||String(r.dataset.age||'').indexOf(age)!==-1;
-                r.style.display=(nameOk&&addrOk&&ageOk)?'':'none';
+                const visible=nameOk&&addrOk&&ageOk;
+                r.style.display=visible?'':'none';
+                if(!visible)closeClientDetails(r.dataset.pid);
             });
         }
 
@@ -152,6 +183,23 @@ $conn->close();
         tr{transition:background .15s}
       `;
       document.head.appendChild(s);
+      const c=document.createElement('style');
+      c.textContent=`
+        .client-row{cursor:pointer;transition:background .15s}
+        .client-row:hover{background:rgba(15,23,42,.045)}
+        [data-theme="dark"] .client-row:hover{background:rgba(255,255,255,.05)}
+        .client-name{display:inline-flex;align-items:center;gap:.5rem;font-weight:700;flex-wrap:wrap}
+        .chev{transition:transform .18s ease;flex:none;color:#94a3b8}
+        .client-detail>td{background:#f8fafc;padding:1rem 1.15rem !important}
+        [data-theme="dark"] .client-detail>td{background:rgba(255,255,255,.04)}
+        .cd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem 1.1rem}
+        .cd-item label{display:block;font-size:.66rem;text-transform:uppercase;letter-spacing:.07em;color:#64748b;font-weight:700;margin-bottom:.12rem}
+        .cd-item span{font-weight:600;font-size:.9rem;color:#0f172a;word-break:break-word}
+        [data-theme="dark"] .cd-item span{color:#e2e8f0}
+        .cd-profile-link{display:inline-block;margin-top:.9rem;font-size:.85rem;font-weight:700;color:#16a34a;text-decoration:none}
+        .cd-profile-link:hover{text-decoration:underline}
+      `;
+      document.head.appendChild(c);
       document.addEventListener('click',function(e){
         const link=e.target.closest('a[href]');
         if(!link)return;
