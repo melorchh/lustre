@@ -178,7 +178,9 @@ $conn->close();
             }
           }
         }
+        var __touchGuardUntil=0;
         function toggleClientDetails(pid){
+            if(Date.now()<__touchGuardUntil)return;
             var det=document.getElementById('client-detail-'+pid);
             if(!det)return;
             var open=det.style.display!=='none';
@@ -192,6 +194,27 @@ $conn->close();
             var chev=document.querySelector('.client-row[data-pid="'+pid+'"] .chev');
             if(chev)chev.style.transform='';
         }
+        var __rowTouch=null;
+        document.addEventListener('touchstart',function(e){
+            var row=e.target.closest?e.target.closest('.client-row'):null;
+            if(!row){__rowTouch=null;return;}
+            var t=e.touches[0];
+            __rowTouch={row:row,x:t.clientX,y:t.clientY};
+        },{passive:true});
+        document.addEventListener('touchend',function(e){
+            if(!__rowTouch)return;
+            var rec=__rowTouch;__rowTouch=null;
+            var row=e.target.closest?e.target.closest('.client-row'):null;
+            if(!row||row!==rec.row)return;
+            var t=e.changedTouches[0];
+            if(Math.abs(t.clientX-rec.x)>12||Math.abs(t.clientY-rec.y)>12)return;
+            if(e.target.closest('a[href]'))return;
+            __touchGuardUntil=0;
+            toggleClientDetails(parseInt(row.getAttribute('data-pid'),10));
+            __touchGuardUntil=Date.now()+600;
+            if(e.cancelable)e.preventDefault();
+        },{passive:false});
+        window.addEventListener('pageshow',function(e){if(e.persisted)document.body.classList.remove('__leaving');});
         function filterPatients(){
             const name=document.getElementById('searchName').value.toLowerCase().trim();
             const addr=document.getElementById('searchAddr').value.toLowerCase().trim();
@@ -223,7 +246,7 @@ $conn->close();
       document.head.appendChild(s);
       const c=document.createElement('style');
       c.textContent=`
-        .client-row{cursor:pointer;transition:background .15s}
+        .client-row{cursor:pointer;transition:background .15s;touch-action:manipulation}
         .client-row:hover{background:rgba(15,23,42,.045)}
         [data-theme="dark"] .client-row:hover{background:rgba(255,255,255,.05)}
         .client-name{display:inline-flex;align-items:center;gap:.5rem;font-weight:700;flex-wrap:wrap}

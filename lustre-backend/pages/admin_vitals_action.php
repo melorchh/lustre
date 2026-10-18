@@ -108,6 +108,92 @@ switch ($action) {
         $stmt->close();
         break;
 
+    case 'save_appointment_vitals':
+        $appointment_id = (int)($_POST['appointment_id'] ?? 0);
+        $visit_date = trim($_POST['visit_date'] ?? '');
+        $weight     = trim($_POST['weight_kg'] ?? '');
+        $height     = trim($_POST['height_cm'] ?? '');
+        $bp         = trim($_POST['blood_pressure'] ?? '');
+        $hr         = trim($_POST['heart_rate'] ?? '');
+        $fh         = trim($_POST['fundal_height'] ?? '');
+        $notes      = trim($_POST['notes'] ?? '');
+
+        if ($appointment_id <= 0) { echo 'Invalid appointment.'; exit; }
+        if ($visit_date === '') { echo 'Visit date is required.'; exit; }
+
+        // The appointment must exist and belong to the posted patient.
+        $chk = $conn->prepare("SELECT patient_id FROM appointments WHERE id = ?");
+        $chk->bind_param("i", $appointment_id);
+        $chk->execute();
+        $appt = $chk->get_result()->fetch_assoc();
+        $chk->close();
+        if (!$appt || (int)$appt['patient_id'] !== $patient_id) {
+            echo 'Appointment does not match this patient.';
+            exit;
+        }
+
+        if ($weight === '' && $height === '' && $bp === '' && $hr === '' && $fh === '') {
+            echo 'Enter at least one vital sign measurement.';
+            exit;
+        }
+        if ($weight !== '' && (!is_numeric($weight) || (float)$weight <= 0)) { echo 'Please provide a valid weight.'; exit; }
+        if ($height !== '' && (!is_numeric($height) || (float)$height <= 0 || (float)$height > 300)) { echo 'Please enter a valid height (30-300 cm).'; exit; }
+        if ($bp !== '' && !preg_match('/^\d{2,3}\/\d{2,3}$/', $bp)) { echo 'Blood pressure must look like 110/70.'; exit; }
+        if ($hr !== '' && (!is_numeric($hr) || (int)$hr < 0 || (int)$hr > 250)) { echo 'Heart rate must be 0-250 bpm.'; exit; }
+        if ($fh !== '' && (!is_numeric($fh) || (float)$fh < 0 || (float)$fh > 50)) { echo 'Invalid fundal height.'; exit; }
+
+        $w = $weight !== '' ? (float)$weight : null;
+        $h = $height !== '' ? (float)$height : null;
+        $b = $bp !== '' ? $bp : null;
+        $r = $hr !== '' ? (int)$hr : null;
+        $f = $fh !== '' ? (float)$fh : null;
+        $n = $notes !== '' ? $notes : null;
+
+        // One vitals record per appointment: update the latest row, else insert.
+        $ex = $conn->prepare("SELECT id FROM vitals WHERE appointment_id = ? ORDER BY id DESC LIMIT 1");
+        $ex->bind_param("i", $appointment_id);
+        $ex->execute();
+        $existing = $ex->get_result()->fetch_assoc();
+        $ex->close();
+
+        $ok = false;
+        if ($existing) {
+            $vid = (int)$existing['id'];
+            $stmt = $conn->prepare("UPDATE vitals SET visit_date=?, weight_kg=?, height_cm=?, blood_pressure=?, heart_rate=?, fundal_height=?, notes=? WHERE id=?");
+            $stmt->bind_param("sddsidsi", $visit_date, $w, $h, $b, $r, $f, $n, $vid);
+            $ok = $stmt->execute();
+            $stmt->close();
+        } else {
+            $stmt = $conn->prepare("INSERT INTO vitals (patient_id, appointment_id, visit_date, weight_kg, height_cm, blood_pressure, heart_rate, fundal_height, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("iisddsids", $patient_id, $appointment_id, $visit_date, $w, $h, $b, $r, $f, $n);
+            $ok = $stmt->execute();
+            $stmt->close();
+        }
+
+        if ($ok) {
+            // Keep the patient profile in sync with the latest measurements.
+            if ($w !== null && $h !== null) {
+                $upd = $conn->prepare("UPDATE patients SET weight_kg = ?, height_cm = ? WHERE id = ?");
+                $upd->bind_param("ddi", $w, $h, $patient_id);
+                $upd->execute();
+                $upd->close();
+            } elseif ($w !== null) {
+                $upd = $conn->prepare("UPDATE patients SET weight_kg = ? WHERE id = ?");
+                $upd->bind_param("di", $w, $patient_id);
+                $upd->execute();
+                $upd->close();
+            } elseif ($h !== null) {
+                $upd = $conn->prepare("UPDATE patients SET height_cm = ? WHERE id = ?");
+                $upd->bind_param("di", $h, $patient_id);
+                $upd->execute();
+                $upd->close();
+            }
+            echo 'success';
+        } else {
+            echo 'Failed to save vitals.';
+        }
+        break;
+
     case 'delete_vital':
         $id = (int)($_POST['vital_id'] ?? 0);
         if ($id <= 0) { echo 'Invalid record.'; exit; }

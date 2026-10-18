@@ -55,7 +55,11 @@ if ($action === 'save_result') {
 $today   = date('Y-m-d');
 $walkins = $conn->query("
     SELECT w.id, w.arrival_time, w.status, w.result, w.test_procedure,
-           p.id AS patient_id, p.name AS patient_name, p.contact
+           p.id AS patient_id, p.name AS patient_name, p.contact,
+           (SELECT a.id FROM appointments a
+             WHERE a.patient_id = w.patient_id AND a.doctor_id = w.doctor_id
+               AND a.appointment_date = w.arrival_date
+             ORDER BY a.id DESC LIMIT 1) AS appointment_id
     FROM walk_ins w
     JOIN patients p ON w.patient_id = p.id
     WHERE w.doctor_id = $doctor_id AND w.arrival_date = '$today'
@@ -75,6 +79,7 @@ if ($walkins) {
             'id'        => (int)$w['id'],
             'queue'     => $n,
             'patient_id'=> (int)$w['patient_id'],
+            'appointment_id' => ($w['appointment_id'] !== null && $w['appointment_id'] !== '') ? (int)$w['appointment_id'] : null,
             'name'      => $w['patient_name'],
             'contact'   => $w['contact'],
             'arrival'   => date('g:i A', strtotime($w['arrival_time'])),

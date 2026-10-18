@@ -2,6 +2,8 @@
 require __DIR__ . '/../src/session.php';
 if (!isset($_SESSION["admin_id"])) { header("Location: admin_login.php"); exit; }
 require_once __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/unique_ids.php';
+ensure_unique_ids($conn);
 $admin_name = $_SESSION["admin_name"];
 
 // Stats
@@ -13,9 +15,10 @@ $today_count        = $conn->query("SELECT COUNT(*) c FROM appointments WHERE ap
 
 // All appointments
 $appointments = $conn->query("
-    SELECT a.id, a.appointment_date, a.appointment_time, a.status, a.payment_status,
+    SELECT a.id, a.patient_id, a.unique_code, a.appointment_date, a.appointment_time, a.status, a.payment_status,
            a.is_urgent, a.reschedule_count, a.updated_at, a.appointment_duration,
            a.service_requested,
+           (SELECT COUNT(*) FROM vitals v WHERE v.appointment_id = a.id) AS vital_count,
            p.name AS patient_name, p.email AS patient_email,
            p.address AS patient_address, p.age AS patient_age,
            d.name AS doctor_name, d.specialty
@@ -218,7 +221,7 @@ $conn->close();
                             </select>
                         </td>
                         <td><?php echo $updated->format('M j, Y'); ?><br><small style="color:#94a3b8"><?php echo $updated->format('g:i A'); ?></small>
-                            <div style="margin-top:6px">
+                            <div style="margin-top:6px;display:flex;flex-direction:column;gap:6px">
                                 <button type="button" class="btn-slip" title="Print appointment slip" onclick="openSlip(<?php echo htmlspecialchars(json_encode([
                                     'patient' => $apt['patient_name'],
                                     'doctor'  => $apt['doctor_name'],
@@ -230,6 +233,16 @@ $conn->close();
                                     'payment' => ucfirst($ps),
                                 ])); ?>)">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg> Slip
+                                </button>
+                                <?php $has_vitals = (int)($apt['vital_count'] ?? 0) > 0; ?>
+                                <button type="button" class="btn-slip" data-vitals-btn="<?php echo (int)$apt['id']; ?>" title="<?php echo $has_vitals ? 'Edit recorded vitals' : 'Record vitals for this appointment'; ?>" onclick="openAptVitals(<?php echo htmlspecialchars(json_encode([
+                                    'id'         => (int)$apt['id'],
+                                    'patient_id' => (int)$apt['patient_id'],
+                                    'code'       => $apt['unique_code'],
+                                    'patient'    => $apt['patient_name'],
+                                    'date'       => $apt['appointment_date'],
+                                ])); ?>)">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals<?php if ($has_vitals): ?> <span class="vitals-check">&#10003;</span><?php endif; ?>
                                 </button>
                             </div>
                         </td>
@@ -252,6 +265,57 @@ $conn->close();
                     <button type="button" class="btn-secondary" onclick="closeModal('slipModal')">Close</button>
                     <button type="button" class="btn-primary" onclick="printSlip()">Print Slip</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Record / Edit Vitals Modal -->
+        <div class="modal-overlay" id="aptVitalsModal">
+            <div class="modal-box">
+                <button class="modal-close-btn" onclick="closeModal('aptVitalsModal')">&times;</button>
+                <h2>Record Vitals</h2>
+                <div id="avWho" style="margin:-.35rem 0 1rem;font-size:.92rem;color:var(--gray-600)"><!-- filled by JS --></div>
+                <form id="aptVitalsForm" onsubmit="return saveAptVitals(event)">
+                    <input type="hidden" name="appointment_id" id="avAppointmentId">
+                    <input type="hidden" name="patient_id" id="avPatientId">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Visit Date *</label>
+                            <input type="date" name="visit_date" id="avVisitDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Weight (kg)</label>
+                            <input type="number" name="weight_kg" step="0.1" min="0" placeholder="e.g. 58.5">
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Height (cm)</label>
+                            <input type="number" name="height_cm" step="0.1" min="0" placeholder="e.g. 160.0">
+                        </div>
+                        <div class="form-group">
+                            <label>Blood Pressure</label>
+                            <input type="text" name="blood_pressure" placeholder="e.g. 110/70" pattern="\d{2,3}/\d{2,3}" title="Format: systolic/diastolic (e.g. 110/70)">
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Heart Rate (bpm)</label>
+                            <input type="number" name="heart_rate" min="0" max="250" placeholder="e.g. 78">
+                        </div>
+                        <div class="form-group">
+                            <label>Fundal Height (cm)</label>
+                            <input type="number" name="fundal_height" step="0.1" min="0" max="50" placeholder="e.g. 24.0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea name="notes" rows="2" style="min-height:74px" placeholder="Optional notes"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeModal('aptVitalsModal')">Cancel</button>
+                        <button type="submit" class="btn-primary">Save Vitals</button>
+                    </div>
+                </form>
             </div>
         </div>
     </main>
@@ -359,6 +423,77 @@ $conn->close();
             '</div><script>window.onload=function(){window.print();}<\/script></body></html>');
         w.document.close();
         showToast('Slip ready to print','success');
+    }
+
+    // ---- Record / edit vitals for an appointment ----
+    function escH(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+    function fmtAptDate(iso){
+        if(!iso)return '';
+        var p=String(iso).slice(0,10).split('-');
+        if(p.length<3)return String(iso);
+        var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var mi=parseInt(p[1],10)-1;
+        return (m[mi]||p[1])+' '+parseInt(p[2],10)+', '+p[0];
+    }
+    (function(){
+        var f=document.getElementById('aptVitalsForm');
+        if(f)f.addEventListener('input',function(){this.dataset.touched='1';});
+    })();
+    function openAptVitals(d){
+        var form=document.getElementById('aptVitalsForm');
+        form.reset();
+        form.dataset.touched='';
+        document.getElementById('avAppointmentId').value=d.id;
+        document.getElementById('avPatientId').value=d.patient_id;
+        document.getElementById('avVisitDate').value=String(d.date||'').slice(0,10);
+        document.getElementById('avWho').innerHTML='<strong>'+escH(d.patient)+'</strong> &middot; '+escH(d.code||('#'+d.id))+' &middot; '+escH(fmtAptDate(d.date));
+        openModal('aptVitalsModal');
+        // Prefill any vitals already recorded for this appointment.
+        fetch('client_vitals_api.php?appointment_id='+encodeURIComponent(d.id))
+        .then(function(r){return r.json();})
+        .then(function(j){
+            if(!j.ok||!j.vitals||!j.vitals.length)return;
+            if(form.dataset.touched==='1')return;
+            var v=j.vitals[0];
+            [['visit_date',v.visit_date],['weight_kg',v.weight_kg],['height_cm',v.height_cm],
+             ['blood_pressure',v.blood_pressure],['heart_rate',v.heart_rate],
+             ['fundal_height',v.fundal_height],['notes',v.notes]].forEach(function(pair){
+                var el=form.elements[pair[0]];
+                if(!el)return;
+                el.value=(pair[1]===null||pair[1]===undefined)?'':String(pair[1]);
+            });
+        })
+        .catch(function(){});
+    }
+    function saveAptVitals(e){
+        e.preventDefault();
+        var form=document.getElementById('aptVitalsForm');
+        var fd=new FormData(form);
+        fd.append('action','save_appointment_vitals');
+        showLoading();
+        fetch('admin_vitals_action.php',{method:'POST',body:fd})
+        .then(function(r){return r.text();})
+        .then(function(res){
+            hideLoading();
+            if(res.trim()==='success'){
+                closeModal('aptVitalsModal');
+                showToast('Vitals saved!','success');
+                var id=form.elements['appointment_id'].value;
+                document.querySelectorAll('[data-vitals-btn="'+id+'"]').forEach(function(b){
+                    b.title='Edit recorded vitals';
+                    if(!b.querySelector('.vitals-check')){
+                        var s=document.createElement('span');
+                        s.className='vitals-check';
+                        s.innerHTML='&#10003;';
+                        b.appendChild(s);
+                    }
+                });
+            }else{
+                showToast(res.trim()||'Could not save vitals.','error');
+            }
+        })
+        .catch(function(){hideLoading();showToast('Error','error');});
+        return false;
     }
 
     /* -- LustreMDC Smooth Transitions -- */
