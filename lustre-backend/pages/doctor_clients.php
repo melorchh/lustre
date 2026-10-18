@@ -12,6 +12,14 @@ if (!$patients) {
     die("Query failed: " . $conn->error);
 }
 
+$appts_by_patient = [];
+$aq = $conn->query("SELECT a.patient_id, a.id, a.unique_code, a.appointment_date, a.appointment_time, a.service_requested, a.status, d.name AS doctor_name FROM appointments a JOIN doctors d ON a.doctor_id = d.id ORDER BY a.appointment_date DESC, a.appointment_time DESC");
+if ($aq) {
+    while ($ar = $aq->fetch_assoc()) {
+        $appts_by_patient[(int)$ar['patient_id']][] = $ar;
+    }
+}
+
 $conn->close();
 ?>
 <!DOCTYPE html>
@@ -27,7 +35,7 @@ $conn->close();
     <script>try{if(localStorage.getItem('meTheme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}</script>
     <link rel="stylesheet" href="admin.css?v=<?= filemtime(__DIR__ . '/../../admin.css') ?>">
     <link rel="stylesheet" href="doctor.css?v=<?= filemtime(__DIR__ . '/../../doctor.css') ?>">
-    <title>Clients - Doctor Portal</title>
+    <title>Patients - Doctor Portal</title>
 </head>
 <body class="doctor-page">
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
@@ -44,7 +52,7 @@ $conn->close();
             <nav class="sidebar-nav">
                 <a href="doctor_dashboard.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="rail-label">Dashboard</span></a>
                 <a href="doctor_appointments.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 18l3 3 3-3"/></svg></span><span class="rail-label">Appointments</span></a>
-                <a href="doctor_clients.php" class="nav-item active"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="rail-label">Clients</span></a>
+                <a href="doctor_clients.php" class="nav-item active"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="rail-label">Patients</span></a>
                 <a href="doctor_laboratory.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v6.3L4.5 17a2.5 2.5 0 0 0 2 4h11a2.5 2.5 0 0 0 2-4L14 8.3V2"/><path d="M8.5 2h7"/><path d="M7 15h10"/></svg></span><span class="rail-label">Laboratory</span></a>
                 <a href="doctor_schedule.php" class="nav-item"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span class="rail-label">Availability</span></a>
             </nav>
@@ -56,7 +64,7 @@ $conn->close();
             <header class="topbar">
                 <div class="topbar-left">
                     <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Open menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-                    <span class="topbar-title">Clients</span>
+                    <span class="topbar-title">Patients</span>
                 </div>
                 <div class="topbar-actions">
                     <button type="button" class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode"><svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M19.07 4.93l-1.41 1.41M6.34 17.66l-1.41 1.41"/></svg><svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
@@ -67,7 +75,7 @@ $conn->close();
 
 <div class="content-card">
     <div class="patients-header">
-        <h2 style="margin-bottom:0;">All Clients</h2>
+        <h2 style="margin-bottom:0;">All Patients</h2>
     </div>
     <div class="search-box" style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center">
         <input type="search" id="searchName" placeholder="Search by name..." oninput="filterPatients()">
@@ -109,12 +117,38 @@ $conn->close();
             <div class="cd-item"><label>Last Visit</label><span><?php echo $last_txt; ?></span></div>
             <div class="cd-item"><label>Registered</label><span><?php echo $reg_txt; ?></span></div>
         </div>
+        <div class="cd-appts">
+            <div class="cd-appts-title">Appointment Archive (<?php echo isset($appts_by_patient[$pid]) ? count($appts_by_patient[$pid]) : 0; ?>)</div>
+            <?php $plist = $appts_by_patient[$pid] ?? []; if ($plist): ?>
+            <div class="table-scroll">
+                <table>
+                    <thead><tr><th>Appointment ID</th><th>Date &amp; Time</th><th>Doctor</th><th>Service</th><th>Status</th></tr></thead>
+                    <tbody>
+                    <?php foreach ($plist as $ap):
+                        $as = $ap['status'];
+                        $asb = ['pending' => 'badge-pending', 'confirmed' => 'badge-active', 'completed' => 'badge-completed', 'cancelled' => 'badge-cancelled'][$as] ?? 'badge-pending';
+                    ?>
+                        <tr>
+                            <td><strong><?php echo htmlspecialchars($ap['unique_code'] ?? ('APT-' . str_pad((string)$ap['id'], 6, '0', STR_PAD_LEFT))); ?></strong></td>
+                            <td><?php echo (new DateTime($ap['appointment_date']))->format('M j, Y'); ?> &middot; <?php echo date('g:i A', strtotime($ap['appointment_time'])); ?></td>
+                            <td>Dr. <?php echo htmlspecialchars($ap['doctor_name']); ?></td>
+                            <td><?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation'); ?></td>
+                            <td><span class="badge <?php echo $asb; ?>"><?php echo ucfirst($as); ?></span></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php else: ?>
+            <p class="cd-empty">No appointments recorded yet.</p>
+            <?php endif; ?>
+        </div>
         <a class="cd-profile-link" href="client_profile.php?id=<?php echo $pid; ?>" onclick="event.stopPropagation()">View full profile &rarr;</a>
     </td>
 </tr>
 <?php endwhile; ?>
 <?php if ($patients->num_rows === 0): ?>
-<tr><td colspan="4" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></div>No clients found.</td></tr>
+<tr><td colspan="4" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></div>No patients found.</td></tr>
 <?php endif; ?>
 </tbody>
         </table>
@@ -198,6 +232,11 @@ $conn->close();
         [data-theme="dark"] .cd-item span{color:#e2e8f0}
         .cd-profile-link{display:inline-block;margin-top:.9rem;font-size:.85rem;font-weight:700;color:#16a34a;text-decoration:none}
         .cd-profile-link:hover{text-decoration:underline}
+        .cd-appts{margin-top:1rem}
+        .cd-appts-title{font-size:.66rem;text-transform:uppercase;letter-spacing:.07em;color:#64748b;font-weight:700;margin-bottom:.4rem}
+        .cd-appts table{font-size:.85rem}
+        .cd-appts th,.cd-appts td{padding:.4rem .55rem}
+        .cd-empty{color:#94a3b8;font-size:.85rem;margin:.2rem 0 0}
       `;
       document.head.appendChild(c);
       document.addEventListener('click',function(e){
