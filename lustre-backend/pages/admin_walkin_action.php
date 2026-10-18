@@ -7,6 +7,8 @@ if (!isset($_SESSION["admin_id"])) {
 }
 
 require_once __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/unique_ids.php';
+ensure_unique_ids($conn);
 
 $conn->query("ALTER TABLE walk_ins ADD COLUMN IF NOT EXISTS test_procedure TEXT NOT NULL DEFAULT ''");
 

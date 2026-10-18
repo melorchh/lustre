@@ -3,6 +3,8 @@ require __DIR__ . '/../src/session.php';
 if (!isset($_SESSION["admin_id"])) { echo "error: Unauthorized"; exit; }
 
 require_once __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/unique_ids.php';
+ensure_unique_ids($conn);
 
 $patient_id = isset($_POST["patient_id"]) ? intval($_POST["patient_id"]) : 0;
 $doctor_id  = isset($_POST["doctor_id"])  ? intval($_POST["doctor_id"])  : 0;
