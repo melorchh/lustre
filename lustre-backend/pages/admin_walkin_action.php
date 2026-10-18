@@ -31,10 +31,27 @@ if ($action === 'add_walkin') {
     $doctor_id = isset($_POST['doctor_id']) ? intval($_POST['doctor_id']) : 0;
     $arrival_time = trim($_POST['arrival_time'] ?? '');
     $test_procedure = trim($_POST['test_procedure'] ?? '');
+    $blood_pressure = trim($_POST['blood_pressure'] ?? '');
+    $heart_rate     = trim($_POST['heart_rate'] ?? '');
+    $fundal_height  = trim($_POST['fundal_height'] ?? '');
 
     if ($name === '') { echo 'Patient name is required.'; exit; }
     if ($contact === '') { echo 'Contact number is required.'; exit; }
     if ($doctor_id <= 0) { echo 'Please select a doctor.'; exit; }
+    if ($blood_pressure === '' || !preg_match('/^\d{2,3}\/\d{2,3}$/', $blood_pressure)) {
+        echo 'Blood pressure is required (e.g. 110/70).';
+        exit;
+    }
+    if ($heart_rate === '' || !is_numeric($heart_rate) || (int)$heart_rate < 0 || (int)$heart_rate > 250) {
+        echo 'Heart rate is required (0-250 bpm).';
+        exit;
+    }
+    if ($fundal_height !== '' && (!is_numeric($fundal_height) || (float)$fundal_height < 0 || (float)$fundal_height > 50)) {
+        echo 'Invalid fundal height.';
+        exit;
+    }
+    $heartRateVal    = (int)$heart_rate;
+    $fundalHeightVal = ($fundal_height !== '') ? (float)$fundal_height : null;
 
     // Validate doctor exists
     $docCheck = $conn->prepare("SELECT id FROM doctors WHERE id = ?");
@@ -163,6 +180,20 @@ if ($action === 'add_walkin') {
         $wi->bind_param("iisss", $newId, $doctor_id, $arrival_date, $arrival_hm, $test_procedure);
         $wi->execute();
         $wi->close();
+
+        // Book the consultation so it appears in the client's appointments
+        $service = ($test_procedure !== '') ? $test_procedure : 'Walk-in Consultation';
+        $ap = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, service_requested, status, payment_status, reminder_sent) VALUES (?, ?, ?, ?, ?, 'confirmed', 'pending', 1)");
+        $ap->bind_param("iisss", $newId, $doctor_id, $arrival_date, $arrival_hm, $service);
+        $ap->execute();
+        $appointment_id = (int)$ap->insert_id;
+        $ap->close();
+
+        // Vitals captured during the consultation, tied to the appointment
+        $vt = $conn->prepare("INSERT INTO vitals (patient_id, appointment_id, visit_date, weight_kg, height_cm, blood_pressure, heart_rate, fundal_height) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $vt->bind_param("iisddsid", $newId, $appointment_id, $arrival_date, $weightVal, $heightVal, $blood_pressure, $heartRateVal, $fundalHeightVal);
+        $vt->execute();
+        $vt->close();
 
         echo "success:" . $newId;
     } else {
