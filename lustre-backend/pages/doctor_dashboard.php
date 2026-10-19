@@ -181,18 +181,14 @@ function fill_color($s) {
                         <thead><tr><th>Queue</th><th>Patient</th><th>Test / Procedure</th><th>Arrival</th><th>Status</th></tr></thead>
                         <tbody id="queueBody">
                         <?php if (count($walkin_queue) > 0): ?>
-                            <?php foreach ($walkin_queue as $w):
-                                $wcolors = ['waiting'=>'background:#fef3c7;color:#92400e','in_service'=>'background:#dbeafe;color:#1e40af','served'=>'background:#d1fae5;color:#065f46','cancelled'=>'background:#fee2e2;color:#991b1b'];
-                                $wbc = $wcolors[$w['status']] ?? '';
-                            ?>
+                            <?php foreach ($walkin_queue as $w): ?>
                             <tr>
                                 <td><span class="badge" style="background:#16a34a;color:#fff;font-size:1rem;font-weight:800">#<?php echo $w['queue']; ?></span></td>
                                 <td><strong><?php if (!empty($w['patient_id'])): ?><a href="client_profile.php?id=<?php echo (int)$w['patient_id']; ?>" style="color:inherit;text-decoration:underline;text-underline-offset:2px"><?php echo htmlspecialchars($w['name']); ?></a><?php else: ?><?php echo htmlspecialchars($w['name']); ?><?php endif; ?></strong><br><small style="color:#64748b"><?php echo htmlspecialchars($w['contact']); ?></small></td>
                                 <td><?php echo htmlspecialchars($w['procedure'] ?: '—'); ?></td>
                                 <td><?php echo htmlspecialchars($w['arrival']); ?></td>
                                 <td style="white-space:nowrap">
-                                    <span class="badge" style="<?php echo $wbc; ?>"><?php echo ucfirst(str_replace('_',' ',$w['status'])); ?></span>
-                                    <select class="action-select" data-id="<?php echo $w['id']; ?>" data-prev="<?php echo htmlspecialchars($w['status']); ?>" onchange="updateWalkinStatus(this)" aria-label="Queue status">
+                                    <select class="action-select wq-status wq-st-<?php echo htmlspecialchars($w['status']); ?>" data-id="<?php echo $w['id']; ?>" data-prev="<?php echo htmlspecialchars($w['status']); ?>" onchange="updateWalkinStatus(this)" aria-label="Queue status">
                                         <?php foreach (['waiting','in_service','served','cancelled'] as $opt): ?>
                                         <option value="<?php echo $opt; ?>" <?php echo $w['status']===$opt?'selected':''; ?>><?php echo ucfirst(str_replace('_',' ',$opt)); ?></option>
                                         <?php endforeach; ?>
@@ -432,12 +428,6 @@ function fill_color($s) {
 
         /* -- Walk-in queue (live) -- */
         const WQ_STATUSES = ['waiting','in_service','served','cancelled'];
-        const WQ_COLORS = {
-            waiting:'background:#fef3c7;color:#92400e',
-            in_service:'background:#dbeafe;color:#1e40af',
-            served:'background:#d1fae5;color:#065f46',
-            cancelled:'background:#fee2e2;color:#991b1b'
-        };
         const WQ_EMPTY = '<tr><td colspan="5" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.7L18 9.3l-4.4 1.6L12 15.6l-1.6-4.7L6 9.3l4.4-1.6z" style="stroke-width:1.8"/><path d="M5 20h14"/></svg></div>No walk-ins registered yet today.</td></tr>';
         function wqEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
         function wqLabel(s){return s.charAt(0).toUpperCase()+s.slice(1).replace(/_/g,' ');}
@@ -453,13 +443,15 @@ function fill_color($s) {
                 '<td>'+wqEsc(w.procedure||'—')+'</td>' +
                 '<td>'+wqEsc(w.arrival)+'</td>' +
                 '<td style="white-space:nowrap">' +
-                    '<span class="badge" style="'+(WQ_COLORS[w.status]||'')+'">'+wqLabel(w.status)+'</span> ' +
-                    '<select class="action-select" data-id="'+w.id+'" data-prev="'+wqEsc(w.status)+'" onchange="updateWalkinStatus(this)" aria-label="Queue status">'+opts+'</select>' +
+                    '<select class="action-select wq-status wq-st-'+w.status+'" data-id="'+w.id+'" data-prev="'+wqEsc(w.status)+'" onchange="updateWalkinStatus(this)" aria-label="Queue status">'+opts+'</select>' +
                     resultBtn +
                     vitalsBtn +
                 '</td></tr>';
         }
         let wqBusy = false, wqPending = false;
+        function wqSyncBadge(sel){
+            sel.className = 'action-select wq-status wq-st-' + (sel.value || 'waiting');
+        }
         function refreshQueue(manual){
             if (wqBusy){ if (manual) wqPending = true; return; }
             wqBusy = true; wqPending = false;
@@ -469,6 +461,7 @@ function fill_color($s) {
                 if(!d || !d.ok) return;
                 const body = document.getElementById('queueBody');
                 if (body) body.innerHTML = d.rows.length ? d.rows.map(wqRow).join('') : WQ_EMPTY;
+                if (window.fdEnhance) window.fdEnhance();
                 const stat = document.getElementById('queueWaitingStat');
                 if (stat) stat.textContent = d.waiting;
                 const upd = document.getElementById('queueUpdated');
@@ -484,6 +477,7 @@ function fill_color($s) {
                 openWalkinResultModal(id, 'served');
                 return;
             }
+            wqSyncBadge(sel);
             const fd = new FormData();
             fd.append('action','update_status');
             fd.append('walkin_id', id);
@@ -499,17 +493,19 @@ function fill_color($s) {
                 } else {
                     showToast(res,'error');
                     sel.value = sel.getAttribute('data-prev') || 'waiting';
+                    wqSyncBadge(sel);
                 }
                 wqPending = true;
                 refreshQueue();
             })
-            .catch(()=>{ hideLoading(); showToast('Network error','error'); sel.value = sel.getAttribute('data-prev') || 'waiting'; wqPending = true; refreshQueue(); });
+            .catch(()=>{ hideLoading(); showToast('Network error','error'); sel.value = sel.getAttribute('data-prev') || 'waiting'; wqSyncBadge(sel); wqPending = true; refreshQueue(); });
         }
 
         /* -- Walk-in result modal -- */
         let wqModalMode = 'edit';
         let wqModalId = null;
         function openWalkinResultModal(id, mode){
+            id = parseInt(id, 10);
             wqModalId = id;
             wqModalMode = mode || 'edit';
             const ta = document.getElementById('wqResultText');
@@ -525,7 +521,7 @@ function fill_color($s) {
             .then(r=>r.json())
             .then(d=>{
                 if(!d || !d.ok || wqModalId !== id) return;
-                const row = (d.rows||[]).find(x=>x.id===id);
+                const row = (d.rows||[]).find(x=>parseInt(x.id,10)===id);
                 if(!row) return;
                 if (info) info.innerHTML =
                     '<div class="info-item"><label>Queue</label><span>#'+row.queue+'</span></div>' +
@@ -542,7 +538,7 @@ function fill_color($s) {
             document.body.style.overflow = '';
             if (wqModalMode === 'served' && wqModalId) {
                 const sel = document.querySelector('#queueBody select[data-id="'+wqModalId+'"]');
-                if (sel) sel.value = sel.getAttribute('data-prev') || 'waiting';
+                if (sel) { sel.value = sel.getAttribute('data-prev') || 'waiting'; wqSyncBadge(sel); }
             }
             wqModalId = null;
             wqModalMode = 'edit';

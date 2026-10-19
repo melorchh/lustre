@@ -17,7 +17,7 @@ $today_count        = $conn->query("SELECT COUNT(*) c FROM appointments WHERE ap
 $appointments = $conn->query("
     SELECT a.id, a.patient_id, a.unique_code, a.appointment_date, a.appointment_time, a.status, a.payment_status,
            a.is_urgent, a.reschedule_count, a.updated_at, a.appointment_duration,
-           a.service_requested,
+           a.service_requested, a.result, a.result_date,
            (SELECT COUNT(*) FROM vitals v WHERE v.appointment_id = a.id) AS vital_count,
            p.name AS patient_name, p.email AS patient_email,
            p.address AS patient_address, p.age AS patient_age,
@@ -142,6 +142,7 @@ $conn->close();
                             <th>Time</th>
                             <th>Status</th>
                             <th>Payment</th>
+                            <th>Result</th>
                             <th>Updated</th>
                         </tr>
                     </thead>
@@ -220,6 +221,18 @@ $conn->close();
                                 <option value="paid" <?php echo $ps==='paid'?'selected':''; ?>>Paid</option>
                             </select>
                         </td>
+                        <td>
+                            <?php $has_result = !empty($apt['result']); ?>
+                            <?php if ($has_result): ?>
+                                <?php if (in_array($s, ['pending', 'confirmed'])): ?>
+                                    <span class="badge" style="background:#fef3c7;color:#92400e;cursor:pointer" title="Draft findings - appointment not yet completed" onclick="openAdminResultView(this)" data-patient="<?php echo htmlspecialchars($apt['patient_name'], ENT_QUOTES); ?>" data-code="<?php echo htmlspecialchars($apt['unique_code'] ?? '', ENT_QUOTES); ?>" data-doctor="<?php echo htmlspecialchars('Dr. ' . $apt['doctor_name'] . ' (' . $apt['specialty'] . ')', ENT_QUOTES); ?>" data-service="<?php echo htmlspecialchars($apt['service_requested'] ?: 'General consultation', ENT_QUOTES); ?>" data-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>" data-result="<?php echo htmlspecialchars($apt['result'], ENT_QUOTES); ?>">Draft</span>
+                                <?php else: ?>
+                                    <span class="badge badge-completed" style="cursor:pointer" onclick="openAdminResultView(this)" data-patient="<?php echo htmlspecialchars($apt['patient_name'], ENT_QUOTES); ?>" data-code="<?php echo htmlspecialchars($apt['unique_code'] ?? '', ENT_QUOTES); ?>" data-doctor="<?php echo htmlspecialchars('Dr. ' . $apt['doctor_name'] . ' (' . $apt['specialty'] . ')', ENT_QUOTES); ?>" data-service="<?php echo htmlspecialchars($apt['service_requested'] ?: 'General consultation', ENT_QUOTES); ?>" data-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>" data-result="<?php echo htmlspecialchars($apt['result'], ENT_QUOTES); ?>">Ready</span>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <span style="color:#94a3b8;font-size:.82rem">No result</span>
+                            <?php endif; ?>
+                        </td>
                         <td><?php echo $updated->format('M j, Y'); ?><br><small style="color:#94a3b8"><?php echo $updated->format('g:i A'); ?></small>
                             <div style="margin-top:6px;display:flex;flex-direction:column;gap:6px">
                                 <button type="button" class="btn-slip" title="Print appointment slip" onclick="openSlip(<?php echo htmlspecialchars(json_encode([
@@ -248,7 +261,7 @@ $conn->close();
                         </td>
                     </tr>
                     <?php endwhile; else: ?>
-                    <tr><td colspan="9" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>No appointments found.</td></tr>
+                    <tr><td colspan="10" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>No appointments found.</td></tr>
                     <?php endif; ?>
                     </tbody>
                 </table>
@@ -264,6 +277,20 @@ $conn->close();
                 <div class="form-actions">
                     <button type="button" class="btn-secondary" onclick="closeModal('slipModal')">Close</button>
                     <button type="button" class="btn-primary" onclick="printSlip()">Print Slip</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointment Result View Modal (admin, read-only) -->
+        <div class="modal-overlay" id="adminResultModal">
+            <div class="modal-box">
+                <button class="modal-close-btn" onclick="closeModal('adminResultModal')">&times;</button>
+                <h2>Appointment Result</h2>
+                <div id="adminResultMeta" style="margin:-.35rem 0 1rem;font-size:.92rem;color:var(--gray-600)"></div>
+                <div class="table-scroll"><table><tbody id="adminResultInfo"></tbody></table></div>
+                <div id="adminResultBody" class="result-view-body" style="margin-top:1rem"></div>
+                <div class="form-actions" style="margin-top:1.1rem">
+                    <button type="button" class="btn-secondary" onclick="closeModal('adminResultModal')">Close</button>
                 </div>
             </div>
         </div>
@@ -385,6 +412,21 @@ $conn->close();
     // ---- Modal helpers ----
     function openModal(id){document.getElementById(id).classList.add('active');document.body.style.overflow='hidden';}
     function closeModal(id){document.getElementById(id).classList.remove('active');document.body.style.overflow='';}
+
+    // ---- Appointment result viewer (admin, read-only) ----
+    function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+    function openAdminResultView(el){
+        var d = el.dataset;
+        var draft = d.status !== 'completed';
+        document.getElementById('adminResultMeta').innerHTML =
+            '<strong>'+escHtml(d.patient)+'</strong> &middot; '+escHtml(d.code)+
+            ' &middot; <span class="badge '+(draft?'badge-pending':'badge-completed')+'">'+escHtml(draft?'Draft':'Completed')+'</span>';
+        document.getElementById('adminResultInfo').innerHTML =
+            '<tr><th style="width:140px">Doctor</th><td>'+escHtml(d.doctor)+'</td></tr>'+
+            '<tr><th>Service</th><td>'+escHtml(d.service)+'</td></tr>';
+        document.getElementById('adminResultBody').textContent = d.result || '';
+        openModal('adminResultModal');
+    }
 
     // ---- Print appointment slip ----
     function openSlip(d){

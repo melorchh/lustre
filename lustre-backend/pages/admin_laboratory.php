@@ -67,9 +67,14 @@ $conn->close();
     <script>try{if(localStorage.getItem('meTheme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}</script>
 <link rel="stylesheet" href="admin.css?v=<?= filemtime(__DIR__ . '/../../admin.css') ?>">
     <style>
-        .test-type-checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.45rem .9rem;max-height:270px;overflow-y:auto;padding:.5rem .65rem;border:1px solid rgba(100,116,139,.25);border-radius:10px;background:rgba(100,116,139,.04)}
-        .test-type-check{display:flex;align-items:flex-start;gap:.5rem;font-weight:400;font-size:.88rem;cursor:pointer;line-height:1.35;text-transform:none;letter-spacing:0;margin:0;color:inherit}
-        .test-type-check input[type="checkbox"]{margin-top:.15rem;accent-color:#16a34a;width:15px;height:15px;flex:0 0 auto}
+        .test-type-checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:.4rem;max-height:290px;overflow-y:auto;padding:.55rem;border:1px solid var(--gray-100);border-radius:12px;background:var(--off-white)}
+        .test-type-check{display:flex;align-items:center;gap:.55rem;padding:.5rem .65rem;font-size:.85rem;font-weight:500;cursor:pointer;line-height:1.4;text-transform:none;letter-spacing:0;margin:0;color:var(--gray-800);border:1px solid transparent;border-radius:9px;transition:background .15s ease,border-color .15s ease}
+        .test-type-check:hover{background:var(--green-pale)}
+        .test-type-check.is-checked{background:var(--green-pale2);border-color:rgba(22,163,74,.4)}
+       .test-type-check input[type="checkbox"] {accent-color: var(--green, #16a34a);width: 15px;height: 15px;vertical-align: middle;position: relative;top: -1px;margin-right: 6px;flex: 0 0 auto;}
+        .test-type-checks::-webkit-scrollbar{width:8px}
+        .test-type-checks::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:8px}
+        .test-type-checks::-webkit-scrollbar-track{background:transparent}
     </style>
     <title>Laboratory - LustreMDC Admin</title>
 </head>
@@ -407,6 +412,16 @@ $conn->close();
         g.style.display = cb.checked ? '' : 'none';
         if(!cb.checked){ var i = document.getElementById('testTypeOther'); if(i) i.value=''; }
     }
+
+    /* -- Checked-state highlight on test type chips -- */
+    (function(){
+        var box = document.querySelector('.test-type-checks');
+        if(!box) return;
+        box.addEventListener('change', function(e){
+            var lab = e.target.closest ? e.target.closest('.test-type-check') : null;
+            if(lab) lab.classList.toggle('is-checked', e.target.checked);
+        });
+    })();
 
     /* -- Add Lab Test -- */
     document.getElementById('addLabForm').addEventListener('submit', function(e){

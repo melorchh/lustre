@@ -322,6 +322,10 @@
       .catch(function(){});
   })();
 
+  /* Exposed so pages that re-render rows via innerHTML (live queues, etc.)
+     can enhance newly inserted selects after the initial init. */
+  window.fdEnhance = init;
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {

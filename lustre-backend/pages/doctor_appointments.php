@@ -153,8 +153,17 @@ $conn->close();
                         <td><?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation'); ?></td>
                         <td><span class="badge" style="background:<?php echo $status_badge; ?>"><?php echo ucfirst($s); ?></span></td>
                         <td>
+                            <?php
+                            $has_result = !empty($ap['result']);
+                            $result_attr_d = $has_result ? str_replace(["\r\n", "\r", "\n"], '&#10;', htmlspecialchars($ap['result'], ENT_QUOTES)) : '';
+                            $name_attr = htmlspecialchars($ap['patient_name'], ENT_QUOTES);
+                            ?>
                             <?php if ($has_result): ?>
-                                <span class="badge badge-completed" style="cursor:pointer" onclick="openResultModal(<?php echo $ap['id']; ?>, '<?php echo addslashes(htmlspecialchars($ap['patient_name'])); ?>', '<?php echo addslashes(htmlspecialchars($ap['result'] ?? '')); ?>', true)">Ready</span>
+                                <?php if (in_array($s, ['pending', 'confirmed'])): ?>
+                                    <span class="badge" style="background:#fef3c7;color:#92400e;cursor:pointer" title="Draft findings - appointment not yet completed" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="<?php echo $result_attr_d; ?>" data-draft="1" onclick="openResultFromEl(this)">Draft</span>
+                                <?php else: ?>
+                                    <span class="badge badge-completed" style="cursor:pointer" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="<?php echo $result_attr_d; ?>" onclick="openResultFromEl(this)">Ready</span>
+                                <?php endif; ?>
                             <?php else: ?>
                                 <span style="color:#94a3b8;font-size:.82rem">No result</span>
                             <?php endif; ?>
@@ -163,16 +172,12 @@ $conn->close();
                             <button class="btn-sm btn-vitals" title="View patient vitals" data-apt="<?php echo (int)$ap['id']; ?>" data-pid="<?php echo (int)$ap['patient_id']; ?>" data-name="<?php echo htmlspecialchars($ap['patient_name'], ENT_QUOTES); ?>" data-code="<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>" data-label="<?php echo htmlspecialchars($date_fmt, ENT_QUOTES); ?> &middot; <?php echo htmlspecialchars($time_fmt, ENT_QUOTES); ?>" onclick="openAptVitalsView(this)">
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals
                             </button>
-                            <?php if (in_array($s, ['pending', 'confirmed'])): ?>
-                                <button class="btn-sm btn-edit" onclick="openResultModal(<?php echo $ap['id']; ?>, '<?php echo addslashes(htmlspecialchars($ap['patient_name'])); ?>', '', false)">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Complete &amp; Result
-                                </button>
-                            <?php elseif ($s === 'completed' && !$has_result): ?>
-                                <button class="btn-sm btn-edit" onclick="openResultModal(<?php echo $ap['id']; ?>, '<?php echo addslashes(htmlspecialchars($ap['patient_name'])); ?>', '', false, true)">
+                            <?php if ($s === 'completed' && !$has_result): ?>
+                                <button class="btn-sm btn-edit" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="" onclick="openResultFromEl(this)">
                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Add Result
                                 </button>
                             <?php elseif ($s === 'completed' && $has_result): ?>
-                                <button class="btn-sm btn-edit" onclick="openResultModal(<?php echo $ap['id']; ?>, '<?php echo addslashes(htmlspecialchars($ap['patient_name'])); ?>', '<?php echo addslashes(htmlspecialchars($ap['result'] ?? '')); ?>', false, true)">
+                                <button class="btn-sm btn-edit" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="<?php echo $result_attr_d; ?>" onclick="openResultFromEl(this)">
                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit Result
                                 </button>
                             <?php else: ?>
@@ -253,14 +258,23 @@ $conn->close();
 
     let currentApptId = null;
     let isCompleteOnly = false;
-    function openResultModal(id, patientName, result, isEditOnly, completedNoResult){
+    let isDraftMode = false;
+    function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+    function openResultFromEl(el){
+        var d = el.dataset;
+        openResultModal(parseInt(d.apt,10), d.patient||'', d.result||'', false, true, d.draft==='1');
+    }
+    function openResultModal(id, patientName, result, isEditOnly, completedNoResult, draftMode){
         currentApptId = id;
-        isCompleteOnly = !!completedNoResult;
-        document.getElementById('modalTitle').textContent = isCompleteOnly ? 'Appointment Result' : 'Complete Appointment &amp; Enter Result';
-        document.getElementById('modalTitle').innerHTML = isCompleteOnly ? 'Appointment Result' : 'Complete & Enter Result';
-        document.getElementById('modalInfoRow').innerHTML = `
-            <div class="info-item"><label>Patient</label><span>${patientName}</span></div>
-            <div class="info-item"><label>Appt ID</label><span>#${id}</span></div>`;
+        isCompleteOnly = !!completedNoResult || !!draftMode;
+        isDraftMode = !!draftMode;
+        document.getElementById('modalTitle').innerHTML = isDraftMode ? 'Consultation Findings (Draft)' : (isCompleteOnly ? 'Appointment Result' : 'Complete &amp; Enter Result');
+        document.getElementById('saveResultBtn').innerHTML = isDraftMode
+            ? '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Save Findings'
+            : '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Save Result';
+        document.getElementById('modalInfoRow').innerHTML =
+            '<div class="info-item"><label>Patient</label><span>' + escHtml(patientName) + '</span></div>' +
+            '<div class="info-item"><label>Appt ID</label><span>#' + escHtml(String(id)) + '</span></div>';
         document.getElementById('modalResult').value = result || '';
         document.getElementById('resultModal').classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -283,7 +297,7 @@ $conn->close();
         .then(r=>r.text()).then(res=>{
             hideLoading();
             if(res.trim()==='success'){
-                showToast('Result saved successfully!','success');
+                showToast(isDraftMode ? 'Draft findings saved!' : 'Result saved successfully!','success');
                 closeResultModal();
                 document.body.classList.add('__leaving');
                 setTimeout(()=>location.reload(),215);

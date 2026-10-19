@@ -475,7 +475,7 @@ $conn->close();
                 </div>
                 <div class="form-group">
                     <label>Contact Number *</label>
-                    <input type="text" name="contact" placeholder="e.g. 09171234567" required>
+                    <input type="text" minlength="11" maxlength="11" name="contact" placeholder="e.g. 09171234567" required>
                 </div>
             </div>
             <div class="form-grid">

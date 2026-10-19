@@ -21,7 +21,7 @@ if (!function_exists('send_appointment_email')) {
      */
     function send_appointment_email($conn, $appointment_id, $event)
     {
-        $allowed = array('booked', 'confirmed', 'cancelled', 'completed', 'rescheduled', 'reminder');
+        $allowed = array('booked', 'confirmed', 'cancelled', 'completed', 'rescheduled', 'reminder', 'result');
         if (!in_array($event, $allowed, true)) {
             return false;
         }
@@ -35,6 +35,7 @@ if (!function_exists('send_appointment_email')) {
                 a.status,
                 a.payment_status,
                 a.service_requested,
+                a.result,
                 p.name     AS patient_name,
                 p.email    AS patient_email,
                 d.name     AS doctor_name,
@@ -132,6 +133,22 @@ if (!function_exists('send_appointment_email')) {
                     . "Time:     {$time}\n\n"
                     . "Please arrive on time and present your booking reference at the front desk.\n\n"
                     . "â€” LustreMDC Clinics & Diagnostics";
+                break;
+
+            case 'result':
+                $subject = 'Appointment Result - ' . $ref;
+                $title   = 'Your appointment result is ready.';
+                $result  = trim((string)$a['result']);
+                $body    = "Hi {$name},\n\n"
+                    . "The result / findings for your appointment {$ref} are now available.\n\n"
+                    . "Doctor:   {$doc}\n"
+                    . "{$svc}"
+                    . "Date:     {$date}\n"
+                    . "Time:     {$time}\n\n"
+                    . "Result / Findings:\n"
+                    . "{$result}\n\n"
+                    . "You can also view and download the full result from your patient dashboard under My Appointments.\n\n"
+                    . "- LustreMDC Clinics & Diagnostics";
                 break;
 
             default:
