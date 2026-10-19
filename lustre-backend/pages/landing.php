@@ -370,13 +370,13 @@ if (isset($_SESSION["patient_id"])) {
       </div>
       <span class="chatbot-close">&times;</span>
     </div>
-    <div class="chatbot-chips">
-      <span class="chip" data-msg="What lab tests do you offer?">Lab tests</span>
-      <span class="chip" data-msg="How do I book an appointment?">Book appointment</span>
-      <span class="chip" data-msg="What are signs of a healthy pregnancy?">Pregnancy info</span>
-      <span class="chip" data-msg="What are common PCOS symptoms?">PCOS symptoms</span>
-      <span class="chip" data-msg="What does an ECG check?">ECG / Heart</span>
-    </div>
+<div class="chatbot-chips">
+<span class="chip" data-msg="How do I book an appointment?">Book an appointment</span>
+<span class="chip" data-msg="What services does the clinic offer?">Clinic services</span>
+<span class="chip" data-msg="Do you accept walk-ins?">Walk-ins?</span>
+<span class="chip" data-msg="How do I prepare for a lab test?">Lab test prep</span>
+<span class="chip" data-msg="How can I get my lab results?">Get my results</span>
+</div>
     <div class="chatbot-messages" id="chatbotMessages">
       <div class="chatbot-message bot-message">
         <div class="msg-avatar"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
@@ -1193,7 +1193,18 @@ function resetRegisterOtp() {
 /* -- Chatbot -- */
 (function(){
   const GROQ_MODEL='qwen/qwen3.8-27b';
-  const SYSTEM_PROMPT=`You are MedBot, a compassionate AI medical assistant for LustreMDC Clinics & Diagnostics. Help patients with questions about lab tests, diagnostics, OB-GYN care, and appointment booking. Be warm, concise, and always recommend consulting a doctor for serious concerns. Add: "This is general health information, not a medical diagnosis." when giving medical info.`;
+  const SYSTEM_PROMPT=`You are MedBot, a compassionate AI medical assistant for LustreMDC Clinics & Diagnostics (Lustre Medical and Diagnostic Clinic).
+
+Clinic facts you know:
+- Address: 111 Urbano Velasco Avenue, Brgy. Pinagbuhatan, Pasig City
+- Phone: 0928 599 6038
+- Services: Pediatric Consultation, Adult Consultation, OB-Gyn Consultation (by appointment), Pediatric and Adult Vaccination, Medical Certification, Physical Examination / Fit to Work Certification, and 20+ lab tests (CBC, ECG, X-Ray, Ultrasound/UTZ, and more)
+- Lab results are typically ready within 24 hours
+- Appointments are booked online: create an account, pick a doctor/service, choose a date and time, and receive confirmation
+- Walk-ins are accepted for consultations; OB-Gyn is by appointment only
+- For clinic hours, pricing, and availability, politely advise the patient to call or text 0928 599 6038 for the most accurate and up-to-date information — never invent specific hours or prices
+
+Help patients with questions about clinic services, lab tests, diagnostics, OB-GYN care, appointment booking, and how to get their results. Guide them on how to use the website (register, book, view results in their account). Be warm, concise, and always recommend consulting a doctor for serious concerns. Add: "This is general health information, not a medical diagnosis." when giving medical info.`;
   let history=[],typing=false;
   const btn=document.getElementById('chatbotButton');
   const box=document.getElementById('chatbotBox');
