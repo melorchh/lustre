@@ -245,18 +245,45 @@ $conn->close();
                             <td><?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation'); ?></td>
                             <td><span class="badge <?php echo $status_badge; ?>"><?php echo ucfirst($s); ?></span></td>
                             <td class="findings-cell">
-                                <?php $show_findings_action = $is_doctor && (int)$ap['doctor_id'] === $doctor_id && $s === 'confirmed'; ?>
-                                <?php if (!empty($ap['result'])): ?>
-                                    <?php echo nl2br(htmlspecialchars($ap['result'])); ?>
+                                <?php
+                                $show_findings_action = $is_doctor && (int)$ap['doctor_id'] === $doctor_id && $s === 'confirmed';
+                                $has_result    = !empty($ap['result']);
+                                $recorded_fmt  = !empty($ap['result_date']) ? date('M j, Y g:i A', strtotime($ap['result_date'])) : '';
+                                $result_attr   = $has_result ? str_replace(["\r\n", "\r", "\n"], '&#10;', htmlspecialchars($ap['result'], ENT_QUOTES)) : '';
+                                $date_txt = ($date_fmt === '&mdash;') ? '' : $date_fmt;
+                                $time_txt = ($time_fmt === '&mdash;') ? '' : $time_fmt;
+                                $when_attr = trim($date_txt . ($date_txt && $time_txt ? ' · ' : '') . $time_txt);
+                                if ($when_attr === '') { $when_attr = 'Not scheduled'; }
+                                ?>
+                                <?php if ($has_result): ?>
+                                    <div class="result-preview"><?php echo nl2br(htmlspecialchars($ap['result'])); ?></div>
                                 <?php elseif (!$show_findings_action): ?>
                                     <span class="muted-sub">No result yet</span>
                                 <?php endif; ?>
-                                <?php if ($show_findings_action): ?>
+                                <?php if ($has_result || $show_findings_action): ?>
                                     <div class="findings-actions">
-                                        <button type="button" class="btn-sm btn-edit" onclick="openResultModal(<?php echo $appt_id; ?>, '<?php echo addslashes(htmlspecialchars($patient['name'])); ?>', '<?php echo addslashes(htmlspecialchars($ap['result'] ?? '')); ?>')">
-                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                                            Findings
-                                        </button>
+                                        <?php if ($has_result): ?>
+                                            <button type="button" class="btn-sm btn-view js-result-view"
+                                                data-apt="<?php echo $appt_id; ?>"
+                                                data-code="<?php echo htmlspecialchars($ap['unique_code'] ?? ('APT-' . str_pad((string)$ap['id'], 6, '0', STR_PAD_LEFT)), ENT_QUOTES); ?>"
+                                                data-patient="<?php echo htmlspecialchars($patient['name'], ENT_QUOTES); ?>"
+                                                data-doctor="<?php echo htmlspecialchars('Dr. ' . $ap['doctor_name'] . ' (' . $ap['specialty'] . ')', ENT_QUOTES); ?>"
+                                                data-service="<?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation', ENT_QUOTES); ?>"
+                                                data-when="<?php echo htmlspecialchars($when_attr, ENT_QUOTES); ?>"
+                                                data-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>"
+                                                data-recorded="<?php echo htmlspecialchars($recorded_fmt, ENT_QUOTES); ?>"
+                                                data-result="<?php echo $result_attr; ?>"
+                                                onclick="openResultView(this)">
+                                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                                View Result
+                                            </button>
+                                        <?php endif; ?>
+                                        <?php if ($show_findings_action): ?>
+                                            <button type="button" class="btn-sm btn-edit" onclick="openResultModal(<?php echo $appt_id; ?>, '<?php echo addslashes(htmlspecialchars($patient['name'])); ?>', '<?php echo str_replace(["\r\n", "\r", "\n"], '\n', addslashes(htmlspecialchars($ap['result'] ?? ''))); ?>')">
+                                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                                Findings
+                                            </button>
+                                        <?php endif; ?>
                                     </div>
                                 <?php endif; ?>
                             </td>
@@ -377,15 +404,42 @@ $conn->close();
     </div>
 </div>
 
-<?php if ($is_doctor): ?>
 <style>
     .findings-actions{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.55rem}
     .findings-actions .btn-sm{padding:.35rem .7rem;font-size:.76rem;min-height:32px}
+    .result-preview{white-space:normal;word-break:break-word}
     .complete-check{display:flex;align-items:center;gap:.5rem;font-size:.86rem;color:var(--gray-700,#334155);margin:-.2rem 0 .9rem;cursor:pointer;user-select:none}
     .complete-check input{width:16px;height:16px;accent-color:#16a34a;cursor:pointer}
+    .result-view-body{margin-top:.7rem;background:var(--green-pale,#f0fdf4);border:1px solid rgba(22,163,74,.25);border-radius:12px;padding:.85rem 1rem;font-size:.9rem;line-height:1.65;color:inherit;white-space:pre-wrap;word-break:break-word}
+    .result-view-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem;align-items:center}
+    .result-view-actions a.btn-sm{text-decoration:none}
 </style>
 
-<!-- Result Entry Modal -->
+<!-- Appointment Result Modal (view / print / send) -->
+<div class="modal-overlay" id="resultViewModal">
+    <div class="modal-box" style="width:min(720px,94vw)">
+        <button class="modal-close-btn" onclick="closeModal('resultViewModal')">&times;</button>
+        <h2>Appointment Result</h2>
+        <p id="resultViewMeta" class="muted-sub" style="margin:-.3rem 0 .8rem;font-size:.85rem"></p>
+        <div id="resultViewBody" style="min-height:60px"></div>
+        <div class="result-view-actions">
+            <a class="btn-sm btn-view" id="resultViewPdf" href="#" target="_blank" rel="noopener">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Print / Download PDF
+            </a>
+            <button type="button" class="btn-sm btn-edit" id="resultViewSend" onclick="sendResultToPatient()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Send to Patient
+            </button>
+            <button type="button" class="btn-secondary" onclick="closeModal('resultViewModal')">Close</button>
+        </div>
+        <p id="resultViewNote" class="muted-sub" style="margin:.7rem 0 0;font-size:.82rem"></p>
+    </div>
+</div>
+
+<?php if ($is_doctor): ?>
+
+<!-- Findings Entry Modal (doctors only) -->
 <div class="result-modal" id="resultModal">
     <div class="result-modal-box">
         <button class="result-close" onclick="closeResultModal()">&#10005;</button>
@@ -409,10 +463,10 @@ $conn->close();
         </div>
     </div>
 </div>
+<?php endif; ?>
 
 <div id="loadingScreen" class="loading-screen"><div class="spinner"></div><p>Processing...</p></div>
 <div id="toast" class="toast"></div>
-<?php endif; ?>
 
 <script>
     function openSidebar(){document.getElementById('adminSidebar').classList.add('open');document.getElementById('sidebarOverlay').classList.add('active');document.body.style.overflow='hidden';}
@@ -440,6 +494,7 @@ $conn->close();
     document.addEventListener('keydown', function(e){
         if(e.key !== 'Escape') return;
         if(document.getElementById('resultModal')) closeResultModal();
+        closeModal('resultViewModal');
         closeModal('apptVitalsModal');
     });
 
@@ -487,8 +542,7 @@ $conn->close();
             });
     }
 
-    <?php if ($is_doctor): ?>
-    /* -- Appointment result / findings entry -- */
+    /* -- Appointment result viewer: print + email (admin & doctor) -- */
     function showToast(msg,type){
         var t=document.getElementById('toast');
         if(!t)return;
@@ -499,6 +553,58 @@ $conn->close();
     function showLoading(){var l=document.getElementById('loadingScreen');if(l)l.classList.add('active');}
     function hideLoading(){var l=document.getElementById('loadingScreen');if(l)l.classList.remove('active');}
 
+    var currentResultId = null;
+    function openResultView(btn){
+        var d = btn.dataset;
+        var draft = d.status !== 'completed';
+        currentResultId = parseInt(d.apt, 10) || null;
+
+        document.getElementById('resultViewMeta').innerHTML =
+            '<strong>' + escapeHtml(d.patient) + '</strong> &middot; ' + escapeHtml(d.code) +
+            ' &middot; <span class="badge ' + (draft ? 'badge-pending' : 'badge-completed') + '">' +
+            escapeHtml(draft ? 'Draft' : d.status.charAt(0).toUpperCase() + d.status.slice(1)) + '</span>';
+
+        var rows =
+            '<tr><th style="width:190px">Doctor</th><td>' + escapeHtml(d.doctor) + '</td></tr>' +
+            '<tr><th>Service</th><td>' + escapeHtml(d.service) + '</td></tr>' +
+            '<tr><th>Schedule</th><td>' + escapeHtml(d.when) + '</td></tr>' +
+            (d.recorded ? '<tr><th>Result Recorded On</th><td>' + escapeHtml(d.recorded) + '</td></tr>' : '');
+
+        document.getElementById('resultViewBody').innerHTML =
+            '<div class="table-scroll"><table><tbody>' + rows + '</tbody></table></div>' +
+            '<div class="result-view-body">' + escapeHtml(d.result) + '</div>';
+
+        var pdf  = document.getElementById('resultViewPdf');
+        var send = document.getElementById('resultViewSend');
+        var note = document.getElementById('resultViewNote');
+        pdf.href = 'appointment_result_pdf.php?id=' + encodeURIComponent(d.apt);
+        if (draft) {
+            pdf.style.display = 'none';
+            send.style.display = 'none';
+            note.textContent = 'This result is still a draft. Printing and sending to the patient become available once the appointment is marked completed.';
+        } else {
+            pdf.style.display = '';
+            send.style.display = '';
+            note.textContent = '';
+        }
+        openModal('resultViewModal');
+    }
+    function sendResultToPatient(){
+        if(!currentResultId) return;
+        if(!window.confirm('Email this result to the patient?')) return;
+        showLoading();
+        var fd = new FormData();
+        fd.append('appointment_id', currentResultId);
+        fetch('send_appointment_result.php', { method:'POST', body:fd })
+        .then(function(r){return r.text();}).then(function(res){
+            hideLoading();
+            if(res.trim()==='success') showToast('Result sent to the patient!','success');
+            else showToast(res,'error');
+        }).catch(function(){ hideLoading(); showToast('Error','error'); });
+    }
+
+    <?php if ($is_doctor): ?>
+    /* -- Appointment findings entry (doctors only) -- */
     var currentApptId = null;
     function openResultModal(id, patientName, result){
         currentApptId = id;
@@ -532,6 +638,7 @@ $conn->close();
             if(res.trim()==='success'){
                 showToast(complete ? 'Appointment completed!' : 'Findings saved!','success');
                 closeResultModal();
+                try{sessionStorage.setItem('lustreShowResult', String(currentApptId));}catch(e){}
                 document.body.classList.add('__leaving');
                 setTimeout(function(){location.reload();},215);
             }
@@ -572,6 +679,19 @@ $conn->close();
         document.body.classList.add('__leaving');
         setTimeout(()=>{window.location.href=href;},215);
       });
+    })();
+
+    /* -- Re-open the result modal right after a result/findings was saved -- */
+    (function(){
+        var id = null;
+        try{
+            id = sessionStorage.getItem('lustreShowResult');
+            if(id) sessionStorage.removeItem('lustreShowResult');
+        }catch(e){}
+        id = parseInt(id, 10);
+        if(!id) return;
+        var btn = document.querySelector('.js-result-view[data-apt="' + id + '"]');
+        if(btn) openResultView(btn);
     })();
 </script>
 <script src="admin_components.js?v=<?= filemtime(__DIR__ . '/../../admin_components.js') ?>"></script>

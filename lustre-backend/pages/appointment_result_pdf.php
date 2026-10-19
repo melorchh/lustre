@@ -1,13 +1,18 @@
 <?php
 require __DIR__ . '/../src/session.php';
 
-if (!isset($_SESSION["patient_id"])) {
+$is_patient = isset($_SESSION["patient_id"]);
+$is_admin   = isset($_SESSION["admin_id"]);
+$is_doctor  = isset($_SESSION["doctor_id"]);
+
+// Patients may download their own result; admins any; doctors only the
+// appointments assigned to them (checked in the query below).
+if (!$is_patient && !$is_admin && !$is_doctor) {
     http_response_code(403);
     exit('Unauthorized');
 }
 
-$patient_id = (int)$_SESSION["patient_id"];
-$appt_id    = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$appt_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($appt_id <= 0) {
     http_response_code(400);
@@ -16,7 +21,7 @@ if ($appt_id <= 0) {
 
 require_once __DIR__ . '/../src/db.php';
 
-$stmt = $conn->prepare("
+$sql = "
     SELECT
         a.appointment_date,
         a.appointment_time,
@@ -30,9 +35,23 @@ $stmt = $conn->prepare("
     FROM appointments a
     JOIN doctors  d ON a.doctor_id  = d.id
     JOIN patients p ON a.patient_id = p.id
-    WHERE a.id = ? AND a.patient_id = ?
-");
-$stmt->bind_param("ii", $appt_id, $patient_id);
+    WHERE a.id = ?
+";
+$types  = 'i';
+$params = [$appt_id];
+
+if ($is_patient) {
+    $sql .= " AND a.patient_id = ?";
+    $types .= 'i';
+    $params[] = (int)$_SESSION["patient_id"];
+} elseif ($is_doctor && !$is_admin) {
+    $sql .= " AND a.doctor_id = ?";
+    $types .= 'i';
+    $params[] = (int)$_SESSION["doctor_id"];
+}
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param($types, ...$params);
 $stmt->execute();
 $row = $stmt->get_result()->fetch_assoc();
 $stmt->close();
