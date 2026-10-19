@@ -11,9 +11,7 @@ if (!$is_admin && !$is_doctor) {
 
 require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/unique_ids.php';
-require_once __DIR__ . '/walkin_schema.php';
 ensure_unique_ids($conn);
-walkins_ensure_result_column($conn);
 
 $display_name = $is_admin ? $_SESSION['admin_name'] : $_SESSION['doctor_name'];
 
@@ -24,7 +22,6 @@ $appointments = null;
 $vitals_list = null;
 $vitals_by_appt = [];
 $lab_tests = null;
-$consultations = null;
 
 if ($patient_id > 0) {
     $stmt = $conn->prepare("SELECT * FROM patients WHERE id = ?");
@@ -71,36 +68,6 @@ if ($patient) {
     }
     $last_visit_fmt = (!empty($last_visit['last_appt'])) ? (new DateTime($last_visit['last_appt']))->format('M j, Y') : 'Never';
 
-    // Past consultation findings (doctor view only): completed appointments and
-    // served walk-ins that already have a result/findings recorded. Read-only.
-    if ($is_doctor) {
-        $stmt = $conn->prepare("
-            SELECT visit_date, visit_time, doctor_name, specialty, service, findings, source FROM (
-                SELECT a.appointment_date AS visit_date, a.appointment_time AS visit_time,
-                       d.name AS doctor_name, d.specialty,
-                       a.service_requested AS service, a.result AS findings,
-                       'Appointment' AS source
-                FROM appointments a
-                JOIN doctors d ON a.doctor_id = d.id
-                WHERE a.patient_id = ? AND a.status = 'completed'
-                  AND a.result IS NOT NULL AND a.result <> ''
-                UNION ALL
-                SELECT w.arrival_date AS visit_date, w.arrival_time AS visit_time,
-                       d.name AS doctor_name, d.specialty,
-                       w.test_procedure AS service, w.result AS findings,
-                       'Walk-in' AS source
-                FROM walk_ins w
-                JOIN doctors d ON w.doctor_id = d.id
-                WHERE w.patient_id = ?
-                  AND w.result IS NOT NULL AND w.result <> ''
-            ) hist
-            ORDER BY visit_date DESC, visit_time DESC
-        ");
-        $stmt->bind_param("ii", $patient_id, $patient_id);
-        $stmt->execute();
-        $consultations = $stmt->get_result();
-        $stmt->close();
-    }
 } else {
     $patient_id = 0;
 }
@@ -238,43 +205,6 @@ $conn->close();
                 </table>
             </div>
         </div>
-
-        <?php if ($is_doctor): ?>
-        <!-- Past Consultation Findings (doctor view — read-only) -->
-        <div class="content-card">
-            <h2>Past Consultation Findings</h2>
-            <div class="table-scroll">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date &amp; Time</th>
-                            <th>Type</th>
-                            <th>Doctor</th>
-                            <th>Service / Procedure</th>
-                            <th>Findings / Result</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <?php if ($consultations && $consultations->num_rows > 0):
-                        while ($c = $consultations->fetch_assoc()):
-                            $c_date = !empty($c['visit_date']) ? (new DateTime($c['visit_date']))->format('M j, Y') : '&mdash;';
-                            $c_time = !empty($c['visit_time']) ? date('g:i A', strtotime($c['visit_time'])) : '&mdash;';
-                    ?>
-                        <tr>
-                            <td><strong><?php echo $c_date; ?></strong><br><small class="cell-sub"><?php echo $c_time; ?></small></td>
-                            <td><span class="badge <?php echo $c['source'] === 'Walk-in' ? 'badge-urgent' : 'badge-active'; ?>"><?php echo htmlspecialchars($c['source']); ?></span></td>
-                            <td>Dr. <?php echo htmlspecialchars($c['doctor_name']); ?><br><small class="cell-sub"><?php echo htmlspecialchars($c['specialty']); ?></small></td>
-                            <td><?php echo htmlspecialchars($c['service'] ?: 'General consultation'); ?></td>
-                            <td class="findings-cell"><?php echo nl2br(htmlspecialchars($c['findings'])); ?></td>
-                        </tr>
-                    <?php endwhile; else: ?>
-                        <tr><td colspan="5" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></div>No past consultation findings recorded for this client yet.</td></tr>
-                    <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <?php endif; ?>
 
         <!-- Appointments -->
         <div class="content-card">

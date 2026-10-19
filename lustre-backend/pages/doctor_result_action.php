@@ -113,6 +113,7 @@ function complete_appointment($conn, $appt_id, $result) {
 if ($action === 'complete_and_result') {
     $result = isset($_POST['result']) ? trim($_POST['result']) : '';
     if ($result === '') { echo "Please enter the appointment result"; $conn->close(); exit; }
+    if ($current_status === 'cancelled') { echo "Cannot add a result to a cancelled appointment"; $conn->close(); exit; }
 
     $ok = complete_appointment($conn, $appt_id, $result);
     echo $ok ? "success" : "Failed";
@@ -122,6 +123,7 @@ if ($action === 'complete_and_result') {
 } elseif ($action === 'save_result') {
     $result = isset($_POST['result']) ? trim($_POST['result']) : '';
     if ($result === '') { echo "Please enter the appointment result"; $conn->close(); exit; }
+    if ($current_status === 'cancelled') { echo "Cannot add a result to a cancelled appointment"; $conn->close(); exit; }
 
     $stmt = $conn->prepare(
         "UPDATE appointments SET result = ?, result_date = NOW() WHERE id = ?"
@@ -134,6 +136,7 @@ if ($action === 'complete_and_result') {
 
 } elseif ($action === 'complete') {
     // Allow completing without a result (result optional)
+    if ($current_status === 'cancelled') { echo "Cannot complete a cancelled appointment"; $conn->close(); exit; }
     $result = isset($_POST['result']) ? trim($_POST['result']) : '';
     $ok = complete_appointment($conn, $appt_id, $result);
     echo $ok ? "success" : "Failed";
