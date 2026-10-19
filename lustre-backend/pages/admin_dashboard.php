@@ -36,14 +36,18 @@ if ($sq) {
 }
 
 // Doctor time blocks (unavailable / time off)
+require_once __DIR__ . '/../src/time_blocks_schema.php';
+ensure_time_blocks_schema($conn);
 $tb_map = [];
-$tbq = $conn->query("SELECT doctor_id, block_type, block_date, day_of_week, to_char(start_time,'HH24:MI') s, to_char(end_time,'HH24:MI') e FROM doctor_time_blocks");
+$tbq = $conn->query("SELECT doctor_id, block_type, block_date, end_date, day_of_week, to_char(start_time,'HH24:MI') s, to_char(end_time,'HH24:MI') e FROM doctor_time_blocks");
 if ($tbq) {
     while ($row = $tbq->fetch_assoc()) {
         $did = $row['doctor_id'];
-        if (!isset($tb_map[$did])) $tb_map[$did] = ['date' => [], 'weekly' => []];
+        if (!isset($tb_map[$did])) $tb_map[$did] = ['date' => [], 'weekly' => [], 'week' => []];
         if ($row['block_type'] === 'date') {
             $tb_map[$did]['date'][] = ['date' => $row['block_date'], 's' => $row['s'], 'e' => $row['e']];
+        } elseif ($row['block_type'] === 'week') {
+            $tb_map[$did]['week'][] = ['start' => $row['block_date'], 'end' => $row['end_date'], 's' => $row['s'], 'e' => $row['e']];
         } else {
             $tb_map[$did]['weekly'][] = ['day' => $row['day_of_week'], 's' => $row['s'], 'e' => $row['e']];
         }
@@ -815,6 +819,14 @@ $conn->close();
                     if(slotStartMin<be && slotEndMin>bs)return true;
                 }
             }
+            // Check week (date-range) blocks
+            var weekRangeBlocks=tb['week']||[];
+            for(var i=0;i<weekRangeBlocks.length;i++){
+                if(weekRangeBlocks[i].start && dateStr>=weekRangeBlocks[i].start && dateStr<=weekRangeBlocks[i].end){
+                    var bs=__toMin(weekRangeBlocks[i].s), be=__toMin(weekRangeBlocks[i].e);
+                    if(slotStartMin<be && slotEndMin>bs)return true;
+                }
+            }
             // Check weekly blocks
             var weekBlocks=tb['weekly']||[];
             for(var i=0;i<weekBlocks.length;i++){
@@ -838,6 +850,14 @@ $conn->close();
             for(var i=0;i<dateBlocks.length;i++){
                 if(dateBlocks[i].date===dateStr){
                     var bs=__toMin(dateBlocks[i].s), be=__toMin(dateBlocks[i].e);
+                    if(bs<=schedStart && be>=schedEnd)return true;
+                }
+            }
+            // Check week (date-range) blocks
+            var weekRangeBlocks=tb['week']||[];
+            for(var i=0;i<weekRangeBlocks.length;i++){
+                if(weekRangeBlocks[i].start && dateStr>=weekRangeBlocks[i].start && dateStr<=weekRangeBlocks[i].end){
+                    var bs=__toMin(weekRangeBlocks[i].s), be=__toMin(weekRangeBlocks[i].e);
                     if(bs<=schedStart && be>=schedEnd)return true;
                 }
             }

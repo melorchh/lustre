@@ -90,7 +90,7 @@ $conn->close();
                 <label>Available From (Day)</label>
                 <select name="start_day" id="startDay" class="form-dropdown" required>
                     <option value="">Select Start Day</option>
-                    <?php foreach(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'] as $day): ?>
+                    <?php foreach(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] as $day): ?>
                     <option value="<?php echo $day; ?>"><?php echo $day; ?></option>
                     <?php endforeach; ?>
                 </select>
@@ -99,7 +99,7 @@ $conn->close();
                 <label>To (Day)</label>
                 <select name="end_day" id="endDay" class="form-dropdown" required>
                     <option value="">Select End Day</option>
-                    <?php foreach(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'] as $day): ?>
+                    <?php foreach(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] as $day): ?>
                     <option value="<?php echo $day; ?>"><?php echo $day; ?></option>
                     <?php endforeach; ?>
                 </select>
@@ -166,12 +166,17 @@ $conn->close();
                 <label>Block Type</label>
                 <select name="block_type" id="blockType" class="form-dropdown" required>
                     <option value="date">Specific date</option>
+                    <option value="week">Date range (week)</option>
                     <option value="weekly">Every week (day of week)</option>
                 </select>
             </div>
             <div class="form-group" id="blockDateGroup">
-                <label>Date</label>
+                <label id="blockDateLabel">Date</label>
                 <input type="date" name="block_date" id="blockDate" data-datepicker min="<?php echo date('Y-m-d'); ?>">
+            </div>
+            <div class="form-group" id="blockEndDateGroup" style="display:none;">
+                <label>End Date</label>
+                <input type="date" name="end_date" id="blockEndDate" data-datepicker min="<?php echo date('Y-m-d'); ?>">
             </div>
             <div class="form-group" id="blockDayGroup" style="display:none;">
                 <label>Day of Week</label>
@@ -214,14 +219,19 @@ $conn->close();
                 <?php while ($tb = $time_blocks->fetch_assoc()):
                     $tb_start = new DateTime($tb['start_time']);
                     $tb_end   = new DateTime($tb['end_time']);
-                    $when = $tb['block_type'] === 'weekly'
-                        ? 'Every ' . $tb['day_of_week']
-                        : date('M j, Y', strtotime($tb['block_date']));
+                    if ($tb['block_type'] === 'weekly') {
+                        $when = 'Every ' . $tb['day_of_week'];
+                    } elseif ($tb['block_type'] === 'week' && !empty($tb['end_date'])) {
+                        $when = date('M j', strtotime($tb['block_date'])) . ' &ndash; ' . date('M j, Y', strtotime($tb['end_date']));
+                    } else {
+                        $when = date('M j, Y', strtotime($tb['block_date']));
+                    }
+                    $type_label = $tb['block_type'] === 'weekly' ? 'Weekly' : ($tb['block_type'] === 'week' ? 'Week' : 'Date');
                 ?>
                 <tr>
                     <td><?php echo $tb['id']; ?></td>
                     <td><strong>Dr. <?php echo htmlspecialchars($tb['doctor_name']); ?></strong></td>
-                    <td><?php echo $tb['block_type'] === 'weekly' ? 'Weekly' : 'Date'; ?></td>
+                    <td><?php echo $type_label; ?></td>
                     <td><?php echo htmlspecialchars($when); ?></td>
                     <td><?php echo $tb_start->format('g:i A'); ?></td>
                     <td><?php echo $tb_end->format('g:i A'); ?></td>
@@ -317,7 +327,7 @@ $conn->close();
         }
 
         // -- Add Schedule: day-range (From -> To) --
-        var dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        var dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
         var startDayEl = document.getElementById('startDay');
         var endDayEl = document.getElementById('endDay');
         var rangeHint = document.getElementById('scheduleRangeHint');
@@ -337,10 +347,12 @@ $conn->close();
         // -- Unavailable Time Blocks --
         function toggleBlockType(){
             const type = document.getElementById('blockType').value;
-            document.getElementById('blockDateGroup').style.display = (type === 'date') ? '' : 'none';
+            document.getElementById('blockDateGroup').style.display = (type === 'date' || type === 'week') ? '' : 'none';
+            document.getElementById('blockEndDateGroup').style.display = (type === 'week') ? '' : 'none';
             document.getElementById('blockDayGroup').style.display = (type === 'weekly') ? '' : 'none';
-            document.getElementById('blockDate').required = (type === 'date');
-            document.getElementById('blockDay').required = (type === 'weekly');
+            document.getElementById('blockDate').required = (type === 'date' || type === 'week');
+            document.getElementById('blockEndDate').required = (type === 'week');
+            document.getElementById('blockDateLabel').textContent = (type === 'week') ? 'From Date' : 'Date';
         }
         document.getElementById('blockType').addEventListener('change', toggleBlockType);
         toggleBlockType();

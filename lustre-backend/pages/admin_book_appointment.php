@@ -5,6 +5,8 @@ if (!isset($_SESSION["admin_id"])) { echo "error: Unauthorized"; exit; }
 require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/unique_ids.php';
 ensure_unique_ids($conn);
+require_once __DIR__ . '/../src/time_blocks_schema.php';
+ensure_time_blocks_schema($conn);
 
 $patient_id = isset($_POST["patient_id"]) ? intval($_POST["patient_id"]) : 0;
 $doctor_id  = isset($_POST["doctor_id"])  ? intval($_POST["doctor_id"])  : 0;
@@ -132,10 +134,10 @@ $stmt->close();
 // Not inside an unavailable block
 $stmt = $conn->prepare("
     SELECT id FROM doctor_time_blocks
-    WHERE doctor_id=? AND ((block_type='date' AND block_date=?) OR (block_type='weekly' AND day_of_week=?))
+    WHERE doctor_id=? AND ((block_type='date' AND block_date=?) OR (block_type='week' AND ? BETWEEN block_date AND end_date) OR (block_type='weekly' AND day_of_week=?))
       AND ? >= start_time AND ? < end_time
 ");
-$stmt->bind_param("issss", $doctor_id, $date, $day_of_week, $time_with_seconds, $time_with_seconds);
+$stmt->bind_param("isssss", $doctor_id, $date, $date, $day_of_week, $time_with_seconds, $time_with_seconds);
 $stmt->execute();
 $stmt->store_result();
 if ($stmt->num_rows > 0) {
