@@ -239,6 +239,19 @@ $conn->close();
                             <td>
                                 <?php if ($has_vitals): ?>
                                     <button type="button" class="btn-sm" onclick="openApptVitals(<?php echo $appt_id; ?>, '<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>')" style="border:1px solid #cbd5e1;background:#fff;color:#0f172a;border-radius:8px;padding:.28rem .6rem;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap">View Vitals</button>
+                                <?php else: ?>
+                                    <span style="color:#94a3b8;font-size:.82rem">&mdash;</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endwhile; else: ?>
+                        <tr><td colspan="7" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>No appointments recorded for this client yet.</td></tr>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Lab Tests -->
         <div class="content-card">
             <h2>Lab Tests</h2>
@@ -275,19 +288,6 @@ $conn->close();
                         </tr>
                     <?php endwhile; else: ?>
                         <tr><td colspan="6" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v6.3L4.5 17a2.5 2.5 0 0 0 2 4h11a2.5 2.5 0 0 0 2-4L14 8.3V2"/><path d="M8.5 2h7"/><path d="M7 15h10"/></svg></div>No lab tests ordered for this client yet.</td></tr>
-                    <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <?php else: ?>
-                                    <span style="color:#94a3b8;font-size:.82rem">&mdash;</span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endwhile; else: ?>
-                        <tr><td colspan="7" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>No appointments recorded for this client yet.</td></tr>
                     <?php endif; ?>
                     </tbody>
                 </table>
