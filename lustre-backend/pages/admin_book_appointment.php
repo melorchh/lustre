@@ -12,6 +12,15 @@ $date       = isset($_POST["date"])  ? trim($_POST["date"]) : '';
 $time       = isset($_POST["time"])  ? trim($_POST["time"]) : '';
 $appointment_duration = 120; // 2 hours - FIXED DURATION (matches booking)
 
+// Optional vitals captured with the booking
+$vt_weight = isset($_POST["weight_kg"])      ? trim($_POST["weight_kg"])      : '';
+$vt_height = isset($_POST["height_cm"])      ? trim($_POST["height_cm"])      : '';
+$vt_bp     = isset($_POST["blood_pressure"]) ? trim($_POST["blood_pressure"]) : '';
+$vt_hr     = isset($_POST["heart_rate"])     ? trim($_POST["heart_rate"])     : '';
+$vt_fh     = isset($_POST["fundal_height"])  ? trim($_POST["fundal_height"])  : '';
+$vt_notes  = isset($_POST["vitals_notes"])   ? trim($_POST["vitals_notes"])   : '';
+$has_vitals = ($vt_weight !== '' || $vt_height !== '' || $vt_bp !== '' || $vt_hr !== '' || $vt_fh !== '' || $vt_notes !== '');
+
 // Validate inputs
 if (empty($patient_id) || empty($doctor_id) || empty($date) || empty($time)) {
     echo "error: Please fill all fields";
@@ -44,6 +53,40 @@ if (strtotime($date) < strtotime(date('Y-m-d'))) {
 if (!preg_match('/^([01][0-9]|2[0-3]):[0-5][0-9]$/', $time)) {
     echo "error: Invalid time format";
     $conn->close(); exit;
+}
+
+// Vitals validation (same rules as the per-appointment vitals form)
+if ($has_vitals) {
+    if ($vt_weight === '' && $vt_height === '' && $vt_bp === '' && $vt_hr === '' && $vt_fh === '') {
+        echo "error: Enter at least one vital sign measurement, or clear the vitals section";
+        $conn->close(); exit;
+    }
+    if ($vt_weight !== '' && (!is_numeric($vt_weight) || (float)$vt_weight <= 0)) {
+        echo "error: Please provide a valid weight";
+        $conn->close(); exit;
+    }
+    if ($vt_height !== '' && (!is_numeric($vt_height) || (float)$vt_height <= 0 || (float)$vt_height > 300)) {
+        echo "error: Please enter a valid height (30-300 cm)";
+        $conn->close(); exit;
+    }
+    if ($vt_bp !== '' && !preg_match('/^\d{2,3}\/\d{2,3}$/', $vt_bp)) {
+        echo "error: Blood pressure must look like 110/70";
+        $conn->close(); exit;
+    }
+    if ($vt_hr !== '' && (!is_numeric($vt_hr) || (int)$vt_hr < 0 || (int)$vt_hr > 250)) {
+        echo "error: Heart rate must be 0-250 bpm";
+        $conn->close(); exit;
+    }
+    if ($vt_fh !== '' && (!is_numeric($vt_fh) || (float)$vt_fh < 0 || (float)$vt_fh > 50)) {
+        echo "error: Invalid fundal height";
+        $conn->close(); exit;
+    }
+    $vt_w = $vt_weight !== '' ? (float)$vt_weight : null;
+    $vt_h = $vt_height !== '' ? (float)$vt_height : null;
+    $vt_b = $vt_bp !== ''     ? $vt_bp            : null;
+    $vt_r = $vt_hr !== ''     ? (int)$vt_hr       : null;
+    $vt_f = $vt_fh !== ''     ? (float)$vt_fh     : null;
+    $vt_n = $vt_notes !== ''  ? $vt_notes         : null;
 }
 
 $time_with_seconds = $time . ":00";
@@ -107,6 +150,30 @@ $stmt = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appoint
 $stmt->bind_param("iissi", $patient_id, $doctor_id, $date, $time_with_seconds, $appointment_duration);
 if ($stmt->execute()) {
     $new_id = $conn->insert_id;
+
+    // Save vitals tied to this appointment (visit date = appointment date)
+    if ($has_vitals) {
+        $vt = $conn->prepare("INSERT INTO vitals (patient_id, appointment_id, visit_date, weight_kg, height_cm, blood_pressure, heart_rate, fundal_height, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $vt->bind_param("iisddsids", $patient_id, $new_id, $date, $vt_w, $vt_h, $vt_b, $vt_r, $vt_f, $vt_n);
+        $vt->execute();
+        $vt->close();
+
+        // Keep the patient profile in sync with the latest measurements.
+        if ($vt_w !== null && $vt_h !== null) {
+            $upd = $conn->prepare("UPDATE patients SET weight_kg = ?, height_cm = ? WHERE id = ?");
+            $upd->bind_param("ddi", $vt_w, $vt_h, $patient_id);
+        } elseif ($vt_w !== null) {
+            $upd = $conn->prepare("UPDATE patients SET weight_kg = ? WHERE id = ?");
+            $upd->bind_param("di", $vt_w, $patient_id);
+        } elseif ($vt_h !== null) {
+            $upd = $conn->prepare("UPDATE patients SET height_cm = ? WHERE id = ?");
+            $upd->bind_param("di", $vt_h, $patient_id);
+        } else {
+            $upd = null;
+        }
+        if ($upd) { $upd->execute(); $upd->close(); }
+    }
+
     require_once __DIR__ . '/appointment_mailer.php';
     send_appointment_email($conn, $new_id, 'booked');
     echo "success:" . $new_id;

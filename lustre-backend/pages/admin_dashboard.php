@@ -371,6 +371,36 @@ $conn->close();
                 </div>
             </div>
             <p class="form-hint">Pick a doctor to see available dates &amp; times. Duration is 2 hours / visit.</p>
+            <p class="form-hint" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-600);margin-top:1rem">Vitals (optional)</p>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Weight (kg)</label>
+                    <input type="number" name="weight_kg" step="0.1" min="0" placeholder="e.g. 58.5">
+                </div>
+                <div class="form-group">
+                    <label>Height (cm)</label>
+                    <input type="number" name="height_cm" step="0.1" min="0" placeholder="e.g. 160.0">
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Blood Pressure</label>
+                    <input type="text" name="blood_pressure" placeholder="e.g. 110/70" pattern="\d{2,3}/\d{2,3}" title="Format: systolic/diastolic (e.g. 110/70)">
+                </div>
+                <div class="form-group">
+                    <label>Heart Rate (bpm)</label>
+                    <input type="number" name="heart_rate" min="0" max="250" placeholder="e.g. 78">
+                </div>
+                <div class="form-group">
+                    <label>Fundal Height (cm)</label>
+                    <input type="number" name="fundal_height" step="0.1" min="0" max="50" placeholder="e.g. 24.0">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Vitals Notes</label>
+                <textarea name="vitals_notes" rows="2" placeholder="Optional notes (e.g. patient condition)"></textarea>
+            </div>
+            <p class="form-hint">Leave blank to record vitals later from the appointment&rsquo;s Vitals button.</p>
             <div class="form-actions">
                 <button type="button" class="btn-secondary" onclick="closeModal('newApptModal')">Cancel</button>
                 <button type="submit" class="btn-primary">Book Appointment</button>
