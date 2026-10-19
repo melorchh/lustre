@@ -34,7 +34,7 @@ if ($patient_id > 0) {
 
 if ($patient) {
     $appointments = $conn->query("
-        SELECT a.*, d.name AS doctor_name, d.specialty
+        SELECT a.*, d.name AS doctor_name, d.specialty, a.result_date
         FROM appointments a
         JOIN doctors d ON a.doctor_id = d.id
         WHERE a.patient_id = $patient_id
