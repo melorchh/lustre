@@ -245,8 +245,13 @@ $conn->close();
                             <td><?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation'); ?></td>
                             <td><span class="badge <?php echo $status_badge; ?>"><?php echo ucfirst($s); ?></span></td>
                             <td class="findings-cell">
-                                <?php echo !empty($ap['result']) ? nl2br(htmlspecialchars($ap['result'])) : '<span class="muted-sub">No result yet</span>'; ?>
-                                <?php if ($is_doctor && (int)$ap['doctor_id'] === $doctor_id && $s === 'confirmed'): ?>
+                                <?php $show_findings_action = $is_doctor && (int)$ap['doctor_id'] === $doctor_id && $s === 'confirmed'; ?>
+                                <?php if (!empty($ap['result'])): ?>
+                                    <?php echo nl2br(htmlspecialchars($ap['result'])); ?>
+                                <?php elseif (!$show_findings_action): ?>
+                                    <span class="muted-sub">No result yet</span>
+                                <?php endif; ?>
+                                <?php if ($show_findings_action): ?>
                                     <div class="findings-actions">
                                         <button type="button" class="btn-sm btn-edit" onclick="openResultModal(<?php echo $appt_id; ?>, '<?php echo addslashes(htmlspecialchars($patient['name'])); ?>', '<?php echo addslashes(htmlspecialchars($ap['result'] ?? '')); ?>')">
                                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
@@ -257,7 +262,7 @@ $conn->close();
                             </td>
                             <td>
                                 <?php if ($has_vitals): ?>
-                                    <button type="button" class="btn-view-vitals" onclick="openApptVitals(<?php echo $appt_id; ?>, '<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>')">View Vitals</button>
+                                    <button type="button" class="btn-sm btn-vitals" title="View patient vitals" onclick="openApptVitals(<?php echo $appt_id; ?>, '<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals</button>
                                 <?php else: ?>
                                     <span class="muted-sub">&mdash;</span>
                                 <?php endif; ?>
