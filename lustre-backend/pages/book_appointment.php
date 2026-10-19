@@ -156,7 +156,7 @@ $stmt = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appoint
 $stmt->bind_param("iisss", $patient_id, $doctor_id, $date, $time_with_seconds, $service);
 
 if ($stmt->execute()) {
-    $new_id = $conn->insert_id;
+    $new_id = $stmt->insert_id;
 
     // Send the patient a booking request confirmation email (non-fatal on failure)
     require_once __DIR__ . '/appointment_mailer.php';

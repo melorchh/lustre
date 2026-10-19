@@ -151,13 +151,15 @@ $stmt->close();
 $stmt = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, appointment_duration, status, payment_status) VALUES (?, ?, ?, ?, ?, 'pending','pending')");
 $stmt->bind_param("iissi", $patient_id, $doctor_id, $date, $time_with_seconds, $appointment_duration);
 if ($stmt->execute()) {
-    $new_id = $conn->insert_id;
+    $new_id = $stmt->insert_id;
 
     // Save vitals tied to this appointment (visit date = appointment date)
     if ($has_vitals) {
         $vt = $conn->prepare("INSERT INTO vitals (patient_id, appointment_id, visit_date, weight_kg, height_cm, blood_pressure, heart_rate, fundal_height, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $vt->bind_param("iisddsids", $patient_id, $new_id, $date, $vt_w, $vt_h, $vt_b, $vt_r, $vt_f, $vt_n);
-        $vt->execute();
+        if (!$vt->execute()) {
+            error_log('[lustre] vitals insert failed for appointment ' . $new_id . ': ' . $vt->error);
+        }
         $vt->close();
 
         // Keep the patient profile in sync with the latest measurements.
