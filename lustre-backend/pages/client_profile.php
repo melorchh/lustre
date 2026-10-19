@@ -255,10 +255,12 @@ $conn->close();
                                 $when_attr = trim($date_txt . ($date_txt && $time_txt ? ' · ' : '') . $time_txt);
                                 if ($when_attr === '') { $when_attr = 'Not scheduled'; }
                                 ?>
-                                <?php if ($has_result): ?>
-                                    <div class="result-preview"><?php echo nl2br(htmlspecialchars($ap['result'])); ?></div>
-                                <?php elseif (!$show_findings_action): ?>
-                                    <span class="muted-sub">No result yet</span>
+                                <?php if ($has_result || !$show_findings_action): ?>
+                                    <?php if ($has_result): ?>
+                                        <span class="muted-sub">&mdash;</span>
+                                    <?php else: ?>
+                                        <span class="muted-sub">No result yet</span>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                                 <?php if ($has_result || $show_findings_action): ?>
                                     <div class="findings-actions">
