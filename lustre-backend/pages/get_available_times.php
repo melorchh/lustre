@@ -5,6 +5,8 @@ header('Expires: 0');
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/time_blocks_schema.php';
+ensure_time_blocks_schema($conn);
 
 $doctor_id = isset($_GET['doctor_id']) ? intval($_GET['doctor_id']) : 0;
 $date = isset($_GET['date']) ? $_GET['date'] : '';
@@ -72,9 +74,9 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
-// Get unavailable time blocks for this doctor (specific date OR weekly day-of-week)
-$stmt = $conn->prepare("SELECT start_time, end_time FROM doctor_time_blocks WHERE doctor_id=? AND ((block_type='date' AND block_date=?) OR (block_type='weekly' AND day_of_week=?))");
-$stmt->bind_param("iss", $doctor_id, $date, $day_of_week);
+// Get unavailable time blocks for this doctor (specific date, week range, OR weekly day-of-week)
+$stmt = $conn->prepare("SELECT start_time, end_time FROM doctor_time_blocks WHERE doctor_id=? AND ((block_type='date' AND block_date=?) OR (block_type='week' AND ? BETWEEN block_date AND end_date) OR (block_type='weekly' AND day_of_week=?))");
+$stmt->bind_param("isss", $doctor_id, $date, $date, $day_of_week);
 $stmt->execute();
 $result = $stmt->get_result();
 $blocked_ranges = [];

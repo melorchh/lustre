@@ -8,6 +8,11 @@ if (!isset($_SESSION["admin_id"])) {
 
 require_once __DIR__ . '/../src/db.php';
 include __DIR__ . '/../src/schedule_sync.php';
+require_once __DIR__ . '/../src/time_blocks_schema.php';
+ensure_time_blocks_schema($conn);
+// Allow the 'week' (date-range) block type on existing databases.
+$conn->query("ALTER TABLE doctor_time_blocks DROP CONSTRAINT IF EXISTS doctor_time_blocks_block_type_check");
+$conn->query("ALTER TABLE doctor_time_blocks ADD CONSTRAINT doctor_time_blocks_block_type_check CHECK (block_type IN ('date','weekly','week'))");
 
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
@@ -24,8 +29,8 @@ if ($action === 'add') {
         exit;
     }
 
-    // Validate day-of-week range (order matters: Mon -> Sat)
-    $valid_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    // Validate day-of-week range (order matters: Mon -> Sun)
+    $valid_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     $si = array_search($start_day, $valid_days);
     $ei = array_search($end_day, $valid_days);
     if ($si === false || $ei === false) {
@@ -144,12 +149,13 @@ elseif ($action === 'add_block') {
     $doctor_id   = isset($_POST['doctor_id'])   ? intval($_POST['doctor_id'])   : 0;
     $block_type  = isset($_POST['block_type'])  ? trim($_POST['block_type'])    : 'date';
     $block_date  = isset($_POST['block_date'])  ? trim($_POST['block_date'])    : '';
+    $end_date    = isset($_POST['end_date'])    ? trim($_POST['end_date'])      : '';
     $day_of_week = isset($_POST['day_of_week']) ? trim($_POST['day_of_week'])   : '';
     $start_time  = isset($_POST['start_time'])  ? trim($_POST['start_time'])    : '';
     $end_time    = isset($_POST['end_time'])    ? trim($_POST['end_time'])      : '';
     $reason      = isset($_POST['reason'])      ? trim($_POST['reason'])        : '';
 
-    if (empty($doctor_id) || empty($start_time) || empty($end_time) || !in_array($block_type, ['date', 'weekly'])) {
+    if (empty($doctor_id) || empty($start_time) || empty($end_time) || !in_array($block_type, ['date', 'weekly', 'week'])) {
         echo "error: Please fill in the required fields";
         $conn->close();
         exit;
@@ -159,6 +165,18 @@ elseif ($action === 'add_block') {
         echo "error: Please select a date";
         $conn->close();
         exit;
+    }
+    if ($block_type === 'week') {
+        if ($block_date === '' || $end_date === '') {
+            echo "error: Please select both a start and end date";
+            $conn->close();
+            exit;
+        }
+        if (strtotime($end_date) < strtotime($block_date)) {
+            echo "error: End date must be on or after the start date";
+            $conn->close();
+            exit;
+        }
     }
     if ($block_type === 'weekly') {
         $valid_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -178,15 +196,19 @@ elseif ($action === 'add_block') {
         exit;
     }
 
-    // Date blocks: prevent a block ending in the past
-    if ($block_type === 'date' && strtotime($block_date) < strtotime(date('Y-m-d'))) {
+    // Date / week blocks: prevent a block starting in the past
+    if (in_array($block_type, ['date', 'week']) && strtotime($block_date) < strtotime(date('Y-m-d'))) {
         echo "error: Cannot block a date in the past";
         $conn->close();
         exit;
     }
 
-    $stmt = $conn->prepare("INSERT INTO doctor_time_blocks (doctor_id, block_type, block_date, day_of_week, start_time, end_time, reason) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("issssss", $doctor_id, $block_type, $block_date, $day_of_week, $start_time, $end_time, $reason);
+    $block_date_sql = ($block_date !== '') ? $block_date : null;
+    $end_date_sql   = ($block_type === 'week' && $end_date !== '') ? $end_date : null;
+    $day_of_week_sql = ($day_of_week !== '') ? $day_of_week : null;
+
+    $stmt = $conn->prepare("INSERT INTO doctor_time_blocks (doctor_id, block_type, block_date, end_date, day_of_week, start_time, end_time, reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("isssssss", $doctor_id, $block_type, $block_date_sql, $end_date_sql, $day_of_week_sql, $start_time, $end_time, $reason);
 
     if ($stmt->execute()) {
         if ($block_type === 'weekly') {

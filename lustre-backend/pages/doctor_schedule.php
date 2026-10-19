@@ -188,13 +188,17 @@ function me_time($t){ return (new DateTime($t))->format('g:i A'); }
                         <tbody>
                         <?php if ($time_blocks && $time_blocks->num_rows > 0): ?>
                             <?php while ($tb = $time_blocks->fetch_assoc()):
-                                $when = $tb['block_type'] === 'weekly'
-                                    ? 'Every ' . $tb['day_of_week']
-                                    : date('M j, Y', strtotime($tb['block_date']));
+                                if ($tb['block_type'] === 'weekly') {
+                                    $when = 'Every ' . $tb['day_of_week'];
+                                } elseif ($tb['block_type'] === 'week' && !empty($tb['end_date'])) {
+                                    $when = date('M j', strtotime($tb['block_date'])) . ' &ndash; ' . date('M j, Y', strtotime($tb['end_date']));
+                                } else {
+                                    $when = date('M j, Y', strtotime($tb['block_date']));
+                                }
                             ?>
                             <tr>
                                 <td><?php echo $tb['id']; ?></td>
-                                <td><?php echo $tb['block_type'] === 'weekly' ? 'Weekly' : 'Date'; ?></td>
+                                <td><?php echo $tb['block_type'] === 'weekly' ? 'Weekly' : ($tb['block_type'] === 'week' ? 'Week' : 'Date'); ?></td>
                                 <td><?php echo htmlspecialchars($when); ?></td>
                                 <td><?php echo me_time($tb['start_time']); ?></td>
                                 <td><?php echo me_time($tb['end_time']); ?></td>

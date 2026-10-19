@@ -40,6 +40,22 @@ $fn$ LANGUAGE plpgsql");
     $conn->query("CREATE TRIGGER trg_appointments_unique_code BEFORE INSERT ON appointments FOR EACH ROW EXECUTE FUNCTION assign_unique_code('APT', 'appointments_id_seq')");
 
     // Vitals can belong to a specific appointment (consultation).
-    $conn->query("ALTER TABLE vitals ADD COLUMN IF NOT EXISTS appointment_id INTEGER REFERENCES appointments(id)");
+    $conn->query("ALTER TABLE vitals ADD COLUMN IF NOT EXISTS appointment_id INTEGER");
     $conn->query("CREATE INDEX IF NOT EXISTS idx_vitals_appointment ON vitals(appointment_id)");
+
+    // Older databases created the vitals -> appointments FK without
+    // ON DELETE SET NULL (NO ACTION), which makes deleting a doctor fail
+    // with "vitals_appointment_id_fkey ... is still referenced" because
+    // doctor deletion cascades to appointments. Re-create the FK so the
+    // vitals record is preserved and only the appointment link is cleared.
+    // Runs only when the constraint is missing or wrong (cheap catalog check).
+    $needs_fk_fix = true;
+    $fk = $conn->query("SELECT confdeltype FROM pg_constraint WHERE conname = 'vitals_appointment_id_fkey' AND conrelid = 'vitals'::regclass AND confrelid = 'appointments'::regclass");
+    if ($fk && ($frow = $fk->fetch_assoc())) {
+        $needs_fk_fix = ($frow['confdeltype'] !== 's'); // 's' = SET NULL
+    }
+    if ($needs_fk_fix) {
+        $conn->query("ALTER TABLE vitals DROP CONSTRAINT IF EXISTS vitals_appointment_id_fkey");
+        $conn->query("ALTER TABLE vitals ADD CONSTRAINT vitals_appointment_id_fkey FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE SET NULL");
+    }
 }

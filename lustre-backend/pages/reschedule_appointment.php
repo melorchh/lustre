@@ -6,6 +6,8 @@ if (!isset($_SESSION["patient_id"])) {
 }
 
 require_once __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/time_blocks_schema.php';
+ensure_time_blocks_schema($conn);
 
 $patient_id = $_SESSION["patient_id"];
 $appointment_id = isset($_POST["appointment_id"]) ? intval($_POST["appointment_id"]) : 0;
@@ -122,11 +124,12 @@ $stmt = $conn->prepare("
     SELECT id FROM doctor_time_blocks
     WHERE doctor_id = ?
       AND ((block_type = 'date' AND block_date = ?)
+        OR (block_type = 'week' AND ? BETWEEN block_date AND end_date)
         OR (block_type = 'weekly' AND day_of_week = ?))
       AND ? >= start_time
       AND ? <  end_time
 ");
-$stmt->bind_param("issss", $doctor_id, $date, $day_of_week, $time_with_seconds, $time_with_seconds);
+$stmt->bind_param("isssss", $doctor_id, $date, $date, $day_of_week, $time_with_seconds, $time_with_seconds);
 $stmt->execute();
 $stmt->store_result();
 if ($stmt->num_rows > 0) {
