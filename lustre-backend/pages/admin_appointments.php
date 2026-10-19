@@ -17,7 +17,7 @@ $today_count        = $conn->query("SELECT COUNT(*) c FROM appointments WHERE ap
 $appointments = $conn->query("
     SELECT a.id, a.patient_id, a.unique_code, a.appointment_date, a.appointment_time, a.status, a.payment_status,
            a.is_urgent, a.reschedule_count, a.updated_at, a.appointment_duration,
-           a.service_requested,
+           a.service_requested, a.result, a.result_date,
            (SELECT COUNT(*) FROM vitals v WHERE v.appointment_id = a.id) AS vital_count,
            p.name AS patient_name, p.email AS patient_email,
            p.address AS patient_address, p.age AS patient_age,
