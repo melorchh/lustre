@@ -255,37 +255,30 @@ $conn->close();
                                 $when_attr = trim($date_txt . ($date_txt && $time_txt ? ' · ' : '') . $time_txt);
                                 if ($when_attr === '') { $when_attr = 'Not scheduled'; }
                                 ?>
-                                <?php if ($has_result || !$show_findings_action): ?>
-                                    <?php if ($has_result): ?>
-                                        <span class="muted-sub">&mdash;</span>
-                                    <?php else: ?>
-                                        <span class="muted-sub">No result yet</span>
-                                    <?php endif; ?>
+                                <?php if ($has_result): ?>
+                                    <button type="button" class="btn-sm btn-view js-result-view"
+                                        data-apt="<?php echo $appt_id; ?>"
+                                        data-code="<?php echo htmlspecialchars($ap['unique_code'] ?? ('APT-' . str_pad((string)$ap['id'], 6, '0', STR_PAD_LEFT)), ENT_QUOTES); ?>"
+                                        data-patient="<?php echo htmlspecialchars($patient['name'], ENT_QUOTES); ?>"
+                                        data-doctor="<?php echo htmlspecialchars('Dr. ' . $ap['doctor_name'] . ' (' . $ap['specialty'] . ')', ENT_QUOTES); ?>"
+                                        data-service="<?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation', ENT_QUOTES); ?>"
+                                        data-when="<?php echo htmlspecialchars($when_attr, ENT_QUOTES); ?>"
+                                        data-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>"
+                                        data-recorded="<?php echo htmlspecialchars($recorded_fmt, ENT_QUOTES); ?>"
+                                        data-result="<?php echo $result_attr; ?>"
+                                        onclick="openResultView(this)">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                        View Result
+                                    </button>
+                                <?php elseif (!$show_findings_action): ?>
+                                    <span class="muted-sub">No result yet</span>
                                 <?php endif; ?>
-                                <?php if ($has_result || $show_findings_action): ?>
+                                <?php if ($show_findings_action): ?>
                                     <div class="findings-actions">
-                                        <?php if ($has_result): ?>
-                                            <button type="button" class="btn-sm btn-view js-result-view"
-                                                data-apt="<?php echo $appt_id; ?>"
-                                                data-code="<?php echo htmlspecialchars($ap['unique_code'] ?? ('APT-' . str_pad((string)$ap['id'], 6, '0', STR_PAD_LEFT)), ENT_QUOTES); ?>"
-                                                data-patient="<?php echo htmlspecialchars($patient['name'], ENT_QUOTES); ?>"
-                                                data-doctor="<?php echo htmlspecialchars('Dr. ' . $ap['doctor_name'] . ' (' . $ap['specialty'] . ')', ENT_QUOTES); ?>"
-                                                data-service="<?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation', ENT_QUOTES); ?>"
-                                                data-when="<?php echo htmlspecialchars($when_attr, ENT_QUOTES); ?>"
-                                                data-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>"
-                                                data-recorded="<?php echo htmlspecialchars($recorded_fmt, ENT_QUOTES); ?>"
-                                                data-result="<?php echo $result_attr; ?>"
-                                                onclick="openResultView(this)">
-                                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                                                View Result
-                                            </button>
-                                        <?php endif; ?>
-                                        <?php if ($show_findings_action): ?>
-                                            <button type="button" class="btn-sm btn-edit" onclick="openResultModal(<?php echo $appt_id; ?>, '<?php echo addslashes(htmlspecialchars($patient['name'])); ?>', '<?php echo str_replace(["\r\n", "\r", "\n"], '\n', addslashes(htmlspecialchars($ap['result'] ?? ''))); ?>')">
-                                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                                                Findings
-                                            </button>
-                                        <?php endif; ?>
+                                        <button type="button" class="btn-sm btn-edit" onclick="openResultModal(<?php echo $appt_id; ?>, '<?php echo addslashes(htmlspecialchars($patient['name'])); ?>', '<?php echo str_replace(["\r\n", "\r", "\n"], '\n', addslashes(htmlspecialchars($ap['result'] ?? ''))); ?>')">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                            Findings
+                                        </button>
                                     </div>
                                 <?php endif; ?>
                             </td>
@@ -429,6 +422,10 @@ $conn->close();
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Print / Download PDF
             </a>
+            <button type="button" class="btn-sm btn-edit" id="resultViewEdit" onclick="editResultFromModal()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                Edit Result
+            </button>
             <button type="button" class="btn-sm btn-edit" id="resultViewSend" onclick="sendResultToPatient()">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 Send to Patient
@@ -580,6 +577,15 @@ $conn->close();
         var send = document.getElementById('resultViewSend');
         var note = document.getElementById('resultViewNote');
         pdf.href = 'appointment_result_pdf.php?id=' + encodeURIComponent(d.apt);
+        <?php if ($is_doctor): ?>
+        var editBtn = document.getElementById('resultViewEdit');
+        editBtn.dataset.patient = d.patient;
+        editBtn.dataset.appt = d.apt;
+        editBtn.dataset.result = d.result;
+        editBtn.style.display = '';
+        <?php else: ?>
+        document.getElementById('resultViewEdit').style.display = 'none';
+        <?php endif; ?>
         if (draft) {
             pdf.style.display = 'none';
             send.style.display = 'none';
@@ -603,6 +609,17 @@ $conn->close();
             if(res.trim()==='success') showToast('Result sent to the patient!','success');
             else showToast(res,'error');
         }).catch(function(){ hideLoading(); showToast('Error','error'); });
+    }
+    function editResultFromModal(){
+        var btn = document.getElementById('resultViewEdit');
+        if(!btn) return;
+        var appt = parseInt(btn.dataset.appt, 10);
+        var patient = btn.dataset.patient || '';
+        var result = btn.dataset.result || '';
+        closeModal('resultViewModal');
+        if (window.openResultModal) {
+            openResultModal(appt, patient, result);
+        }
     }
 
     <?php if ($is_doctor): ?>
