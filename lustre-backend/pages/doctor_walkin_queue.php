@@ -17,6 +17,54 @@ walkins_ensure_result_column($conn);
 $doctor_id = (int)$_SESSION['doctor_id'];
 $action    = $_POST['action'] ?? '';
 
+// Mirror a walk-in result onto the matching appointment (same patient,
+// doctor, and date — latest appointment wins) so the result shows up in
+// client_profile.php, doctor_appointments.php, and the admin side.
+// If no appointment exists for that walk-in, create a completed one so the
+// consultation still lands in the patient's records.
+function walkins_mirror_result_to_appointment($conn, $doctor_id, $wid, $result) {
+    if ($result === '') return;
+    $res = $conn->query(
+        "SELECT a.id FROM appointments a
+         JOIN walk_ins w ON a.patient_id = w.patient_id
+                       AND a.doctor_id = w.doctor_id
+                       AND a.appointment_date = w.arrival_date
+         WHERE w.id = " . (int)$wid . " AND w.doctor_id = " . (int)$doctor_id . "
+         ORDER BY a.id DESC LIMIT 1"
+    );
+    if ($res && ($r = $res->fetch_assoc())) {
+        $aid = (int)$r['id'];
+        $upd = $conn->prepare("UPDATE appointments SET result = ?, result_date = NOW() WHERE id = ? AND doctor_id = ?");
+        $upd->bind_param("sii", $result, $aid, $doctor_id);
+        $upd->execute();
+        $upd->close();
+        return;
+    }
+    // No appointment found — create a completed one for this walk-in.
+    $w = $conn->query(
+        "SELECT w.patient_id, w.arrival_date, w.arrival_time, w.test_procedure
+         FROM walk_ins w
+         WHERE w.id = " . (int)$wid . " AND w.doctor_id = " . (int)$doctor_id
+    );
+    if (!$w || !($wr = $w->fetch_assoc())) return;
+    $service = ($wr['test_procedure'] !== null && $wr['test_procedure'] !== '') ? $wr['test_procedure'] : 'Walk-in consultation';
+    $ins = $conn->prepare(
+        "INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, service_requested, status, payment_status, reminder_sent, result, result_date)
+         VALUES (?, ?, ?, ?, ?, 'completed', 'pending', 1, ?, NOW())"
+    );
+    $ins->bind_param(
+        "iissss",
+        $wr['patient_id'],
+        $doctor_id,
+        $wr['arrival_date'],
+        $wr['arrival_time'],
+        $service,
+        $result
+    );
+    $ins->execute();
+    $ins->close();
+}
+
 if ($action === 'update_status') {
     $wid    = isset($_POST['walkin_id']) ? intval($_POST['walkin_id']) : 0;
     $status = trim($_POST['status'] ?? '');
@@ -28,11 +76,15 @@ if ($action === 'update_status') {
         $result = trim($_POST['result']);
         $upd = $conn->prepare("UPDATE walk_ins SET status = ?, result = ? WHERE id = ? AND doctor_id = ?");
         $upd->bind_param("ssii", $status, $result, $wid, $doctor_id);
+        if ($upd->execute()) {
+            if ($result !== '') walkins_mirror_result_to_appointment($conn, $doctor_id, $wid, $result);
+            echo 'success';
+        } else { echo 'Update failed.'; }
     } else {
         $upd = $conn->prepare("UPDATE walk_ins SET status = ? WHERE id = ? AND doctor_id = ?");
         $upd->bind_param("sii", $status, $wid, $doctor_id);
+        if ($upd->execute()) { echo 'success'; } else { echo 'Update failed.'; }
     }
-    if ($upd->execute()) { echo 'success'; } else { echo 'Update failed.'; }
     $upd->close();
     $conn->close();
     exit;
@@ -45,7 +97,10 @@ if ($action === 'save_result') {
 
     $upd = $conn->prepare("UPDATE walk_ins SET result = ? WHERE id = ? AND doctor_id = ?");
     $upd->bind_param("sii", $result, $wid, $doctor_id);
-    if ($upd->execute()) { echo 'success'; } else { echo 'Update failed.'; }
+    if ($upd->execute()) {
+        walkins_mirror_result_to_appointment($conn, $doctor_id, $wid, $result);
+        echo 'success';
+    } else { echo 'Update failed.'; }
     $upd->close();
     $conn->close();
     exit;

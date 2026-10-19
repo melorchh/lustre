@@ -505,6 +505,7 @@ function fill_color($s) {
         let wqModalMode = 'edit';
         let wqModalId = null;
         function openWalkinResultModal(id, mode){
+            id = parseInt(id, 10);
             wqModalId = id;
             wqModalMode = mode || 'edit';
             const ta = document.getElementById('wqResultText');
@@ -520,7 +521,7 @@ function fill_color($s) {
             .then(r=>r.json())
             .then(d=>{
                 if(!d || !d.ok || wqModalId !== id) return;
-                const row = (d.rows||[]).find(x=>x.id===id);
+                const row = (d.rows||[]).find(x=>parseInt(x.id,10)===id);
                 if(!row) return;
                 if (info) info.innerHTML =
                     '<div class="info-item"><label>Queue</label><span>#'+row.queue+'</span></div>' +
