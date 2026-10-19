@@ -14,6 +14,7 @@ require_once __DIR__ . '/../src/unique_ids.php';
 ensure_unique_ids($conn);
 
 $display_name = $is_admin ? $_SESSION['admin_name'] : $_SESSION['doctor_name'];
+$doctor_id    = $is_doctor ? (int)$_SESSION['doctor_id'] : 0;
 
 $patient_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
@@ -243,7 +244,17 @@ $conn->close();
                             <td>Dr. <?php echo htmlspecialchars($ap['doctor_name']); ?><br><small class="cell-sub"><?php echo htmlspecialchars($ap['specialty']); ?></small></td>
                             <td><?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation'); ?></td>
                             <td><span class="badge <?php echo $status_badge; ?>"><?php echo ucfirst($s); ?></span></td>
-                            <td class="findings-cell"><?php echo !empty($ap['result']) ? nl2br(htmlspecialchars($ap['result'])) : '<span class="muted-sub">No result yet</span>'; ?></td>
+                            <td class="findings-cell">
+                                <?php echo !empty($ap['result']) ? nl2br(htmlspecialchars($ap['result'])) : '<span class="muted-sub">No result yet</span>'; ?>
+                                <?php if ($is_doctor && (int)$ap['doctor_id'] === $doctor_id && $s === 'confirmed'): ?>
+                                    <div class="findings-actions">
+                                        <button type="button" class="btn-sm btn-edit" onclick="openResultModal(<?php echo $appt_id; ?>, '<?php echo addslashes(htmlspecialchars($patient['name'])); ?>', '<?php echo addslashes(htmlspecialchars($ap['result'] ?? '')); ?>')">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                            Findings
+                                        </button>
+                                    </div>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <?php if ($has_vitals): ?>
                                     <button type="button" class="btn-view-vitals" onclick="openApptVitals(<?php echo $appt_id; ?>, '<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>')">View Vitals</button>
@@ -361,6 +372,43 @@ $conn->close();
     </div>
 </div>
 
+<?php if ($is_doctor): ?>
+<style>
+    .findings-actions{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.55rem}
+    .findings-actions .btn-sm{padding:.35rem .7rem;font-size:.76rem;min-height:32px}
+    .complete-check{display:flex;align-items:center;gap:.5rem;font-size:.86rem;color:var(--gray-700,#334155);margin:-.2rem 0 .9rem;cursor:pointer;user-select:none}
+    .complete-check input{width:16px;height:16px;accent-color:#16a34a;cursor:pointer}
+</style>
+
+<!-- Result Entry Modal -->
+<div class="result-modal" id="resultModal">
+    <div class="result-modal-box">
+        <button class="result-close" onclick="closeResultModal()">&#10005;</button>
+        <h3 id="modalTitle">Consultation Findings</h3>
+
+        <div class="info-row" id="modalInfoRow"></div>
+
+        <div class="form-group">
+            <label>Appointment Result / Findings</label>
+            <textarea id="modalResult" rows="8" placeholder="Enter the appointment result, diagnosis, findings, and notes here..."></textarea>
+        </div>
+
+        <label class="complete-check">
+            <input type="checkbox" id="modalComplete">
+            <span>Mark this appointment as completed</span>
+        </label>
+
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+            <button class="btn-primary" onclick="saveResult()" id="saveResultBtn"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Save Findings</button>
+            <button class="btn-secondary" onclick="closeResultModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="loadingScreen" class="loading-screen"><div class="spinner"></div><p>Processing...</p></div>
+<div id="toast" class="toast"></div>
+<?php endif; ?>
+
 <script>
     function openSidebar(){document.getElementById('adminSidebar').classList.add('open');document.getElementById('sidebarOverlay').classList.add('active');document.body.style.overflow='hidden';}
     function closeSidebar(){document.getElementById('adminSidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('active');document.body.style.overflow='';}
@@ -385,7 +433,9 @@ $conn->close();
         overlay.addEventListener('click', function(e){ if(e.target === this) closeModal(this.id); });
     });
     document.addEventListener('keydown', function(e){
-        if(e.key === 'Escape') closeModal('apptVitalsModal');
+        if(e.key !== 'Escape') return;
+        if(document.getElementById('resultModal')) closeResultModal();
+        closeModal('apptVitalsModal');
     });
 
     function escapeHtml(s){
@@ -431,6 +481,62 @@ $conn->close();
                 document.getElementById('apptVitalsBody').innerHTML = '<p style="color:#dc2626">Network error.</p>';
             });
     }
+
+    <?php if ($is_doctor): ?>
+    /* -- Appointment result / findings entry -- */
+    function showToast(msg,type){
+        var t=document.getElementById('toast');
+        if(!t)return;
+        t.textContent=msg;
+        t.className='toast show'+(type?' '+type:'');
+        setTimeout(function(){t.className='toast';},3500);
+    }
+    function showLoading(){var l=document.getElementById('loadingScreen');if(l)l.classList.add('active');}
+    function hideLoading(){var l=document.getElementById('loadingScreen');if(l)l.classList.remove('active');}
+
+    var currentApptId = null;
+    function openResultModal(id, patientName, result){
+        currentApptId = id;
+        document.getElementById('modalInfoRow').innerHTML =
+            '<div class="info-item"><label>Patient</label><span>'+escapeHtml(patientName)+'</span></div>' +
+            '<div class="info-item"><label>Appt ID</label><span>#'+escapeHtml(String(id))+'</span></div>';
+        document.getElementById('modalResult').value = result || '';
+        document.getElementById('modalComplete').checked = false;
+        document.getElementById('resultModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeResultModal(){
+        var m = document.getElementById('resultModal');
+        if (m) m.classList.remove('active');
+        document.body.style.overflow = '';
+        currentApptId = null;
+    }
+    function saveResult(){
+        if(!currentApptId) return;
+        var result = document.getElementById('modalResult').value.trim();
+        if(!result){ showToast('Please enter the appointment result','error'); return; }
+        var complete = document.getElementById('modalComplete').checked;
+        showLoading();
+        var fd = new FormData();
+        fd.append('appointment_id', currentApptId);
+        fd.append('result', result);
+        var action = complete ? 'complete_and_result' : 'save_result';
+        fetch('doctor_result_action.php?action=' + action, { method:'POST', body:fd })
+        .then(function(r){return r.text();}).then(function(res){
+            hideLoading();
+            if(res.trim()==='success'){
+                showToast(complete ? 'Appointment completed!' : 'Findings saved!','success');
+                closeResultModal();
+                document.body.classList.add('__leaving');
+                setTimeout(function(){location.reload();},215);
+            }
+            else showToast(res,'error');
+        }).catch(function(){ hideLoading(); showToast('Error','error'); });
+    }
+    document.getElementById('resultModal').addEventListener('click', function(e){
+        if(e.target === this) closeResultModal();
+    });
+    <?php endif; ?>
 
     /* -- LustreMDC Smooth Transitions -- */
     (function(){
