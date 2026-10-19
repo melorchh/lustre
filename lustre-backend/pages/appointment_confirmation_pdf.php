@@ -169,6 +169,10 @@ $Y = $Y + $panelH + 20;
 // â”€â”€ Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 rectfill($stream, $M, $Y, $w_pt - 2 * $M, 1, $line_gray);
 $Y += 14;
+pdftxt($stream, $M, $Y, 'To ensure all patients are seen promptly, a 30-minute grace period is given.', 'B', 8.5, $gray_mid);
+$Y += 13;
+pdftxt($stream, $M, $Y, 'Failure to arrive within this window will result in the cancellation of your appointment.', 'B', 8.5, $gray_mid);
+$Y += 15;
 pdftxt($stream, $M, $Y, 'Appointments are scheduled as 2-hour visits. Please arrive on time.', 'R', 8.5, $gray_light);
 $Y += 13;
 pdftxt($stream, $M, $Y, 'Present this confirmation card at the clinic front desk upon arrival.', 'R', 8.5, $gray_light);

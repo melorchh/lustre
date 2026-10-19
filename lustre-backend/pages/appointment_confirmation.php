@@ -103,6 +103,7 @@ $v_js  = is_file(__DIR__ . '/../../' . $asset_js)  ? filemtime(__DIR__ . '/../..
         .btn-download:hover{background:var(--green-dark)}
         .btn-secondary{background:#eef2ef;color:var(--ink);border:1px solid var(--line)}
         .cf-note{background:#f8faf9;border:1px dashed #cfd8d2;border-radius:12px;padding:10px 14px;font-size:.8rem;color:var(--gray-mid);margin-top:20px}
+        .cf-note--policy{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-weight:600}
         .cf-foot{text-align:center;color:var(--gray-light);font-size:.78rem;margin-top:22px}
         .cf-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
         .cf-field--wide{grid-column:1 / -1}
@@ -183,6 +184,10 @@ $v_js  = is_file(__DIR__ . '/../../' . $asset_js)  ? filemtime(__DIR__ . '/../..
                         Download Proof (PDF)
                     </a>
                     <a class="btn btn-secondary" href="my_appointments.php">Back to Appointments</a>
+                </div>
+
+                <div class="cf-note cf-note--policy">
+                    To ensure all patients are seen promptly, a 30-minute grace period is given. Failure to arrive within this window will result in the cancellation of your appointment.
                 </div>
 
                 <div class="cf-note">
