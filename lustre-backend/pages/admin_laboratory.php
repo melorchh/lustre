@@ -71,7 +71,7 @@ $conn->close();
         .test-type-check{display:flex;align-items:center;gap:.55rem;padding:.5rem .65rem;font-size:.85rem;font-weight:500;cursor:pointer;line-height:1.4;text-transform:none;letter-spacing:0;margin:0;color:var(--gray-800);border:1px solid transparent;border-radius:9px;transition:background .15s ease,border-color .15s ease}
         .test-type-check:hover{background:var(--green-pale)}
         .test-type-check.is-checked{background:var(--green-pale2);border-color:rgba(22,163,74,.4)}
-        .test-type-check input[type="checkbox"]{accent-color:var(--green,#16a34a);width:15px;height:15px;flex:0 0 auto}
+       .test-type-check input[type="checkbox"] {accent-color: var(--green, #16a34a);width: 15px;height: 15px;vertical-align: middle;position: relative;top: -1px;margin-right: 6px;flex: 0 0 auto;}
         .test-type-checks::-webkit-scrollbar{width:8px}
         .test-type-checks::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:8px}
         .test-type-checks::-webkit-scrollbar-track{background:transparent}
