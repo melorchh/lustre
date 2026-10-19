@@ -1158,7 +1158,10 @@ table small {
 }
 
 /* ── Custom filter dropdown (replaces native <select> popup) ── */
-.filter-select{
+/* Hide the native select only after admin_components.js has built its
+   custom-dropdown replacement (it sets data-fd=1), so the filter stays
+   usable even if that script is cached/missing. */
+.filter-select[data-fd]{
   display:none;
 }
 .cust-dropdown{
@@ -1305,7 +1308,8 @@ table small {
 }
 
 /* ── Custom form dropdown (Request New Lab Test etc.) ── */
-.form-dropdown{
+/* Hidden only after admin_components.js sets data-fd=1 (custom dropdown built) */
+.form-dropdown[data-fd]{
   display:none;
 }
 .cust-dropdown.cd-form{
@@ -1339,8 +1343,24 @@ table small {
 }
 
 /* ── Custom inline action dropdown (table status/payment selects) ── */
-.action-select{
+/* Hidden only after admin_components.js sets data-fd=1 (custom dropdown built) */
+.action-select[data-fd]{
   display:none;
+}
+/* Read-only appointment result body (admin result viewer) */
+.result-view-body{
+  margin-top:.7rem;
+  background:var(--green-pale,#f0fdf4);
+  border:1px solid rgba(22,163,74,.25);
+  border-radius:12px;
+  padding:.85rem 1rem;
+  font-size:.9rem;
+  line-height:1.65;
+  color:inherit;
+  white-space:pre-wrap;
+  word-break:break-word;
+  max-height:320px;
+  overflow:auto;
 }
 .apt-actions .cust-dropdown.cd-action{
   width:100%;
