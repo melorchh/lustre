@@ -20,7 +20,7 @@ if (isset($_SESSION["patient_id"])) {
 <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="icon" href="images/Lustre.png" type="image/png">
 </head>
-<body>
+<body><script data-pjax src="page_transitions.js?v=<?= filemtime(__DIR__ . '/../../page_transitions.js') ?>"></script>
 
 <!-- == NAVBAR == -->
 <nav class="navbar" id="navbar">
