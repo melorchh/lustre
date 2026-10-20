@@ -59,10 +59,40 @@ function render_staff_shell(array $staff, string $view, array $data, string $ent
 </head>
 <body>
   <div id="root"></div>
+  <noscript><div style="padding:32px;font-family:system-ui,sans-serif;">JavaScript is required for the LustreMDC staff portal.</div></noscript>
+  <div id="staff-boot-error" style="display:none;padding:32px;font-family:system-ui,sans-serif;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:12px;margin:40px auto;max-width:720px;">
+    <h2 style="margin:0 0 8px;font-size:18px;">This page failed to load.</h2>
+    <p style="margin:0 0 12px;color:#7f1d1d;">Please refresh. If it persists, the staff bundle may not be deployed.</p>
+    <pre id="staff-boot-error-detail" style="white-space:pre-wrap;font-size:12px;color:#7f1d1d;margin:0;"></pre>
+  </div>
   <script>
     window.__LUSTRE__ = <?php echo json_encode($payload, $flags); ?>;
+    (function () {
+      var shown = false;
+      window.__staffBootError = function (detail) {
+        if (shown) return; shown = true;
+        var box = document.getElementById('staff-boot-error');
+        if (!box) { box = document.createElement('div'); box.id = 'staff-boot-error'; document.body.appendChild(box); }
+        box.style.display = 'block';
+        var pre = document.getElementById('staff-boot-error-detail');
+        if (pre && detail) pre.textContent = String(detail);
+      };
+      window.addEventListener('error', function (e) {
+        var src = (e && e.filename) ? (' @ ' + e.filename + ':' + (e.lineno || 0)) : '';
+        window.__staffBootError((e && e.message ? e.message : 'Script error') + src);
+      });
+      window.addEventListener('unhandledrejection', function (e) {
+        window.__staffBootError('Unhandled rejection: ' + ((e && e.reason && (e.reason.message || e.reason)) || 'unknown'));
+      });
+      setTimeout(function () {
+        var root = document.getElementById('root');
+        if (root && root.childElementCount === 0) {
+          window.__staffBootError('Bundle did not mount within 6s. Confirm the script URL loads (check the Network tab): <?php echo htmlspecialchars($asset_js, ENT_QUOTES); ?>?v=<?php echo (int)$v_js; ?>');
+        }
+      }, 6000);
+    })();
   </script>
-  <script type="module" src="<?php echo htmlspecialchars($asset_js, ENT_QUOTES); ?>?v=<?php echo $v_js; ?>"></script>
+  <script type="module" src="<?php echo htmlspecialchars($asset_js, ENT_QUOTES); ?>?v=<?php echo (int)$v_js; ?>"></script>
 </body>
 </html>
     <?php
