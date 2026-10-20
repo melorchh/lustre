@@ -73,7 +73,7 @@ $conn->close();
 <link rel="stylesheet" href="admin.css?v=<?= filemtime(__DIR__ . '/../../admin.css') ?>">
     <title>Patient Management - LustreMDC Admin</title>
 </head>
-<body>
+<body><script data-pjax src="page_transitions.js?v=<?= filemtime(__DIR__ . '/../../page_transitions.js') ?>"></script>
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
     <div class="admin-layout">
         <aside class="admin-sidebar" id="adminSidebar">
@@ -421,7 +421,7 @@ $conn->close();
                 .catch(function(){hideLoading();showToast('Network error','error');});
         });
 
-        function reloadPage(){document.body.classList.add('__leaving');setTimeout(function(){window.location.href='admin_patients.php';},215);}
+        function reloadPage(){if(window.LustrePjax)return window.LustrePjax.visit('admin_patients.php');document.body.classList.add('__leaving');setTimeout(function(){window.location.href='admin_patients.php';},215);}
         function filterPatients(){
             const name=document.getElementById('searchName').value.toLowerCase().trim();
             const addr=document.getElementById('searchAddr').value.toLowerCase().trim();
@@ -434,36 +434,6 @@ $conn->close();
             });
         }
     
-    /* -- LustreMDC Smooth Transitions -- */
-    (function(){
-      const s=document.createElement('style');
-      s.textContent=`
-        @keyframes __meIn  {from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-        @keyframes __meOut {from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-6px)}}
-        @keyframes __meFade {from{opacity:0}to{opacity:1}}
-        @keyframes __meFadeOut {from{opacity:1}to{opacity:0}}
-        body{animation:__meFade .4s ease both}
-        body.__leaving{animation:__meFadeOut .22s ease forwards;pointer-events:none}
-        button:not(:disabled):active{transform:scale(.965) !important}
-        .content-card{animation:__meIn .42s cubic-bezier(.22,1,.36,1) both}
-        .stat-card{animation:__meIn .38s cubic-bezier(.22,1,.36,1) both}
-        tr{transition:background .15s}
-        .modal-box{animation:__meIn .3s cubic-bezier(.34,1.56,.64,1)}
-        .result-modal-box{animation:__meIn .3s cubic-bezier(.34,1.56,.64,1)}
-        .doctor-card{transition:transform .2s,box-shadow .22s !important}
-        .doctor-card:hover{transform:translateY(-3px) !important}
-      `;
-      document.head.appendChild(s);
-      document.addEventListener('click',function(e){
-        const link=e.target.closest('a[href]');
-        if(!link)return;
-        const href=link.getAttribute('href');
-        if(!href||href.startsWith('#')||href.startsWith('javascript')||href.startsWith('http')||link.getAttribute('target')==='_blank')return;
-        e.preventDefault();
-        document.body.classList.add('__leaving');
-        setTimeout(()=>{window.location.href=href;},215);
-      });
-    })();
 </script>
 <script src="admin_components.js?v=<?= filemtime(__DIR__ . '/../../admin_components.js') ?>"></script>
 <script src="admin_theme.js?v=<?= filemtime(__DIR__ . '/../../admin_theme.js') ?>"></script>

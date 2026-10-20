@@ -21,7 +21,7 @@ if (isset($_SESSION["doctor_id"])) {
     <link rel="stylesheet" href="doctor.css?v=<?= filemtime(__DIR__ . '/../../doctor.css') ?>">
     <title>Doctor Login - LustreMDC</title>
 </head>
-<body class="doctor-page">
+<body class="doctor-page"><script data-pjax src="page_transitions.js?v=<?= filemtime(__DIR__ . '/../../page_transitions.js') ?>"></script>
     <div class="admin-login-page">
         <div class="login-card">
             <div class="login-header">
@@ -71,32 +71,6 @@ if (isset($_SESSION["doctor_id"])) {
             document.getElementById('loadingScreen').classList.remove('active');
         }
 
-        /* -- Smooth Transitions -- */
-        (function(){
-          const s=document.createElement('style');
-          s.textContent=`
-            @keyframes __meIn  {from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
-            @keyframes __meOut {from{opacity:1}to{opacity:0;transform:translateY(-6px)}}
-            @keyframes __meFade {from{opacity:0}to{opacity:1}}
-            @keyframes __meFadeOut {from{opacity:1}to{opacity:0}}
-            body{animation:__meFade .4s ease both}
-            body.__leaving{animation:__meFadeOut .22s ease forwards;pointer-events:none}
-            .login-card{animation:__meIn .5s cubic-bezier(.34,1.2,.64,1) both}
-            button:not(:disabled):active{transform:scale(.965) !important}
-            .form-group input{transition:border-color .2s,box-shadow .2s}
-            .form-group input:focus{box-shadow:0 0 0 4px rgba(22,163,74,.15)}
-          `;
-          document.head.appendChild(s);
-          document.addEventListener('click',function(e){
-            const link=e.target.closest('a[href]');
-            if(!link)return;
-            const href=link.getAttribute('href');
-            if(!href||href.startsWith('#')||href.startsWith('javascript')||href.startsWith('http'))return;
-            e.preventDefault();
-            document.body.classList.add('__leaving');
-            setTimeout(()=>{window.location.href=href;},215);
-          });
-        })();
 
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');

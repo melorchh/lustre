@@ -5,7 +5,22 @@
 //   POST : update a walk-in's status (scoped to this doctor)
 // ============================================================================
 require __DIR__ . '/../src/session.php';
+require_once __DIR__ . '/../src/api.php';
+
+$wantJson = (isset($_SERVER['HTTP_X_LUSTRE_API']) && $_SERVER['HTTP_X_LUSTRE_API'] === '1');
+
+function dwq_out($msg, $isError = false, $status = 400) {
+    global $wantJson;
+    if ($wantJson) {
+        if ($isError) { api_fail($msg, $status); }
+        api_ok();
+    }
+    echo $msg;
+    exit;
+}
+
 if (!isset($_SESSION["doctor_id"])) {
+    if ($wantJson) { api_fail('Unauthorized', 401); }
     http_response_code(401);
     echo "Unauthorized";
     exit;
@@ -15,7 +30,9 @@ require_once __DIR__ . '/walkin_schema.php';
 walkins_ensure_result_column($conn);
 
 $doctor_id = (int)$_SESSION['doctor_id'];
-$action    = $_POST['action'] ?? '';
+$in        = api_input();
+if (empty($in)) { $in = $_POST; }
+$action    = $in['action'] ?? '';
 
 // Mirror a walk-in result onto the matching appointment (same patient,
 // doctor, and date — latest appointment wins) so the result shows up in
@@ -66,44 +83,42 @@ function walkins_mirror_result_to_appointment($conn, $doctor_id, $wid, $result) 
 }
 
 if ($action === 'update_status') {
-    $wid    = isset($_POST['walkin_id']) ? intval($_POST['walkin_id']) : 0;
-    $status = trim($_POST['status'] ?? '');
+    $wid    = isset($in['walkin_id']) ? intval($in['walkin_id']) : 0;
+    $status = trim($in['status'] ?? '');
     $allowed = ['waiting', 'in_service', 'served', 'cancelled'];
-    if ($wid <= 0)      { echo 'Invalid walk-in.'; $conn->close(); exit; }
-    if (!in_array($status, $allowed, true)) { echo 'Invalid status.'; $conn->close(); exit; }
+    if ($wid <= 0)      { dwq_out('Invalid walk-in.', true); }
+    if (!in_array($status, $allowed, true)) { dwq_out('Invalid status.', true); }
 
-    if (array_key_exists('result', $_POST)) {
-        $result = trim($_POST['result']);
+    if (array_key_exists('result', $in)) {
+        $result = trim($in['result']);
         $upd = $conn->prepare("UPDATE walk_ins SET status = ?, result = ? WHERE id = ? AND doctor_id = ?");
         $upd->bind_param("ssii", $status, $result, $wid, $doctor_id);
         if ($upd->execute()) {
             if ($result !== '') walkins_mirror_result_to_appointment($conn, $doctor_id, $wid, $result);
-            echo 'success';
-        } else { echo 'Update failed.'; }
+            $upd->close();
+            dwq_out('success');
+        } else { $upd->close(); dwq_out('Update failed.', true); }
     } else {
         $upd = $conn->prepare("UPDATE walk_ins SET status = ? WHERE id = ? AND doctor_id = ?");
         $upd->bind_param("sii", $status, $wid, $doctor_id);
-        if ($upd->execute()) { echo 'success'; } else { echo 'Update failed.'; }
+        $ok = $upd->execute();
+        $upd->close();
+        if ($ok) { dwq_out('success'); } else { dwq_out('Update failed.', true); }
     }
-    $upd->close();
-    $conn->close();
-    exit;
 }
 
 if ($action === 'save_result') {
-    $wid = isset($_POST['walkin_id']) ? intval($_POST['walkin_id']) : 0;
-    $result = trim($_POST['result'] ?? '');
-    if ($wid <= 0) { echo 'Invalid walk-in.'; $conn->close(); exit; }
+    $wid = isset($in['walkin_id']) ? intval($in['walkin_id']) : 0;
+    $result = trim($in['result'] ?? '');
+    if ($wid <= 0) { dwq_out('Invalid walk-in.', true); }
 
     $upd = $conn->prepare("UPDATE walk_ins SET result = ? WHERE id = ? AND doctor_id = ?");
     $upd->bind_param("sii", $result, $wid, $doctor_id);
     if ($upd->execute()) {
         walkins_mirror_result_to_appointment($conn, $doctor_id, $wid, $result);
-        echo 'success';
-    } else { echo 'Update failed.'; }
-    $upd->close();
-    $conn->close();
-    exit;
+        $upd->close();
+        dwq_out('success');
+    } else { $upd->close(); dwq_out('Update failed.', true); }
 }
 
 // GET — today's queue for this doctor
