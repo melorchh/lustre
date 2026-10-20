@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require __DIR__ . '/../src/session.php';
 $is_admin  = isset($_SESSION['admin_id']);
 $is_doctor = isset($_SESSION['doctor_id']);

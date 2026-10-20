@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Appointment email notifications for LustreMDC.
  *

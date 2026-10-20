@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // ===========================================================================
 // Automated appointment reminder — run ~1 hour before the schedule.
 // Finds confirmed/pending appointments starting in roughly 1 hour and emails
