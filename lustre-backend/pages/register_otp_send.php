@@ -20,67 +20,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // ---- Validate all registration fields (same rules as register.php) ----
-$name       = isset($_POST['name']) ? trim($_POST['name']) : '';
-$email      = isset($_POST['email']) ? trim($_POST['email']) : '';
-$contact    = isset($_POST['contact']) ? trim($_POST['contact']) : '';
-$address    = isset($_POST['address']) ? trim($_POST['address']) : '';
-$password   = isset($_POST['password']) ? trim($_POST['password']) : '';
+$name     = isset($_POST['name']) ? trim($_POST['name']) : '';
+$email    = isset($_POST['email']) ? trim($_POST['email']) : '';
+$contact  = isset($_POST['contact']) ? trim($_POST['contact']) : '';
+$address  = isset($_POST['address']) ? trim($_POST['address']) : '';
+$password = isset($_POST['password']) ? trim($_POST['password']) : '';
 $birthday = isset($_POST['birthday']) ? trim($_POST['birthday']) : '';
 $age      = isset($_POST['age']) ? trim($_POST['age']) : '';
 $gender   = isset($_POST['gender']) ? strtolower(trim($_POST['gender'])) : '';
 
-// Validate birthdate (must be within last 1 year)
-if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthday)) {
-    echo "Please select a valid birthday";
-    exit;
-}
-$bd = DateTime::createFromFormat('Y-m-d', $birthday);
-if (!$bd || $bd->format('Y-m-d') !== $birthday) {
-    echo "Please select a valid birthday";
-    exit;
-}
-$today = new DateTime('today');
-$min = (clone $today)->modify('-1 year');
-if ($bd > $today || $bd < $min) {
-    echo "Birthdate must be within the last 1 year";
-    exit;
-}
-$regionName = isset($_POST['region_name']) ? trim($_POST['region_name']) : '';
-$provinceName = isset($_POST['province_name']) ? trim($_POST['province_name']) : '';
-$municipalityName = isset($_POST['municipality_name']) ? trim($_POST['municipality_name']) : '';
-$barangayName = isset($_POST['barangay_name']) ? trim($_POST['barangay_name']) : '';
-$street = isset($_POST['street']) ? trim($_POST['street']) : '';
-
 if (empty($name) || empty($email) || empty($contact) || empty($address) || empty($password)) {
     echo "All fields are required";
-    exit;
-}
-
-if (!preg_match('/^[0-9]{11}$/', $contact)) {
-    echo "Contact number must be 11 digits";
-    exit;
-}
-
-// Restrict registration to NCR and CALABARZON only
-if (!in_array($regionName, ['NCR', 'CALABARZON'], true)) {
-    echo "Registration is only available for NCR and CALABARZON (Region IV-A).";
-    exit;
-}
-
-if (empty($provinceName) && $regionName !== 'NCR') {
-    echo "Please select your province";
-    exit;
-}
-if (empty($municipalityName)) {
-    echo "Please select your municipality / city";
-    exit;
-}
-if (empty($barangayName)) {
-    echo "Please select your barangay";
-    exit;
-}
-if (empty($street)) {
-    echo "Please enter your house no. / street / subdivision";
     exit;
 }
 
@@ -96,6 +46,28 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
 if (strtolower(substr($email, -10)) !== '@gmail.com') {
     echo "Please use a valid Gmail address.";
+    exit;
+}
+
+if (empty($contact) || !preg_match('/^[0-9]{11}$/', $contact)) {
+    echo "Contact number must be 11 digits";
+    exit;
+}
+
+// Validate birthdate (must be at least 1 year ago)
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthday)) {
+    echo "Please select a valid birthday";
+    exit;
+}
+$bd = DateTime::createFromFormat('Y-m-d', $birthday);
+if (!$bd || $bd->format('Y-m-d') !== $birthday) {
+    echo "Please select a valid birthday";
+    exit;
+}
+$today = new DateTime('today');
+$min = (clone $today)->modify('-1 year');
+if ($bd > $today || $bd < $min) {
+    echo "Birthdate must be at least 1 year ago";
     exit;
 }
 

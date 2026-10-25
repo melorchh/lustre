@@ -1557,7 +1557,7 @@ footer .footer-copy {
 .reg-dp-trigger.open .reg-dp-chev { transform: rotate(180deg); }
 .reg-dp-chev { color: inherit; flex-shrink: 0; transition: transform 0.2s var(--ease); }
 
-.reg-dp-popup { position: fixed; z-index: 3800; }
+.reg-dp-popup { position: fixed; z-index: 5000; }
 
 .reg-calendar {
   background: linear-gradient(180deg, #f4f9f4, var(--white));
