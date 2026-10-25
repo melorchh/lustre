@@ -706,7 +706,7 @@ function checkFpPasswordStrength(pw){
       todayCheck.setHours(0,0,0,0);
       pickCheck.setHours(0,0,0,0);
       const minCheck = new Date(todayCheck.getFullYear() - 1, todayCheck.getMonth(), todayCheck.getDate());
-      if (pickCheck > todayCheck || pickCheck < minCheck) {
+      if (pickCheck > minCheck) {
         showToast('Birthdate must be at least 1 year ago', 'error');
         hidden.value = '';
         input.value = '';
@@ -785,7 +785,7 @@ function checkFpPasswordStrength(pw){
       const isToday = ds === todayStr;
       const dt = new Date(viewY, viewM, d);
       dt.setHours(0,0,0,0);
-      const blocked = dt > t || dt < minDate;
+      const blocked = dt > minDate;
       const cls = ['reg-cal-btn'].concat(isSel?'active':[], isToday?'cal-today':[], blocked?'cal-future':[]).join(' ');
       cells += '<span class="reg-cal-day"><button type="button" class="'+cls+'" data-date="'+ds+'"'+(blocked?' disabled aria-disabled="true"':'')+'>'+d+'</button></span>';
     }
@@ -927,7 +927,7 @@ function checkFpPasswordStrength(pw){
         todayCheck.setHours(0,0,0,0);
         pickCheck.setHours(0,0,0,0);
         const minCheck = new Date(todayCheck.getFullYear() - 1, todayCheck.getMonth(), todayCheck.getDate());
-        if (pickCheck > todayCheck || pickCheck < minCheck) {
+        if (pickCheck > minCheck) {
           showToast('Birthdate must be at least 1 year ago', 'error');
           hidden.value = '';
           ageEl.value = '';
@@ -953,7 +953,7 @@ function checkFpPasswordStrength(pw){
       todayCheck.setHours(0,0,0,0);
       pickCheck.setHours(0,0,0,0);
       const minCheck = new Date(todayCheck.getFullYear() - 1, todayCheck.getMonth(), todayCheck.getDate());
-      if (pickCheck > todayCheck || pickCheck < minCheck) {
+      if (pickCheck > minCheck) {
         showToast('Birthdate must be at least 1 year ago', 'error');
         input.value = hidden.value ? formatLong(new Date(hidden.value + 'T00:00:00')) : '';
         input.classList.toggle('placeholder', !hidden.value);
@@ -1252,7 +1252,7 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
     todayDt.setHours(0,0,0,0);
     bdayDt.setHours(0,0,0,0);
     const minDt = new Date(todayDt.getFullYear() - 1, todayDt.getMonth(), todayDt.getDate());
-    if (bdayDt > todayDt || bdayDt < minDt) {
+    if (bdayDt > minDt) {
         showToast('Birthdate must be at least 1 year ago', 'error');
         return;
     }
