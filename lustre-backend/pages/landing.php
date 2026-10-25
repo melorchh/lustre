@@ -897,27 +897,7 @@ function checkFpPasswordStrength(pw){
 // -- Philippine Address Cascading Dropdowns (PSGC API) ----------------
 const PSGC = 'https://psgc.gitlab.io/api';
 
-<<<<<<< HEAD
-// Load all regions on page ready
-fetch(`${PSGC}/regions/`)
-    .then(r => r.json())
-    .then(data => {
-        const sel = document.getElementById('regRegion');
-        data.sort((a, b) => a.name.localeCompare(b.name)).forEach(r => {
-            const opt = document.createElement('option');
-            opt.value = r.code;
-            opt.textContent = r.name;
-            sel.appendChild(opt);
-        });
-        if (window.__fdResync) window.__fdResync(sel);
-    })
-    .catch(() => {
-        const sel = document.getElementById('regRegion');
-        sel.innerHTML = '<option value="">Failed to load regions</option>';
-        if (window.__fdResync) window.__fdResync(sel);
-    });
-=======
-// Load provinces for NCR and CALABARZON
+// Load provinces for NCR and CALABARZON only
 function loadProvincesByRegion() {
     const regionSel = document.getElementById('regRegion');
     const provSel = document.getElementById('regProvince');
@@ -925,6 +905,13 @@ function loadProvincesByRegion() {
     
     provSel.innerHTML = '<option value="">Loading...</option>';
     provSel.disabled = true;
+    const munSel = document.getElementById('regMunicipality');
+    const brgySel = document.getElementById('regBarangay');
+    munSel.innerHTML = '<option value="">Select Municipality / City</option>';
+    munSel.disabled = true;
+    brgySel.innerHTML = '<option value="">Select Barangay</option>';
+    brgySel.disabled = true;
+    if (window.__fdResync) { window.__fdResync(provSel); window.__fdResync(munSel); window.__fdResync(brgySel); }
     
     // NCR has no provinces, load cities directly
     if (region === 'NCR') {
@@ -933,7 +920,6 @@ function loadProvincesByRegion() {
             .then(cities => {
                 provSel.innerHTML = '<option value="">NCR (Direct)</option>';
                 provSel.disabled = false;
-                const munSel = document.getElementById('regMunicipality');
                 munSel.innerHTML = '<option value="">Select City/Municipality</option>';
                 cities.sort((a, b) => a.name.localeCompare(b.name)).forEach(c => {
                     const opt = document.createElement('option');
@@ -972,12 +958,12 @@ function loadProvincesByRegion() {
                 provSel.innerHTML = '<option value="">Failed to load provinces</option>';
                 if (window.__fdResync) window.__fdResync(provSel);
             });
+        return;
     }
 }
 
 document.getElementById('regRegion').addEventListener('change', loadProvincesByRegion);
 loadProvincesByRegion();
->>>>>>> refinement
 
 function loadProvinces() {
     const regionCode = document.getElementById('regRegion').value;
@@ -1041,11 +1027,7 @@ function loadProvinces() {
 
 function loadMunicipalities() {
     const provinceCode = document.getElementById('regProvince').value;
-<<<<<<< HEAD
-    const regionCode = document.getElementById('regRegion').value;
-=======
     const region = document.getElementById('regRegion').value;
->>>>>>> refinement
     const munSel  = document.getElementById('regMunicipality');
     const brgySel = document.getElementById('regBarangay');
 
