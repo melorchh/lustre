@@ -295,9 +295,10 @@ if (isset($_SESSION["patient_id"])) {
                 <div class="address-group-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> <span>Address</span></div>
 
                 <span class="address-label">Region</span>
-                <select name="region_name" id="regRegion" class="form-dropdown" required>
-                    <option value="NCR">National Capital Region (NCR)</option>
-                    <option value="CALABARZON">CALABARZON (Region IV-A)</option>
+                <select name="region_name" id="regRegion" class="form-dropdown" required onchange="loadProvinces()">
+                    <option value="">Select Region</option>
+                    <option value="NCR">NCR</option>
+                    <option value="Region IV-A">Region IV-A (CALABARZON)</option>
                 </select>
 
                 <span class="address-label">Province</span>
@@ -705,9 +706,8 @@ function checkFpPasswordStrength(pw){
       const todayCheck = new Date();
       todayCheck.setHours(0,0,0,0);
       pickCheck.setHours(0,0,0,0);
-      const minCheck = new Date(todayCheck.getFullYear() - 1, todayCheck.getMonth(), todayCheck.getDate());
-      if (pickCheck > minCheck) {
-        showToast('Birthdate must be at least 1 year ago', 'error');
+      if (pickCheck.getFullYear() === todayCheck.getFullYear() || pickCheck > todayCheck) {
+        showToast('Birthdate cannot be in the current year or future', 'error');
         hidden.value = '';
         input.value = '';
         input.classList.add('placeholder');
@@ -775,7 +775,6 @@ function checkFpPasswordStrength(pw){
     const daysInMonth = new Date(viewY, viewM + 1, 0).getDate();
     const t = new Date();
     t.setHours(0,0,0,0);
-    const minDate = new Date(t.getFullYear() - 1, t.getMonth(), t.getDate());
     const todayStr = t.getFullYear() + '-' + pad2(t.getMonth()+1) + '-' + pad2(t.getDate());
     let cells = '';
     for (let i=0;i<firstDow;i++) cells += '<span class="reg-cal-day reg-cal-day--blank"></span>';
@@ -785,7 +784,7 @@ function checkFpPasswordStrength(pw){
       const isToday = ds === todayStr;
       const dt = new Date(viewY, viewM, d);
       dt.setHours(0,0,0,0);
-      const blocked = dt > minDate;
+      const blocked = dt.getFullYear() === t.getFullYear() || dt > t;
       const cls = ['reg-cal-btn'].concat(isSel?'active':[], isToday?'cal-today':[], blocked?'cal-future':[]).join(' ');
       cells += '<span class="reg-cal-day"><button type="button" class="'+cls+'" data-date="'+ds+'"'+(blocked?' disabled aria-disabled="true"':'')+'>'+d+'</button></span>';
     }
@@ -926,9 +925,8 @@ function checkFpPasswordStrength(pw){
         const todayCheck = new Date();
         todayCheck.setHours(0,0,0,0);
         pickCheck.setHours(0,0,0,0);
-        const minCheck = new Date(todayCheck.getFullYear() - 1, todayCheck.getMonth(), todayCheck.getDate());
-        if (pickCheck > minCheck) {
-          showToast('Birthdate must be at least 1 year ago', 'error');
+        if (pickCheck.getFullYear() === todayCheck.getFullYear() || pickCheck > todayCheck) {
+          showToast('Birthdate cannot be in the current year or future', 'error');
           hidden.value = '';
           ageEl.value = '';
           return;
@@ -952,9 +950,8 @@ function checkFpPasswordStrength(pw){
       const todayCheck = new Date();
       todayCheck.setHours(0,0,0,0);
       pickCheck.setHours(0,0,0,0);
-      const minCheck = new Date(todayCheck.getFullYear() - 1, todayCheck.getMonth(), todayCheck.getDate());
-      if (pickCheck > minCheck) {
-        showToast('Birthdate must be at least 1 year ago', 'error');
+      if (pickCheck.getFullYear() === todayCheck.getFullYear() || pickCheck > todayCheck) {
+        showToast('Birthdate cannot be in the current year or future', 'error');
         input.value = hidden.value ? formatLong(new Date(hidden.value + 'T00:00:00')) : '';
         input.classList.toggle('placeholder', !hidden.value);
         const pick = hidden.value ? new Date(hidden.value + 'T00:00:00') : null;
@@ -1251,9 +1248,8 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
     const todayDt = new Date();
     todayDt.setHours(0,0,0,0);
     bdayDt.setHours(0,0,0,0);
-    const minDt = new Date(todayDt.getFullYear() - 1, todayDt.getMonth(), todayDt.getDate());
-    if (bdayDt > minDt) {
-        showToast('Birthdate must be at least 1 year ago', 'error');
+    if (bdayDt.getFullYear() === todayDt.getFullYear() || bdayDt > todayDt) {
+        showToast('Birthdate cannot be in the current year or future', 'error');
         return;
     }
 

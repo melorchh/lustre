@@ -54,7 +54,7 @@ if (empty($contact) || !preg_match('/^[0-9]{11}$/', $contact)) {
     exit;
 }
 
-// Validate birthdate (must be at least 1 year ago)
+// Validate birthdate (must be at least previous years only - block current year and future)
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthday)) {
     echo "Please select a valid birthday";
     exit;
@@ -65,9 +65,8 @@ if (!$bd || $bd->format('Y-m-d') !== $birthday) {
     exit;
 }
 $today = new DateTime('today');
-$min = (clone $today)->modify('-1 year');
-if ($bd > $today || $bd < $min) {
-    echo "Birthdate must be at least 1 year ago";
+if ((int)$bd->format('Y') === (int)$today->format('Y') || $bd > $today) {
+    echo "Birthdate cannot be in the current year or future";
     exit;
 }
 
