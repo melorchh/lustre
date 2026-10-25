@@ -14,7 +14,8 @@ $conn->query("ALTER TABLE walk_ins ADD COLUMN IF NOT EXISTS test_procedure TEXT 
 
 // Ensure the patient_type CHECK includes the 'child' type on existing databases.
 $conn->query("ALTER TABLE patients DROP CONSTRAINT IF EXISTS patients_patient_type_check");
-$conn->query("ALTER TABLE patients ADD CONSTRAINT patients_patient_type_check CHECK (patient_type IN ('newborn','infant','child','adolescent','adult','elderly'))");
+$conn->query("ALTER TABLE patients DROP CONSTRAINT IF EXISTS patients_patient_type_check");
+$conn->query("ALTER TABLE patients ADD CONSTRAINT patients_patient_type_check CHECK (patient_type IN ('infant','child','adolescent','adult','elderly'))");
 
 $action = $_POST['action'] ?? '';
 
@@ -74,7 +75,7 @@ if ($action === 'add_walkin') {
     }
 
     // Validate patient type against allowed values
-    $allowedTypes = ['newborn','infant','child','adolescent','adult','elderly'];
+    $allowedTypes = ['infant','child','adolescent','adult','elderly'];
     if ($type !== '' && !in_array($type, $allowedTypes)) {
         echo 'Invalid patient type.';
         exit;
@@ -97,7 +98,6 @@ if ($action === 'add_walkin') {
 
     // Enforce the age band that belongs to the selected patient type
     $ageBands = [
-        'newborn'    => [0, 0],
         'infant'     => [1, 2],
         'child'      => [3, 12],
         'adolescent' => [13, 17],
