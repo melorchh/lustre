@@ -169,22 +169,31 @@ $conn->close();
                             <?php endif; ?>
                         </td>
                         <td style="white-space:nowrap">
-                            <button class="btn-sm btn-vitals" title="View patient vitals" data-apt="<?php echo (int)$ap['id']; ?>" data-pid="<?php echo (int)$ap['patient_id']; ?>" data-name="<?php echo htmlspecialchars($ap['patient_name'], ENT_QUOTES); ?>" data-code="<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>" data-label="<?php echo htmlspecialchars($date_fmt, ENT_QUOTES); ?> &middot; <?php echo htmlspecialchars($time_fmt, ENT_QUOTES); ?>" onclick="openAptVitalsView(this)">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals
-                            </button>
-                            <?php if ($s === 'completed' && !$has_result): ?>
-                                <button class="btn-sm btn-edit" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="" onclick="openResultFromEl(this)">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Add Result
+                            <div style="display:flex;flex-direction:column;gap:6px;min-width:140px">
+                                <select class="action-select" onchange="updateApptStatusDoctor(<?php echo (int)$ap['id']; ?>, this)">
+                                    <?php foreach (['pending','confirmed','completed','cancelled'] as $opt): ?>
+                                        <option value="<?php echo $opt; ?>" <?php echo $s===$opt?'selected':''; ?>><?php echo ucfirst($opt); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button class="btn-sm btn-vitals" title="View patient vitals" data-apt="<?php echo (int)$ap['id']; ?>" data-pid="<?php echo (int)$ap['patient_id']; ?>" data-name="<?php echo htmlspecialchars($ap['patient_name'], ENT_QUOTES); ?>" data-code="<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>" data-label="<?php echo htmlspecialchars($date_fmt, ENT_QUOTES); ?> &middot; <?php echo htmlspecialchars($time_fmt, ENT_QUOTES); ?>" onclick="openAptVitalsView(this)">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals
                                 </button>
-                            <?php elseif ($s === 'completed' && $has_result): ?>
-                                <button class="btn-sm btn-edit" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="<?php echo $result_attr_d; ?>" onclick="openResultFromEl(this)">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit Result
-                                </button>
-                            <?php else: ?>
-                                <button class="btn-sm" disabled style="opacity:.5;cursor:not-allowed">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> No action
-                                </button>
-                            <?php endif; ?>
+                                <?php if ($s === 'completed'): ?>
+                                    <?php if (!$has_result): ?>
+                                        <button class="btn-sm btn-edit" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="" onclick="openResultFromEl(this)">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Add Result
+                                        </button>
+                                    <?php else: ?>
+                                        <button class="btn-sm btn-edit" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="<?php echo $result_attr_d; ?>" onclick="openResultFromEl(this)">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit Result
+                                        </button>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <button class="btn-sm" disabled style="opacity:.5;cursor:not-allowed" title="Mark as completed to add result">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Add Result
+                                    </button>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                     <?php endwhile; ?>
@@ -304,6 +313,27 @@ $conn->close();
             }
             else showToast(res,'error');
         }).catch(()=>{ hideLoading(); showToast('Error','error'); });
+    }
+
+    function updateApptStatusDoctor(apptId, sel){
+        const status = sel.value;
+        const fd = new FormData();
+        fd.append('appointment_id', apptId);
+        fd.append('status', status);
+        showLoading();
+        fetch('doctor_appointment_action.php', {method:'POST', body:fd})
+        .then(r=>r.text())
+        .then(res=>{
+            hideLoading();
+            if(res.trim()==='success'){
+                showToast('Appointment status updated','success');
+                document.body.classList.add('__leaving');
+                setTimeout(()=>location.reload(),215);
+            }else{
+                showToast(res,'error');
+            }
+        })
+        .catch(()=>{hideLoading();showToast('Network error','error');});
     }
 
     document.getElementById('resultModal').addEventListener('click', function(e){

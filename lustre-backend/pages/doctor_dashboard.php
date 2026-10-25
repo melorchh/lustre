@@ -188,7 +188,7 @@ function fill_color($s) {
                                 <td><?php echo htmlspecialchars($w['procedure'] ?: '—'); ?></td>
                                 <td><?php echo htmlspecialchars($w['arrival']); ?></td>
                                 <td style="white-space:nowrap">
-                                    <select class="action-select wq-status wq-st-<?php echo htmlspecialchars($w['status']); ?>" data-id="<?php echo $w['id']; ?>" data-prev="<?php echo htmlspecialchars($w['status']); ?>" onchange="updateWalkinStatus(this)" aria-label="Queue status">
+                                    <select class="action-select" data-id="<?php echo $w['id']; ?>" data-prev="<?php echo htmlspecialchars($w['status']); ?>" onchange="updateWalkinStatus(this)" aria-label="Queue status">
                                         <?php foreach (['waiting','in_service','served','cancelled'] as $opt): ?>
                                         <option value="<?php echo $opt; ?>" <?php echo $w['status']===$opt?'selected':''; ?>><?php echo ucfirst(str_replace('_',' ',$opt)); ?></option>
                                         <?php endforeach; ?>
@@ -432,25 +432,26 @@ function fill_color($s) {
         function wqEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
         function wqLabel(s){return s.charAt(0).toUpperCase()+s.slice(1).replace(/_/g,' ');}
         function wqRow(w){
-            const opts = WQ_STATUSES.map(s=>'<option value="'+s+'"'+(w.status===s?' selected':'')+'>'+wqLabel(s)+'</option>').join('');
-            const resultBtn = w.status==='served'
-                ? ' <button type="button" class="btn-sm btn-edit" style="margin-left:4px" onclick="openWalkinResultModal('+w.id+',\'edit\')">'+((w.result&&w.result.length)?'Result':'Add Result')+'</button>'
-                : '';
-            const vitalsBtn = ' <button type="button" class="btn-sm btn-vitals" style="margin-left:4px" title="View patient vitals" data-apt="'+(w.appointment_id==null?'':parseInt(w.appointment_id,10))+'" data-pid="'+parseInt(w.patient_id,10)+'" data-name="'+wqEsc(w.name)+'" data-label="Walk-in &middot; '+wqEsc(w.arrival)+'" onclick="openAptVitalsView(this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals</button>';
-            return '<tr>' +
-                '<td><span class="badge" style="background:#16a34a;color:#fff;font-size:1rem;font-weight:800">#'+w.queue+'</span></td>' +
-                '<td><strong>'+(w.patient_id?'<a href="client_profile.php?id='+parseInt(w.patient_id,10)+'" style="color:inherit;text-decoration:underline;text-underline-offset:2px">':'')+wqEsc(w.name)+(w.patient_id?'</a>':'')+'</strong><br><small style="color:#64748b">'+wqEsc(w.contact)+'</small></td>' +
-                '<td>'+wqEsc(w.procedure||'—')+'</td>' +
-                '<td>'+wqEsc(w.arrival)+'</td>' +
-                '<td style="white-space:nowrap">' +
-                    '<select class="action-select wq-status wq-st-'+w.status+'" data-id="'+w.id+'" data-prev="'+wqEsc(w.status)+'" onchange="updateWalkinStatus(this)" aria-label="Queue status">'+opts+'</select>' +
-                    resultBtn +
-                    vitalsBtn +
-                '</td></tr>';
+        const opts = WQ_STATUSES.map(s=>'<option value="'+s+'"'+(w.status===s?' selected':'')+'>'+wqLabel(s)+'</option>').join('');
+        const resultBtn = w.status==='served'
+            ? ' <button type="button" class="btn-sm btn-edit" style="margin-left:4px" onclick="openWalkinResultModal('+w.id+',\'edit\')">'+((w.result&&w.result.length)?'Result':'Add Result')+'</button>'
+            : '';
+        const vitalsBtn = ' <button type="button" class="btn-sm btn-vitals" style="margin-left:4px" title="View patient vitals" data-apt="'+(w.appointment_id==null?'':parseInt(w.appointment_id,10))+'" data-pid="'+parseInt(w.patient_id,10)+'" data-name="'+wqEsc(w.name)+'" data-label="Walk-in &middot; '+wqEsc(w.arrival)+'" onclick="openAptVitalsView(this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals</button>';
+        return '<tr>' +
+            '<td><span class="badge" style="background:#16a34a;color:#fff;font-size:1rem;font-weight:800">#'+w.queue+'</span></td>' +
+            '<td><strong>'+(w.patient_id?'<a href="client_profile.php?id='+parseInt(w.patient_id,10)+'" style="color:inherit;text-decoration:underline;text-underline-offset:2px">':'')+wqEsc(w.name)+(w.patient_id?'</a>':'')+'</strong><br><small style="color:#64748b">'+wqEsc(w.contact)+'</small></td>' +
+            '<td>'+wqEsc(w.procedure||'—')+'</td>' +
+            '<td>'+wqEsc(w.arrival)+'</td>' +
+            '<td style="white-space:nowrap">' +
+                '<select class="action-select" data-id="'+w.id+'" data-prev="'+wqEsc(w.status)+'" onchange="updateWalkinStatus(this)" aria-label="Queue status">'+opts+'</select>' +
+                resultBtn +
+                vitalsBtn +
+            '</td></tr>';
         }
         let wqBusy = false, wqPending = false;
         function wqSyncBadge(sel){
-            sel.className = 'action-select wq-status wq-st-' + (sel.value || 'waiting');
+            // Keep styling consistent with admin action-select
+            sel.className = 'action-select';
         }
         function refreshQueue(manual){
             if (wqBusy){ if (manual) wqPending = true; return; }
