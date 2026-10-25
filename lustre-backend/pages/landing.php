@@ -959,20 +959,22 @@ function loadMunicipalities() {
     const munSel  = document.getElementById('regMunicipality');
     const brgySel = document.getElementById('regBarangay');
 
-    munSel.innerHTML  = '<option value="">Loading...</option>';
-    munSel.disabled   = true;
     brgySel.innerHTML = '<option value="">Select Barangay</option>';
     brgySel.disabled  = true;
-    if (window.__fdResync) { window.__fdResync(munSel); window.__fdResync(brgySel); }
+    if (window.__fdResync) window.__fdResync(brgySel);
     document.getElementById('regFullAddress').value = '';
 
     if (region === 'NCR') {
-        // Already loaded in loadProvincesByRegion
+        // Cities are already loaded in loadProvincesByRegion()
         munSel.disabled = false;
         if (window.__fdResync) window.__fdResync(munSel);
         updateFullAddress();
         return;
     }
+
+    munSel.innerHTML  = '<option value="">Loading...</option>';
+    munSel.disabled   = true;
+    if (window.__fdResync) window.__fdResync(munSel);
 
     if (!provinceCode) return;
 
