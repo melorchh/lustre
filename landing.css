@@ -1557,7 +1557,10 @@ footer .footer-copy {
 .reg-dp-trigger.open .reg-dp-chev { transform: rotate(180deg); }
 .reg-dp-chev { color: inherit; flex-shrink: 0; transition: transform 0.2s var(--ease); }
 
-.reg-dp-popup { position: absolute !important; z-index: 2147483647 !important; }
+.reg-dp-popup { position: absolute !important; z-index: 2147483647 !important; overflow: visible; scrollbar-width: none; -ms-overflow-style: none; }
+.reg-dp-popup::-webkit-scrollbar { display: none; }
+.reg-cal-days { max-height: 280px; overflow: visible; }
+.reg-dp-popup, .reg-calendar { overflow: visible; }
 
 .reg-calendar {
   background: linear-gradient(180deg, #f4f9f4, var(--white));
