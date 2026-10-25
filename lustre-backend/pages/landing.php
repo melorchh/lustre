@@ -295,13 +295,12 @@ if (isset($_SESSION["patient_id"])) {
                 <div class="address-group-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> <span>Address</span></div>
 
                 <span class="address-label">Region</span>
-                <select name="region_name" id="regRegion" class="form-dropdown" data-searchable required>
-                    <option value="NCR">National Capital Region (NCR)</option>
-                    <option value="CALABARZON">CALABARZON (Region IV-A)</option>
+                <select name="region_name" id="regRegion" class="form-dropdown" data-searchable required onchange="loadProvinces()">
+                    <option value="">Select Region</option>
                 </select>
 
                 <span class="address-label">Province</span>
-                <select name="province_name" id="regProvince" class="form-dropdown" data-searchable required onchange="loadMunicipalities()">
+                <select name="province_name" id="regProvince" class="form-dropdown" data-searchable required onchange="loadMunicipalities()" disabled>
                     <option value="">Select Province</option>
                 </select>
 
@@ -323,8 +322,8 @@ if (isset($_SESSION["patient_id"])) {
             <input type="hidden" name="address" id="regFullAddress">
             <!-- -- End Address Fields -- -->
 
-            <input type="email" name="email" id="regEmail" placeholder="Email Address (Gmail only)" required>
-            <input type="tel" name="contact" id="regContact" maxlength="11" placeholder="Contact Number" inputmode="numeric" pattern="[0-9]{11}" oninput="this.value = this.value.replace(/[^0-9]/g,'').slice(0,11)" required>
+            <input type="email" name="email" id="regEmail" placeholder="Email Address" required>
+            <input type="text" name="contact" maxlength="11" placeholder="Contact Number" required>
             <div class="pw-field"><input type="password" name="password" id="regPassword" placeholder="Password" required oninput="checkPasswordStrength(this.value)"><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
             <div id="pwStrengthBox" class="pw-strength-box">
                 <div class="pw-strength-info">
@@ -700,22 +699,6 @@ function checkFpPasswordStrength(pw){
   }
 
   function setValue(val){
-    if (val) {
-      const pickCheck = new Date(val + 'T00:00:00');
-      const todayCheck = new Date();
-      todayCheck.setHours(0,0,0,0);
-      pickCheck.setHours(0,0,0,0);
-      const minCheck = new Date(todayCheck.getFullYear() - 1, todayCheck.getMonth(), todayCheck.getDate());
-      if (pickCheck > todayCheck || pickCheck < minCheck) {
-        showToast('Birthdate must be within the last 1 year', 'error');
-        hidden.value = '';
-        input.value = '';
-        input.classList.add('placeholder');
-        ageEl.value = '';
-        lastGood = '';
-        return;
-      }
-    }
     hidden.value = val;
     const pick = val ? new Date(val + 'T00:00:00') : null;
     input.value = pick ? formatLong(pick) : '';
@@ -743,27 +726,13 @@ function checkFpPasswordStrength(pw){
     const pop = document.createElement('div'); pop.id='regDpPopup'; pop.className='reg-dp-popup';
     pop.innerHTML = popupHTML();
     document.body.appendChild(pop);
-    const popH = pop.offsetHeight || 360;
-    const gap = 8;
-    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const popH = 400, gap = 8, vh = window.innerHeight || document.documentElement.clientHeight;
     const downRoom = vh - rect.bottom - gap;
-    const upRoom = rect.top - gap;
-    let topPos;
-    if (downRoom >= popH) {
-      topPos = rect.bottom + gap;
-      pop.style.bottom = 'auto';
-    } else if (upRoom >= popH) {
-      topPos = rect.top - popH - gap;
-      pop.style.bottom = 'auto';
-    } else {
-      topPos = Math.max(gap, rect.bottom + gap);
-      pop.style.bottom = 'auto';
-      pop.style.maxHeight = Math.min(popH, downRoom) + 'px';
-      pop.style.overflowY = 'auto';
-    }
+    const flip = downRoom < popH && rect.top > downRoom;
     pop.style.width = Math.min(320, Math.max(295, rect.width)) + 'px';
     pop.style.left = Math.max(8, Math.min(rect.left, (window.innerWidth||document.documentElement.clientWidth) - 8 - pop.clientWidth)) + 'px';
-    pop.style.top = topPos + window.scrollY + 'px';
+    pop.style.top = flip ? 'auto' : (rect.bottom + gap) + 'px';
+    pop.style.bottom = flip ? (vh - rect.top + gap) + 'px' : 'auto';
     bindNav();
   }
 
@@ -773,8 +742,6 @@ function checkFpPasswordStrength(pw){
     const firstDow = new Date(viewY, viewM, 1).getDay();
     const daysInMonth = new Date(viewY, viewM + 1, 0).getDate();
     const t = new Date();
-    t.setHours(0,0,0,0);
-    const minDate = new Date(t.getFullYear() - 1, t.getMonth(), t.getDate());
     const todayStr = t.getFullYear() + '-' + pad2(t.getMonth()+1) + '-' + pad2(t.getDate());
     let cells = '';
     for (let i=0;i<firstDow;i++) cells += '<span class="reg-cal-day reg-cal-day--blank"></span>';
@@ -782,11 +749,10 @@ function checkFpPasswordStrength(pw){
       const ds = viewY + '-' + pad2(viewM+1) + '-' + pad2(d);
       const isSel = ds === hidden.value;
       const isToday = ds === todayStr;
-      const dt = new Date(viewY, viewM, d);
-      dt.setHours(0,0,0,0);
-      const blocked = dt > t || dt < minDate;
-      const cls = ['reg-cal-btn'].concat(isSel?'active':[], isToday?'cal-today':[], blocked?'cal-future':[]).join(' ');
-      cells += '<span class="reg-cal-day"><button type="button" class="'+cls+'" data-date="'+ds+'"'+(blocked?' disabled aria-disabled="true"':'')+'>'+d+'</button></span>';
+      const dt = new Date(ds + 'T00:00:00');
+      const future = dt > t;
+      const cls = ['reg-cal-btn'].concat(isSel?'active':[], isToday?'cal-today':[], future?'cal-future':[]).join(' ');
+      cells += '<span class="reg-cal-day"><button type="button" class="'+cls+'" data-date="'+ds+'">'+d+'</button></span>';
     }
     return cells;
   }
@@ -839,11 +805,8 @@ function checkFpPasswordStrength(pw){
 
   function bindDayButtons(pop){
     pop.querySelectorAll('.reg-cal-btn').forEach(function(b){
-      if (b.disabled) return;
       b.addEventListener('click', function(){ setValue(b.getAttribute('data-date')); close(); });
     });
-    repositionPopup();
-  }
     const clear = pop.querySelector('.reg-cal-clear');
     if (clear) clear.addEventListener('click', function(){ setValue(''); close(); });
   }
@@ -852,51 +815,22 @@ function checkFpPasswordStrength(pw){
     const pop = document.getElementById('regDpPopup'); if (!pop) return;
     pop.querySelectorAll('.reg-cal-nav').forEach(function(n){
       n.addEventListener('click', function(ev){
-        ev.stopPropagation();
+        ev.stopPropagation(); // without this the document click handler can treat the
+                              // click as "outside" the popup and close the calendar
         const dir = parseInt(n.getAttribute('data-nav'),10);
         let m = viewM + dir;
         if (m<0){ m=11; viewY--; } else if (m>11){ m=0; viewY++; }
         viewM = m;
         refreshPopup();
-        repositionPopup();
       });
     });
     const yearSel = pop.querySelector('.reg-cal-year');
     if (yearSel) yearSel.addEventListener('change', function(ev){
       ev.stopPropagation();
       const y = parseInt(yearSel.value, 10);
-      if (!isNaN(y)){ viewY = y; refreshPopup(); repositionPopup(); }
+      if (!isNaN(y)){ viewY = y; refreshPopup(); }
     });
     bindDayButtons(pop);
-  }
-
-  function repositionPopup(){
-    const pop = document.getElementById('regDpPopup');
-    const wrap = document.getElementById('regDatepicker');
-    if (!pop || !wrap) return;
-    const rect = wrap.getBoundingClientRect();
-    const popH = pop.scrollHeight || pop.offsetHeight || 360;
-    const gap = 8;
-    const vh = window.innerHeight || document.documentElement.clientHeight;
-    const downRoom = vh - rect.bottom - gap;
-    const upRoom = rect.top - gap;
-    if (downRoom >= popH) {
-      pop.style.top = (rect.bottom + gap) + window.scrollY + 'px';
-      pop.style.bottom = 'auto';
-      pop.style.maxHeight = '';
-      pop.style.overflowY = '';
-    } else if (upRoom >= popH) {
-      pop.style.top = (rect.top - popH - gap) + window.scrollY + 'px';
-      pop.style.bottom = 'auto';
-      pop.style.maxHeight = '';
-      pop.style.overflowY = '';
-    } else {
-      pop.style.top = Math.max(gap, rect.bottom + gap) + window.scrollY + 'px';
-      pop.style.bottom = 'auto';
-      pop.style.maxHeight = Math.min(popH, downRoom) + 'px';
-      pop.style.overflowY = 'auto';
-    }
-    pop.style.left = Math.max(8, Math.min(rect.left, (window.innerWidth||document.documentElement.clientWidth) - 8 - pop.clientWidth)) + 'px';
   }
 
   // Open the calendar from the trigger button or clicking the field
@@ -921,17 +855,6 @@ function checkFpPasswordStrength(pw){
     if (digits.length >= 8) {
       const parsed = parseTyped(input.value);
       if (parsed) {
-        const pickCheck = new Date(parsed + 'T00:00:00');
-        const todayCheck = new Date();
-        todayCheck.setHours(0,0,0,0);
-        pickCheck.setHours(0,0,0,0);
-        const minCheck = new Date(todayCheck.getFullYear() - 1, todayCheck.getMonth(), todayCheck.getDate());
-        if (pickCheck > todayCheck || pickCheck < minCheck) {
-          showToast('Birthdate must be within the last 1 year', 'error');
-          hidden.value = '';
-          ageEl.value = '';
-          return;
-        }
         hidden.value = parsed;
         const pick = new Date(parsed + 'T00:00:00');
         const today = new Date();
@@ -946,30 +869,7 @@ function checkFpPasswordStrength(pw){
   });
   function commitOnBlur(){
     const parsed = parseTyped(input.value);
-    if (parsed) {
-      const pickCheck = new Date(parsed + 'T00:00:00');
-      const todayCheck = new Date();
-      todayCheck.setHours(0,0,0,0);
-      pickCheck.setHours(0,0,0,0);
-      const minCheck = new Date(todayCheck.getFullYear() - 1, todayCheck.getMonth(), todayCheck.getDate());
-      if (pickCheck > todayCheck || pickCheck < minCheck) {
-        showToast('Birthdate must be within the last 1 year', 'error');
-        input.value = hidden.value ? formatLong(new Date(hidden.value + 'T00:00:00')) : '';
-        input.classList.toggle('placeholder', !hidden.value);
-        const pick = hidden.value ? new Date(hidden.value + 'T00:00:00') : null;
-        if (pick && !isNaN(pick.getTime())){
-          const today = new Date();
-          let age = today.getFullYear() - pick.getFullYear();
-          const md = today.getMonth() - pick.getMonth();
-          if (md < 0 || (md === 0 && today.getDate() < pick.getDate())) age--;
-          ageEl.value = age;
-        } else {
-          ageEl.value = '';
-        }
-        return;
-      }
-      setValue(parsed);
-    }
+    if (parsed) setValue(parsed);
     else if (hidden.value) setValue(hidden.value); // keep a just-picked calendar date shown in long format
     else { input.value=''; hidden.value=''; ageEl.value=''; }
   }
@@ -986,96 +886,130 @@ function checkFpPasswordStrength(pw){
     if (open && popEl && !popEl.contains(e.target) && !field.contains(e.target)) close();
   });
   document.addEventListener('keydown', function(e){ if (e.key==='Escape') close(); });
-  window.addEventListener('scroll', function(){ if (open) repositionPopup(); }, { passive: true });
-  window.addEventListener('resize', function(){ if (open) repositionPopup(); });
 })();
 
 // -- Philippine Address Cascading Dropdowns (PSGC API) ----------------
 const PSGC = 'https://psgc.gitlab.io/api';
 
-// Load provinces for NCR and CALABARZON
-function loadProvincesByRegion() {
-    const regionSel = document.getElementById('regRegion');
+// Load all regions on page ready
+fetch(`${PSGC}/regions/`)
+    .then(r => r.json())
+    .then(data => {
+        const sel = document.getElementById('regRegion');
+        data.sort((a, b) => a.name.localeCompare(b.name)).forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r.code;
+            opt.textContent = r.name;
+            sel.appendChild(opt);
+        });
+        if (window.__fdResync) window.__fdResync(sel);
+    })
+    .catch(() => {
+        const sel = document.getElementById('regRegion');
+        sel.innerHTML = '<option value="">Failed to load regions</option>';
+        if (window.__fdResync) window.__fdResync(sel);
+    });
+
+function loadProvinces() {
+    const regionCode = document.getElementById('regRegion').value;
     const provSel = document.getElementById('regProvince');
-    const region = regionSel.value;
-    
-    provSel.innerHTML = '<option value="">Loading...</option>';
-    provSel.disabled = true;
-    
-    // NCR has no provinces, load cities directly
-    if (region === 'NCR') {
-        fetch(`${PSGC}/regions/130000000/cities/`)
-            .then(r => r.json())
-            .then(cities => {
-                provSel.innerHTML = '<option value="NCR">NCR</option>';
-                provSel.disabled = false;
-                const munSel = document.getElementById('regMunicipality');
-                munSel.innerHTML = '<option value="">Select City/Municipality</option>';
-                cities.sort((a, b) => a.name.localeCompare(b.name)).forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.code;
-                    opt.textContent = c.name;
-                    munSel.appendChild(opt);
-                });
-                munSel.disabled = false;
-                if (window.__fdResync) window.__fdResync(munSel);
-                updateFullAddress();
-            })
-            .catch(() => {
-                provSel.innerHTML = '<option value="">Select Province</option>';
-                provSel.disabled = false;
-            });
-        return;
-    }
-    
-    // CALABARZON
-    if (region === 'CALABARZON') {
-        fetch(`${PSGC}/regions/040000000/provinces/`)
-            .then(r => r.json())
-            .then(data => {
-                provSel.innerHTML = '<option value="">Select Province</option>';
-                data.sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.code;
-                    opt.textContent = p.name;
-                    provSel.appendChild(opt);
-                });
-                provSel.disabled = false;
-                if (window.__fdResync) window.__fdResync(provSel);
-                updateFullAddress();
-            })
-            .catch(() => {
-                provSel.innerHTML = '<option value="">Failed to load provinces</option>';
-                if (window.__fdResync) window.__fdResync(provSel);
-            });
-    }
-}
-
-document.getElementById('regRegion').addEventListener('change', loadProvincesByRegion);
-loadProvincesByRegion();
-
-function loadMunicipalities() {
-    const provinceCode = document.getElementById('regProvince').value;
-    const region = document.getElementById('regRegion').value;
     const munSel  = document.getElementById('regMunicipality');
     const brgySel = document.getElementById('regBarangay');
 
+    provSel.innerHTML = '<option value="">Loading...</option>';
+    provSel.disabled  = true;
+    munSel.innerHTML  = '<option value="">Select Municipality / City</option>';
+    munSel.disabled   = true;
     brgySel.innerHTML = '<option value="">Select Barangay</option>';
     brgySel.disabled  = true;
-    if (window.__fdResync) window.__fdResync(brgySel);
+    if (window.__fdResync) { window.__fdResync(provSel); window.__fdResync(munSel); window.__fdResync(brgySel); }
     document.getElementById('regFullAddress').value = '';
 
-    if (region === 'NCR') {
-        // Cities are already loaded in loadProvincesByRegion()
-        munSel.disabled = false;
-        if (window.__fdResync) window.__fdResync(munSel);
-        updateFullAddress();
-        return;
-    }
+    if (!regionCode) return;
+
+    fetch(`${PSGC}/regions/${regionCode}/provinces/`)
+        .then(r => r.ok ? r.json() : [])
+        .then(data => {
+            provSel.innerHTML = '<option value="">Select Province</option>';
+            data.sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.code;
+                opt.textContent = p.name;
+                provSel.appendChild(opt);
+            });
+            if (data.length === 0) {
+                // NCR and some regions have no provinces - load cities directly
+                return fetch(`${PSGC}/regions/${regionCode}/cities/`)
+                    .then(r => r.ok ? r.json() : fetch(`${PSGC}/regions/${regionCode}/cities-municipalities/`).then(r2 => r2.ok ? r2.json() : []))
+                    .then(cities => {
+                        if (cities && cities.length) {
+                            const munSel2  = document.getElementById('regMunicipality');
+                            const brgySel2 = document.getElementById('regBarangay');
+                            munSel2.innerHTML = '<option value="">Select Municipality / City</option>';
+                            cities.sort((a, b) => a.name.localeCompare(b.name)).forEach(m => {
+                                const opt = document.createElement('option');
+                                opt.value = m.code;
+                                opt.textContent = m.name;
+                                munSel2.appendChild(opt);
+                            });
+                            munSel2.disabled = false;
+                            if (window.__fdResync) window.__fdResync(munSel2);
+                            brgySel2.innerHTML = '<option value="">Select Barangay</option>';
+                            brgySel2.disabled = true;
+                            if (window.__fdResync) window.__fdResync(brgySel2);
+                        }
+                    });
+            }
+            provSel.disabled = false;
+            if (window.__fdResync) window.__fdResync(provSel);
+            updateFullAddress();
+        })
+        .catch(() => {
+            provSel.innerHTML = '<option value="">Error loading. Try again.</option>';
+            if (window.__fdResync) window.__fdResync(provSel);
+        });
+}
+
+function loadMunicipalities() {
+    const provinceCode = document.getElementById('regProvince').value;
+    const regionCode = document.getElementById('regRegion').value;
+    const munSel  = document.getElementById('regMunicipality');
+    const brgySel = document.getElementById('regBarangay');
 
     munSel.innerHTML  = '<option value="">Loading...</option>';
     munSel.disabled   = true;
-    if (window.__fdResync) window.__fdResync(munSel);
+    brgySel.innerHTML = '<option value="">Select Barangay</option>';
+    brgySel.disabled  = true;
+    if (window.__fdResync) { window.__fdResync(munSel); window.__fdResync(brgySel); }
+    document.getElementById('regFullAddress').value = '';
+
+    if (!provinceCode && regionCode) {
+        // Try to load cities from region (e.g. NCR)
+        fetch(`${PSGC}/regions/${regionCode}/cities/`)
+            .then(r => r.ok ? r.json() : fetch(`${PSGC}/regions/${regionCode}/cities-municipalities/`).then(r2 => r2.ok ? r2.json() : []))
+            .then(cities => {
+                if (cities && cities.length) {
+                    munSel.innerHTML = '<option value="">Select Municipality / City</option>';
+                    cities.sort((a, b) => a.name.localeCompare(b.name)).forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m.code;
+                        opt.textContent = m.name;
+                        munSel.appendChild(opt);
+                    });
+                    munSel.disabled = false;
+                    if (window.__fdResync) window.__fdResync(munSel);
+                    updateFullAddress();
+                    return;
+                }
+                munSel.innerHTML = '<option value="">Select Municipality / City</option>';
+                if (window.__fdResync) window.__fdResync(munSel);
+            })
+            .catch(() => {
+                munSel.innerHTML = '<option value="">Error loading. Try again.</option>';
+                if (window.__fdResync) window.__fdResync(munSel);
+            });
+        return;
+    }
 
     if (!provinceCode) return;
 
@@ -1136,14 +1070,14 @@ function updateFullAddress() {
     const brgySel  = document.getElementById('regBarangay');
     const munSel   = document.getElementById('regMunicipality');
     const provSel  = document.getElementById('regProvince');
-    const regSel   = document.getElementById('regRegion');
+    const regionSel= document.getElementById('regRegion');
 
     const brgyText   = brgySel.selectedIndex > 0 ? brgySel.options[brgySel.selectedIndex].text : '';
     const munText    = munSel.selectedIndex  > 0 ? munSel.options[munSel.selectedIndex].text   : '';
     const provText   = provSel.selectedIndex > 0 && provSel.options[provSel.selectedIndex].text !== 'Select Province' ? provSel.options[provSel.selectedIndex].text : '';
-    const regText    = regSel.options[regSel.selectedIndex] ? regSel.options[regSel.selectedIndex].text : '';
+    const regionText = regionSel.selectedIndex > 0 && regionSel.options[regionSel.selectedIndex].text !== 'Select Region' ? regionSel.options[regionSel.selectedIndex].text : '';
 
-    const parts = [street, brgyText, munText, provText, regText].filter(p => p && p !== 'Select Region');
+    const parts = [street, brgyText, munText, provText, regionText].filter(p => p);
     document.getElementById('regFullAddress').value = parts.join(', ');
 }
 
@@ -1205,30 +1139,8 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
     const confirmPassword = document.getElementById('regConfirmPassword').value;
 
     // Validate birthday was picked via the custom calendar
-    const bday = document.getElementById('regBirthday').value;
-    if (!bday) {
+    if (!document.getElementById('regBirthday').value) {
         showToast('Please select your birthday', 'error');
-        return;
-    }
-    const bdayDt = new Date(bday + 'T00:00:00');
-    const todayDt = new Date();
-    todayDt.setHours(0,0,0,0);
-    bdayDt.setHours(0,0,0,0);
-    const minDt = new Date(todayDt.getFullYear() - 1, todayDt.getMonth(), todayDt.getDate());
-    if (bdayDt > todayDt || bdayDt < minDt) {
-        showToast('Birthdate must be within the last 1 year', 'error');
-        return;
-    }
-
-    const email = document.getElementById('regEmail').value.trim().toLowerCase();
-    if (!email.endsWith('@gmail.com') || !/^[a-z0-9._%+-]+@gmail\.com$/.test(email)) {
-        showToast('Please use a valid Gmail address.', 'error');
-        return;
-    }
-
-    const contact = document.getElementById('regContact').value.trim();
-    if (!/^[0-9]{11}$/.test(contact)) {
-        showToast('Contact number must be 11 digits', 'error');
         return;
     }
 
