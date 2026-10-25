@@ -1,1 +1,0 @@
-function n(){var e;(e=document.getElementById("loadingScreen"))==null||e.classList.add("active")}function t(){var e;(e=document.getElementById("loadingScreen"))==null||e.classList.remove("active")}export{t as h,n as s};

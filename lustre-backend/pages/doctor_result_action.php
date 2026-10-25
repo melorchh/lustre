@@ -1,49 +1,28 @@
 <?php
 require __DIR__ . '/../src/session.php';
-require_once __DIR__ . '/../src/api.php';
-
-$wantJson = (isset($_SERVER['HTTP_X_LUSTRE_API']) && $_SERVER['HTTP_X_LUSTRE_API'] === '1');
-
-function dra_out($msg, $isError = false, $status = 400) {
-    global $wantJson;
-    if ($wantJson) {
-        if ($isError) { api_fail($msg, $status); }
-        api_ok();
-    }
-    echo $msg;
-    exit;
-}
-
-if (!isset($_SESSION["doctor_id"])) {
-    if ($wantJson) { api_fail('Unauthorized', 401); }
-    header("Content-Type: text/plain; charset=utf-8");
-    echo "Unauthorized";
-    exit;
-}
+if (!isset($_SESSION["doctor_id"])) { header("Content-Type: text/plain; charset=utf-8"); echo "Unauthorized"; exit; }
 require_once __DIR__ . '/../src/db.php';
 
-if (!$wantJson) { header('Content-Type: text/plain; charset=utf-8'); }
+header('Content-Type: text/plain; charset=utf-8');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') { dra_out("Invalid request", true, 405); }
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo "Invalid request"; exit; }
 
 $doctor_id   = (int)$_SESSION['doctor_id'];
 $action      = isset($_GET['action']) ? $_GET['action'] : '';
-$in          = api_input();
-if (empty($in)) { $in = $_POST; }
-$appt_id     = isset($in['appointment_id']) ? (int)$in['appointment_id'] : 0;
+$appt_id     = isset($_POST['appointment_id']) ? (int)$_POST['appointment_id'] : 0;
 
-if (!$appt_id) { dra_out("Invalid appointment", true); }
+if (!$appt_id) { echo "Invalid appointment"; exit; }
 
 // Verify this appointment belongs to the logged-in doctor
 $check = $conn->prepare("SELECT doctor_id, status FROM appointments WHERE id = ?");
 $check->bind_param("i", $appt_id);
 $check->execute();
 $check->store_result();
-if ($check->num_rows === 0) { $check->close(); dra_out("Appointment not found", true, 404); }
+if ($check->num_rows === 0) { $check->close(); echo "Appointment not found"; $conn->close(); exit; }
 $check->bind_result($owner_id, $current_status);
 $check->fetch();
 $check->close();
-if ((int)$owner_id !== $doctor_id) { dra_out("You are not allowed to modify this appointment", true, 403); }
+if ((int)$owner_id !== $doctor_id) { echo "You are not allowed to modify this appointment"; $conn->close(); exit; }
 
 /**
  * When a vaccination appointment is completed, record the dose that was just
@@ -132,39 +111,40 @@ function complete_appointment($conn, $appt_id, $result) {
 }
 
 if ($action === 'complete_and_result') {
-    $result = isset($in['result']) ? trim($in['result']) : '';
-    if ($result === '') { dra_out("Please enter the appointment result", true); }
-    if ($current_status === 'cancelled') { dra_out("Cannot add a result to a cancelled appointment", true); }
+    $result = isset($_POST['result']) ? trim($_POST['result']) : '';
+    if ($result === '') { echo "Please enter the appointment result"; $conn->close(); exit; }
+    if ($current_status === 'cancelled') { echo "Cannot add a result to a cancelled appointment"; $conn->close(); exit; }
 
     $ok = complete_appointment($conn, $appt_id, $result);
-    dra_out($ok ? "success" : "Failed", !$ok);
+    echo $ok ? "success" : "Failed";
     $conn->close();
+    exit;
 
 } elseif ($action === 'save_result') {
-    $result = isset($in['result']) ? trim($in['result']) : '';
-    if ($result === '') { dra_out("Please enter the appointment result", true); }
-    if ($current_status === 'cancelled') { dra_out("Cannot add a result to a cancelled appointment", true); }
+    $result = isset($_POST['result']) ? trim($_POST['result']) : '';
+    if ($result === '') { echo "Please enter the appointment result"; $conn->close(); exit; }
+    if ($current_status === 'cancelled') { echo "Cannot add a result to a cancelled appointment"; $conn->close(); exit; }
 
     $stmt = $conn->prepare(
         "UPDATE appointments SET result = ?, result_date = NOW() WHERE id = ?"
     );
     $stmt->bind_param("si", $result, $appt_id);
-    $ok = $stmt->execute();
-    $err = $stmt->error;
+    echo $stmt->execute() ? "success" : "Failed: " . $stmt->error;
     $stmt->close();
-    dra_out($ok ? "success" : "Failed: " . $err, !$ok);
     $conn->close();
+    exit;
 
 } elseif ($action === 'complete') {
     // Allow completing without a result (result optional)
-    if ($current_status === 'cancelled') { dra_out("Cannot complete a cancelled appointment", true); }
-    $result = isset($in['result']) ? trim($in['result']) : '';
+    if ($current_status === 'cancelled') { echo "Cannot complete a cancelled appointment"; $conn->close(); exit; }
+    $result = isset($_POST['result']) ? trim($_POST['result']) : '';
     $ok = complete_appointment($conn, $appt_id, $result);
-    dra_out($ok ? "success" : "Failed", !$ok);
+    echo $ok ? "success" : "Failed";
     $conn->close();
+    exit;
 
 } else {
-    dra_out("Unknown action", true);
+    echo "Unknown action";
 }
 
 $conn->close();
