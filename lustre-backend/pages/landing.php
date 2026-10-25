@@ -297,8 +297,6 @@ if (isset($_SESSION["patient_id"])) {
                 <span class="address-label">Region</span>
                 <select name="region_name" id="regRegion" class="form-dropdown" required onchange="loadProvinces()">
                     <option value="">Select Region</option>
-                    <option value="NCR">NCR</option>
-                    <option value="Region IV-A">Region IV-A (CALABARZON)</option>
                 </select>
 
                 <span class="address-label">Province</span>
@@ -874,29 +872,29 @@ function checkFpPasswordStrength(pw){
     const wrap = document.getElementById('regDatepicker');
     if (!pop || !wrap) return;
     const rect = wrap.getBoundingClientRect();
-    const popH = pop.scrollHeight || pop.offsetHeight || 360;
+    const popW = pop.offsetWidth || 320;
+    const popH = Math.min(pop.scrollHeight || pop.offsetHeight || 340, 320);
     const gap = 8;
+    const vw = window.innerWidth || document.documentElement.clientWidth;
     const vh = window.innerHeight || document.documentElement.clientHeight;
-    const downRoom = vh - rect.bottom - gap;
-    const upRoom = rect.top - gap;
-    if (downRoom >= popH) {
-      pop.style.top = (rect.bottom + gap) + window.scrollY + 'px';
-      pop.style.bottom = 'auto';
-      pop.style.maxHeight = '';
-      pop.style.overflowY = '';
-    } else if (upRoom >= popH) {
-      pop.style.top = (rect.top - popH - gap) + window.scrollY + 'px';
-      pop.style.bottom = 'auto';
-      pop.style.maxHeight = '';
-      pop.style.overflowY = '';
+    // prefer below
+    let top = rect.bottom + gap + window.scrollY;
+    if (rect.bottom + gap + popH > vh && rect.top - gap - popH >= 0) {
+      top = rect.top - popH - gap + window.scrollY;
+    } else if (rect.bottom + gap + popH > vh) {
+      pop.style.maxHeight = Math.max(200, vh - rect.bottom - gap - 8) + 'px';
+      pop.style.overflowY = 'auto';
+      top = rect.bottom + gap + window.scrollY;
     } else {
-      pop.style.top = Math.max(gap, rect.bottom + gap) + window.scrollY + 'px';
-      pop.style.bottom = 'auto';
-      pop.style.maxHeight = Math.min(popH, downRoom) + 'px';
+      pop.style.maxHeight = '320px';
       pop.style.overflowY = 'auto';
     }
-    pop.style.left = Math.max(8, Math.min(rect.left, (window.innerWidth||document.documentElement.clientWidth) - 8 - pop.clientWidth)) + 'px';
-    pop.style.zIndex = '5000';
+    let left = rect.left + window.scrollX;
+    if (left + popW > vw - 8) left = Math.max(8, vw - popW - 8 + window.scrollX);
+    if (left < 8) left = 8 + window.scrollX;
+    pop.style.top = top + 'px';
+    pop.style.left = left + 'px';
+    pop.style.zIndex = '10000';
   }
 
   // Open the calendar from the trigger button or clicking the field
@@ -991,12 +989,17 @@ function checkFpPasswordStrength(pw){
 // -- Philippine Address Cascading Dropdowns (PSGC API) ----------------
 const PSGC = 'https://psgc.gitlab.io/api';
 
-// Load all regions on page ready
+// Load regions (restricted to NCR and Region IV-A)
 fetch(`${PSGC}/regions/`)
     .then(r => r.json())
     .then(data => {
         const sel = document.getElementById('regRegion');
-        data.sort((a, b) => a.name.localeCompare(b.name)).forEach(r => {
+        sel.innerHTML = '<option value="">Select Region</option>';
+        const allowed = ['NCR', 'National Capital Region', 'Region IV-A', 'CALABARZON', 'Region IVA'];
+        data.filter(r => {
+            const n = r.name.toUpperCase();
+            return n.includes('NCR') || n.includes('CALABARZON') || n.includes('REGION IV-A') || n.includes('REGION IVA');
+        }).forEach(r => {
             const opt = document.createElement('option');
             opt.value = r.code;
             opt.textContent = r.name;
@@ -1006,7 +1009,7 @@ fetch(`${PSGC}/regions/`)
     })
     .catch(() => {
         const sel = document.getElementById('regRegion');
-        sel.innerHTML = '<option value="">Failed to load regions</option>';
+        sel.innerHTML = '<option value="">Select Region</option><option value="130000000">National Capital Region (NCR)</option><option value="040000000">Region IV-A (CALABARZON)</option>';
         if (window.__fdResync) window.__fdResync(sel);
     });
 
