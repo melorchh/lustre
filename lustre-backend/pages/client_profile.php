@@ -58,6 +58,12 @@ if ($patient) {
         ORDER BY lt.created_at DESC
     ");
 
+    $vaccinations = $conn->query("
+        SELECT * FROM vaccinations
+        WHERE patient_id = $patient_id
+        ORDER BY administered_date DESC, id DESC
+    ");
+
     $created = !empty($patient['created_at']) ? new DateTime($patient['created_at']) : null;
     $last_visit = ['last_appt' => null];
     $lv_res = $conn->query("SELECT MAX(appointment_date) AS last_appt FROM appointments WHERE patient_id = $patient_id");
@@ -326,6 +332,53 @@ $conn->close();
                         </tr>
                     <?php endwhile; else: ?>
                         <tr><td colspan="6" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v6.3L4.5 17a2.5 2.5 0 0 0 2 4h11a2.5 2.5 0 0 0 2-4L14 8.3V2"/><path d="M8.5 2h7"/><path d="M7 15h10"/></svg></div>No lab tests ordered for this client yet.</td></tr>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Vaccinations -->
+        <div class="content-card">
+            <h2>Vaccinations</h2>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Vaccine</th>
+                            <th>Dose</th>
+                            <th>Administered</th>
+                            <th>Next Due</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php if ($vaccinations && $vaccinations->num_rows > 0):
+                        $today = date('Y-m-d');
+                        while ($vc = $vaccinations->fetch_assoc()):
+                            $given = !empty($vc['administered_date']) ? (new DateTime($vc['administered_date']))->format('M j, Y') : '&mdash;';
+                            $due = $vc['next_due_date'];
+                            $dueStatus = '';
+                            if ($due) {
+                                $dueDiff = (strtotime($due) - strtotime($today)) / 86400;
+                                $dueStatus = $dueDiff <= 14 ? 'badge-due' : 'badge-done';
+                            }
+                    ?>
+                        <tr>
+                            <td><strong><?php echo htmlspecialchars($vc['vaccine_name']); ?></strong></td>
+                            <td><span class="badge badge-normal"><?php echo htmlspecialchars($vc['dose_label']); ?></span></td>
+                            <td><?php echo $given; ?></td>
+                            <td>
+                                <?php if ($due): ?>
+                                    <span class="badge <?php echo $dueStatus; ?>"><?php echo (new DateTime($due))->format('M j, Y'); ?></span>
+                                <?php else: ?>
+                                    <span class="badge badge-done">Complete</span>
+                                <?php endif; ?>
+                            </td>
+                            <td><?php echo $vc['notes'] ? htmlspecialchars($vc['notes']) : '&mdash;'; ?></td>
+                        </tr>
+                    <?php endwhile; else: ?>
+                        <tr><td colspan="5" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0L11.5 5.85 9.9 4.25a5.4 5.4 0 0 0-7.65 7.65l1.6 1.6-6.4 6.4a1 1 0 0 0 0 1.41l2.83 2.83a1 1 0 0 0 1.41 0l6.4-6.4 1.6 1.6a5.4 5.4 0 0 0 7.65-7.65l-1.6-1.6 1.27-1.27a5.4 5.4 0 0 0 0-7.65z"/></svg></div>No vaccinations recorded for this client yet.</td></tr>
                     <?php endif; ?>
                     </tbody>
                 </table>
