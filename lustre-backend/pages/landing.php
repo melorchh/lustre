@@ -906,7 +906,7 @@ function loadProvincesByRegion() {
         fetch(`${PSGC}/regions/130000000/cities/`)
             .then(r => r.json())
             .then(cities => {
-                provSel.innerHTML = '<option value="">NCR (Direct)</option>';
+                provSel.innerHTML = '<option value="NCR">NCR</option>';
                 provSel.disabled = false;
                 const munSel = document.getElementById('regMunicipality');
                 munSel.innerHTML = '<option value="">Select City/Municipality</option>';
