@@ -873,20 +873,22 @@ function checkFpPasswordStrength(pw){
     if (!pop || !wrap) return;
     const rect = wrap.getBoundingClientRect();
     const popW = pop.offsetWidth || 320;
-    const popH = Math.min(pop.scrollHeight || pop.offsetHeight || 340, 320);
+    const popH = pop.scrollHeight || pop.offsetHeight || 340;
     const gap = 8;
     const vw = window.innerWidth || document.documentElement.clientWidth;
     const vh = window.innerHeight || document.documentElement.clientHeight;
-    // prefer below
-    let top = rect.bottom + gap + window.scrollY;
-    if (rect.bottom + gap + popH > vh && rect.top - gap - popH >= 0) {
-      top = rect.top - popH - gap + window.scrollY;
-    } else if (rect.bottom + gap + popH > vh) {
-      pop.style.maxHeight = Math.max(200, vh - rect.bottom - gap - 8) + 'px';
-      pop.style.overflowY = 'auto';
+    let top;
+    if (rect.bottom + popH + gap <= vh) {
       top = rect.bottom + gap + window.scrollY;
+      pop.style.maxHeight = '';
+      pop.style.overflowY = '';
+    } else if (rect.top - popH - gap >= 0) {
+      top = rect.top - popH - gap + window.scrollY;
+      pop.style.maxHeight = '';
+      pop.style.overflowY = '';
     } else {
-      pop.style.maxHeight = '320px';
+      top = rect.bottom + gap + window.scrollY;
+      pop.style.maxHeight = Math.max(220, vh - rect.bottom - gap - 12) + 'px';
       pop.style.overflowY = 'auto';
     }
     let left = rect.left + window.scrollX;
@@ -894,7 +896,8 @@ function checkFpPasswordStrength(pw){
     if (left < 8) left = 8 + window.scrollX;
     pop.style.top = top + 'px';
     pop.style.left = left + 'px';
-    pop.style.zIndex = '10000';
+    pop.style.position = 'fixed';
+    pop.style.zIndex = '2147483647';
   }
 
   // Open the calendar from the trigger button or clicking the field
@@ -1014,10 +1017,45 @@ fetch(`${PSGC}/regions/`)
     });
 
 function loadProvinces() {
-    const regionCode = document.getElementById('regRegion').value;
+    const regionSel = document.getElementById('regRegion');
+    const regionCode = regionSel.value;
     const provSel = document.getElementById('regProvince');
     const munSel  = document.getElementById('regMunicipality');
     const brgySel = document.getElementById('regBarangay');
+    const regionText = (regionSel.options[regionSel.selectedIndex]?.textContent || '').toLowerCase();
+
+    // For NCR, skip province selection
+    if (regionCode && (regionText.includes('ncr') || regionCode.startsWith('13'))) {
+        provSel.innerHTML = '<option value="">N/A</option>';
+        provSel.disabled = true;
+        provSel.value = '';
+        munSel.innerHTML = '<option value="">Loading...</option>';
+        munSel.disabled = true;
+        brgySel.innerHTML = '<option value="">Select Barangay</option>';
+        brgySel.disabled = true;
+        if (window.__fdResync) { window.__fdResync(provSel); window.__fdResync(munSel); window.__fdResync(brgySel); }
+        document.getElementById('regFullAddress').value = '';
+        // Load cities/municipalities directly under NCR
+        fetch(`${PSGC}/regions/${regionCode}/cities/`)
+            .then(r => r.ok ? r.json() : fetch(`${PSGC}/regions/${regionCode}/cities-municipalities/`).then(r2 => r2.ok ? r2.json() : []))
+            .then(data => {
+                munSel.innerHTML = '<option value="">Select Municipality / City</option>';
+                data.sort((a, b) => a.name.localeCompare(b.name)).forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.code;
+                    opt.textContent = m.name;
+                    munSel.appendChild(opt);
+                });
+                munSel.disabled = false;
+                if (window.__fdResync) window.__fdResync(munSel);
+            })
+            .catch(() => {
+                munSel.innerHTML = '<option value="">Failed to load</option>';
+                if (window.__fdResync) window.__fdResync(munSel);
+            });
+        updateFullAddress();
+        return;
+    }
 
     provSel.innerHTML = '<option value="">Loading...</option>';
     provSel.disabled  = true;
