@@ -90,7 +90,7 @@ select {
 .navbar {
   position: sticky;
   top: 0;
-  z-index: 2000;
+  z-index: 1000;
   background: rgba(255, 255, 255, 0.92);
   border-bottom: 1.5px solid rgba(229, 233, 228, 0.9);
   transition: box-shadow 0.3s ease;
@@ -973,7 +973,7 @@ footer .footer-copy {
 .register-modal {
   position: fixed;
   inset: 0;
-  z-index: 5000;
+  z-index: 3000;
   display: none;
   align-items: flex-end;
   justify-content: center;
@@ -2373,7 +2373,7 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 2100;
+  z-index: 1300;
   align-items: center;
   gap: 0.35rem;
   padding: 0.55rem 0.75rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
