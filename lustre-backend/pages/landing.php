@@ -872,31 +872,28 @@ function checkFpPasswordStrength(pw){
     const wrap = document.getElementById('regDatepicker');
     if (!pop || !wrap) return;
     const rect = wrap.getBoundingClientRect();
-    const popW = pop.offsetWidth || 320;
-    const popH = pop.scrollHeight || pop.offsetHeight || 340;
-    const gap = 8;
+    const popW = 320;
+    const popH = pop.scrollHeight || pop.offsetHeight || 320;
     const vw = window.innerWidth || document.documentElement.clientWidth;
     const vh = window.innerHeight || document.documentElement.clientHeight;
-    let top;
-    if (rect.bottom + popH + gap <= vh) {
-      top = rect.bottom + gap + window.scrollY;
-      pop.style.maxHeight = '';
-      pop.style.overflowY = '';
-    } else if (rect.top - popH - gap >= 0) {
-      top = rect.top - popH - gap + window.scrollY;
-      pop.style.maxHeight = '';
-      pop.style.overflowY = '';
-    } else {
-      top = rect.bottom + gap + window.scrollY;
-      pop.style.maxHeight = Math.max(220, vh - rect.bottom - gap - 12) + 'px';
-      pop.style.overflowY = 'auto';
+    let left = rect.left + window.scrollX + (rect.width / 2) - (popW / 2);
+    left = Math.max(8, Math.min(left, vw - popW - 8 + window.scrollX));
+    let top = rect.bottom + 6 + window.scrollY;
+    if (rect.bottom + popH + 12 > vh) {
+      if (rect.top - popH - 12 >= 0) {
+        top = rect.top - popH - 6 + window.scrollY;
+      } else {
+        top = Math.max(8 + window.scrollY, (vh - popH) / 2 + window.scrollY);
+      }
     }
-    let left = rect.left + window.scrollX;
-    if (left + popW > vw - 8) left = Math.max(8, vw - popW - 8 + window.scrollX);
-    if (left < 8) left = 8 + window.scrollX;
+    pop.style.position = 'absolute';
     pop.style.top = top + 'px';
     pop.style.left = left + 'px';
-    pop.style.position = 'fixed';
+    pop.style.right = 'auto';
+    pop.style.bottom = 'auto';
+    pop.style.width = popW + 'px';
+    pop.style.maxHeight = '360px';
+    pop.style.overflowY = 'auto';
     pop.style.zIndex = '2147483647';
   }
 
