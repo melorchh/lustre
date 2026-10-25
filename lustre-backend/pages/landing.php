@@ -294,12 +294,17 @@ if (isset($_SESSION["patient_id"])) {
             <div class="address-group">
                 <div class="address-group-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> <span>Address</span></div>
 
+                <span class="address-label">Region</span>
+                <select name="region_name" id="regRegion" class="form-dropdown" data-searchable required onchange="loadProvinces()">
+                    <option value="">Select Region</option>
+                </select>
+
                 <span class="address-label">Province</span>
-                <select name="province_name" id="regProvince" class="form-dropdown" data-searchable required onchange="loadMunicipalities()">
+                <select name="province_name" id="regProvince" class="form-dropdown" data-searchable required onchange="loadMunicipalities()" disabled>
                     <option value="">Select Province</option>
                 </select>
 
-    <span class="address-label">Municipality / City</span>
+                <span class="address-label">Municipality / City</span>
                 <select name="municipality_name" id="regMunicipality" class="form-dropdown" required onchange="loadBarangays()" disabled>
                     <option value="">Select Municipality / City</option>
                 </select>
@@ -886,27 +891,88 @@ function checkFpPasswordStrength(pw){
 // -- Philippine Address Cascading Dropdowns (PSGC API) ----------------
 const PSGC = 'https://psgc.gitlab.io/api';
 
-// Load all provinces on page ready
-fetch(`${PSGC}/provinces/`)
+// Load all regions on page ready
+fetch(`${PSGC}/regions/`)
     .then(r => r.json())
     .then(data => {
-        const sel = document.getElementById('regProvince');
-        data.sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
+        const sel = document.getElementById('regRegion');
+        data.sort((a, b) => a.name.localeCompare(b.name)).forEach(r => {
             const opt = document.createElement('option');
-            opt.value = p.code;
-            opt.textContent = p.name;
+            opt.value = r.code;
+            opt.textContent = r.name;
             sel.appendChild(opt);
         });
         if (window.__fdResync) window.__fdResync(sel);
     })
     .catch(() => {
-        const sel = document.getElementById('regProvince');
-        sel.innerHTML = '<option value="">Failed to load provinces</option>';
+        const sel = document.getElementById('regRegion');
+        sel.innerHTML = '<option value="">Failed to load regions</option>';
         if (window.__fdResync) window.__fdResync(sel);
     });
 
+function loadProvinces() {
+    const regionCode = document.getElementById('regRegion').value;
+    const provSel = document.getElementById('regProvince');
+    const munSel  = document.getElementById('regMunicipality');
+    const brgySel = document.getElementById('regBarangay');
+
+    provSel.innerHTML = '<option value="">Loading...</option>';
+    provSel.disabled  = true;
+    munSel.innerHTML  = '<option value="">Select Municipality / City</option>';
+    munSel.disabled   = true;
+    brgySel.innerHTML = '<option value="">Select Barangay</option>';
+    brgySel.disabled  = true;
+    if (window.__fdResync) { window.__fdResync(provSel); window.__fdResync(munSel); window.__fdResync(brgySel); }
+    document.getElementById('regFullAddress').value = '';
+
+    if (!regionCode) return;
+
+    fetch(`${PSGC}/regions/${regionCode}/provinces/`)
+        .then(r => r.ok ? r.json() : [])
+        .then(data => {
+            provSel.innerHTML = '<option value="">Select Province</option>';
+            data.sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.code;
+                opt.textContent = p.name;
+                provSel.appendChild(opt);
+            });
+            if (data.length === 0) {
+                // NCR and some regions have no provinces - load cities directly
+                return fetch(`${PSGC}/regions/${regionCode}/cities/`)
+                    .then(r => r.ok ? r.json() : fetch(`${PSGC}/regions/${regionCode}/cities-municipalities/`).then(r2 => r2.ok ? r2.json() : []))
+                    .then(cities => {
+                        if (cities && cities.length) {
+                            const munSel2  = document.getElementById('regMunicipality');
+                            const brgySel2 = document.getElementById('regBarangay');
+                            munSel2.innerHTML = '<option value="">Select Municipality / City</option>';
+                            cities.sort((a, b) => a.name.localeCompare(b.name)).forEach(m => {
+                                const opt = document.createElement('option');
+                                opt.value = m.code;
+                                opt.textContent = m.name;
+                                munSel2.appendChild(opt);
+                            });
+                            munSel2.disabled = false;
+                            if (window.__fdResync) window.__fdResync(munSel2);
+                            brgySel2.innerHTML = '<option value="">Select Barangay</option>';
+                            brgySel2.disabled = true;
+                            if (window.__fdResync) window.__fdResync(brgySel2);
+                        }
+                    });
+            }
+            provSel.disabled = false;
+            if (window.__fdResync) window.__fdResync(provSel);
+            updateFullAddress();
+        })
+        .catch(() => {
+            provSel.innerHTML = '<option value="">Error loading. Try again.</option>';
+            if (window.__fdResync) window.__fdResync(provSel);
+        });
+}
+
 function loadMunicipalities() {
     const provinceCode = document.getElementById('regProvince').value;
+    const regionCode = document.getElementById('regRegion').value;
     const munSel  = document.getElementById('regMunicipality');
     const brgySel = document.getElementById('regBarangay');
 
@@ -916,6 +982,34 @@ function loadMunicipalities() {
     brgySel.disabled  = true;
     if (window.__fdResync) { window.__fdResync(munSel); window.__fdResync(brgySel); }
     document.getElementById('regFullAddress').value = '';
+
+    if (!provinceCode && regionCode) {
+        // Try to load cities from region (e.g. NCR)
+        fetch(`${PSGC}/regions/${regionCode}/cities/`)
+            .then(r => r.ok ? r.json() : fetch(`${PSGC}/regions/${regionCode}/cities-municipalities/`).then(r2 => r2.ok ? r2.json() : []))
+            .then(cities => {
+                if (cities && cities.length) {
+                    munSel.innerHTML = '<option value="">Select Municipality / City</option>';
+                    cities.sort((a, b) => a.name.localeCompare(b.name)).forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m.code;
+                        opt.textContent = m.name;
+                        munSel.appendChild(opt);
+                    });
+                    munSel.disabled = false;
+                    if (window.__fdResync) window.__fdResync(munSel);
+                    updateFullAddress();
+                    return;
+                }
+                munSel.innerHTML = '<option value="">Select Municipality / City</option>';
+                if (window.__fdResync) window.__fdResync(munSel);
+            })
+            .catch(() => {
+                munSel.innerHTML = '<option value="">Error loading. Try again.</option>';
+                if (window.__fdResync) window.__fdResync(munSel);
+            });
+        return;
+    }
 
     if (!provinceCode) return;
 
@@ -976,12 +1070,14 @@ function updateFullAddress() {
     const brgySel  = document.getElementById('regBarangay');
     const munSel   = document.getElementById('regMunicipality');
     const provSel  = document.getElementById('regProvince');
+    const regionSel= document.getElementById('regRegion');
 
-    const brgyText = brgySel.selectedIndex > 0 ? brgySel.options[brgySel.selectedIndex].text : '';
-    const munText  = munSel.selectedIndex  > 0 ? munSel.options[munSel.selectedIndex].text   : '';
-    const provText = provSel.selectedIndex > 0 ? provSel.options[provSel.selectedIndex].text : '';
+    const brgyText   = brgySel.selectedIndex > 0 ? brgySel.options[brgySel.selectedIndex].text : '';
+    const munText    = munSel.selectedIndex  > 0 ? munSel.options[munSel.selectedIndex].text   : '';
+    const provText   = provSel.selectedIndex > 0 && provSel.options[provSel.selectedIndex].text !== 'Select Province' ? provSel.options[provSel.selectedIndex].text : '';
+    const regionText = regionSel.selectedIndex > 0 && regionSel.options[regionSel.selectedIndex].text !== 'Select Region' ? regionSel.options[regionSel.selectedIndex].text : '';
 
-    const parts = [street, brgyText, munText, provText].filter(p => p);
+    const parts = [street, brgyText, munText, provText, regionText].filter(p => p);
     document.getElementById('regFullAddress').value = parts.join(', ');
 }
 
