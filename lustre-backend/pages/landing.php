@@ -1017,10 +1017,45 @@ fetch(`${PSGC}/regions/`)
     });
 
 function loadProvinces() {
-    const regionCode = document.getElementById('regRegion').value;
+    const regionSel = document.getElementById('regRegion');
+    const regionCode = regionSel.value;
     const provSel = document.getElementById('regProvince');
     const munSel  = document.getElementById('regMunicipality');
     const brgySel = document.getElementById('regBarangay');
+    const regionText = (regionSel.options[regionSel.selectedIndex]?.textContent || '').toLowerCase();
+
+    // For NCR, skip province selection
+    if (regionCode && (regionText.includes('ncr') || regionCode.startsWith('13'))) {
+        provSel.innerHTML = '<option value="">N/A</option>';
+        provSel.disabled = true;
+        provSel.value = '';
+        munSel.innerHTML = '<option value="">Loading...</option>';
+        munSel.disabled = true;
+        brgySel.innerHTML = '<option value="">Select Barangay</option>';
+        brgySel.disabled = true;
+        if (window.__fdResync) { window.__fdResync(provSel); window.__fdResync(munSel); window.__fdResync(brgySel); }
+        document.getElementById('regFullAddress').value = '';
+        // Load cities/municipalities directly under NCR
+        fetch(`${PSGC}/regions/${regionCode}/cities/`)
+            .then(r => r.ok ? r.json() : fetch(`${PSGC}/regions/${regionCode}/cities-municipalities/`).then(r2 => r2.ok ? r2.json() : []))
+            .then(data => {
+                munSel.innerHTML = '<option value="">Select Municipality / City</option>';
+                data.sort((a, b) => a.name.localeCompare(b.name)).forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.code;
+                    opt.textContent = m.name;
+                    munSel.appendChild(opt);
+                });
+                munSel.disabled = false;
+                if (window.__fdResync) window.__fdResync(munSel);
+            })
+            .catch(() => {
+                munSel.innerHTML = '<option value="">Failed to load</option>';
+                if (window.__fdResync) window.__fdResync(munSel);
+            });
+        updateFullAddress();
+        return;
+    }
 
     provSel.innerHTML = '<option value="">Loading...</option>';
     provSel.disabled  = true;
