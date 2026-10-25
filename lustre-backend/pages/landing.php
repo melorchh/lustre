@@ -762,8 +762,11 @@ function checkFpPasswordStrength(pw){
     pop.style.width = Math.min(320, Math.max(295, rect.width)) + 'px';
     pop.style.left = Math.max(8, Math.min(rect.left, (window.innerWidth||document.documentElement.clientWidth) - 8 - pop.clientWidth)) + 'px';
     pop.style.top = topPos + window.scrollY + 'px';
-    pop.style.zIndex = '5000';
+    pop.style.zIndex = '2147483647';
     bindNav();
+    const xBtn = document.getElementById('regCalXBtn');
+    if (xBtn) xBtn.addEventListener('click', function(ev){ ev.stopPropagation(); close(); });
+    repositionPopup();
   }
 
   const CAL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -804,13 +807,16 @@ function checkFpPasswordStrength(pw){
 
   function popupHTML(){
     return '<div class="reg-calendar">' +
-      '<div class="reg-cal-head">' +
-        '<button type="button" class="reg-cal-nav" data-nav="-1" aria-label="Previous month"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>' +
-        '<div class="reg-cal-title">' +
-          '<span class="reg-cal-month">'+CAL_MONTHS[viewM]+'</span>' +
-          '<select class="reg-cal-year" aria-label="Year">'+yearOptionsHTML()+'</select>' +
+      '<div class="reg-cal-head" style="display:flex;align-items:center;justify-content:space-between;">' +
+        '<div style="display:flex;align-items:center;gap:4px;">' +
+          '<button type="button" class="reg-cal-nav" data-nav="-1" aria-label="Previous month"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>' +
+          '<div class="reg-cal-title">' +
+            '<span class="reg-cal-month">'+CAL_MONTHS[viewM]+'</span>' +
+            '<select class="reg-cal-year" aria-label="Year">'+yearOptionsHTML()+'</select>' +
+          '</div>' +
+          '<button type="button" class="reg-cal-nav" data-nav="1" aria-label="Next month"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>' +
         '</div>' +
-        '<button type="button" class="reg-cal-nav" data-nav="1" aria-label="Next month"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>' +
+        '<button type="button" id="regCalXBtn" aria-label="Close" style="border:none;background:transparent;font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;">&times;</button>' +
       '</div>' +
       '<div class="reg-cal-weekdays">'+WEEKDAYS.map(w=>'<span>'+w+'</span>').join('')+'</div>' +
       '<div class="reg-cal-days">'+dayCellsHTML()+'</div>' +
@@ -873,18 +879,16 @@ function checkFpPasswordStrength(pw){
     if (!pop || !wrap) return;
     const rect = wrap.getBoundingClientRect();
     const popW = 320;
-    const popH = pop.scrollHeight || pop.offsetHeight || 320;
+    const popH = 360;
     const vw = window.innerWidth || document.documentElement.clientWidth;
     const vh = window.innerHeight || document.documentElement.clientHeight;
     let left = rect.left + window.scrollX + (rect.width / 2) - (popW / 2);
     left = Math.max(8, Math.min(left, vw - popW - 8 + window.scrollX));
     let top = rect.bottom + 6 + window.scrollY;
-    if (rect.bottom + popH + 12 > vh) {
-      if (rect.top - popH - 12 >= 0) {
-        top = rect.top - popH - 6 + window.scrollY;
-      } else {
-        top = Math.max(8 + window.scrollY, (vh - popH) / 2 + window.scrollY);
-      }
+    if (rect.bottom + popH + 12 > vh && rect.top - popH - 12 >= 0) {
+      top = rect.top - popH - 6 + window.scrollY;
+    } else if (rect.bottom + popH + 12 > vh) {
+      top = Math.max(8 + window.scrollY, vh + window.scrollY - popH - 12);
     }
     pop.style.position = 'absolute';
     pop.style.top = top + 'px';
@@ -892,8 +896,8 @@ function checkFpPasswordStrength(pw){
     pop.style.right = 'auto';
     pop.style.bottom = 'auto';
     pop.style.width = popW + 'px';
-    pop.style.maxHeight = '360px';
-    pop.style.overflowY = 'auto';
+    pop.style.maxHeight = popH + 'px';
+    pop.style.overflow = 'visible';
     pop.style.zIndex = '2147483647';
   }
 
