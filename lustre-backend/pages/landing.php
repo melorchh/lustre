@@ -705,8 +705,8 @@ function checkFpPasswordStrength(pw){
       const todayCheck = new Date();
       todayCheck.setHours(0,0,0,0);
       pickCheck.setHours(0,0,0,0);
-      if (pickCheck >= todayCheck) {
-        showToast('Birthdate cannot be today or in the future', 'error');
+      if (pickCheck > todayCheck) {
+        showToast('Birthdate cannot be in the future', 'error');
         hidden.value = '';
         input.value = '';
         input.classList.add('placeholder');
@@ -742,13 +742,27 @@ function checkFpPasswordStrength(pw){
     const pop = document.createElement('div'); pop.id='regDpPopup'; pop.className='reg-dp-popup';
     pop.innerHTML = popupHTML();
     document.body.appendChild(pop);
-    const popH = 400, gap = 8, vh = window.innerHeight || document.documentElement.clientHeight;
+    const popH = pop.offsetHeight || 360;
+    const gap = 8;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
     const downRoom = vh - rect.bottom - gap;
-    const flip = downRoom < popH && rect.top > downRoom;
+    const upRoom = rect.top - gap;
+    let topPos;
+    if (downRoom >= popH) {
+      topPos = rect.bottom + gap;
+      pop.style.bottom = 'auto';
+    } else if (upRoom >= popH) {
+      topPos = rect.top - popH - gap;
+      pop.style.bottom = 'auto';
+    } else {
+      topPos = Math.max(gap, rect.bottom + gap);
+      pop.style.bottom = 'auto';
+      pop.style.maxHeight = Math.min(popH, downRoom) + 'px';
+      pop.style.overflowY = 'auto';
+    }
     pop.style.width = Math.min(320, Math.max(295, rect.width)) + 'px';
     pop.style.left = Math.max(8, Math.min(rect.left, (window.innerWidth||document.documentElement.clientWidth) - 8 - pop.clientWidth)) + 'px';
-    pop.style.top = flip ? 'auto' : (rect.bottom + gap) + 'px';
-    pop.style.bottom = flip ? (vh - rect.top + gap) + 'px' : 'auto';
+    pop.style.top = topPos + window.scrollY + 'px';
     bindNav();
   }
 
@@ -768,7 +782,7 @@ function checkFpPasswordStrength(pw){
       const isToday = ds === todayStr;
       const dt = new Date(viewY, viewM, d);
       dt.setHours(0,0,0,0);
-      const future = dt >= t;
+      const future = dt > t;
       const cls = ['reg-cal-btn'].concat(isSel?'active':[], isToday?'cal-today':[], future?'cal-future':[]).join(' ');
       cells += '<span class="reg-cal-day"><button type="button" class="'+cls+'" data-date="'+ds+'"'+(future?' disabled aria-disabled="true"':'')+'>'+d+'</button></span>';
     }
@@ -826,6 +840,8 @@ function checkFpPasswordStrength(pw){
       if (b.disabled) return;
       b.addEventListener('click', function(){ setValue(b.getAttribute('data-date')); close(); });
     });
+    repositionPopup();
+  }
     const clear = pop.querySelector('.reg-cal-clear');
     if (clear) clear.addEventListener('click', function(){ setValue(''); close(); });
   }
@@ -834,22 +850,51 @@ function checkFpPasswordStrength(pw){
     const pop = document.getElementById('regDpPopup'); if (!pop) return;
     pop.querySelectorAll('.reg-cal-nav').forEach(function(n){
       n.addEventListener('click', function(ev){
-        ev.stopPropagation(); // without this the document click handler can treat the
-                              // click as "outside" the popup and close the calendar
+        ev.stopPropagation();
         const dir = parseInt(n.getAttribute('data-nav'),10);
         let m = viewM + dir;
         if (m<0){ m=11; viewY--; } else if (m>11){ m=0; viewY++; }
         viewM = m;
         refreshPopup();
+        repositionPopup();
       });
     });
     const yearSel = pop.querySelector('.reg-cal-year');
     if (yearSel) yearSel.addEventListener('change', function(ev){
       ev.stopPropagation();
       const y = parseInt(yearSel.value, 10);
-      if (!isNaN(y)){ viewY = y; refreshPopup(); }
+      if (!isNaN(y)){ viewY = y; refreshPopup(); repositionPopup(); }
     });
     bindDayButtons(pop);
+  }
+
+  function repositionPopup(){
+    const pop = document.getElementById('regDpPopup');
+    const wrap = document.getElementById('regDatepicker');
+    if (!pop || !wrap) return;
+    const rect = wrap.getBoundingClientRect();
+    const popH = pop.scrollHeight || pop.offsetHeight || 360;
+    const gap = 8;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const downRoom = vh - rect.bottom - gap;
+    const upRoom = rect.top - gap;
+    if (downRoom >= popH) {
+      pop.style.top = (rect.bottom + gap) + window.scrollY + 'px';
+      pop.style.bottom = 'auto';
+      pop.style.maxHeight = '';
+      pop.style.overflowY = '';
+    } else if (upRoom >= popH) {
+      pop.style.top = (rect.top - popH - gap) + window.scrollY + 'px';
+      pop.style.bottom = 'auto';
+      pop.style.maxHeight = '';
+      pop.style.overflowY = '';
+    } else {
+      pop.style.top = Math.max(gap, rect.bottom + gap) + window.scrollY + 'px';
+      pop.style.bottom = 'auto';
+      pop.style.maxHeight = Math.min(popH, downRoom) + 'px';
+      pop.style.overflowY = 'auto';
+    }
+    pop.style.left = Math.max(8, Math.min(rect.left, (window.innerWidth||document.documentElement.clientWidth) - 8 - pop.clientWidth)) + 'px';
   }
 
   // Open the calendar from the trigger button or clicking the field
@@ -878,8 +923,8 @@ function checkFpPasswordStrength(pw){
         const todayCheck = new Date();
         todayCheck.setHours(0,0,0,0);
         pickCheck.setHours(0,0,0,0);
-        if (pickCheck >= todayCheck) {
-          showToast('Birthdate cannot be today or in the future', 'error');
+        if (pickCheck > todayCheck) {
+          showToast('Birthdate cannot be in the future', 'error');
           hidden.value = '';
           ageEl.value = '';
           return;
@@ -903,8 +948,8 @@ function checkFpPasswordStrength(pw){
       const todayCheck = new Date();
       todayCheck.setHours(0,0,0,0);
       pickCheck.setHours(0,0,0,0);
-      if (pickCheck >= todayCheck) {
-        showToast('Birthdate cannot be today or in the future', 'error');
+      if (pickCheck > todayCheck) {
+        showToast('Birthdate cannot be in the future', 'error');
         input.value = hidden.value ? formatLong(new Date(hidden.value + 'T00:00:00')) : '';
         input.classList.toggle('placeholder', !hidden.value);
         const pick = hidden.value ? new Date(hidden.value + 'T00:00:00') : null;
@@ -937,6 +982,8 @@ function checkFpPasswordStrength(pw){
     if (open && popEl && !popEl.contains(e.target) && !field.contains(e.target)) close();
   });
   document.addEventListener('keydown', function(e){ if (e.key==='Escape') close(); });
+  window.addEventListener('scroll', function(){ if (open) repositionPopup(); }, { passive: true });
+  window.addEventListener('resize', function(){ if (open) repositionPopup(); });
 })();
 
 // -- Philippine Address Cascading Dropdowns (PSGC API) ----------------
@@ -1163,8 +1210,8 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
     const todayDt = new Date();
     todayDt.setHours(0,0,0,0);
     bdayDt.setHours(0,0,0,0);
-    if (bdayDt >= todayDt) {
-        showToast('Birthdate cannot be today or in the future', 'error');
+    if (bdayDt > todayDt) {
+        showToast('Birthdate cannot be in the future', 'error');
         return;
     }
 
