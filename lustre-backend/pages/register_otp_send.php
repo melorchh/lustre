@@ -29,7 +29,7 @@ $birthday = isset($_POST['birthday']) ? trim($_POST['birthday']) : '';
 $age      = isset($_POST['age']) ? trim($_POST['age']) : '';
 $gender   = isset($_POST['gender']) ? strtolower(trim($_POST['gender'])) : '';
 
-// Validate birthdate (not in the future)
+// Validate birthdate (must be within last 1 year)
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthday)) {
     echo "Please select a valid birthday";
     exit;
@@ -40,8 +40,9 @@ if (!$bd || $bd->format('Y-m-d') !== $birthday) {
     exit;
 }
 $today = new DateTime('today');
-if ($bd > $today) {
-    echo "Birthdate cannot be in the future";
+$min = (clone $today)->modify('-1 year');
+if ($bd > $today || $bd < $min) {
+    echo "Birthdate must be within the last 1 year";
     exit;
 }
 $regionName = isset($_POST['region_name']) ? trim($_POST['region_name']) : '';

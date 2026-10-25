@@ -705,8 +705,9 @@ function checkFpPasswordStrength(pw){
       const todayCheck = new Date();
       todayCheck.setHours(0,0,0,0);
       pickCheck.setHours(0,0,0,0);
-      if (pickCheck > todayCheck) {
-        showToast('Birthdate cannot be in the future', 'error');
+      const minCheck = new Date(todayCheck.getFullYear() - 1, todayCheck.getMonth(), todayCheck.getDate());
+      if (pickCheck > todayCheck || pickCheck < minCheck) {
+        showToast('Birthdate must be within the last 1 year', 'error');
         hidden.value = '';
         input.value = '';
         input.classList.add('placeholder');
@@ -773,6 +774,7 @@ function checkFpPasswordStrength(pw){
     const daysInMonth = new Date(viewY, viewM + 1, 0).getDate();
     const t = new Date();
     t.setHours(0,0,0,0);
+    const minDate = new Date(t.getFullYear() - 1, t.getMonth(), t.getDate());
     const todayStr = t.getFullYear() + '-' + pad2(t.getMonth()+1) + '-' + pad2(t.getDate());
     let cells = '';
     for (let i=0;i<firstDow;i++) cells += '<span class="reg-cal-day reg-cal-day--blank"></span>';
@@ -782,9 +784,9 @@ function checkFpPasswordStrength(pw){
       const isToday = ds === todayStr;
       const dt = new Date(viewY, viewM, d);
       dt.setHours(0,0,0,0);
-      const future = dt > t;
-      const cls = ['reg-cal-btn'].concat(isSel?'active':[], isToday?'cal-today':[], future?'cal-future':[]).join(' ');
-      cells += '<span class="reg-cal-day"><button type="button" class="'+cls+'" data-date="'+ds+'"'+(future?' disabled aria-disabled="true"':'')+'>'+d+'</button></span>';
+      const blocked = dt > t || dt < minDate;
+      const cls = ['reg-cal-btn'].concat(isSel?'active':[], isToday?'cal-today':[], blocked?'cal-future':[]).join(' ');
+      cells += '<span class="reg-cal-day"><button type="button" class="'+cls+'" data-date="'+ds+'"'+(blocked?' disabled aria-disabled="true"':'')+'>'+d+'</button></span>';
     }
     return cells;
   }
@@ -923,8 +925,9 @@ function checkFpPasswordStrength(pw){
         const todayCheck = new Date();
         todayCheck.setHours(0,0,0,0);
         pickCheck.setHours(0,0,0,0);
-        if (pickCheck > todayCheck) {
-          showToast('Birthdate cannot be in the future', 'error');
+        const minCheck = new Date(todayCheck.getFullYear() - 1, todayCheck.getMonth(), todayCheck.getDate());
+        if (pickCheck > todayCheck || pickCheck < minCheck) {
+          showToast('Birthdate must be within the last 1 year', 'error');
           hidden.value = '';
           ageEl.value = '';
           return;
@@ -948,8 +951,9 @@ function checkFpPasswordStrength(pw){
       const todayCheck = new Date();
       todayCheck.setHours(0,0,0,0);
       pickCheck.setHours(0,0,0,0);
-      if (pickCheck > todayCheck) {
-        showToast('Birthdate cannot be in the future', 'error');
+      const minCheck = new Date(todayCheck.getFullYear() - 1, todayCheck.getMonth(), todayCheck.getDate());
+      if (pickCheck > todayCheck || pickCheck < minCheck) {
+        showToast('Birthdate must be within the last 1 year', 'error');
         input.value = hidden.value ? formatLong(new Date(hidden.value + 'T00:00:00')) : '';
         input.classList.toggle('placeholder', !hidden.value);
         const pick = hidden.value ? new Date(hidden.value + 'T00:00:00') : null;
@@ -1210,8 +1214,9 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
     const todayDt = new Date();
     todayDt.setHours(0,0,0,0);
     bdayDt.setHours(0,0,0,0);
-    if (bdayDt > todayDt) {
-        showToast('Birthdate cannot be in the future', 'error');
+    const minDt = new Date(todayDt.getFullYear() - 1, todayDt.getMonth(), todayDt.getDate());
+    if (bdayDt > todayDt || bdayDt < minDt) {
+        showToast('Birthdate must be within the last 1 year', 'error');
         return;
     }
 

@@ -215,7 +215,6 @@ $conn->close();
                     <label>Patient Type</label>
                     <select name="patient_type" class="form-dropdown">
                         <option value="">Select Type</option>
-                        <option value="newborn">Newborn</option>
                         <option value="infant">Infant</option>
                         <option value="child">Child</option>
                         <option value="adolescent">Adolescent</option>
@@ -346,7 +345,6 @@ $conn->close();
 
         // ---- Patient type -> age band enforcement ----
         var __ptAgeBands = {
-            newborn:    {min:0,  max:0,   label:'0 (under 1 year)'},
             infant:     {min:1,  max:2,   label:'1-2 years'},
             child:      {min:3,  max:12,  label:'3-12 years'},
             adolescent: {min:13, max:17,  label:'13-17 years'},
