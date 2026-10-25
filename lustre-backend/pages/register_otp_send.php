@@ -44,6 +44,33 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
+if (strtolower(substr($email, -10)) !== '@gmail.com') {
+    echo "Please use a valid Gmail address.";
+    exit;
+}
+
+if (empty($contact) || !preg_match('/^[0-9]{11}$/', $contact)) {
+    echo "Contact number must be 11 digits";
+    exit;
+}
+
+// Validate birthdate (must be at least 1 year ago)
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthday)) {
+    echo "Please select a valid birthday";
+    exit;
+}
+$bd = DateTime::createFromFormat('Y-m-d', $birthday);
+if (!$bd || $bd->format('Y-m-d') !== $birthday) {
+    echo "Please select a valid birthday";
+    exit;
+}
+$today = new DateTime('today');
+$min = (clone $today)->modify('-1 year');
+if ($bd > $today || $bd < $min) {
+    echo "Birthdate must be at least 1 year ago";
+    exit;
+}
+
 if (strlen($password) < 8 || !preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password) || !preg_match('/[0-9]/', $password)) {
     echo "Password must be at least 8 characters and include uppercase, lowercase, and a number";
     exit;
