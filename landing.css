@@ -287,23 +287,25 @@ select {
   background-size: cover;
   background-position: center;
   background-color: var(--green-deep);
-  z-index: 0;
+  z-index: 1;
+  pointer-events: none;
 }
 .hero-img-overlay {
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   background: linear-gradient(
     100deg,
     rgba(14, 58, 33, 0.88) 0%,
     rgba(17, 74, 41, 0.74) 45%,
     rgba(5, 95, 74, 0.55) 100%
   );
+  pointer-events: none;
 }
 .slide-layer {
   position: absolute;
   inset: 0;
-  z-index: -2;
+  z-index: -1;
   background-size: cover;
   background-position: center;
   opacity: 0;
@@ -321,7 +323,8 @@ select {
   position: absolute;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.06);
-  z-index: -1;
+  z-index: 0;
+  pointer-events: none;
 }
 .blob-1 {
   width: 360px;
@@ -345,18 +348,19 @@ select {
 .hero-grid {
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
   background-size: 44px 44px;
   mask-image: linear-gradient(90deg, transparent, #000 40%, #000);
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 40%, #000);
+  pointer-events: none;
 }
 
 .hero-inner {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   padding: 3.75rem 3rem;
   max-width: 600px;
   display: flex;
@@ -470,6 +474,9 @@ select {
   display: flex;
   gap: 0.55rem;
   margin-bottom: 2rem;
+  position: relative;
+  z-index: 3;
+  pointer-events: auto;
 }
 .dot {
   width: 34px;
@@ -477,6 +484,8 @@ select {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.28);
   transition: background-color 0.3s var(--ease), width 0.3s var(--ease);
+  cursor: pointer;
+  pointer-events: auto;
 }
 .dot.active {
   background: var(--green-light);
@@ -503,18 +512,22 @@ select {
 
 .scroll-hint {
   position: absolute;
-  bottom: 1.4rem;
+  bottom: 1.6rem;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.3rem;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.78rem;
-  font-weight: 600;
+  gap: 0.4rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.88rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  cursor: pointer;
+  animation: hintBounce 2.4s infinite;
+  text-decoration: none;
+  z-index: 3;
+  pointer-events: auto;
 }
 .chevron {
   width: 14px;
