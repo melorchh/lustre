@@ -25,9 +25,25 @@ $email      = isset($_POST['email']) ? trim($_POST['email']) : '';
 $contact    = isset($_POST['contact']) ? trim($_POST['contact']) : '';
 $address    = isset($_POST['address']) ? trim($_POST['address']) : '';
 $password   = isset($_POST['password']) ? trim($_POST['password']) : '';
-$birthday   = isset($_POST['birthday']) ? trim($_POST['birthday']) : '';
-$age        = isset($_POST['age']) ? trim($_POST['age']) : '';
-$gender     = isset($_POST['gender']) ? strtolower(trim($_POST['gender'])) : '';
+$birthday = isset($_POST['birthday']) ? trim($_POST['birthday']) : '';
+$age      = isset($_POST['age']) ? trim($_POST['age']) : '';
+$gender   = isset($_POST['gender']) ? strtolower(trim($_POST['gender'])) : '';
+
+// Validate birthdate (not today or future)
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthday)) {
+    echo "Please select a valid birthday";
+    exit;
+}
+$bd = DateTime::createFromFormat('Y-m-d', $birthday);
+if (!$bd || $bd->format('Y-m-d') !== $birthday) {
+    echo "Please select a valid birthday";
+    exit;
+}
+$today = new DateTime('today');
+if ($bd >= $today) {
+    echo "Birthdate cannot be today or in the future";
+    exit;
+}
 $regionName = isset($_POST['region_name']) ? trim($_POST['region_name']) : '';
 $provinceName = isset($_POST['province_name']) ? trim($_POST['province_name']) : '';
 $municipalityName = isset($_POST['municipality_name']) ? trim($_POST['municipality_name']) : '';
@@ -36,6 +52,11 @@ $street = isset($_POST['street']) ? trim($_POST['street']) : '';
 
 if (empty($name) || empty($email) || empty($contact) || empty($address) || empty($password)) {
     echo "All fields are required";
+    exit;
+}
+
+if (!preg_match('/^[0-9]{11}$/', $contact)) {
+    echo "Contact number must be 11 digits";
     exit;
 }
 
@@ -69,6 +90,11 @@ if (!in_array($gender, ['male', 'female'], true)) {
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     echo "Invalid email format";
+    exit;
+}
+
+if (strtolower(substr($email, -10)) !== '@gmail.com') {
+    echo "Please use a valid Gmail address.";
     exit;
 }
 

@@ -323,8 +323,8 @@ if (isset($_SESSION["patient_id"])) {
             <input type="hidden" name="address" id="regFullAddress">
             <!-- -- End Address Fields -- -->
 
-            <input type="email" name="email" id="regEmail" placeholder="Email Address" required>
-            <input type="text" name="contact" maxlength="11" placeholder="Contact Number" required>
+            <input type="email" name="email" id="regEmail" placeholder="Email Address (Gmail only)" required>
+            <input type="tel" name="contact" id="regContact" maxlength="11" placeholder="Contact Number" inputmode="numeric" pattern="[0-9]{11}" oninput="this.value = this.value.replace(/[^0-9]/g,'').slice(0,11)" required>
             <div class="pw-field"><input type="password" name="password" id="regPassword" placeholder="Password" required oninput="checkPasswordStrength(this.value)"><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
             <div id="pwStrengthBox" class="pw-strength-box">
                 <div class="pw-strength-info">
@@ -700,6 +700,21 @@ function checkFpPasswordStrength(pw){
   }
 
   function setValue(val){
+    if (val) {
+      const pickCheck = new Date(val + 'T00:00:00');
+      const todayCheck = new Date();
+      todayCheck.setHours(0,0,0,0);
+      pickCheck.setHours(0,0,0,0);
+      if (pickCheck >= todayCheck) {
+        showToast('Birthdate cannot be today or in the future', 'error');
+        hidden.value = '';
+        input.value = '';
+        input.classList.add('placeholder');
+        ageEl.value = '';
+        lastGood = '';
+        return;
+      }
+    }
     hidden.value = val;
     const pick = val ? new Date(val + 'T00:00:00') : null;
     input.value = pick ? formatLong(pick) : '';
@@ -743,6 +758,7 @@ function checkFpPasswordStrength(pw){
     const firstDow = new Date(viewY, viewM, 1).getDay();
     const daysInMonth = new Date(viewY, viewM + 1, 0).getDate();
     const t = new Date();
+    t.setHours(0,0,0,0);
     const todayStr = t.getFullYear() + '-' + pad2(t.getMonth()+1) + '-' + pad2(t.getDate());
     let cells = '';
     for (let i=0;i<firstDow;i++) cells += '<span class="reg-cal-day reg-cal-day--blank"></span>';
@@ -750,10 +766,11 @@ function checkFpPasswordStrength(pw){
       const ds = viewY + '-' + pad2(viewM+1) + '-' + pad2(d);
       const isSel = ds === hidden.value;
       const isToday = ds === todayStr;
-      const dt = new Date(ds + 'T00:00:00');
-      const future = dt > t;
+      const dt = new Date(viewY, viewM, d);
+      dt.setHours(0,0,0,0);
+      const future = dt >= t;
       const cls = ['reg-cal-btn'].concat(isSel?'active':[], isToday?'cal-today':[], future?'cal-future':[]).join(' ');
-      cells += '<span class="reg-cal-day"><button type="button" class="'+cls+'" data-date="'+ds+'">'+d+'</button></span>';
+      cells += '<span class="reg-cal-day"><button type="button" class="'+cls+'" data-date="'+ds+'"'+(future?' disabled aria-disabled="true"':'')+'>'+d+'</button></span>';
     }
     return cells;
   }
@@ -806,6 +823,7 @@ function checkFpPasswordStrength(pw){
 
   function bindDayButtons(pop){
     pop.querySelectorAll('.reg-cal-btn').forEach(function(b){
+      if (b.disabled) return;
       b.addEventListener('click', function(){ setValue(b.getAttribute('data-date')); close(); });
     });
     const clear = pop.querySelector('.reg-cal-clear');
@@ -856,6 +874,16 @@ function checkFpPasswordStrength(pw){
     if (digits.length >= 8) {
       const parsed = parseTyped(input.value);
       if (parsed) {
+        const pickCheck = new Date(parsed + 'T00:00:00');
+        const todayCheck = new Date();
+        todayCheck.setHours(0,0,0,0);
+        pickCheck.setHours(0,0,0,0);
+        if (pickCheck >= todayCheck) {
+          showToast('Birthdate cannot be today or in the future', 'error');
+          hidden.value = '';
+          ageEl.value = '';
+          return;
+        }
         hidden.value = parsed;
         const pick = new Date(parsed + 'T00:00:00');
         const today = new Date();
@@ -870,7 +898,29 @@ function checkFpPasswordStrength(pw){
   });
   function commitOnBlur(){
     const parsed = parseTyped(input.value);
-    if (parsed) setValue(parsed);
+    if (parsed) {
+      const pickCheck = new Date(parsed + 'T00:00:00');
+      const todayCheck = new Date();
+      todayCheck.setHours(0,0,0,0);
+      pickCheck.setHours(0,0,0,0);
+      if (pickCheck >= todayCheck) {
+        showToast('Birthdate cannot be today or in the future', 'error');
+        input.value = hidden.value ? formatLong(new Date(hidden.value + 'T00:00:00')) : '';
+        input.classList.toggle('placeholder', !hidden.value);
+        const pick = hidden.value ? new Date(hidden.value + 'T00:00:00') : null;
+        if (pick && !isNaN(pick.getTime())){
+          const today = new Date();
+          let age = today.getFullYear() - pick.getFullYear();
+          const md = today.getMonth() - pick.getMonth();
+          if (md < 0 || (md === 0 && today.getDate() < pick.getDate())) age--;
+          ageEl.value = age;
+        } else {
+          ageEl.value = '';
+        }
+        return;
+      }
+      setValue(parsed);
+    }
     else if (hidden.value) setValue(hidden.value); // keep a just-picked calendar date shown in long format
     else { input.value=''; hidden.value=''; ageEl.value=''; }
   }
@@ -1104,8 +1154,29 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
     const confirmPassword = document.getElementById('regConfirmPassword').value;
 
     // Validate birthday was picked via the custom calendar
-    if (!document.getElementById('regBirthday').value) {
+    const bday = document.getElementById('regBirthday').value;
+    if (!bday) {
         showToast('Please select your birthday', 'error');
+        return;
+    }
+    const bdayDt = new Date(bday + 'T00:00:00');
+    const todayDt = new Date();
+    todayDt.setHours(0,0,0,0);
+    bdayDt.setHours(0,0,0,0);
+    if (bdayDt >= todayDt) {
+        showToast('Birthdate cannot be today or in the future', 'error');
+        return;
+    }
+
+    const email = document.getElementById('regEmail').value.trim().toLowerCase();
+    if (!email.endsWith('@gmail.com') || !/^[a-z0-9._%+-]+@gmail\.com$/.test(email)) {
+        showToast('Please use a valid Gmail address.', 'error');
+        return;
+    }
+
+    const contact = document.getElementById('regContact').value.trim();
+    if (!/^[0-9]{11}$/.test(contact)) {
+        showToast('Contact number must be 11 digits', 'error');
         return;
     }
 
