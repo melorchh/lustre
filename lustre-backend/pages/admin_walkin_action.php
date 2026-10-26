@@ -201,6 +201,16 @@ if ($action === 'add_walkin') {
     }
 
     $stmt->close();
+} elseif ($action === 'update_status') {
+    $wid    = isset($_POST['walkin_id']) ? (int)$_POST['walkin_id'] : 0;
+    $status = trim($_POST['status'] ?? '');
+    $allowed = array('waiting', 'in_service', 'served', 'cancelled');
+    if ($wid <= 0) { echo 'Invalid walk-in.'; $conn->close(); exit; }
+    if (!in_array($status, $allowed, true)) { echo 'Invalid status.'; $conn->close(); exit; }
+    $upd = $conn->prepare("UPDATE walk_ins SET status = ? WHERE id = ?");
+    $upd->bind_param("si", $status, $wid);
+    echo $upd->execute() ? 'success' : 'Update failed.';
+    $upd->close();
 } else {
     http_response_code(400);
     echo 'Unknown action.';
