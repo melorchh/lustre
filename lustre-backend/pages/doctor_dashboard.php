@@ -422,7 +422,7 @@ function fill_color($s) {
             const fd = new FormData();
             fd.append('appointment_id', dashApptId);
             fd.append('result', result);
-            fetch('doctor_result_action.php?action=complete_and_result', { method:'POST', body: fd })
+            fetch('doctor_result_action.php?action=save_result', { method:'POST', body: fd })
             .then(r=>r.text()).then(res=>{
                 hideLoading();
                 if(res.trim()==='success'){

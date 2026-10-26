@@ -34,7 +34,7 @@ function walkins_mirror_result_to_appointment($conn, $doctor_id, $wid, $result) 
     );
     if ($res && ($r = $res->fetch_assoc())) {
         $aid = (int)$r['id'];
-        $upd = $conn->prepare("UPDATE appointments SET result = ?, result_date = NOW(), status = IF(status = 'cancelled', status, 'completed') WHERE id = ? AND doctor_id = ?");
+        $upd = $conn->prepare("UPDATE appointments SET result = ?, result_date = NOW() WHERE id = ? AND doctor_id = ?");
         $upd->bind_param("sii", $result, $aid, $doctor_id);
         $upd->execute();
         $upd->close();
