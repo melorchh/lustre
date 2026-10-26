@@ -242,7 +242,7 @@ export default function Tour({ active, onDone }: TourProps) {
 
   return (
     <div className="tour-root" role="dialog" aria-modal="true" aria-label={step.title}>
-      <div className="tour-scrim" aria-hidden="true" />
+      {!ring && <div className="tour-scrim" aria-hidden="true" />}
       {ring && (
         <div
           className="tour-ring"
