@@ -204,7 +204,7 @@ if (isset($_SESSION["patient_id"])) {
     <form id="loginForm">
       <div class="field"><label>Email or username</label><input type="text" id="loginId" name="email" placeholder="you@example.com or username" required autocomplete="username"><div class="field-hint">Patients enter your email · Staff enter your username</div></div>
       <div class="field"><label>Password</label><div class="pw-field"><input type="password" name="password" id="loginPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required autocomplete="current-password"><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
-      <label class="terms-check"><input type="checkbox" id="loginTerms" required><span>I have read and agree to the Terms and Conditions.</span></label>
+      <label class="terms-check"><input type="checkbox" id="loginTerms" required><span>I have read and agree to the <a href="#" class="terms-link" onclick="event.preventDefault();event.stopPropagation();openModal('termsModal');">Terms and Conditions</a>.</span></label>
       <button type="submit" class="submit-btn" id="loginSubmitBtn" disabled><span>Sign In</span> &rarr;</button>
     </form>
     <a href="#" class="forgot-link" onclick="openForgotPassword()">Forgot password?</a>
@@ -342,7 +342,7 @@ if (isset($_SESSION["patient_id"])) {
                 <div id="pwReq4" class="pw-req" data-text="One number (0-9)"><span class="pw-ic" aria-hidden="true">&#10007;</span> One number (0-9)</div>
             </div>
             <div class="pw-field"><input type="password" name="confirm_password" id="regConfirmPassword" placeholder="Confirm Password" required><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
-            <label class="terms-check"><input type="checkbox" id="regTerms" required><span>I have read and agree to the Terms and Conditions.</span></label>
+            <label class="terms-check"><input type="checkbox" id="regTerms" required><span>I have read and agree to the <a href="#" class="terms-link" onclick="event.preventDefault();event.stopPropagation();openModal('termsModal');">Terms and Conditions</a>.</span></label>
             <button type="submit" class="btn-primary btn-full" id="regSubmitBtn" disabled>Register</button>
         </form>
 
@@ -362,6 +362,42 @@ if (isset($_SESSION["patient_id"])) {
         <button type="button" id="regBackToForm" class="reg-back-link" style="display:none;">&larr; Back to form</button>
         <p class="modal-footer"><span>Already have an account?</span> <a href="#" onclick="switchModal('registerModal', 'loginModal')">Login here</a></p>
     </div>
+</div>
+
+<!-- == TERMS AND CONDITIONS MODAL == -->
+<div class="modal-overlay terms-modal" id="termsModal">
+  <div class="modal-sheet terms-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('termsModal')">&times;</button>
+    <div class="modal-title">Terms and Conditions</div>
+    <div class="modal-sub">Please read these terms before using LustreMDC.</div>
+    <div class="terms-body">
+      <h3>1. Acceptance of Terms</h3>
+      <p>By creating an account, signing in, or using the online appointment services of LustreMDC, you agree to these Terms and Conditions. If you do not agree, please do not use the service.</p>
+
+      <h3>2. Eligibility and Account</h3>
+      <p>You must provide accurate, current, and complete information when registering. You are responsible for keeping your login credentials confidential and for all activity that occurs under your account. Notify the clinic immediately if you suspect unauthorized use of your account.</p>
+
+      <h3>3. Appointments</h3>
+      <p>Online bookings are requests subject to clinic availability and confirmation. Please arrive on time and bring a valid ID. If you need to cancel or reschedule, do so as early as possible. Repeated no-shows may result in restrictions on future bookings.</p>
+
+      <h3>4. Health Information and Emergencies</h3>
+      <p>This service is for appointment scheduling and general clinic communication only. It does not provide medical advice or emergency care. For medical emergencies, contact local emergency services or go to the nearest hospital immediately.</p>
+
+      <h3>5. Privacy and Data</h3>
+      <p>Personal information is collected and processed to manage your account, appointments, and clinic services in accordance with the Data Privacy Act of 2012 and the clinic&rsquo;s privacy practices. We do not sell your personal information.</p>
+
+      <h3>6. Acceptable Use</h3>
+      <p>You agree not to submit false information, impersonate another person, attempt unauthorized access, interfere with the service, or use the service for unlawful purposes.</p>
+
+      <h3>7. Changes and Limitation</h3>
+      <p>We may update these Terms at any time. Continued use of the service after changes are posted means you accept the updated Terms. The service is provided on an &ldquo;as available&rdquo; basis, and the clinic is not liable for delays or interruptions beyond its reasonable control.</p>
+
+      <h3>8. Contact</h3>
+      <p>For questions about these Terms, please contact the clinic using the contact details provided on this website.</p>
+    </div>
+    <button type="button" class="btn-primary btn-full" onclick="closeModal('termsModal')">I Understand</button>
+  </div>
 </div>
 
 <!-- == CHATBOT WIDGET == -->
