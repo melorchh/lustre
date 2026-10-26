@@ -1381,18 +1381,63 @@ button.resched-badge:hover {
   width: 100%;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
+/* --- selects: native-backed but fully themed --- */
+.admin-portal select,
+.admin-portal select.form-input,
+.admin-portal select.form-dropdown,
+.admin-portal select.apt-select,
+.admin-portal .ap-field select.apt-select,
 .admin-portal .apt-toolbar select.apt-select,
-.admin-portal .ap-field .apt-select {
-  padding-right: 2.1rem;
+.admin-portal select.filter-select,
+.admin-portal select.action-select,
+.admin-portal .form-group select,
+.admin-portal .pdf-cal-head select {
   appearance: none;
   -webkit-appearance: none;
-  cursor: pointer;
-  font-weight: 600;
-}
-.admin-portal .ap-field .apt-select {
+  min-height: 40px;
+  padding: 0.48rem 2.2rem 0.48rem 0.72rem;
+  border: 1.5px solid var(--ap-border-strong);
+  border-radius: 10px;
+  background-color: var(--ap-surface);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2316a34a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 0.7rem center;
+  background-position: right 0.72rem center;
+  background-size: 15px 15px;
+  color: var(--ap-text);
+  color-scheme: light;
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.admin-portal select:hover:not(:disabled) {
+  border-color: var(--ap-accent);
+  background-color: var(--ap-surface-2);
+}
+.admin-portal select:focus,
+.admin-portal select:focus-visible {
+  outline: none;
+  border-color: var(--ap-accent);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.13);
+}
+.admin-portal select:disabled {
+  border-color: var(--ap-border);
+  background-color: var(--ap-surface-3);
+  color: var(--ap-faint);
+  -webkit-text-fill-color: var(--ap-faint);
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+.admin-portal select option {
+  background-color: var(--ap-surface);
+  color: var(--ap-text);
+  font-weight: 500;
+}
+.admin-portal select option:disabled {
+  color: var(--ap-faint);
 }
 .admin-portal .form-input::placeholder,
 .admin-portal .apt-search::placeholder {
@@ -1414,6 +1459,31 @@ button.resched-badge:hover {
 [data-theme="dark"] .admin-portal .ap-field .apt-select {
   background-color: var(--ap-surface-2);
 }
+[data-theme="dark"] .admin-portal select,
+[data-theme="dark"] .admin-portal select.form-input,
+[data-theme="dark"] .admin-portal select.form-dropdown,
+[data-theme="dark"] .admin-portal select.apt-select,
+[data-theme="dark"] .admin-portal .ap-field select.apt-select,
+[data-theme="dark"] .admin-portal .apt-toolbar select.apt-select,
+[data-theme="dark"] .admin-portal select.filter-select,
+[data-theme="dark"] .admin-portal select.action-select,
+[data-theme="dark"] .admin-portal .form-group select,
+[data-theme="dark"] .admin-portal .pdf-cal-head select {
+  background-color: var(--ap-surface-2);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2334d399' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  color-scheme: dark;
+}
+[data-theme="dark"] .admin-portal select:hover:not(:disabled) {
+  background-color: var(--ap-surface-3);
+}
+[data-theme="dark"] .admin-portal select:focus {
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
+}
+[data-theme="dark"] .admin-portal select:disabled {
+  border-color: var(--ap-border);
+  background-color: var(--ap-surface-3);
+  color: var(--ap-faint);
+}
 .admin-portal .form-label {
   color: var(--ap-muted);
   font-size: 0.7rem;
@@ -1431,17 +1501,32 @@ button.resched-badge:hover {
   color: var(--ap-muted);
 }
 .admin-portal .form-group input,
-.admin-portal .form-group select,
 .admin-portal .form-group textarea {
   min-height: 42px;
   padding: 0.52rem 0.72rem;
   border: 1.5px solid var(--ap-border-strong);
   border-radius: 10px;
-  background: var(--ap-surface);
+  background-color: var(--ap-surface);
   color: var(--ap-text);
   font-size: 0.88rem;
   font-family: inherit;
   font-weight: 500;
+}
+.admin-portal .form-group select {
+  min-height: 40px;
+  padding: 0.48rem 2.2rem 0.48rem 0.72rem;
+  border: 1.5px solid var(--ap-border-strong);
+  border-radius: 10px;
+  background-color: var(--ap-surface);
+  color: var(--ap-text);
+  font-size: 0.88rem;
+  font-family: inherit;
+  font-weight: 600;
+}
+.admin-portal .form-group select:disabled {
+  border-color: var(--ap-border);
+  background-color: var(--ap-surface-3);
+  color: var(--ap-faint);
 }
 .admin-portal .form-group textarea {
   min-height: 84px;
@@ -1456,7 +1541,11 @@ button.resched-badge:hover {
 [data-theme="dark"] .admin-portal .form-group input,
 [data-theme="dark"] .admin-portal .form-group select,
 [data-theme="dark"] .admin-portal .form-group textarea {
-  background: var(--ap-surface-2);
+  background-color: var(--ap-surface-2);
+}
+[data-theme="dark"] .admin-portal .form-group select:disabled {
+  background-color: var(--ap-surface-3);
+  color: var(--ap-faint);
 }
 .admin-portal .form-group {
   margin-bottom: 0.85rem;
