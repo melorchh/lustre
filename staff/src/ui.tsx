@@ -8,7 +8,7 @@ import type { ReactNode } from 'react';
  * doctor portal (and the remaining PHP admin pages) keep their own styling.
  */
 
-export type Tone = 'green' | 'amber' | 'blue' | 'violet' | 'slate' | 'rose';
+export type Tone = 'green' | 'amber' | 'blue' | 'violet' | 'slate' | 'rose' | 'teal';
 
 export function StatGrid({ children, className = '' }: { children: ReactNode; className?: string }) {
   return <div className={`ap-stat-grid ${className}`.trim()}>{children}</div>;
