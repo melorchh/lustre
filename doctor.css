@@ -219,42 +219,27 @@ html {
   width: 170px;
 }
 
-/* ---------- Walk-in queue status: dropdown IS the badge ---------- */
-/* admin_components.js inserts .cust-dropdown immediately after the select,
-   so the colored badge button is driven by the select's wq-st-* class. */
+/* ---------- Walk-in queue status: match the Result / Vitals buttons ---------- */
+/* admin_components.js inserts .cust-dropdown immediately after the select. */
 .doctor-page select.wq-status + .cust-dropdown.cd-action {
   width: auto;
   min-width: 0;
 }
 .doctor-page select.wq-status + .cust-dropdown .cd-btn {
-  min-height: 36px;
-  padding: 0.35rem 0.85rem;
-  border: none;
-  border-radius: 999px;
-  font-size: 0.85rem;
+  min-height: 48px;
+  padding: 0.6rem 1rem;
+  border: 1.5px solid rgba(22, 163, 74, 0.45);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--green-dark);
+  font-size: 0.98rem;
   font-weight: 700;
   letter-spacing: 0.01em;
   gap: 0.35rem;
 }
 .doctor-page select.wq-status + .cust-dropdown .cd-btn .cd-arrow svg {
-  width: 13px;
-  height: 13px;
-}
-.doctor-page select.wq-st-waiting + .cust-dropdown .cd-btn {
-  background: #fef3c7;
-  color: #92400e;
-}
-.doctor-page select.wq-st-in_service + .cust-dropdown .cd-btn {
-  background: #dbeafe;
-  color: #1e40af;
-}
-.doctor-page select.wq-st-served + .cust-dropdown .cd-btn {
-  background: #d1fae5;
-  color: #065f46;
-}
-.doctor-page select.wq-st-cancelled + .cust-dropdown .cd-btn {
-  background: #fee2e2;
-  color: #991b1b;
+  width: 15px;
+  height: 15px;
 }
 
 /* ---------- Custom dropdown widget ---------- */
