@@ -119,14 +119,14 @@ if (!$stmt->execute()) {
 $stmt->close();
 
 // ---- Send the OTP email ----
-$subject = 'LustreMDC â€” Verify Your Email';
+$subject = 'LustreMDC — Verify Your Email';
 $full_name = $name;
 $message = "Hello " . $full_name . ",\n\n"
     . "Thank you for registering with LustreMDC Clinics & Diagnostics.\n\n"
     . "Your email verification code is: " . $otp . "\n\n"
     . "This code will expire in 15 minutes.\n"
     . "If you did not sign up for an account, you can ignore this email.\n\n"
-    . "â€” LustreMDC Clinics & Diagnostics";
+    . "— LustreMDC Clinics & Diagnostics";
 
 require __DIR__ . '/../src/SMTPMailer.php';
 

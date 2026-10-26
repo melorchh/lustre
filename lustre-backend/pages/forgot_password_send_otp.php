@@ -25,7 +25,7 @@ if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
-// Verify the email belongs to a registered patient (hide existence for accounts â€” but
+// Verify the email belongs to a registered patient (hide existence for accounts — but
 // show a friendly message here since this is the account owner's own request)
 $stmt = $conn->prepare("SELECT id, name FROM patients WHERE email = ?");
 $stmt->bind_param("s", $email);
@@ -67,13 +67,13 @@ if (!$stmt->execute()) {
 $stmt->close();
 
 // ---- Send the OTP email ----
-$subject = 'LustreMDC â€” Password Reset Code';
+$subject = 'LustreMDC — Password Reset Code';
 $message = "Hello " . $name . ",\n\n"
     . "We received a request to reset the password for your LustreMDC account.\n\n"
     . "Your password reset code is: " . $otp . "\n\n"
     . "This code will expire in 15 minutes.\n"
     . "If you did not request this, you can safely ignore this email.\n\n"
-    . "â€” LustreMDC Clinics & Diagnostics";
+    . "— LustreMDC Clinics & Diagnostics";
 
 require __DIR__ . '/../src/SMTPMailer.php';
 

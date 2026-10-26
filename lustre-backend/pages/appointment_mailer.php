@@ -64,7 +64,7 @@ if (!function_exists('send_appointment_email')) {
 
         switch ($event) {
             case 'booked':
-                $subject = 'Appointment Booked â€” ' . $ref;
+                $subject = 'Appointment Booked — ' . $ref;
                 $title   = 'Your appointment request has been received.';
                 $body    = "Hi {$name},\n\n"
                     . "We received your appointment request with reference {$ref}.\n\n"
@@ -74,11 +74,11 @@ if (!function_exists('send_appointment_email')) {
                     . "Time:     {$time}\n"
                     . "Status:   Pending confirmation\n\n"
                     . "Our clinic will confirm your appointment shortly. You can view or manage it in your patient dashboard.\n\n"
-                    . "â€” LustreMDC Clinics & Diagnostics";
+                    . "— LustreMDC Clinics & Diagnostics";
                 break;
 
             case 'confirmed':
-                $subject = 'Appointment Confirmed â€” ' . $ref;
+                $subject = 'Appointment Confirmed — ' . $ref;
                 $title   = 'Your appointment is confirmed.';
                 $body    = "Hi {$name},\n\n"
                     . "Great news! Your appointment has been confirmed.\n\n"
@@ -88,29 +88,29 @@ if (!function_exists('send_appointment_email')) {
                     . "Date:     {$date}\n"
                     . "Time:     {$time}\n\n"
                     . "Please arrive on time and present your booking reference at the front desk.\n\n"
-                    . "â€” LustreMDC Clinics & Diagnostics";
+                    . "— LustreMDC Clinics & Diagnostics";
                 break;
 
             case 'cancelled':
-                $subject = 'Appointment Cancelled â€” ' . $ref;
+                $subject = 'Appointment Cancelled — ' . $ref;
                 $title   = 'Your appointment has been cancelled.';
                 $body    = "Hi {$name},\n\n"
                     . "This is to confirm that appointment {$ref} with {$doc} on {$date} at {$time} has been cancelled.\n\n"
                     . "If this was a mistake or you'd like to rebook, please do so through your patient dashboard or contact the clinic.\n\n"
-                    . "â€” LustreMDC Clinics & Diagnostics";
+                    . "— LustreMDC Clinics & Diagnostics";
                 break;
 
             case 'completed':
-                $subject = 'Appointment Completed â€” ' . $ref;
+                $subject = 'Appointment Completed — ' . $ref;
                 $title   = 'Thank you for your visit.';
                 $body    = "Hi {$name},\n\n"
                     . "Your appointment {$ref} with {$doc} has been marked as completed.\n\n"
                     . "Thank you for choosing LustreMDC Clinics & Diagnostics. We hope to see you again!\n\n"
-                    . "â€” LustreMDC Clinics & Diagnostics";
+                    . "— LustreMDC Clinics & Diagnostics";
                 break;
 
             case 'rescheduled':
-                $subject = 'Appointment Rescheduled â€” ' . $ref;
+                $subject = 'Appointment Rescheduled — ' . $ref;
                 $title   = 'Your appointment has been rescheduled.';
                 $body    = "Hi {$name},\n\n"
                     . "Your appointment has been rescheduled.\n\n"
@@ -119,11 +119,11 @@ if (!function_exists('send_appointment_email')) {
                     . "New Date:  {$date}\n"
                     . "New Time:  {$time}\n\n"
                     . "Please review the updated schedule and contact the clinic if you have any questions.\n\n"
-                    . "â€” LustreMDC Clinics & Diagnostics";
+                    . "— LustreMDC Clinics & Diagnostics";
                 break;
 
             case 'reminder':
-                $subject = 'Appointment Reminder â€” ' . $ref . ' in 1 hour';
+                $subject = 'Appointment Reminder — ' . $ref . ' in 1 hour';
                 $title   = 'Your appointment is coming up.';
                 $body    = "Hi {$name},\n\n"
                     . "This is a friendly reminder that your appointment starts in about 1 hour.\n\n"
@@ -132,7 +132,7 @@ if (!function_exists('send_appointment_email')) {
                     . "Date:     {$date}\n"
                     . "Time:     {$time}\n\n"
                     . "Please arrive on time and present your booking reference at the front desk.\n\n"
-                    . "â€” LustreMDC Clinics & Diagnostics";
+                    . "— LustreMDC Clinics & Diagnostics";
                 break;
 
             case 'result':

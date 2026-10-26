@@ -69,10 +69,11 @@ if (!class_exists('SMTPMailer')) {
                 'X-Mailer: LustreMDC SMTPMailer'
             );
 
+            $encodedBody = chunk_split(base64_encode($body), 76, "\r\n");
             $message = "--" . $boundary . "\r\n"
                 . "Content-Type: text/plain; charset=UTF-8\r\n"
-                . "Content-Transfer-Encoding: 8bit\r\n\r\n"
-                . $body . "\r\n"
+                . "Content-Transfer-Encoding: base64\r\n\r\n"
+                . $encodedBody
                 . "--" . $boundary . "--\r\n";
 
             $conn = $this->connect();
