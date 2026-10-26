@@ -94,7 +94,7 @@ export default function Shell({ active, title, children }: ShellProps) {
   return (
     <ToastCtx.Provider value={{ showToast }}>
       <div className="sidebar-overlay" id="sidebarOverlay" onClick={() => (window as unknown as { closeSidebar?: () => void }).closeSidebar?.()}></div>
-      <div className={`admin-layout ${role === 'doctor' ? 'doctor-page' : ''}`}>
+      <div className={`admin-layout ${role === 'doctor' ? 'doctor-page' : 'admin-portal'}`}>
         <aside className="admin-sidebar" id="adminSidebar">
           <div className="sidebar-brand">
             <span className="brand-icon"><img src="images/Lustre.png" alt="LustreMDC Logo" width="42" height="42" /></span>
@@ -129,11 +129,24 @@ export default function Shell({ active, title, children }: ShellProps) {
               <button className="mobile-menu-btn" onClick={() => (window as unknown as { toggleSidebar?: () => void }).toggleSidebar?.()} aria-label="Open menu">
                 <IconMenu size={22} />
               </button>
-              <span className="topbar-title">{title}</span>
+              <span className="topbar-heading">
+                {role !== 'doctor' ? <span className="topbar-kicker">{brand} portal</span> : null}
+                <span className="topbar-title">{title}</span>
+              </span>
             </div>
             <div className="topbar-actions">
-              <button type="button" className="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode" onClick={toggleTheme}>
-                {isDark ? <span className="theme-icon theme-icon--sun"><IconSun /></span> : <span className="theme-icon theme-icon--moon"><IconMoon /></span>}
+              {/* Both icons stay mounted: admin.css crossfades them via
+                  [data-theme], so rendering only one leaves the button blank. */}
+              <button
+                type="button"
+                className="theme-toggle"
+                title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                aria-pressed={isDark}
+                onClick={toggleTheme}
+              >
+                <span className="theme-icon theme-icon--sun"><IconSun /></span>
+                <span className="theme-icon theme-icon--moon"><IconMoon /></span>
               </button>
               <div className="topbar-hello">
                 <span className="topbar-hello-label">{helloLabel}</span>

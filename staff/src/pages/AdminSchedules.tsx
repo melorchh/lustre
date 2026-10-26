@@ -4,6 +4,8 @@ import { getInitial, postAction, isSuccess, fmtTime } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
 import { Modal } from '../components';
+import { Card, EmptyState, Field, FilterBar, FormSection, ModalHead, Stack, StatCard, StatGrid } from '../ui';
+import { IconCheck, IconSchedules, IconWalkins } from '../icons';
 import type { DoctorRow, ScheduleRow, TimeBlockRow } from '../types';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -26,6 +28,9 @@ export default function AdminSchedules() {
   const doctorName = (id: number) => doctors.find((x) => x.id === id)?.name || `#${id}`;
   const visibleSchedules = doctorId ? schedules.filter((s) => s.doctor_id === Number(doctorId)) : schedules;
   const visibleBlocks = doctorId ? blocks.filter((b) => b.doctor_id === Number(doctorId)) : blocks;
+  const activeSchedules = schedules.filter((s) => s.is_active).length;
+  const coveredDoctors = new Set(schedules.map((s) => s.doctor_id)).size;
+  const upcomingBlocks = blocks.filter((b) => !b.block_date || b.block_date >= new Date().toISOString().slice(0, 10)).length;
 
   async function addSchedule() {
     if (!doctorId) { showToast('Select a doctor first', 'error'); return; }
@@ -92,121 +97,175 @@ export default function AdminSchedules() {
 
   return (
     <Shell active="schedules" title="Schedules">
-      <div className="content-card">
-        <div className="card-head">
-          <h2>Doctor Schedules</h2>
-          <button className="btn-primary" onClick={() => setBlockOpen(true)}>+ Add Time Block</button>
-        </div>
-        <div className="apt-toolbar">
-          <select className="apt-select" value={doctorId} onChange={(e) => setDoctorId(e.target.value)}>
-            <option value="">All Doctors</option>
-            {doctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name}</option>)}
-          </select>
-        </div>
-        <div className="table-scroll"><table>
-          <thead><tr><th>Doctor</th><th>Day</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody>
-            {visibleSchedules.length === 0 ? (
-              <tr><td colSpan={6} className="empty-state-row">No schedules.</td></tr>
-            ) : visibleSchedules.map((s) => (
-              <tr key={s.id}>
-                <td>Dr. {doctorName(s.doctor_id)}</td>
-                <td>{s.day_of_week}</td>
-                <td>{fmtTime(s.start_time)}</td>
-                <td>{fmtTime(s.end_time)}</td>
-                <td><span className={`badge badge-${s.is_active ? 'completed' : 'cancelled'}`}>{s.is_active ? 'Active' : 'Inactive'}</span></td>
-                <td>
-                  <div className="row-actions">
-                    <button className="btn-secondary btn-xs" onClick={() => toggleSchedule(s)}>{s.is_active ? 'Disable' : 'Enable'}</button>
-                    <button className="btn-danger btn-xs" onClick={() => deleteSchedule(s.id)}>Delete</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table></div>
+      <Stack>
+        <StatGrid>
+          <StatCard icon={<IconSchedules />} label="Active blocks" value={activeSchedules} hint="Weekly availability rows" />
+          <StatCard icon={<IconCheck />} label="Doctors covered" value={coveredDoctors} hint="With at least one schedule" tone="blue" />
+          <StatCard icon={<IconWalkins />} label="Time blocks" value={blocks.length} hint={`${upcomingBlocks} upcoming or recurring`} tone="amber" />
+        </StatGrid>
 
-        {doctorId && (
-          <div className="subform">
-            <h3>Add Schedule for Dr. {doctorName(Number(doctorId))}</h3>
-            <div className="subform-row">
-              <select className="form-dropdown" value={schedForm.start_day} onChange={(e) => setSchedForm({ ...schedForm, start_day: e.target.value })}>
-                {DAYS.map((day) => <option key={day} value={day}>From {day}</option>)}
+        <Card
+          title="Weekly schedules"
+          subtitle={`${visibleSchedules.length} availability row${visibleSchedules.length === 1 ? '' : 's'}`}
+          actions={<button type="button" className="btn-primary" onClick={() => setBlockOpen(true)}>Add time block</button>}
+        >
+          <FilterBar>
+            <Field label="Doctor">
+              <select className="apt-select" value={doctorId} onChange={(e) => setDoctorId(e.target.value)}>
+                <option value="">All doctors</option>
+                {doctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name}</option>)}
               </select>
-              <select className="form-dropdown" value={schedForm.end_day} onChange={(e) => setSchedForm({ ...schedForm, end_day: e.target.value })}>
-                {DAYS.map((day) => <option key={day} value={day}>To {day}</option>)}
-              </select>
-              <input className="form-input" type="time" value={schedForm.start_time} onChange={(e) => setSchedForm({ ...schedForm, start_time: e.target.value })} />
-              <input className="form-input" type="time" value={schedForm.end_time} onChange={(e) => setSchedForm({ ...schedForm, end_time: e.target.value })} />
-              <button className="btn-primary" onClick={addSchedule}>Add</button>
-            </div>
-          </div>
-        )}
-      </div>
+            </Field>
+          </FilterBar>
 
-      <div className="content-card">
-        <h2>Time Blocks &amp; Leaves</h2>
-        <div className="table-scroll"><table>
-          <thead><tr><th>Doctor</th><th>Type</th><th>Date</th><th>Start</th><th>End</th><th>Reason</th><th></th></tr></thead>
-          <tbody>
-            {visibleBlocks.length === 0 ? (
-              <tr><td colSpan={7} className="empty-state-row">No time blocks.</td></tr>
-            ) : visibleBlocks.map((b) => (
-              <tr key={b.id}>
-                <td>Dr. {doctorName(b.doctor_id)}</td>
-                <td><span className="pill">{b.block_type}</span></td>
-                <td>{b.block_date || b.day_of_week || '—'}{b.end_date ? ` → ${b.end_date}` : ''}</td>
-                <td>{fmtTime(b.start_time)}</td>
-                <td>{fmtTime(b.end_time)}</td>
-                <td>{b.reason || '—'}</td>
-                <td><button className="btn-danger btn-xs" onClick={() => deleteBlock(b.id)}>Remove</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table></div>
-      </div>
+          <div className="table-scroll"><table>
+            <thead><tr><th>Doctor</th><th>Day</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              {visibleSchedules.length === 0 ? (
+                <tr>
+                  <td colSpan={6}>
+                    <EmptyState
+                      icon={<IconSchedules size={20} />}
+                      title="No schedules"
+                      hint="Pick a doctor below to add their weekly availability."
+                    />
+                  </td>
+                </tr>
+              ) : visibleSchedules.map((s) => (
+                <tr key={s.id}>
+                  <td><span className="ap-strong">Dr. {doctorName(s.doctor_id)}</span></td>
+                  <td>{s.day_of_week}</td>
+                  <td>{fmtTime(s.start_time)}</td>
+                  <td>{fmtTime(s.end_time)}</td>
+                  <td><span className={`badge badge-${s.is_active ? 'completed' : 'cancelled'}`}>{s.is_active ? 'Active' : 'Inactive'}</span></td>
+                  <td>
+                    <div className="ap-row-actions ap-row-actions--inline">
+                      <button type="button" className="btn-edit btn-xs" onClick={() => toggleSchedule(s)}>{s.is_active ? 'Disable' : 'Enable'}</button>
+                      <button type="button" className="btn-delete btn-xs" onClick={() => deleteSchedule(s.id)}>Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table></div>
+
+          {doctorId && (
+            <FormSection
+              title={`Add schedule for Dr. ${doctorName(Number(doctorId))}`}
+              hint="Pick a day range and the clinic hours"
+            >
+              <div className="ap-inline-form">
+                <Field label="From">
+                  <select className="form-input" value={schedForm.start_day} onChange={(e) => setSchedForm({ ...schedForm, start_day: e.target.value })}>
+                    {DAYS.map((day) => <option key={day} value={day}>{day}</option>)}
+                  </select>
+                </Field>
+                <Field label="To">
+                  <select className="form-input" value={schedForm.end_day} onChange={(e) => setSchedForm({ ...schedForm, end_day: e.target.value })}>
+                    {DAYS.map((day) => <option key={day} value={day}>{day}</option>)}
+                  </select>
+                </Field>
+                <Field label="Start time">
+                  <input className="form-input" type="time" value={schedForm.start_time} onChange={(e) => setSchedForm({ ...schedForm, start_time: e.target.value })} />
+                </Field>
+                <Field label="End time">
+                  <input className="form-input" type="time" value={schedForm.end_time} onChange={(e) => setSchedForm({ ...schedForm, end_time: e.target.value })} />
+                </Field>
+                <div className="ap-inline-form-submit">
+                  <button type="button" className="btn-primary" onClick={addSchedule}>Add schedule</button>
+                </div>
+              </div>
+            </FormSection>
+          )}
+        </Card>
+
+        <Card
+          title="Time blocks &amp; leaves"
+          subtitle={`${visibleBlocks.length} block${visibleBlocks.length === 1 ? '' : 's'}${doctorId ? ` for Dr. ${doctorName(Number(doctorId))}` : ''}`}
+        >
+          <div className="table-scroll"><table>
+            <thead><tr><th>Doctor</th><th>Type</th><th>Date</th><th>Start</th><th>End</th><th>Reason</th><th></th></tr></thead>
+            <tbody>
+              {visibleBlocks.length === 0 ? (
+                <tr>
+                  <td colSpan={7}>
+                    <EmptyState
+                      icon={<IconSchedules size={20} />}
+                      title="No time blocks"
+                      hint="Add a block to mark leaves, holidays or unavailable hours."
+                    />
+                  </td>
+                </tr>
+              ) : visibleBlocks.map((b) => (
+                <tr key={b.id}>
+                  <td><span className="ap-strong">Dr. {doctorName(b.doctor_id)}</span></td>
+                  <td><span className="pill">{b.block_type}</span></td>
+                  <td>{b.block_date || b.day_of_week || '—'}{b.end_date ? ` → ${b.end_date}` : ''}</td>
+                  <td>{fmtTime(b.start_time)}</td>
+                  <td>{fmtTime(b.end_time)}</td>
+                  <td>{b.reason || <span className="ap-none">—</span>}</td>
+                  <td>
+                    <div className="ap-row-actions ap-row-actions--inline">
+                      <button type="button" className="btn-delete btn-xs" onClick={() => deleteBlock(b.id)}>Remove</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table></div>
+        </Card>
+      </Stack>
 
       <Modal open={blockOpen} onClose={() => setBlockOpen(false)}>
-        <h2>Add Time Block</h2>
-        <label className="form-label">Doctor</label>
-        <select className="form-dropdown form-input" value={blockForm.doctor_id} onChange={(e) => setBlockForm({ ...blockForm, doctor_id: e.target.value })}>
-          <option value="">Select doctor</option>
-          {doctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name}</option>)}
-        </select>
-        <label className="form-label">Type</label>
-        <select className="form-dropdown form-input" value={blockForm.block_type} onChange={(e) => setBlockForm({ ...blockForm, block_type: e.target.value })}>
-          <option value="date">Specific Date</option>
-          <option value="weekly">Weekly (recurring day)</option>
-          <option value="week">Date Range</option>
-        </select>
-        {blockForm.block_type === 'weekly' ? (
-          <>
-            <label className="form-label">Day of Week</label>
-            <select className="form-dropdown form-input" value={blockForm.day_of_week} onChange={(e) => setBlockForm({ ...blockForm, day_of_week: e.target.value })}>
-              {DAYS.map((day) => <option key={day} value={day}>{day}</option>)}
+        <ModalHead
+          title="Add time block"
+          hint="Block out leaves, holidays or hours the doctor cannot take appointments."
+        />
+        <div className="form-grid">
+          <Field label="Doctor">
+            <select className="form-input" value={blockForm.doctor_id} onChange={(e) => setBlockForm({ ...blockForm, doctor_id: e.target.value })}>
+              <option value="">Select doctor</option>
+              {doctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name}</option>)}
             </select>
-          </>
-        ) : (
-          <>
-            <label className="form-label">{blockForm.block_type === 'week' ? 'Start Date' : 'Date'}</label>
-            <input className="form-input" type="date" value={blockForm.block_date} onChange={(e) => setBlockForm({ ...blockForm, block_date: e.target.value })} />
-            {blockForm.block_type === 'week' && (
-              <>
-                <label className="form-label">End Date</label>
-                <input className="form-input" type="date" value={blockForm.end_date} onChange={(e) => setBlockForm({ ...blockForm, end_date: e.target.value })} />
-              </>
-            )}
-          </>
-        )}
-        <label className="form-label">Start</label>
-        <input className="form-input" type="time" value={blockForm.start_time} onChange={(e) => setBlockForm({ ...blockForm, start_time: e.target.value })} />
-        <label className="form-label">End</label>
-        <input className="form-input" type="time" value={blockForm.end_time} onChange={(e) => setBlockForm({ ...blockForm, end_time: e.target.value })} />
-        <label className="form-label">Reason</label>
-        <input className="form-input" value={blockForm.reason} onChange={(e) => setBlockForm({ ...blockForm, reason: e.target.value })} />
+          </Field>
+          <Field label="Type">
+            <select className="form-input" value={blockForm.block_type} onChange={(e) => setBlockForm({ ...blockForm, block_type: e.target.value })}>
+              <option value="date">Specific date</option>
+              <option value="weekly">Weekly (recurring day)</option>
+              <option value="week">Date range</option>
+            </select>
+          </Field>
+          {blockForm.block_type === 'weekly' ? (
+            <Field label="Day of week">
+              <select className="form-input" value={blockForm.day_of_week} onChange={(e) => setBlockForm({ ...blockForm, day_of_week: e.target.value })}>
+                {DAYS.map((day) => <option key={day} value={day}>{day}</option>)}
+              </select>
+            </Field>
+          ) : (
+            <>
+              <Field label={blockForm.block_type === 'week' ? 'Start date' : 'Date'}>
+                <input className="form-input" type="date" value={blockForm.block_date} onChange={(e) => setBlockForm({ ...blockForm, block_date: e.target.value })} />
+              </Field>
+              {blockForm.block_type === 'week' && (
+                <Field label="End date">
+                  <input className="form-input" type="date" value={blockForm.end_date} onChange={(e) => setBlockForm({ ...blockForm, end_date: e.target.value })} />
+                </Field>
+              )}
+            </>
+          )}
+          <Field label="Start time">
+            <input className="form-input" type="time" value={blockForm.start_time} onChange={(e) => setBlockForm({ ...blockForm, start_time: e.target.value })} />
+          </Field>
+          <Field label="End time">
+            <input className="form-input" type="time" value={blockForm.end_time} onChange={(e) => setBlockForm({ ...blockForm, end_time: e.target.value })} />
+          </Field>
+          <Field label="Reason" className="ap-field--full">
+            <input className="form-input" placeholder="e.g. Conference, holiday, personal leave" value={blockForm.reason} onChange={(e) => setBlockForm({ ...blockForm, reason: e.target.value })} />
+          </Field>
+        </div>
         <div className="form-actions">
-          <button className="btn-secondary" onClick={() => setBlockOpen(false)}>Cancel</button>
-          <button className="btn-primary" onClick={addBlock}>Add Block</button>
+          <button type="button" className="btn-secondary" onClick={() => setBlockOpen(false)}>Cancel</button>
+          <button type="button" className="btn-primary" onClick={addBlock}>Add block</button>
         </div>
       </Modal>
     </Shell>

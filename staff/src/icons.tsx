@@ -139,3 +139,49 @@ export const IconPlus = (p: IconProps) => (
     <line x1="5" y1="12" x2="19" y2="12" />
   </Svg>
 );
+
+export const IconClock = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <polyline points="12 7 12 12 15.5 14" />
+  </Svg>
+);
+
+export const IconCheck = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <polyline points="8 12.5 11 15.5 16 9.5" />
+  </Svg>
+);
+
+export const IconSearch = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="11" cy="11" r="7" />
+    <line x1="16.5" y1="16.5" x2="21" y2="21" />
+  </Svg>
+);
+
+export const IconChevronRight = (p: IconProps) => (
+  <Svg {...p}>
+    <polyline points="9 6 15 12 9 18" />
+  </Svg>
+);
+
+export const IconVaccine = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m18 2 4 4" />
+    <path d="m19 9-8.5 8.5" />
+    <path d="m17 7 3-3" />
+    <path d="M14 4 4.6 13.4a2.2 2.2 0 0 0 0 3.1l2.9 2.9a2.2 2.2 0 0 0 3.1 0L20 10" />
+    <path d="m9 11 4 4" />
+    <path d="m5 17 3 3" />
+  </Svg>
+);
+
+export const IconPrint = (p: IconProps) => (
+  <Svg {...p}>
+    <polyline points="6 9 6 2 18 2 18 9" />
+    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+    <rect x="6" y="14" width="12" height="8" rx="1" />
+  </Svg>
+);

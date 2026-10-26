@@ -4,6 +4,8 @@ import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime } from '
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
 import { Modal } from '../components';
+import { Card, EmptyState, Field, FilterBar, ModalHead, Stack, StatCard, StatGrid } from '../ui';
+import { IconCheck, IconClock, IconLab, IconSearch } from '../icons';
 import type { LabTestRow } from '../types';
 
 interface OptionRow {
@@ -58,6 +60,14 @@ export default function AdminLaboratory() {
     if (priority && t.priority !== priority) return false;
     return true;
   }), [tests, q, status, priority]);
+
+  const hasFilters = Boolean(q || status || priority);
+
+  function resetFilters() {
+    setQ('');
+    setStatus('');
+    setPriority('');
+  }
 
   async function refresh() {
     try {
@@ -179,164 +189,202 @@ export default function AdminLaboratory() {
 
   return (
     <Shell active="laboratory" title="Laboratory">
-      <div className="stats-grid">
-        <div className="stat-card"><div className="stat-number">{stats.total ?? tests.length}</div><div className="stat-label">Total Requests</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#f59e0b' }}><div className="stat-number" style={{ color: '#f59e0b' }}>{stats.pending ?? 0}</div><div className="stat-label">Pending</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#0ea5e9' }}><div className="stat-number" style={{ color: '#0ea5e9' }}>{stats.in_progress ?? 0}</div><div className="stat-label">In Progress</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#10b981' }}><div className="stat-number" style={{ color: '#10b981' }}>{stats.completed ?? 0}</div><div className="stat-label">Completed</div></div>
-      </div>
+      <Stack>
+        <StatGrid>
+          <StatCard icon={<IconLab />} label="Total requests" value={stats.total ?? tests.length} hint="All lab records" />
+          <StatCard icon={<IconClock />} label="Pending" value={stats.pending ?? 0} hint="Awaiting processing" tone="amber" />
+          <StatCard icon={<IconLab />} label="In progress" value={stats.in_progress ?? 0} hint="Being examined" tone="blue" />
+          <StatCard icon={<IconCheck />} label="Completed" value={stats.completed ?? 0} hint="Results released" tone="slate" />
+        </StatGrid>
 
-      <div className="content-card">
-        <h2>Request New Lab Test</h2>
-        <div className="form-grid">
-          <div className="form-group">
-            <label>Patient</label>
-            <select className="form-dropdown" value={req.patient_id} onChange={(e) => setReq({ ...req, patient_id: e.target.value })}>
-              <option value="">Select Patient</option>
-              {patients.map((p) => <option key={p.id} value={p.id}>{p.name}{p.email ? ` — ${p.email}` : ''}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Requesting Doctor</label>
-            <select className="form-dropdown" value={req.doctor_id} onChange={(e) => setReq({ ...req, doctor_id: e.target.value })}>
-              <option value="">Select Doctor</option>
-              {doctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name} — {doc.specialty}</option>)}
-            </select>
-          </div>
-          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-            <label>Test Type <span style={{ fontWeight: 400, textTransform: 'none' }}>(select one or more)</span></label>
-            <div className="test-type-checks">
-              {testTypes.map((t) => (
-                <label className={`test-type-check${types.includes(t) ? ' is-checked' : ''}`} key={t}>
-                  <input type="checkbox" checked={types.includes(t)} onChange={() => toggleType(t)} />
-                  <span>{t}</span>
-                </label>
-              ))}
+        <Card
+          title="Request a lab test"
+          subtitle="Pick a patient and requesting doctor, then select one or more tests."
+        >
+          <form
+            className="ap-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitRequest();
+            }}
+          >
+            <div className="form-grid">
+              <Field label="Patient">
+                <select className="form-input" value={req.patient_id} onChange={(e) => setReq({ ...req, patient_id: e.target.value })}>
+                  <option value="">Select patient</option>
+                  {patients.map((p) => <option key={p.id} value={p.id}>{p.name}{p.email ? ` — ${p.email}` : ''}</option>)}
+                </select>
+              </Field>
+              <Field label="Requesting doctor">
+                <select className="form-input" value={req.doctor_id} onChange={(e) => setReq({ ...req, doctor_id: e.target.value })}>
+                  <option value="">Select doctor</option>
+                  {doctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name} — {doc.specialty}</option>)}
+                </select>
+              </Field>
             </div>
-            {types.includes('Other') && (
-              <input
-                type="text"
-                className="form-input"
-                style={{ marginTop: '.55rem' }}
-                placeholder="Enter custom test name"
-                autoComplete="off"
-                value={req.other}
-                onChange={(e) => setReq({ ...req, other: e.target.value })}
-              />
-            )}
-          </div>
-          <div className="form-group">
-            <label>Priority</label>
-            <select className="form-dropdown" value={req.priority} onChange={(e) => setReq({ ...req, priority: e.target.value })}>
-              <option value="normal">Normal</option>
-              <option value="urgent">Urgent</option>
-              <option value="stat">STAT (Immediate)</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Scheduled Date</label>
-            <input type="date" className="form-input" min={today} value={req.scheduled_date} onChange={(e) => setReq({ ...req, scheduled_date: e.target.value })} />
-          </div>
-        </div>
-        <div className="form-group">
-          <label>Clinical Notes / Reason for Test</label>
-          <textarea className="form-input" rows={3} placeholder="Enter clinical notes, symptoms, or reason for requesting this test..." value={req.notes} onChange={(e) => setReq({ ...req, notes: e.target.value })} />
-        </div>
-        <div className="form-actions" style={{ justifyContent: 'flex-start' }}>
-          <button type="button" className="btn-primary" onClick={submitRequest}>+ Submit Lab Request</button>
-        </div>
-      </div>
 
-      <div className="content-card">
-        <h2>All Lab Tests</h2>
-        <div className="apt-toolbar">
-          <input type="search" className="apt-search" placeholder="Search by patient, doctor, or test type..." value={q} onChange={(e) => setQ(e.target.value)} />
-          <select className="apt-select" value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">All Statuses</option>
-            <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
-            <option value="completed">Completed</option>
-          </select>
-          <select className="apt-select" value={priority} onChange={(e) => setPriority(e.target.value)}>
-            <option value="">All Priorities</option>
-            <option value="normal">Normal</option>
-            <option value="urgent">Urgent</option>
-            <option value="stat">STAT</option>
-          </select>
-        </div>
-        <div className="table-scroll"><table>
-          <thead><tr><th>ID</th><th>Patient</th><th>Doctor</th><th>Test Type</th><th>Priority</th><th>Scheduled</th><th>Status</th><th>Result</th><th>Actions</th></tr></thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr><td colSpan={9} className="empty-state-row">No lab tests found. Use the form above to add one.</td></tr>
-            ) : filtered.map((t) => (
-              <tr key={t.id}>
-                <td>#{t.id}</td>
-                <td><strong>{t.patient_name}</strong><br /><small style={{ color: '#64748b' }}>{t.patient_email}</small></td>
-                <td>Dr. {t.doctor_name}<br /><small style={{ color: '#64748b' }}>{t.specialty}</small></td>
-                <td><strong>{t.test_type}</strong></td>
-                <td><span className={`badge badge-${t.priority}`}>{String(t.priority || '').toUpperCase()}</span></td>
-                <td>
-                  {t.scheduled_date ? fmtDate(t.scheduled_date) : '—'}
-                  <br /><small style={{ color: '#94a3b8' }}>Req: {fmtDate(t.created_at)}</small>
-                </td>
-                <td>
-                  <select className="action-select" value={t.status} onChange={(e) => updateStatus(t.id, e.target.value)}>
-                    {['pending', 'processing', 'completed'].map((o) => <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
-                  </select>
-                </td>
-                <td>
-                  {t.result
-                    ? <button type="button" className="btn-view btn-xs" onClick={() => setViewFor(t)}>View</button>
-                    : <span style={{ color: '#94a3b8', fontSize: '.82rem' }}>No result</span>}
-                </td>
-                <td style={{ whiteSpace: 'nowrap' }}>
-                  <div className="row-actions">
-                    <button className="btn-edit btn-xs" onClick={() => openResult(t)}>Result</button>
-                    <button className="btn-delete btn-xs" onClick={() => removeTest(t)}>Delete</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table></div>
-      </div>
+            <Field label="Test type">
+              <div className="test-type-checks">
+                {testTypes.map((t) => (
+                  <label className={`test-type-check${types.includes(t) ? ' is-checked' : ''}`} key={t}>
+                    <input type="checkbox" checked={types.includes(t)} onChange={() => toggleType(t)} />
+                    <span>{t}</span>
+                  </label>
+                ))}
+              </div>
+              {types.includes('Other') && (
+                <input
+                  type="text"
+                  className="form-input ap-mt"
+                  placeholder="Enter custom test name"
+                  autoComplete="off"
+                  value={req.other}
+                  onChange={(e) => setReq({ ...req, other: e.target.value })}
+                />
+              )}
+            </Field>
+
+            <div className="form-grid ap-mt">
+              <Field label="Priority">
+                <select className="form-input" value={req.priority} onChange={(e) => setReq({ ...req, priority: e.target.value })}>
+                  <option value="normal">Normal</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="stat">STAT (immediate)</option>
+                </select>
+              </Field>
+              <Field label="Scheduled date">
+                <input type="date" className="form-input" min={today} value={req.scheduled_date} onChange={(e) => setReq({ ...req, scheduled_date: e.target.value })} />
+              </Field>
+            </div>
+
+            <Field label="Clinical notes / reason" className="ap-mt">
+              <textarea className="form-input" rows={3} placeholder="Symptoms, history, or reason for requesting this test..." value={req.notes} onChange={(e) => setReq({ ...req, notes: e.target.value })} />
+            </Field>
+
+            <div className="form-actions ap-actions-start">
+              <button type="submit" className="btn-primary">Submit lab request</button>
+            </div>
+          </form>
+        </Card>
+
+        <Card
+          title="All lab tests"
+          subtitle={`${filtered.length} of ${tests.length} request${tests.length === 1 ? '' : 's'}`}
+          actions={hasFilters ? <button type="button" className="ap-btn-text" onClick={resetFilters}>Reset filters</button> : undefined}
+        >
+          <FilterBar>
+            <Field label="Search" className="ap-field--grow">
+              <div className="ap-input-icon">
+                <IconSearch size={16} />
+                <input type="search" className="apt-search" placeholder="Patient, doctor or test type..." value={q} onChange={(e) => setQ(e.target.value)} />
+              </div>
+            </Field>
+            <Field label="Status">
+              <select className="apt-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+                <option value="">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="completed">Completed</option>
+              </select>
+            </Field>
+            <Field label="Priority">
+              <select className="apt-select" value={priority} onChange={(e) => setPriority(e.target.value)}>
+                <option value="">All priorities</option>
+                <option value="normal">Normal</option>
+                <option value="urgent">Urgent</option>
+                <option value="stat">STAT</option>
+              </select>
+            </Field>
+          </FilterBar>
+
+          <div className="table-scroll"><table>
+            <thead><tr><th>ID</th><th>Patient</th><th>Doctor</th><th>Test type</th><th>Priority</th><th>Scheduled</th><th>Status</th><th>Result</th><th>Actions</th></tr></thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={9}>
+                    <EmptyState
+                      icon={<IconLab size={20} />}
+                      title="No lab tests"
+                      hint={hasFilters ? 'Try a different search, status or priority.' : 'Use the form above to request the first test.'}
+                    />
+                  </td>
+                </tr>
+              ) : filtered.map((t) => (
+                <tr key={t.id}>
+                  <td className="ap-id">#{t.id}</td>
+                  <td>
+                    <span className="ap-strong">{t.patient_name}</span>
+                    <small className="ap-sub">{t.patient_email || 'No email on file'}</small>
+                  </td>
+                  <td>
+                    <span>Dr. {t.doctor_name}</span>
+                    <small className="ap-sub">{t.specialty}</small>
+                  </td>
+                  <td><span className="ap-strong">{t.test_type}</span></td>
+                  <td><span className={`badge badge-${t.priority}`}>{String(t.priority || '').toUpperCase()}</span></td>
+                  <td>
+                    <span>{t.scheduled_date ? fmtDate(t.scheduled_date) : '—'}</span>
+                    <small className="ap-sub">Requested {fmtDate(t.created_at)}</small>
+                  </td>
+                  <td>
+                    <div className="ap-row-actions ap-row-actions--status">
+                      <select className="action-select" value={t.status} onChange={(e) => updateStatus(t.id, e.target.value)}>
+                        {['pending', 'processing', 'completed'].map((o) => <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
+                      </select>
+                    </div>
+                  </td>
+                  <td>
+                    {t.result
+                      ? <button type="button" className="btn-view btn-xs" onClick={() => setViewFor(t)}>View</button>
+                      : <span className="ap-none">No result</span>}
+                  </td>
+                  <td>
+                    <div className="ap-row-actions ap-row-actions--inline">
+                      <button type="button" className="btn-edit btn-xs" onClick={() => openResult(t)}>Result</button>
+                      <button type="button" className="btn-delete btn-xs" onClick={() => removeTest(t)}>Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table></div>
+        </Card>
+      </Stack>
 
       <Modal open={!!resultFor} onClose={() => setResultFor(null)}>
-        <h2>Enter Lab Result</h2>
-        {resultFor && (
-          <div style={{ margin: '-.35rem 0 1rem', fontSize: '.92rem', color: '#64748b' }}>
-            <strong style={{ color: '#0f172a' }}>{resultFor.test_type}</strong> &middot; {resultFor.patient_name} &middot; Dr. {resultFor.doctor_name}
-          </div>
-        )}
-        <div className="form-group">
-          <label>Status</label>
-          <select className="action-select" style={{ maxWidth: 200 }} value={resultForm.status} onChange={(e) => setResultForm({ ...resultForm, status: e.target.value })}>
+        <ModalHead
+          title="Enter lab result"
+          hint={resultFor ? `${resultFor.test_type} · ${resultFor.patient_name} · Dr. ${resultFor.doctor_name}` : undefined}
+        />
+        <Field label="Status">
+          <select className="form-input" value={resultForm.status} onChange={(e) => setResultForm({ ...resultForm, status: e.target.value })}>
             <option value="pending">Pending</option>
             <option value="processing">Processing</option>
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
           </select>
-        </div>
-        <div className="form-group">
-          <label>Lab Result / Findings</label>
-          <textarea className="form-input" rows={6} placeholder="Enter detailed lab results, findings, and interpretation here..." value={resultForm.result} onChange={(e) => setResultForm({ ...resultForm, result: e.target.value })} />
-        </div>
-        <div className="form-group">
-          <label>Clinical Notes</label>
+        </Field>
+        <Field label="Lab result / findings" className="ap-mt">
+          <textarea className="form-input" rows={6} placeholder="Detailed results, findings and interpretation..." value={resultForm.result} onChange={(e) => setResultForm({ ...resultForm, result: e.target.value })} />
+        </Field>
+        <Field label="Clinical notes" className="ap-mt">
           <textarea className="form-input" rows={3} placeholder="Additional notes or recommendations..." value={resultForm.notes} onChange={(e) => setResultForm({ ...resultForm, notes: e.target.value })} />
-        </div>
+        </Field>
         <div className="form-actions">
-          <button className="btn-secondary" onClick={() => setResultFor(null)}>Cancel</button>
-          <button className="btn-primary" onClick={saveResult}>Save Result</button>
+          <button type="button" className="btn-secondary" onClick={() => setResultFor(null)}>Cancel</button>
+          <button type="button" className="btn-primary" onClick={saveResult}>Save result</button>
         </div>
       </Modal>
 
       <Modal open={!!viewFor} onClose={() => setViewFor(null)}>
-        <h2>Lab Result</h2>
+        <ModalHead
+          title="Lab result"
+          hint={viewFor ? `${viewFor.test_type} · ${viewFor.patient_name}` : undefined}
+        />
         {viewFor && (
           <>
-            <div className="client-detail-grid" style={{ marginBottom: '1rem' }}>
+            <div className="client-detail-grid ap-detail-grid">
               <div><span>Patient</span><strong>{viewFor.patient_name}</strong></div>
               <div><span>Doctor</span><strong>Dr. {viewFor.doctor_name}</strong></div>
               <div><span>Test</span><strong>{viewFor.test_type}</strong></div>
@@ -344,22 +392,18 @@ export default function AdminLaboratory() {
               <div><span>Status</span><strong style={{ textTransform: 'capitalize' }}>{viewFor.status}</strong></div>
               {viewFor.scheduled_time ? <div><span>Time</span><strong>{fmtTime(viewFor.scheduled_time)}</strong></div> : null}
             </div>
-            <label className="form-label">Findings / Result</label>
-            <div className="content-card" style={{ boxShadow: 'none', border: '1px solid #e2e8f0', marginBottom: '1rem', whiteSpace: 'pre-wrap' }}>
-              {viewFor.result}
-            </div>
+            <label className="form-label">Findings / result</label>
+            <div className="ap-result-body">{viewFor.result}</div>
             {viewFor.notes ? (
               <>
-                <label className="form-label">Clinical Notes</label>
-                <div className="content-card" style={{ boxShadow: 'none', border: '1px solid #e2e8f0', whiteSpace: 'pre-wrap' }}>
-                  {viewFor.notes}
-                </div>
+                <label className="form-label ap-mt">Clinical notes</label>
+                <div className="ap-result-body">{viewFor.notes}</div>
               </>
             ) : null}
           </>
         )}
         <div className="form-actions">
-          <button className="btn-secondary" onClick={() => setViewFor(null)}>Close</button>
+          <button type="button" className="btn-secondary" onClick={() => setViewFor(null)}>Close</button>
         </div>
       </Modal>
     </Shell>

@@ -4,6 +4,8 @@ import { getInitial, fetchData, postAction, isSuccess, fmtDate } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
 import { Modal } from '../components';
+import { Card, EmptyState, Field, FilterBar, FormSection, ModalHead, Stack, StatCard, StatGrid } from '../ui';
+import { IconDoctors, IconLab, IconSearch } from '../icons';
 import type { DoctorRow } from '../types';
 
 interface DoctorAccount {
@@ -35,6 +37,7 @@ function ChipInput({ chips, onChange }: { chips: string[]; onChange: (next: stri
       <div className="tp-input-box">
         <input
           type="text"
+          className="form-input"
           placeholder="Type a test / procedure..."
           value={text}
           autoComplete="off"
@@ -63,7 +66,7 @@ function ChipInput({ chips, onChange }: { chips: string[]; onChange: (next: stri
           </span>
         ))}
       </div>
-      <small style={{ color: '#64748b', fontSize: '.78rem', display: 'block', marginTop: '.35rem' }}>
+      <small className="ap-sub">
         Type one and press Enter or Add. Each shows above and can be removed with &times;.
       </small>
     </div>
@@ -250,153 +253,168 @@ export default function AdminDoctors() {
 
   return (
     <Shell active="doctors" title="Doctors">
-      <div className="stats-grid">
-        <div className="stat-card"><div className="stat-number">{stats.total ?? doctors.length}</div><div className="stat-label">Total Doctors</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#10b981' }}><div className="stat-number" style={{ color: '#10b981' }}>{stats.withAccounts ?? accounts.length}</div><div className="stat-label">With Accounts</div></div>
-      </div>
+      <Stack>
+        <StatGrid>
+          <StatCard icon={<IconDoctors />} label="Total doctors" value={stats.total ?? doctors.length} hint="Active specialists" />
+          <StatCard icon={<IconDoctors />} label="Portal accounts" value={stats.withAccounts ?? accounts.length} hint="Can sign in" tone="blue" />
+          <StatCard icon={<IconLab />} label="Specialties" value={specialties.length} hint="Covered by the clinic" tone="violet" />
+        </StatGrid>
 
-      <div className="content-card">
-        <div className="card-head">
-          <h2>Doctor Directory</h2>
-          <button className="btn-add" onClick={openAdd}>+ Add Doctor</button>
-        </div>
-        <div className="apt-toolbar">
-          <input type="search" className="apt-search" placeholder="Search name or specialty..." value={q} onChange={(e) => setQ(e.target.value)} />
-        </div>
-        <div className="table-scroll"><table>
-          <thead><tr><th>ID</th><th>Name</th><th>Specialty</th><th>Schedule</th><th>Experience</th><th>Tests / Procedures</th><th>Appointments</th><th>Account</th><th>Actions</th></tr></thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr><td colSpan={9} className="empty-state-row">No doctors found.</td></tr>
-            ) : filtered.map((doc) => {
-              const acct = accountsByDoctor[doc.id];
-              const procs = String(doc.test_procedures || '')
-                .split('\n')
-                .map((l) => l.trim())
-                .filter(Boolean);
-              return (
-                <tr key={doc.id}>
-                  <td>#{doc.id}</td>
-                  <td><strong>Dr. {doc.name}</strong></td>
-                  <td>{doc.specialty}</td>
-                  <td>{doc.schedule || '—'}</td>
-                  <td>{doc.experience ? `${doc.experience} yrs` : '—'}</td>
-                  <td>
-                    {procs.length === 0 ? '—' : procs.map((p) => <span className="proc-chip" key={p}>{p}</span>)}
+        <Card
+          title="Doctor directory"
+          subtitle={`${filtered.length} of ${doctors.length} specialist${doctors.length === 1 ? '' : 's'}`}
+          actions={<button type="button" className="btn-add" onClick={openAdd}>Add doctor</button>}
+        >
+          <FilterBar>
+            <Field label="Search" className="ap-field--grow">
+              <div className="ap-input-icon">
+                <IconSearch size={16} />
+                <input type="search" className="apt-search" placeholder="Search name or specialty..." value={q} onChange={(e) => setQ(e.target.value)} />
+              </div>
+            </Field>
+          </FilterBar>
+          <div className="table-scroll"><table>
+            <thead><tr><th>ID</th><th>Name</th><th>Specialty</th><th>Schedule</th><th>Experience</th><th>Tests / procedures</th><th>Appointments</th><th>Account</th><th>Actions</th></tr></thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={9}>
+                    <EmptyState
+                      icon={<IconDoctors size={20} />}
+                      title="No doctors found"
+                      hint={q ? 'Try a different name or specialty.' : 'Add the first doctor to start booking appointments.'}
+                    />
                   </td>
-                  <td><strong style={{ color: '#16a34a' }}>{doc.appointment_count ?? 0}</strong></td>
-                  <td>{acct ? <code className="pill">{acct.username}</code> : <span className="badge badge-pending">None</span>}</td>
+                </tr>
+              ) : filtered.map((doc) => {
+                const acct = accountsByDoctor[doc.id];
+                const procs = String(doc.test_procedures || '')
+                  .split('\n')
+                  .map((l) => l.trim())
+                  .filter(Boolean);
+                return (
+                  <tr key={doc.id}>
+                    <td className="ap-id">#{doc.id}</td>
+                    <td><span className="ap-strong">Dr. {doc.name}</span></td>
+                    <td>{doc.specialty}</td>
+                    <td>{doc.schedule || '—'}</td>
+                    <td>{doc.experience ? `${doc.experience} yrs` : '—'}</td>
+                    <td>
+                      {procs.length === 0 ? <span className="ap-none">—</span> : procs.map((p) => <span className="proc-chip" key={p}>{p}</span>)}
+                    </td>
+                    <td><span className="ap-count-badge">{doc.appointment_count ?? 0}</span></td>
+                    <td>{acct ? <code className="pill">{acct.username}</code> : <span className="badge badge-pending">None</span>}</td>
+                    <td>
+                      <div className="ap-row-actions ap-row-actions--inline">
+                        <button type="button" className="btn-edit btn-xs" onClick={() => openEdit(doc)}>Edit</button>
+                        <button type="button" className="btn-delete btn-xs" onClick={() => removeDoctor(doc)}>Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table></div>
+        </Card>
+
+        <Card
+          title="Doctor login accounts"
+          subtitle="Let doctors sign into their portal to enter lab results and set availability."
+        >
+          <FormSection title="Create new account" hint="Username and a password of at least 8 characters">
+            <div className="form-grid">
+              <Field label="Doctor">
+                <select className="form-input" value={acctCreate.doctor_id} onChange={(e) => setAcctCreate({ ...acctCreate, doctor_id: e.target.value })}>
+                  <option value="">Select doctor</option>
+                  {doctors.map((doc) => (
+                    <option key={doc.id} value={doc.id}>Dr. {doc.name} — {doc.specialty}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Username">
+                <input type="text" className="form-input" maxLength={30} placeholder="e.g. dr_dela_cruz" value={acctCreate.username} onChange={(e) => setAcctCreate({ ...acctCreate, username: e.target.value })} />
+              </Field>
+              <Field label="Password">
+                <input type="password" className="form-input" placeholder="At least 8 characters" value={acctCreate.password} onChange={(e) => setAcctCreate({ ...acctCreate, password: e.target.value })} />
+              </Field>
+              <div className="ap-form-submit">
+                <button type="button" className="btn-primary" onClick={createAccount}>Create account</button>
+              </div>
+            </div>
+          </FormSection>
+
+          <div className="table-scroll ap-mt"><table>
+            <thead><tr><th>Doctor</th><th>Specialty</th><th>Username</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody>
+              {accounts.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>
+                    <EmptyState
+                      icon={<IconDoctors size={20} />}
+                      title="No doctor accounts yet"
+                      hint="Create one above to give a doctor portal access."
+                    />
+                  </td>
+                </tr>
+              ) : accounts.map((ac) => (
+                <tr key={ac.id}>
+                  <td><span className="ap-strong">Dr. {ac.doctor_name}</span></td>
+                  <td>{ac.specialty || '—'}</td>
+                  <td><code className="pill">{ac.username}</code></td>
+                  <td>{fmtDate(ac.created_at)}</td>
                   <td>
-                    <div className="row-actions">
-                      <button className="btn-edit btn-xs" onClick={() => openEdit(doc)}>Edit</button>
-                      <button className="btn-delete btn-xs" onClick={() => removeDoctor(doc)}>Delete</button>
+                    <div className="ap-row-actions ap-row-actions--inline">
+                      <button type="button" className="btn-edit btn-xs" onClick={() => { setResetFor(ac); setResetPassword(''); }}>Reset password</button>
+                      <button type="button" className="btn-delete btn-xs" onClick={() => removeAccount(ac)}>Delete</button>
                     </div>
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table></div>
-      </div>
-
-      <div className="content-card">
-        <h2>Doctor Login Accounts</h2>
-        <p style={{ color: '#64748b', margin: '0 0 1.25rem', fontSize: '.93rem' }}>
-          Doctor accounts let doctors log into their own portal to enter lab results and set their availability.
-        </p>
-
-        <div className="subform" style={{ border: '1px solid #e2e8f0', borderRadius: 14, padding: '1.1rem 1.25rem', marginBottom: '1.6rem' }}>
-          <h3>Create New Account</h3>
-          <div className="form-grid">
-            <div className="form-group">
-              <label>Doctor</label>
-              <select className="form-dropdown" value={acctCreate.doctor_id} onChange={(e) => setAcctCreate({ ...acctCreate, doctor_id: e.target.value })}>
-                <option value="">Select Doctor</option>
-                {doctors.map((doc) => (
-                  <option key={doc.id} value={doc.id}>Dr. {doc.name} — {doc.specialty}</option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Username</label>
-              <input type="text" className="form-input" maxLength={30} placeholder="e.g. dr_dela_cruz" value={acctCreate.username} onChange={(e) => setAcctCreate({ ...acctCreate, username: e.target.value })} />
-            </div>
-            <div className="form-group">
-              <label>Password</label>
-              <input type="password" className="form-input" placeholder="At least 8 characters" value={acctCreate.password} onChange={(e) => setAcctCreate({ ...acctCreate, password: e.target.value })} />
-            </div>
-            <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}>
-              <button type="button" className="btn-primary" onClick={createAccount}>+ Create Account</button>
-            </div>
-          </div>
-        </div>
-
-        <div className="table-scroll"><table>
-          <thead><tr><th>Doctor</th><th>Specialty</th><th>Username</th><th>Created</th><th>Actions</th></tr></thead>
-          <tbody>
-            {accounts.length === 0 ? (
-              <tr><td colSpan={5} className="empty-state-row">No doctor accounts yet. Create one above.</td></tr>
-            ) : accounts.map((ac) => (
-              <tr key={ac.id}>
-                <td><strong>Dr. {ac.doctor_name}</strong></td>
-                <td>{ac.specialty || '—'}</td>
-                <td><code className="pill">{ac.username}</code></td>
-                <td>{fmtDate(ac.created_at)}</td>
-                <td>
-                  <div className="row-actions">
-                    <button className="btn-edit btn-xs" onClick={() => { setResetFor(ac); setResetPassword(''); }}>Reset Password</button>
-                    <button className="btn-delete btn-xs" onClick={() => removeAccount(ac)}>Delete</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table></div>
-      </div>
+              ))}
+            </tbody>
+          </table></div>
+        </Card>
+      </Stack>
 
       <Modal open={formOpen} onClose={() => setFormOpen(false)}>
-        <h2>{editing ? 'Edit Doctor' : 'Add New Doctor'}</h2>
+        <ModalHead
+          title={editing ? 'Edit doctor' : 'Add doctor'}
+          hint={editing ? `Update the profile for Dr. ${editing.name}.` : 'Create a profile so the doctor can receive appointments.'}
+        />
         <div className="form-grid">
-          <div className="form-group">
-            <label>Full Name</label>
+          <Field label="Full name">
             <input className="form-input" placeholder="e.g. Juan dela Cruz" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          </div>
-          <div className="form-group">
-            <label>Specialty</label>
+          </Field>
+          <Field label="Specialty">
             <input className="form-input" list="specialtyList" placeholder="e.g. Obstetrics & Gynecology" value={form.specialty} onChange={(e) => setForm({ ...form, specialty: e.target.value })} />
             <datalist id="specialtyList">{specialties.map((s) => <option key={s} value={s} />)}</datalist>
-          </div>
-          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-            <label>Tests / Procedures</label>
+          </Field>
+          <Field label="Tests / procedures" className="ap-field--full">
             <ChipInput chips={chips} onChange={setChips} />
-          </div>
-          <div className="form-group">
-            <label>Schedule</label>
+          </Field>
+          <Field label="Schedule">
             <input className="form-input" placeholder="e.g. Mon-Fri: 9AM-5PM" value={form.schedule} onChange={(e) => setForm({ ...form, schedule: e.target.value })} />
-          </div>
-          <div className="form-group">
-            <label>Years of Experience</label>
+          </Field>
+          <Field label="Years of experience">
             <input className="form-input" type="number" min={0} max={60} placeholder="e.g. 10" value={form.experience} onChange={(e) => setForm({ ...form, experience: e.target.value })} />
-          </div>
+          </Field>
         </div>
         <div className="form-actions">
-          <button className="btn-secondary" onClick={() => setFormOpen(false)}>Cancel</button>
-          <button className="btn-primary" onClick={saveDoctor}>{editing ? 'Update Doctor' : 'Save Doctor'}</button>
+          <button type="button" className="btn-secondary" onClick={() => setFormOpen(false)}>Cancel</button>
+          <button type="button" className="btn-primary" onClick={saveDoctor}>{editing ? 'Update doctor' : 'Save doctor'}</button>
         </div>
       </Modal>
 
       <Modal open={!!resetFor} onClose={() => setResetFor(null)}>
-        <h2>Reset Password</h2>
-        <p style={{ color: '#64748b', marginBottom: '1rem', fontSize: '.95rem' }}>
-          Set a new password for <strong>Dr. {resetFor?.doctor_name}</strong> ({resetFor?.username}).
-        </p>
-        <div className="form-group">
-          <label>New Password</label>
+        <ModalHead
+          title="Reset password"
+          hint={resetFor ? `Set a new password for Dr. ${resetFor.doctor_name} (${resetFor.username}).` : undefined}
+        />
+        <Field label="New password">
           <input type="password" className="form-input" placeholder="At least 8 characters" value={resetPassword} onChange={(e) => setResetPassword(e.target.value)} />
-        </div>
+        </Field>
         <div className="form-actions">
-          <button className="btn-secondary" onClick={() => setResetFor(null)}>Cancel</button>
-          <button className="btn-primary" onClick={saveReset}>Save New Password</button>
+          <button type="button" className="btn-secondary" onClick={() => setResetFor(null)}>Cancel</button>
+          <button type="button" className="btn-primary" onClick={saveReset}>Save new password</button>
         </div>
       </Modal>
     </Shell>

@@ -4,6 +4,10 @@ import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime, fmtDate
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
 import { Modal } from '../components';
+import { Card, EmptyState, Field, FilterBar, ModalHead, Stack, StatCard, StatGrid } from '../ui';
+import {
+  IconAppointments, IconCheck, IconClock, IconPatients, IconPrint, IconSearch, IconVitals,
+} from '../icons';
 import type { AppointmentRow, VitalRow } from '../types';
 
 interface HistoryEntry {
@@ -129,6 +133,17 @@ export default function AdminAppointments() {
     return true;
   });
 
+  const hasFilters = Boolean(qName || qAddr || qAge || qStatus || qPriority);
+  const activeCount = appointments.filter((a) => a.status === 'pending' || a.status === 'confirmed').length;
+
+  function resetFilters() {
+    setQName('');
+    setQAddr('');
+    setQAge('');
+    setQStatus('');
+    setQPriority('');
+  }
+
   async function updateStatus(id: number, status: string) {
     showLoading();
     try {
@@ -194,36 +209,53 @@ export default function AdminAppointments() {
 
   return (
     <Shell active="appointments" title="Appointments">
-      <div className="stats-grid">
-        <div className="stat-card"><div className="stat-number">{stats.total ?? 0}</div><div className="stat-label">Total</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#f59e0b' }}><div className="stat-number" style={{ color: '#f59e0b' }}>{stats.pending ?? 0}</div><div className="stat-label">Pending</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#10b981' }}><div className="stat-number" style={{ color: '#10b981' }}>{stats.confirmed ?? 0}</div><div className="stat-label">Confirmed</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#0ea5e9' }}><div className="stat-number" style={{ color: '#0ea5e9' }}>{stats.completed ?? 0}</div><div className="stat-label">Completed</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#8b5cf6' }}><div className="stat-number" style={{ color: '#8b5cf6' }}>{stats.today ?? 0}</div><div className="stat-label">Today</div></div>
-      </div>
+      <Stack>
+        <StatGrid>
+          <StatCard icon={<IconAppointments />} label="Total appointments" value={stats.total ?? appointments.length} hint="All records" />
+          <StatCard icon={<IconClock />} label="Pending" value={stats.pending ?? 0} hint="Awaiting confirmation" tone="amber" />
+          <StatCard icon={<IconCheck />} label="Confirmed" value={stats.confirmed ?? 0} hint="Ready to serve" tone="blue" />
+          <StatCard icon={<IconPatients />} label="Completed" value={stats.completed ?? 0} hint="Visits finished" tone="slate" />
+          <StatCard icon={<IconAppointments />} label="Today" value={stats.today ?? 0} hint="Scheduled today" tone="violet" />
+        </StatGrid>
 
-      <div className="content-card">
-        <h2>All Appointments</h2>
-        <div className="apt-toolbar">
-          <input type="search" className="apt-search" placeholder="Search patient name..." value={qName} onChange={(e) => setQName(e.target.value)} />
-          <input type="search" className="apt-search" placeholder="Search address..." value={qAddr} onChange={(e) => setQAddr(e.target.value)} />
-          <input type="search" className="apt-search apt-search--age" placeholder="Age..." value={qAge} onChange={(e) => setQAge(e.target.value)} />
-          <select className="apt-select filter-select" value={qStatus} onChange={(e) => setQStatus(e.target.value)}>
-            <option value="">All Statuses</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-          <select className="apt-select filter-select" value={qPriority} onChange={(e) => setQPriority(e.target.value)}>
-            <option value="">All Priorities</option>
-            <option value="urgent">Urgent</option>
-            <option value="normal">Normal</option>
-          </select>
-        </div>
+        <Card
+          title="All appointments"
+          subtitle={`${filtered.length} of ${appointments.length} record${appointments.length === 1 ? '' : 's'}${activeCount ? ` · ${activeCount} active` : ''}`}
+          actions={hasFilters ? <button type="button" className="ap-btn-text" onClick={resetFilters}>Reset filters</button> : undefined}
+        >
+          <FilterBar>
+            <Field label="Patient" className="ap-field--grow">
+              <div className="ap-input-icon">
+                <IconSearch size={16} />
+                <input type="search" className="apt-search" placeholder="Search patient name..." value={qName} onChange={(e) => setQName(e.target.value)} />
+              </div>
+            </Field>
+            <Field label="Address" className="ap-field--grow">
+              <input type="search" className="apt-search" placeholder="Search address..." value={qAddr} onChange={(e) => setQAddr(e.target.value)} />
+            </Field>
+            <Field label="Age" className="ap-field--xs">
+              <input type="search" className="apt-search" placeholder="Any" value={qAge} onChange={(e) => setQAge(e.target.value)} />
+            </Field>
+            <Field label="Status">
+              <select className="apt-select filter-select" value={qStatus} onChange={(e) => setQStatus(e.target.value)}>
+                <option value="">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </Field>
+            <Field label="Priority">
+              <select className="apt-select filter-select" value={qPriority} onChange={(e) => setQPriority(e.target.value)}>
+                <option value="">All priorities</option>
+                <option value="urgent">Urgent</option>
+                <option value="normal">Normal</option>
+              </select>
+            </Field>
+          </FilterBar>
 
-        <div className="table-scroll">
-          <table id="aptTable">
+          <div className="table-scroll">
+            <table id="aptTable">
             <thead>
               <tr>
                 <th>ID</th><th>Patient</th><th>Doctor</th><th>Service / Test</th><th>Date</th>
@@ -232,20 +264,37 @@ export default function AdminAppointments() {
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={10} className="empty-state-row"><div className="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="17" rx="3" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg></div>No appointments found.</td></tr>
+                <tr>
+                  <td colSpan={10}>
+                    <EmptyState
+                      icon={<IconAppointments size={20} />}
+                      title="No matching appointments"
+                      hint={hasFilters ? 'Try a different name, status or priority.' : 'Bookings will appear here once patients reserve a slot.'}
+                    />
+                  </td>
+                </tr>
               ) : filtered.map((a) => {
                 const hist = historyByAppt[a.id] || [];
                 const hasResult = !!(a.result && a.result.length);
                 return (
                   <tr key={a.id}>
-                    <td>#{a.id}</td>
-                    <td><strong>{a.patient_name}</strong><br /><small style={{ color: '#64748b' }}>{a.patient_email}</small></td>
-                    <td>Dr. {a.doctor_name}<br /><small style={{ color: '#64748b' }}>{a.specialty}</small></td>
-                    <td>{a.service_requested || '—'}</td>
+                    <td className="ap-id">#{a.id}</td>
+                    <td>
+                      <span className="ap-strong">{a.patient_name}</span>
+                      <small className="ap-sub">{a.patient_email || 'No email on file'}</small>
+                    </td>
+                    <td>
+                      <span>Dr. {a.doctor_name}</span>
+                      <small className="ap-sub">{a.specialty}</small>
+                    </td>
+                    <td>
+                      {a.service_requested || '—'}
+                      {a.is_urgent ? <span className="badge badge-urgent ap-inline-badge">Urgent</span> : null}
+                    </td>
                     <td>{fmtDate(a.appointment_date)}</td>
                     <td>{fmtTime(a.appointment_time)}</td>
                     <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div className="ap-row-actions ap-row-actions--status">
                         <select className="action-select" value={a.status} onChange={(e) => updateStatus(a.id, e.target.value)}>
                           {['pending', 'confirmed', 'completed', 'cancelled'].map((o) => <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
                         </select>
@@ -277,16 +326,24 @@ export default function AdminAppointments() {
                     </td>
                     <td>
                       {hasResult ? (
-                        a.status === 'pending' || a.status === 'confirmed'
-                          ? <span className="badge" style={{ background: '#fef3c7', color: '#92400e', cursor: 'pointer' }} onClick={() => setResultView(a)}>Draft</span>
-                          : <span className="badge badge-completed" style={{ cursor: 'pointer' }} onClick={() => setResultView(a)}>Ready</span>
-                      ) : <span style={{ color: '#94a3b8', fontSize: '.82rem' }}>No result</span>}
+                        <button
+                          type="button"
+                          className={`badge ${a.status === 'pending' || a.status === 'confirmed' ? 'badge-pending' : 'badge-completed'} ap-badge-btn`}
+                          onClick={() => setResultView(a)}
+                          title="Open the recorded result"
+                        >
+                          {a.status === 'pending' || a.status === 'confirmed' ? 'Draft' : 'Ready'}
+                        </button>
+                      ) : <span className="ap-none">No result</span>}
                     </td>
                     <td>
-                      {fmtDate(a.updated_at)}<br /><small style={{ color: '#94a3b8' }}>{fmtTime(a.updated_at)}</small>
-                      <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <span className="ap-updated">
+                        {fmtDate(a.updated_at)}
+                        <small>{fmtTime(a.updated_at)}</small>
+                      </span>
+                      <div className="ap-row-actions ap-row-actions--inline ap-updated-actions">
                         <button type="button" className="btn-slip" title="Print appointment slip" onClick={() => printSlip(a)}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" rx="1" /></svg> Slip
+                          <IconPrint size={16} /> Slip
                         </button>
                         <button
                           type="button"
@@ -294,7 +351,7 @@ export default function AdminAppointments() {
                           title={(a.vital_count || 0) > 0 ? 'Edit recorded vitals' : 'Record vitals for this appointment'}
                           onClick={() => openVitals(a)}
                         >
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg> Vitals
+                          <IconVitals size={16} /> Vitals
                           {(a.vital_count || 0) > 0 && <span className="vitals-check">&#10003;</span>}
                         </button>
                       </div>
@@ -305,38 +362,40 @@ export default function AdminAppointments() {
             </tbody>
           </table>
         </div>
-      </div>
+        </Card>
+      </Stack>
 
-      {resultView && (
-        <div className="modal-overlay active" onClick={() => setResultView(null)}>
-          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close-btn" onClick={() => setResultView(null)}>&times;</button>
-            <h2>Appointment Result</h2>
-            <div style={{ margin: '-.35rem 0 1rem', fontSize: '.92rem', color: 'var(--gray-600)' }}>
-              <strong>{resultView.patient_name}</strong> · {resultView.unique_code} ·{' '}
+      <Modal open={!!resultView} onClose={() => setResultView(null)}>
+        {resultView && (
+          <>
+            <ModalHead
+              title="Appointment result"
+              hint={`${resultView.patient_name} · ${resultView.unique_code || `#${resultView.id}`}`}
+            />
+            <div className="ap-result-meta">
               <span className={`badge ${resultView.status === 'completed' ? 'badge-completed' : 'badge-pending'}`}>
                 {resultView.status === 'completed' ? 'Completed' : 'Draft'}
               </span>
+              <span className="ap-none">Recorded by Dr. {resultView.doctor_name}</span>
             </div>
-            <div className="table-scroll"><table><tbody>
-              <tr><th style={{ width: 140 }}>Doctor</th><td>Dr. {resultView.doctor_name} ({resultView.specialty})</td></tr>
+            <table className="ap-kv"><tbody>
+              <tr><th>Doctor</th><td>Dr. {resultView.doctor_name}</td></tr>
+              <tr><th>Specialty</th><td>{resultView.specialty || '—'}</td></tr>
               <tr><th>Service</th><td>{resultView.service_requested || 'General consultation'}</td></tr>
-            </tbody></table></div>
-            <div className="result-view-body" style={{ marginTop: '1rem', whiteSpace: 'pre-wrap' }}>{resultView.result}</div>
-            <div className="form-actions" style={{ marginTop: '1.1rem' }}>
+            </tbody></table>
+            <div className="ap-result-body">{resultView.result}</div>
+            <div className="form-actions">
               <button type="button" className="btn-secondary" onClick={() => setResultView(null)}>Close</button>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
 
       <Modal open={!!vitalsFor} onClose={() => setVitalsFor(null)}>
-        <h2>Record Vitals</h2>
-        {vitalsFor && (
-          <div style={{ margin: '-.35rem 0 1rem', fontSize: '.92rem', color: 'var(--gray-600)' }}>
-            <strong>{vitalsFor.patient_name}</strong> &middot; {vitalsFor.unique_code || `#${vitalsFor.id}`} &middot; {fmtDate(vitalsFor.appointment_date)}
-          </div>
-        )}
+        <ModalHead
+          title="Record vitals"
+          hint={vitalsFor ? `${vitalsFor.patient_name} · ${vitalsFor.unique_code || `#${vitalsFor.id}`} · ${fmtDate(vitalsFor.appointment_date)}` : undefined}
+        />
         <div
           onChange={() => setVitalsTouched(true)}
           onInput={() => setVitalsTouched(true)}

@@ -3,6 +3,8 @@ import Shell from '../Shell';
 import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
+import { Card, EmptyState, Field, FilterBar, Stack, StatCard, StatGrid } from '../ui';
+import { IconCheck, IconClock, IconSearch, IconWalkins } from '../icons';
 import type { WalkinRow } from '../types';
 
 const STATUSES = ['waiting', 'in_service', 'served', 'cancelled'];
@@ -99,75 +101,85 @@ export default function AdminWalkins() {
 
   return (
     <Shell active="walkins" title="Walk-ins">
-      <div className="stats-grid">
-        <div className="stat-card"><div className="stat-number">{stats.total ?? 0}</div><div className="stat-label">Total</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#f59e0b' }}><div className="stat-number" style={{ color: '#f59e0b' }}>{stats.waiting ?? 0}</div><div className="stat-label">Waiting</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#0ea5e9' }}><div className="stat-number" style={{ color: '#0ea5e9' }}>{stats.in_progress ?? 0}</div><div className="stat-label">In Service</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#10b981' }}><div className="stat-number" style={{ color: '#10b981' }}>{stats.completed ?? 0}</div><div className="stat-label">Served</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#ef4444' }}><div className="stat-number" style={{ color: '#ef4444' }}>{stats.cancelled ?? 0}</div><div className="stat-label">Cancelled</div></div>
-      </div>
+      <Stack>
+        <StatGrid>
+          <StatCard icon={<IconWalkins />} label="Total" value={stats.total ?? walkins.length} hint="Queue entries" />
+          <StatCard icon={<IconClock />} label="Waiting" value={stats.waiting ?? 0} hint="Not yet called" tone="amber" />
+          <StatCard icon={<IconWalkins />} label="In service" value={stats.in_progress ?? 0} hint="Currently with a doctor" tone="blue" />
+          <StatCard icon={<IconCheck />} label="Served" value={stats.completed ?? 0} hint="Completed today" tone="green" />
+          <StatCard icon={<IconClock />} label="Cancelled" value={stats.cancelled ?? 0} hint="Did not push through" tone="rose" />
+        </StatGrid>
 
-      <div className="content-card">
-        <div className="card-head">
-          <div>
-            <h2 style={{ marginBottom: 4 }}>Walk-ins Queue</h2>
-            <small style={{ color: '#64748b' }}>Dynamic queue number per doctor for the selected date.</small>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '.6rem', flexWrap: 'wrap' }}>
-            <div>
-              <label className="form-label" style={{ marginTop: 0 }}>Date</label>
+        <Card
+          title="Walk-in queue"
+          subtitle={`${filtered.length} entr${filtered.length === 1 ? 'y' : 'ies'} for ${fmtDate(date)} · one queue per doctor`}
+          actions={
+            <Field label="Queue date" className="ap-field--date">
               <input
                 type="date"
-                className="form-input"
-                style={{ width: 180, marginBottom: 0 }}
+                className="apt-search"
                 max={today}
                 value={date}
                 onChange={(e) => loadDate(e.target.value || today)}
               />
+            </Field>
+          }
+        >
+          <FilterBar>
+            <Field label="Search" className="ap-field--grow">
+              <div className="ap-input-icon">
+                <IconSearch size={16} />
+                <input type="search" className="apt-search" placeholder="Patient, contact or procedure..." value={q} onChange={(e) => setQ(e.target.value)} />
+              </div>
+            </Field>
+            <Field label="Status">
+              <select className="apt-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+                <option value="">All statuses</option>
+                {STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
+              </select>
+            </Field>
+          </FilterBar>
+
+          {groups.length === 0 ? (
+            <EmptyState
+              icon={<IconWalkins size={20} />}
+              title={`No walk-ins for ${fmtDate(date)}`}
+              hint="Pick another date or register a walk-in from the dashboard."
+            />
+          ) : groups.map((g) => (
+            <div className="ap-group" key={g.doctor}>
+              <h3 className="ap-group-title">
+                Dr. {g.doctor} {g.specialty ? <small>({g.specialty})</small> : null}
+              </h3>
+              <div className="table-scroll"><table>
+                <thead><tr><th>Queue</th><th>Patient</th><th>Type</th><th>Arrival</th><th>Test / procedure</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                  {g.rows.map((w) => (
+                    <tr key={w.id}>
+                      <td><span className="ap-queue">#{w.queue ?? w.id}</span></td>
+                      <td>
+                        <span className="ap-strong">{w.patient_name}</span>
+                        <small className="ap-sub">{w.contact || 'No contact number'}</small>
+                      </td>
+                      <td>{w.patient_type ? <span className="pill">{w.patient_type.replace(/_/g, ' ')}</span> : '—'}</td>
+                      <td>{fmtTime(w.arrival_time)}</td>
+                      <td>{w.test_procedure || '—'}</td>
+                      <td><span className={`badge ${badgeClass(w.status)}`}>{statusLabel(w.status)}</span></td>
+                      <td>
+                        <div className="ap-row-actions ap-row-actions--status">
+                          <select className="action-select" value={w.status} onChange={(e) => updateStatus(w.id, e.target.value)}>
+                            {STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
+                          </select>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table></div>
             </div>
-          </div>
-        </div>
-
-        <div className="apt-toolbar">
-          <input type="search" className="apt-search" placeholder="Search patient, contact or procedure..." value={q} onChange={(e) => setQ(e.target.value)} />
-          <select className="apt-select" value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">All Statuses</option>
-            {STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
-          </select>
-        </div>
-
-        {groups.length === 0 ? (
-          <div className="empty-state-row" style={{ textAlign: 'center', color: '#94a3b8', padding: '1.5rem 0' }}>
-            No walk-ins for {fmtDate(date)}.
-          </div>
-        ) : groups.map((g) => (
-          <div className="walkin-doctor-group" key={g.doctor} style={{ marginTop: 18 }}>
-            <h3 style={{ margin: '0 0 8px', color: '#0f172a' }}>
-              Dr. {g.doctor} {g.specialty ? <small style={{ color: '#64748b', fontWeight: 400 }}>({g.specialty})</small> : null}
-            </h3>
-            <div className="table-scroll"><table>
-              <thead><tr><th>Queue</th><th>Patient</th><th>Type</th><th>Arrival</th><th>Test / Procedure</th><th>Status</th><th>Actions</th></tr></thead>
-              <tbody>
-                {g.rows.map((w) => (
-                  <tr key={w.id}>
-                    <td><span className="badge" style={{ background: '#16a34a', color: '#fff', fontSize: '1rem', fontWeight: 800 }}>#{w.queue ?? w.id}</span></td>
-                    <td><strong>{w.patient_name}</strong><br /><small style={{ color: '#64748b' }}>{w.contact}</small></td>
-                    <td>{w.patient_type ? <span className="pill">{w.patient_type.replace(/_/g, ' ')}</span> : '—'}</td>
-                    <td>{fmtTime(w.arrival_time)}</td>
-                    <td>{w.test_procedure || '—'}</td>
-                    <td><span className={`badge ${badgeClass(w.status)}`}>{statusLabel(w.status)}</span></td>
-                    <td>
-                      <select className="action-select" value={w.status} onChange={(e) => updateStatus(w.id, e.target.value)}>
-                        {STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
-                      </select>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table></div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </Card>
+      </Stack>
     </Shell>
   );
 }

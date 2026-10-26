@@ -100,7 +100,7 @@ export default function ClientProfile({ portal }: Props) {
       <div className="profile-grid">
         <div className="content-card">
           <h2>Demographics</h2>
-          <table><tbody>
+          <table className="ap-kv"><tbody>
             <tr><th>Email</th><td>{patient.email || '—'}</td></tr>
             <tr><th>Contact</th><td>{patient.contact || '—'}</td></tr>
             <tr><th>Address</th><td>{patient.address || '—'}</td></tr>
@@ -115,12 +115,12 @@ export default function ClientProfile({ portal }: Props) {
         <div className="content-card">
           <h2>Latest Vitals</h2>
           {latestVital ? (
-            <table><tbody>
+            <table className="ap-kv"><tbody>
               <tr><th>Date</th><td>{fmtDateTime(latestVital.visit_date)}</td></tr>
-              <tr><th>Blood Pressure</th><td>{latestVital.blood_pressure || '—'}</td></tr>
-              <tr><th>Heart Rate</th><td>{latestVital.heart_rate ? `${latestVital.heart_rate} bpm` : '—'}</td></tr>
+              <tr><th>Blood pressure</th><td>{latestVital.blood_pressure || '—'}</td></tr>
+              <tr><th>Heart rate</th><td>{latestVital.heart_rate ? `${latestVital.heart_rate} bpm` : '—'}</td></tr>
               <tr><th>Weight</th><td>{latestVital.weight_kg ? `${latestVital.weight_kg} kg` : '—'}</td></tr>
-              <tr><th>Blood Pressure</th><td>{latestVital.blood_pressure || '—'}</td></tr>
+              <tr><th>Notes</th><td>{latestVital.notes || '—'}</td></tr>
             </tbody></table>
           ) : <p className="empty-note">No vitals recorded yet.</p>}
         </div>

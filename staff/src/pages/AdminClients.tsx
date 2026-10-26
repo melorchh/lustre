@@ -1,6 +1,8 @@
 import { Fragment, useMemo, useState } from 'react';
 import Shell from '../Shell';
 import { getInitial, fmtDate, fmtTime } from '../api';
+import { Card, EmptyState, Field, FilterBar, Stack, StatCard, StatGrid } from '../ui';
+import { IconChevronRight, IconPatients, IconSearch, IconWalkins } from '../icons';
 import type { PatientRow } from '../types';
 
 interface PatientAppt {
@@ -44,105 +46,193 @@ export default function AdminClients() {
     return true;
   }), [patients, q, qAddr, qAge, type]);
 
+  const hasFilters = Boolean(q || qAddr || qAge || type);
+
+  function resetFilters() {
+    setQ('');
+    setQAddr('');
+    setQAge('');
+    setType('');
+  }
+
   return (
     <Shell active="clients" title="Patients">
-      <div className="stats-grid">
-        <div className="stat-card"><div className="stat-number">{stats.total ?? patients.length}</div><div className="stat-label">Total Patients</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#10b981' }}><div className="stat-number" style={{ color: '#10b981' }}>{stats.active ?? 0}</div><div className="stat-label">Recently Active</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#f59e0b' }}><div className="stat-number" style={{ color: '#f59e0b' }}>{stats.walkins ?? 0}</div><div className="stat-label">Walk-ins</div></div>
-      </div>
+      <Stack>
+        <StatGrid>
+          <StatCard
+            icon={<IconPatients />}
+            label="Total patients"
+            value={stats.total ?? patients.length}
+            hint="Registered in the clinic"
+          />
+          <StatCard
+            icon={<IconSearch />}
+            label="Recently active"
+            value={stats.active ?? 0}
+            hint="Visited in the last 30 days"
+          />
+          <StatCard
+            icon={<IconWalkins />}
+            label="Walk-ins"
+            value={stats.walkins ?? 0}
+            hint="Registered at the counter"
+            tone="amber"
+          />
+        </StatGrid>
 
-      <div className="content-card">
-        <h2>Patient Directory</h2>
-        <div className="apt-toolbar">
-          <input type="search" className="apt-search" placeholder="Search name, email or ID..." value={q} onChange={(e) => setQ(e.target.value)} />
-          <input type="search" className="apt-search" placeholder="Search address..." value={qAddr} onChange={(e) => setQAddr(e.target.value)} />
-          <input type="search" className="apt-search apt-search--age" placeholder="Age..." value={qAge} onChange={(e) => setQAge(e.target.value)} />
-          <select className="apt-select" value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="">All Types</option>
-            <option value="infant">Infant</option>
-            <option value="child">Child</option>
-            <option value="adolescent">Adolescent</option>
-            <option value="adult">Adult</option>
-            <option value="elderly">Elderly</option>
-          </select>
-        </div>
-        <div className="table-scroll"><table id="patientsTable">
-          <thead><tr><th>ID</th><th>Name</th><th>Contact</th><th>Type</th><th>Age</th><th>Appointments</th><th>Last Visit</th><th></th></tr></thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr><td colSpan={8} className="empty-state-row">No patients found.</td></tr>
-            ) : filtered.map((p) => {
-              const appts = apptsByPatient[p.id] || [];
-              const open = expanded === p.id;
-              return (
-                <Fragment key={p.id}>
-                  <tr className={open ? 'is-open' : ''} style={{ cursor: 'pointer' }} onClick={() => setExpanded(open ? null : p.id)}>
-                    <td>#{p.id}</td>
-                    <td><strong>{p.name}</strong><br /><small style={{ color: '#64748b' }}>{p.unique_code}</small></td>
-                    <td>{p.email}<br /><small style={{ color: '#64748b' }}>{p.contact}</small></td>
-                    <td>{p.patient_type ? <span className="pill">{p.patient_type.replace(/_/g, ' ')}</span> : '—'}</td>
-                    <td>{p.age ?? '—'}</td>
-                    <td>{p.appointment_count ?? appts.length}</td>
-                    <td>{fmtDate(p.last_appointment)}</td>
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <div className="row-actions">
-                        <button type="button" className="btn-secondary btn-xs" onClick={() => setExpanded(open ? null : p.id)}>{open ? 'Hide' : 'Details'}</button>
-                        <a className="btn-secondary btn-xs" href={`client_profile.php?id=${p.id}`}>View</a>
-                      </div>
+        <Card
+          title="Patient directory"
+          subtitle={`${filtered.length} of ${patients.length} patient${patients.length === 1 ? '' : 's'}`}
+          actions={hasFilters ? <button type="button" className="ap-btn-text" onClick={resetFilters}>Reset filters</button> : undefined}
+        >
+          <FilterBar>
+            <Field label="Search" className="ap-field--grow">
+              <div className="ap-input-icon">
+                <IconSearch size={16} />
+                <input
+                  type="search"
+                  className="apt-search"
+                  placeholder="Name, email or patient ID..."
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                />
+              </div>
+            </Field>
+            <Field label="Address" className="ap-field--grow">
+              <input
+                type="search"
+                className="apt-search"
+                placeholder="Barangay, city or street..."
+                value={qAddr}
+                onChange={(e) => setQAddr(e.target.value)}
+              />
+            </Field>
+            <Field label="Age" className="ap-field--xs">
+              <input
+                type="search"
+                className="apt-search"
+                placeholder="Any"
+                value={qAge}
+                onChange={(e) => setQAge(e.target.value)}
+              />
+            </Field>
+            <Field label="Patient type">
+              <select className="apt-select" value={type} onChange={(e) => setType(e.target.value)}>
+                <option value="">All types</option>
+                <option value="infant">Infant</option>
+                <option value="child">Child</option>
+                <option value="adolescent">Adolescent</option>
+                <option value="adult">Adult</option>
+                <option value="elderly">Elderly</option>
+              </select>
+            </Field>
+          </FilterBar>
+
+          <div className="table-scroll">
+            <table id="patientsTable">
+              <thead>
+                <tr><th>ID</th><th>Patient</th><th>Contact</th><th>Type</th><th>Age</th><th>Visits</th><th>Last visit</th><th aria-label="Actions"></th></tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={8}>
+                      <EmptyState
+                        icon={<IconPatients size={20} />}
+                        title="No matching patients"
+                        hint={hasFilters ? 'Try a different name, address or type.' : 'Patients will appear here once they register.'}
+                      />
                     </td>
                   </tr>
-                  {open && (
-                    <tr className="client-detail">
-                      <td colSpan={8}>
-                        <div className="client-detail-grid">
-                          <div><span>Email</span><strong>{p.email || '—'}</strong></div>
-                          <div><span>Contact</span><strong>{p.contact || '—'}</strong></div>
-                          <div><span>Address</span><strong>{p.address || '—'}</strong></div>
-                          <div><span>Gender</span><strong>{p.gender || '—'}</strong></div>
-                          <div><span>Type</span><strong>{p.patient_type || '—'}</strong></div>
-                          <div><span>Age</span><strong>{p.age ?? '—'}</strong></div>
-                          <div><span>Weight</span><strong>{p.weight_kg != null ? `${p.weight_kg} kg` : '—'}</strong></div>
-                          <div><span>Height</span><strong>{p.height_cm != null ? `${p.height_cm} cm` : '—'}</strong></div>
-                          <div><span>Registered</span><strong>{fmtDate(p.created_at)}</strong></div>
-                          <div><span>Source</span><strong>{p.is_walk_in ? 'Walk-in' : 'Registered'}</strong></div>
-                        </div>
-
-                        <h3 style={{ margin: '1rem 0 .5rem' }}>Appointment Archive</h3>
-                        {appts.length === 0 ? (
-                          <p className="empty-note" style={{ margin: 0 }}>No appointments on record.</p>
-                        ) : (
-                          <div className="table-scroll">
-                            <table>
-                              <thead><tr><th>#</th><th>Date</th><th>Time</th><th>Doctor</th><th>Service / Test</th><th>Status</th></tr></thead>
-                              <tbody>
-                                {appts.map((a) => (
-                                  <tr key={a.id}>
-                                    <td>#{a.id}</td>
-                                    <td>{fmtDate(a.appointment_date)}</td>
-                                    <td>{fmtTime(a.appointment_time)}</td>
-                                    <td>{a.doctor_name ? `Dr. ${a.doctor_name}` : '—'}</td>
-                                    <td>{a.service_requested || '—'}</td>
-                                    <td><span className={`badge badge-${a.status}`}>{a.status}</span></td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                ) : filtered.map((p) => {
+                  const appts = apptsByPatient[p.id] || [];
+                  const open = expanded === p.id;
+                  return (
+                    <Fragment key={p.id}>
+                      <tr
+                        className={`ap-row${open ? ' is-open' : ''}`}
+                        onClick={() => setExpanded(open ? null : p.id)}
+                      >
+                        <td className="ap-id">#{p.id}</td>
+                        <td>
+                          <span className="ap-strong">{p.name}</span>
+                          <small className="ap-sub">{p.unique_code}</small>
+                        </td>
+                        <td>
+                          <span>{p.email || '—'}</span>
+                          <small className="ap-sub">{p.contact || 'No contact number'}</small>
+                        </td>
+                        <td>{p.patient_type ? <span className="pill">{p.patient_type.replace(/_/g, ' ')}</span> : '—'}</td>
+                        <td>{p.age ?? '—'}</td>
+                        <td><span className="ap-count-badge">{p.appointment_count ?? appts.length}</span></td>
+                        <td>{p.last_appointment ? fmtDate(p.last_appointment) : '—'}</td>
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <div className="ap-row-actions ap-row-actions--inline">
+                            <a className="ap-icon-btn" href={`client_profile.php?id=${p.id}`} title="Open full profile" aria-label={`Open ${p.name}'s profile`}>
+                              <IconChevronRight size={17} />
+                            </a>
                           </div>
-                        )}
+                        </td>
+                      </tr>
+                      {open && (
+                        <tr className="client-detail">
+                          <td colSpan={8}>
+                            <div className="ap-detail">
+                              <div className="ap-detail-head">
+                                <div>
+                                  <h3>Patient details</h3>
+                                  <p>Full record and appointment archive for {p.name}.</p>
+                                </div>
+                                <a className="btn-primary btn-xs" href={`client_profile.php?id=${p.id}`}>View full profile</a>
+                              </div>
 
-                        <div className="form-actions" style={{ justifyContent: 'flex-start', marginTop: '.85rem' }}>
-                          <a className="btn-primary btn-xs" href={`client_profile.php?id=${p.id}`}>View full profile</a>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table></div>
-      </div>
+                              <div className="client-detail-grid">
+                                <div><span>Email</span><strong>{p.email || '—'}</strong></div>
+                                <div><span>Contact</span><strong>{p.contact || '—'}</strong></div>
+                                <div><span>Address</span><strong>{p.address || '—'}</strong></div>
+                                <div><span>Gender</span><strong>{p.gender || '—'}</strong></div>
+                                <div><span>Type</span><strong>{p.patient_type || '—'}</strong></div>
+                                <div><span>Age</span><strong>{p.age ?? '—'}</strong></div>
+                                <div><span>Weight</span><strong>{p.weight_kg != null ? `${p.weight_kg} kg` : '—'}</strong></div>
+                                <div><span>Height</span><strong>{p.height_cm != null ? `${p.height_cm} cm` : '—'}</strong></div>
+                                <div><span>Registered</span><strong>{fmtDate(p.created_at)}</strong></div>
+                                <div><span>Source</span><strong>{p.is_walk_in ? 'Walk-in' : 'Registered'}</strong></div>
+                              </div>
+
+                              <h3 className="ap-subsection-title">Appointment archive</h3>
+                              {appts.length === 0 ? (
+                                <p className="empty-note" style={{ margin: 0 }}>No appointments on record.</p>
+                              ) : (
+                                <div className="table-scroll">
+                                  <table>
+                                    <thead><tr><th>#</th><th>Date</th><th>Time</th><th>Doctor</th><th>Service / test</th><th>Status</th></tr></thead>
+                                    <tbody>
+                                      {appts.map((a) => (
+                                        <tr key={a.id}>
+                                          <td className="ap-id">#{a.id}</td>
+                                          <td>{fmtDate(a.appointment_date)}</td>
+                                          <td>{fmtTime(a.appointment_time)}</td>
+                                          <td>{a.doctor_name ? `Dr. ${a.doctor_name}` : '—'}</td>
+                                          <td>{a.service_requested || '—'}</td>
+                                          <td><span className={`badge badge-${a.status}`}>{a.status}</span></td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </Stack>
     </Shell>
   );
 }

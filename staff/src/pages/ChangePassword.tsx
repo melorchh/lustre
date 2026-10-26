@@ -3,6 +3,32 @@ import Shell from '../Shell';
 import { getInitial, postAction } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
+import { Card, Stack } from '../ui';
+
+function PasswordField({
+  label,
+  value,
+  onChange,
+  autoComplete,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  autoComplete: string;
+}) {
+  return (
+    <>
+      <label className="form-label">{label}</label>
+      <input
+        className="form-input"
+        type="password"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        autoComplete={autoComplete}
+      />
+    </>
+  );
+}
 
 export default function ChangePassword({ portal }: { portal: 'admin' | 'doctor' }) {
   const staff = getInitial().staff;
@@ -11,6 +37,7 @@ export default function ChangePassword({ portal }: { portal: 'admin' | 'doctor' 
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
   const [mustChange] = useState(!!staff.mustChange);
+  const isAdmin = portal === 'admin';
 
   async function submit() {
     if (!current || !next || !confirm) { showToast('All fields are required', 'error'); return; }
@@ -35,17 +62,39 @@ export default function ChangePassword({ portal }: { portal: 'admin' | 'doctor' 
     finally { hideLoading(); }
   }
 
+  const fields = (
+    <>
+      <PasswordField label="Current Password" value={current} onChange={setCurrent} autoComplete="current-password" />
+      <PasswordField label="New Password" value={next} onChange={setNext} autoComplete="new-password" />
+      <PasswordField label="Confirm New Password" value={confirm} onChange={setConfirm} autoComplete="new-password" />
+    </>
+  );
+
+  if (isAdmin) {
+    return (
+      <Shell active="change_password" title="Change Password">
+        <Stack>
+          <Card
+            className="ap-narrow"
+            title={mustChange ? 'Set a new password' : 'Change password'}
+            subtitle={mustChange ? 'For security, you must set a new password before continuing.' : 'Use at least 8 characters.'}
+          >
+            {fields}
+            <div className="form-actions">
+              <button className="btn-primary" onClick={submit}>Update Password</button>
+            </div>
+          </Card>
+        </Stack>
+      </Shell>
+    );
+  }
+
   return (
     <Shell active="change_password" title="Change Password">
       <div className="content-card" style={{ maxWidth: 520 }}>
         <h2>{mustChange ? 'Set a New Password' : 'Change Password'}</h2>
         {mustChange && <p className="form-hint" style={{ marginBottom: '1rem' }}>For security, you must set a new password before continuing.</p>}
-        <label className="form-label">Current Password</label>
-        <input className="form-input" type="password" value={current} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password" />
-        <label className="form-label">New Password</label>
-        <input className="form-input" type="password" value={next} onChange={(e) => setNext(e.target.value)} autoComplete="new-password" />
-        <label className="form-label">Confirm New Password</label>
-        <input className="form-input" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" />
+        {fields}
         <div className="form-actions">
           <button className="btn-primary" onClick={submit}>Update Password</button>
         </div>
