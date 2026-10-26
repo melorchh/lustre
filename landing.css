@@ -1276,10 +1276,54 @@ footer .footer-copy {
 .terms-check input {
   width: 18px;
   height: 18px;
+  min-height: 0;
   margin: 0.12rem 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   accent-color: var(--green);
   flex: 0 0 auto;
   cursor: pointer;
+}
+.terms-check input:focus {
+  border-color: transparent;
+  box-shadow: none;
+}
+.terms-link {
+  color: var(--green-dark);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.terms-link:hover {
+  color: var(--green-deep);
+}
+.terms-modal {
+  z-index: 3100;
+}
+.terms-sheet {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.terms-body {
+  margin-top: 0.2rem;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--gray-600);
+}
+.terms-body h3 {
+  margin: 1rem 0 0.3rem;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--green-deep);
+}
+.terms-body h3:first-child {
+  margin-top: 0;
+}
+.terms-body p {
+  margin: 0 0 0.55rem;
 }
 
 .modal-switch {
