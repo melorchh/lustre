@@ -152,6 +152,16 @@ html {
   padding: 0.6rem 1.15rem;
   border-radius: 12px;
 }
+.doctor-page .btn-sm:disabled,
+.doctor-page .btn-sm[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.35);
+}
+.doctor-page .btn-sm:disabled:hover,
+.doctor-page .btn-sm[disabled]:hover {
+  transform: none;
+}
 .doctor-page .btn-danger {
   font-size: 1.04rem;
   min-height: 56px;
@@ -297,6 +307,45 @@ html {
 }
 .doctor-page .result-modal-box .info-row .info-item label {
   font-size: 0.92rem;
+}
+
+/* ---------- Consultation checklist ---------- */
+.doctor-page .consult-checklist {
+  display: grid;
+  gap: 0.5rem;
+  background: var(--green-pale);
+  border: 1.5px solid var(--green-pale2);
+  border-radius: 16px;
+  padding: 0.9rem 1.1rem;
+}
+.doctor-page .consult-checklist .consult-check {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0;
+  font-size: 1.02rem;
+  color: var(--gray-800);
+  cursor: pointer;
+  user-select: none;
+}
+.doctor-page .consult-checklist .consult-check input {
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  accent-color: var(--green);
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+.doctor-page .consult-hint {
+  margin: 0 0 1rem;
+  font-size: 0.92rem;
+  color: var(--gray-600);
+  line-height: 1.45;
 }
 
 /* ---------- Confirm dialog ---------- */

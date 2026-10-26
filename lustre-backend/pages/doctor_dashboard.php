@@ -193,9 +193,9 @@ function fill_color($s) {
                                         <option value="<?php echo $opt; ?>" <?php echo $w['status']===$opt?'selected':''; ?>><?php echo ucfirst(str_replace('_',' ',$opt)); ?></option>
                                         <?php endforeach; ?>
                                     </select>
-                                    <?php if ($w['status'] === 'served'): ?>
-                                    <button type="button" class="btn-sm btn-edit" style="margin-left:6px" onclick="openWalkinResultModal(<?php echo (int)$w['id']; ?>, 'edit')"><?php echo ($w['result'] !== '') ? 'Result' : 'Add Result'; ?></button>
-                                    <?php endif; ?>
+                                    <button type="button" class="btn-sm btn-edit wq-result-btn" style="margin-left:6px" data-id="<?php echo (int)$w['id']; ?>" title="<?php echo $w['status'] === 'in_service' ? 'Enter consultation result' : 'Available when the patient is In service'; ?>" onclick="openWalkinResultModal(<?php echo (int)$w['id']; ?>, 'edit')" <?php echo $w['status'] === 'in_service' ? '' : 'disabled'; ?>>
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Result
+                                    </button>
                                     <button type="button" class="btn-sm btn-vitals" style="margin-left:6px" title="View patient vitals" data-apt="<?php echo $w['appointment_id'] !== null ? (int)$w['appointment_id'] : ''; ?>" data-pid="<?php echo (int)$w['patient_id']; ?>" data-name="<?php echo htmlspecialchars($w['name'], ENT_QUOTES); ?>" data-label="Walk-in &middot; <?php echo htmlspecialchars($w['arrival'], ENT_QUOTES); ?>" onclick="openAptVitalsView(this)">
                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals
                                     </button>
@@ -339,15 +339,27 @@ function fill_color($s) {
     <div class="result-modal" id="walkinResultModal">
         <div class="result-modal-box">
             <button class="result-close" onclick="closeWalkinResultModal()">&#10005;</button>
-            <h3 id="wqResultTitle">Walk-in Result</h3>
+            <h3 id="wqResultTitle">Consultation Result</h3>
             <div class="info-row" id="wqResultInfoRow"></div>
             <div class="form-group">
-                <label>Result / Findings</label>
-                <textarea id="wqResultText" rows="8" placeholder="Enter the result, diagnosis, findings, and notes for this walk-in..."></textarea>
+                <label>Consultation Checklist</label>
+                <div class="consult-checklist" id="wqChecklist">
+                    <label class="consult-check"><input type="checkbox" value="The patient is good"> The patient is good</label>
+                    <label class="consult-check"><input type="checkbox" value="No complaints reported"> No complaints reported</label>
+                    <label class="consult-check"><input type="checkbox" value="Vitals are stable"> Vitals are stable</label>
+                    <label class="consult-check"><input type="checkbox" value="No signs of infection"> No signs of infection</label>
+                    <label class="consult-check"><input type="checkbox" value="Medication prescribed"> Medication prescribed</label>
+                    <label class="consult-check"><input type="checkbox" value="Follow-up advised"> Follow-up advised</label>
+                </div>
             </div>
+            <div class="form-group">
+                <label>Notes / Result / Findings</label>
+                <textarea id="wqResultText" rows="6" placeholder="Enter the diagnosis, findings, and notes for this consultation..."></textarea>
+            </div>
+            <p class="consult-hint">The checklist and notes are saved together. Marking the patient as <strong>Served</strong> auto-saves this result.</p>
             <div style="display:flex;gap:.75rem;flex-wrap:wrap">
                 <button class="btn-primary" onclick="saveWalkinResult()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Save Result</button>
-                <button class="btn-secondary" onclick="closeWalkinResultModal()">Cancel</button>
+                <button class="btn-secondary" onclick="closeWalkinResultModal()">Close</button>
             </div>
         </div>
     </div>
@@ -431,22 +443,92 @@ function fill_color($s) {
         const WQ_EMPTY = '<tr><td colspan="5" class="empty-state-row"><div class="empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.7L18 9.3l-4.4 1.6L12 15.6l-1.6-4.7L6 9.3l4.4-1.6z" style="stroke-width:1.8"/><path d="M5 20h14"/></svg></div>No walk-ins registered yet today.</td></tr>';
         function wqEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
         function wqLabel(s){return s.charAt(0).toUpperCase()+s.slice(1).replace(/_/g,' ');}
+
+        const wqRowData = {};
+        const wqResults = {};
+        const wqDrafts = {};
+        (function(){
+            const initial = <?php echo json_encode($walkin_queue, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+            (initial || []).forEach(function(w){
+                wqRowData[w.id] = w;
+                wqResults[w.id] = String(w.result || '');
+            });
+        })();
+
+        const WQ_NOTES_PREFIX = 'Notes / Findings:\n';
+        const WQ_CHECK_MARK = '\n\n' + WQ_NOTES_PREFIX;
+        function wqParseResult(text){
+            text = String(text == null ? '' : text);
+            const checks = [];
+            let notes = text;
+            const hasChecklist = text.indexOf('Checklist:\n') === 0;
+            if (hasChecklist) {
+                const split = text.indexOf(WQ_CHECK_MARK);
+                const head = split >= 0 ? text.slice(0, split) : text;
+                head.split('\n').forEach(function(line){
+                    const m = line.match(/^-\s+(.+)$/);
+                    if (m && m[1].trim()) checks.push(m[1].trim());
+                });
+                notes = split >= 0 ? text.slice(split + WQ_CHECK_MARK.length) : '';
+            } else if (text.indexOf(WQ_NOTES_PREFIX) === 0) {
+                notes = text.slice(WQ_NOTES_PREFIX.length);
+            }
+            return { checks: checks, notes: notes };
+        }
+        function wqComposeResult(checks, notes){
+            const parts = [];
+            if (checks && checks.length) parts.push('Checklist:\n' + checks.map(function(c){ return '- ' + c; }).join('\n'));
+            if (notes && notes.trim()) parts.push(WQ_NOTES_PREFIX + notes.trim());
+            return parts.join('\n\n');
+        }
+        function wqCollectResult(){
+            const checks = Array.prototype.slice.call(document.querySelectorAll('#wqChecklist input:checked')).map(function(cb){ return cb.value; });
+            const notes = (document.getElementById('wqResultText') || {}).value || '';
+            return wqComposeResult(checks, notes);
+        }
+        function wqFillResultForm(text){
+            const parsed = wqParseResult(text);
+            document.querySelectorAll('#wqChecklist input[type="checkbox"]').forEach(function(cb){
+                cb.checked = parsed.checks.indexOf(cb.value) !== -1;
+            });
+            const ta = document.getElementById('wqResultText');
+            if (ta) ta.value = parsed.notes;
+        }
+        function wqStoreDraft(){
+            if (!wqModalId) return;
+            wqDrafts[wqModalId] = wqCollectResult();
+        }
+        function wqResultFor(id){
+            if (wqModalId === id) return wqCollectResult();
+            if (wqDrafts[id] !== undefined) return wqDrafts[id];
+            if (wqResults[id] !== undefined) return wqResults[id];
+            const row = wqRowData[id];
+            return row ? String(row.result || '') : '';
+        }
+        function wqSyncResultBtn(sel){
+            const row = sel.closest('tr');
+            if (!row) return;
+            const btn = row.querySelector('.wq-result-btn');
+            if (!btn) return;
+            const enabled = sel.value === 'in_service';
+            btn.disabled = !enabled;
+            btn.title = enabled ? 'Enter consultation result' : 'Available when the patient is In service';
+        }
         function wqRow(w){
-        const opts = WQ_STATUSES.map(s=>'<option value="'+s+'"'+(w.status===s?' selected':'')+'>'+wqLabel(s)+'</option>').join('');
-        const resultBtn = w.status==='served'
-            ? ' <button type="button" class="btn-sm btn-edit" style="margin-left:4px" onclick="openWalkinResultModal('+w.id+',\'edit\')">'+((w.result&&w.result.length)?'Result':'Add Result')+'</button>'
-            : '';
-        const vitalsBtn = ' <button type="button" class="btn-sm btn-vitals" style="margin-left:4px" title="View patient vitals" data-apt="'+(w.appointment_id==null?'':parseInt(w.appointment_id,10))+'" data-pid="'+parseInt(w.patient_id,10)+'" data-name="'+wqEsc(w.name)+'" data-label="Walk-in &middot; '+wqEsc(w.arrival)+'" onclick="openAptVitalsView(this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals</button>';
-        return '<tr>' +
-            '<td><span class="badge" style="background:#16a34a;color:#fff;font-size:1rem;font-weight:800">#'+w.queue+'</span></td>' +
-            '<td><strong>'+(w.patient_id?'<a href="client_profile.php?id='+parseInt(w.patient_id,10)+'" style="color:inherit;text-decoration:underline;text-underline-offset:2px">':'')+wqEsc(w.name)+(w.patient_id?'</a>':'')+'</strong><br><small style="color:#64748b">'+wqEsc(w.contact)+'</small></td>' +
-            '<td>'+wqEsc(w.procedure||'—')+'</td>' +
-            '<td>'+wqEsc(w.arrival)+'</td>' +
-            '<td style="white-space:nowrap">' +
-                '<select class="action-select" data-id="'+w.id+'" data-prev="'+wqEsc(w.status)+'" onchange="updateWalkinStatus(this)" aria-label="Queue status">'+opts+'</select>' +
-                resultBtn +
-                vitalsBtn +
-            '</td></tr>';
+            const opts = WQ_STATUSES.map(s=>'<option value="'+s+'"'+(w.status===s?' selected':'')+'>'+wqLabel(s)+'</option>').join('');
+            const canResult = w.status === 'in_service';
+            const resultBtn = ' <button type="button" class="btn-sm btn-edit wq-result-btn" style="margin-left:4px" data-id="'+w.id+'" title="'+(canResult?'Enter consultation result':'Available when the patient is In service')+'" onclick="openWalkinResultModal('+w.id+',\'edit\')"'+(canResult?'':' disabled')+'><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Result</button>';
+            const vitalsBtn = ' <button type="button" class="btn-sm btn-vitals" style="margin-left:4px" title="View patient vitals" data-apt="'+(w.appointment_id==null?'':parseInt(w.appointment_id,10))+'" data-pid="'+parseInt(w.patient_id,10)+'" data-name="'+wqEsc(w.name)+'" data-label="Walk-in &middot; '+wqEsc(w.arrival)+'" onclick="openAptVitalsView(this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals</button>';
+            return '<tr>' +
+                '<td><span class="badge" style="background:#16a34a;color:#fff;font-size:1rem;font-weight:800">#'+w.queue+'</span></td>' +
+                '<td><strong>'+(w.patient_id?'<a href="client_profile.php?id='+parseInt(w.patient_id,10)+'" style="color:inherit;text-decoration:underline;text-underline-offset:2px">':'')+wqEsc(w.name)+(w.patient_id?'</a>':'')+'</strong><br><small style="color:#64748b">'+wqEsc(w.contact)+'</small></td>' +
+                '<td>'+wqEsc(w.procedure||'—')+'</td>' +
+                '<td>'+wqEsc(w.arrival)+'</td>' +
+                '<td style="white-space:nowrap">' +
+                    '<select class="action-select" data-id="'+w.id+'" data-prev="'+wqEsc(w.status)+'" onchange="updateWalkinStatus(this)" aria-label="Queue status">'+opts+'</select>' +
+                    resultBtn +
+                    vitalsBtn +
+                '</td></tr>';
         }
         let wqBusy = false, wqPending = false;
         function wqSyncBadge(sel){
@@ -460,6 +542,10 @@ function fill_color($s) {
             .then(r=>r.json())
             .then(d=>{
                 if(!d || !d.ok) return;
+                (d.rows || []).forEach(function(w){
+                    wqRowData[w.id] = w;
+                    wqResults[w.id] = String(w.result || '');
+                });
                 const body = document.getElementById('queueBody');
                 if (body) body.innerHTML = d.rows.length ? d.rows.map(wqRow).join('') : WQ_EMPTY;
                 if (window.fdEnhance) window.fdEnhance();
@@ -473,12 +559,13 @@ function fill_color($s) {
             .finally(()=>{ wqBusy = false; if (wqPending) refreshQueue(false); });
         }
         function updateWalkinStatus(sel){
-            const id = sel.getAttribute('data-id');
+            const id = parseInt(sel.getAttribute('data-id'), 10);
             if (sel.value === 'served') {
-                openWalkinResultModal(id, 'served');
+                wqAutoServe(sel, id);
                 return;
             }
             wqSyncBadge(sel);
+            wqSyncResultBtn(sel);
             const fd = new FormData();
             fd.append('action','update_status');
             fd.append('walkin_id', id);
@@ -495,83 +582,113 @@ function fill_color($s) {
                     showToast(res,'error');
                     sel.value = sel.getAttribute('data-prev') || 'waiting';
                     wqSyncBadge(sel);
+                    wqSyncResultBtn(sel);
                 }
                 wqPending = true;
                 refreshQueue();
             })
-            .catch(()=>{ hideLoading(); showToast('Network error','error'); sel.value = sel.getAttribute('data-prev') || 'waiting'; wqSyncBadge(sel); wqPending = true; refreshQueue(); });
+            .catch(()=>{ hideLoading(); showToast('Network error','error'); sel.value = sel.getAttribute('data-prev') || 'waiting'; wqSyncBadge(sel); wqSyncResultBtn(sel); wqPending = true; refreshQueue(); });
         }
-
-        /* -- Walk-in result modal -- */
-        let wqModalMode = 'edit';
-        let wqModalId = null;
-        function openWalkinResultModal(id, mode){
-            id = parseInt(id, 10);
-            wqModalId = id;
-            wqModalMode = mode || 'edit';
-            const ta = document.getElementById('wqResultText');
-            if (ta) ta.value = '';
-            const title = document.getElementById('wqResultTitle');
-            if (title) title.textContent = wqModalMode === 'served' ? 'Mark Served · Input Result' : 'Walk-in Result';
-            const info = document.getElementById('wqResultInfoRow');
-            if (info) info.innerHTML = '<div class="info-item"><label>Patient</label><span>Loading&hellip;</span></div>';
-            const m = document.getElementById('walkinResultModal');
-            m.classList.add('active');
-            document.body.style.overflow = 'hidden';
-            fetch('doctor_walkin_queue.php')
-            .then(r=>r.json())
-            .then(d=>{
-                if(!d || !d.ok || wqModalId !== id) return;
-                const row = (d.rows||[]).find(x=>parseInt(x.id,10)===id);
-                if(!row) return;
-                if (info) info.innerHTML =
-                    '<div class="info-item"><label>Queue</label><span>#'+row.queue+'</span></div>' +
-                    '<div class="info-item"><label>Patient</label><span>'+wqEsc(row.name)+'</span></div>' +
-                    '<div class="info-item"><label>Test / Procedure</label><span>'+(row.procedure?wqEsc(row.procedure):'—')+'</span></div>' +
-                    '<div class="info-item"><label>Status</label><span>'+wqLabel(row.status)+'</span></div>';
-                if (ta && wqModalMode === 'edit') ta.value = row.result || '';
-            })
-            .catch(()=>{});
-        }
-        function closeWalkinResultModal(){
-            const m = document.getElementById('walkinResultModal');
-            if (m) m.classList.remove('active');
-            document.body.style.overflow = '';
-            if (wqModalMode === 'served' && wqModalId) {
-                const sel = document.querySelector('#queueBody select[data-id="'+wqModalId+'"]');
-                if (sel) { sel.value = sel.getAttribute('data-prev') || 'waiting'; wqSyncBadge(sel); }
-            }
-            wqModalId = null;
-            wqModalMode = 'edit';
-        }
-        function saveWalkinResult(){
-            if(!wqModalId) return;
-            const result = document.getElementById('wqResultText').value.trim();
-            if(!result && wqModalMode !== 'served'){
-                showToast('Please enter the result','error');
-                return;
-            }
-            showLoading();
+        function wqAutoServe(sel, id){
+            const result = wqResultFor(id);
+            wqSyncBadge(sel);
+            wqSyncResultBtn(sel);
             const fd = new FormData();
-            fd.append('walkin_id', wqModalId);
+            fd.append('action','update_status');
+            fd.append('walkin_id', id);
+            fd.append('status','served');
             fd.append('result', result);
-            if (wqModalMode === 'served'){
-                fd.append('action','update_status');
-                fd.append('status','served');
-            } else {
-                fd.append('action','save_result');
-            }
+            showLoading();
             fetch('doctor_walkin_queue.php', {method:'POST', body:fd})
             .then(r=>r.text())
             .then(res=>{
                 hideLoading();
                 if(res.trim()==='success'){
+                    wqResults[id] = result;
+                    delete wqDrafts[id];
+                    sel.setAttribute('data-prev','served');
+                    if (wqModalId === id) closeWalkinResultModal();
+                    showToast(result ? 'Marked served — result saved automatically' : 'Marked served','success');
+                } else {
+                    showToast(res,'error');
+                    sel.value = sel.getAttribute('data-prev') || 'waiting';
+                    wqSyncBadge(sel);
+                    wqSyncResultBtn(sel);
+                }
+                wqPending = true;
+                refreshQueue();
+            })
+            .catch(()=>{ hideLoading(); showToast('Network error','error'); sel.value = sel.getAttribute('data-prev') || 'waiting'; wqSyncBadge(sel); wqSyncResultBtn(sel); wqPending = true; refreshQueue(); });
+        }
+
+        /* -- Walk-in result modal -- */
+        let wqModalMode = 'edit';
+        let wqModalId = null;
+        function wqInfoHtml(row){
+            return '<div class="info-item"><label>Queue</label><span>#'+row.queue+'</span></div>' +
+                '<div class="info-item"><label>Patient</label><span>'+wqEsc(row.name)+'</span></div>' +
+                '<div class="info-item"><label>Test / Procedure</label><span>'+(row.procedure?wqEsc(row.procedure):'—')+'</span></div>' +
+                '<div class="info-item"><label>Status</label><span>'+wqLabel(row.status)+'</span></div>';
+        }
+        function openWalkinResultModal(id, mode){
+            id = parseInt(id, 10);
+            wqModalId = id;
+            wqModalMode = mode || 'edit';
+            const row = wqRowData[id];
+            const title = document.getElementById('wqResultTitle');
+            if (title) title.textContent = 'Consultation Result';
+            const info = document.getElementById('wqResultInfoRow');
+            if (info) info.innerHTML = row ? wqInfoHtml(row) : '<div class="info-item"><label>Patient</label><span>Loading&hellip;</span></div>';
+            const saved = wqDrafts[id] !== undefined ? wqDrafts[id] : (wqResults[id] !== undefined ? wqResults[id] : (row ? String(row.result || '') : ''));
+            wqFillResultForm(saved);
+            const m = document.getElementById('walkinResultModal');
+            m.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            if (!row) {
+                fetch('doctor_walkin_queue.php')
+                .then(r=>r.json())
+                .then(d=>{
+                    if(!d || !d.ok || wqModalId !== id) return;
+                    const found = (d.rows||[]).find(x=>parseInt(x.id,10)===id);
+                    if(!found) return;
+                    wqRowData[id] = found;
+                    wqResults[id] = String(found.result || '');
+                    if (info) info.innerHTML = wqInfoHtml(found);
+                    if (wqDrafts[id] === undefined) wqFillResultForm(wqResults[id]);
+                })
+                .catch(()=>{});
+            }
+        }
+        function closeWalkinResultModal(){
+            const m = document.getElementById('walkinResultModal');
+            if (m) m.classList.remove('active');
+            document.body.style.overflow = '';
+            wqModalId = null;
+            wqModalMode = 'edit';
+        }
+        function saveWalkinResult(){
+            if(!wqModalId) return;
+            const id = wqModalId;
+            const result = wqCollectResult();
+            wqDrafts[id] = result;
+            if(!result){
+                showToast('Select a checklist item or enter notes','error');
+                return;
+            }
+            showLoading();
+            const fd = new FormData();
+            fd.append('action','save_result');
+            fd.append('walkin_id', id);
+            fd.append('result', result);
+            fetch('doctor_walkin_queue.php', {method:'POST', body:fd})
+            .then(r=>r.text())
+            .then(res=>{
+                hideLoading();
+                if(res.trim()==='success'){
+                    wqResults[id] = result;
+                    delete wqDrafts[id];
                     showToast('Result saved successfully!','success');
-                    const m = document.getElementById('walkinResultModal');
-                    m.classList.remove('active');
-                    document.body.style.overflow = '';
-                    wqModalId = null;
-                    wqModalMode = 'edit';
+                    closeWalkinResultModal();
                     wqPending = true;
                     refreshQueue();
                 } else {
@@ -580,6 +697,13 @@ function fill_color($s) {
             })
             .catch(()=>{ hideLoading(); showToast('Network error','error'); });
         }
+        document.querySelectorAll('#wqChecklist input[type="checkbox"]').forEach(function(cb){
+            cb.addEventListener('change', wqStoreDraft);
+        });
+        (function(){
+            const ta = document.getElementById('wqResultText');
+            if (ta) ta.addEventListener('input', wqStoreDraft);
+        })();
         document.getElementById('walkinResultModal').addEventListener('click', function(e){
             if(e.target === this) closeWalkinResultModal();
         });
