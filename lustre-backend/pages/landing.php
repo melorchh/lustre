@@ -204,7 +204,8 @@ if (isset($_SESSION["patient_id"])) {
     <form id="loginForm">
       <div class="field"><label>Email or username</label><input type="text" id="loginId" name="email" placeholder="you@example.com or username" required autocomplete="username"><div class="field-hint">Patients enter your email · Staff enter your username</div></div>
       <div class="field"><label>Password</label><div class="pw-field"><input type="password" name="password" id="loginPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required autocomplete="current-password"><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
-      <button type="submit" class="submit-btn"><span>Sign In</span> &rarr;</button>
+      <label class="terms-check"><input type="checkbox" id="loginTerms" required><span>I have read and agree to the Terms and Conditions.</span></label>
+      <button type="submit" class="submit-btn" id="loginSubmitBtn" disabled><span>Sign In</span> &rarr;</button>
     </form>
     <a href="#" class="forgot-link" onclick="openForgotPassword()">Forgot password?</a>
     <div class="modal-switch"><span>Don't have an account?</span> <a href="#" onclick="switchModal('loginModal','registerModal')">Register here</a></div>
@@ -341,7 +342,8 @@ if (isset($_SESSION["patient_id"])) {
                 <div id="pwReq4" class="pw-req" data-text="One number (0-9)"><span class="pw-ic" aria-hidden="true">&#10007;</span> One number (0-9)</div>
             </div>
             <div class="pw-field"><input type="password" name="confirm_password" id="regConfirmPassword" placeholder="Confirm Password" required><button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
-            <button type="submit" class="btn-primary btn-full">Register</button>
+            <label class="terms-check"><input type="checkbox" id="regTerms" required><span>I have read and agree to the Terms and Conditions.</span></label>
+            <button type="submit" class="btn-primary btn-full" id="regSubmitBtn" disabled>Register</button>
         </form>
 
         <!-- -- OTP verification step (shown after email is sent) -- -->
@@ -489,9 +491,21 @@ function showToast(msg,type=''){const t=document.getElementById('toast');t.textC
 function showLoading(){document.getElementById('loadingScreen').classList.add('active')}
 function hideLoading(){document.getElementById('loadingScreen').classList.remove('active')}
 
+function syncTermsGate(cbId, btnId){
+  const cb = document.getElementById(cbId), btn = document.getElementById(btnId);
+  if (!cb || !btn) return;
+  const sync = () => { btn.disabled = !cb.checked; };
+  cb.addEventListener('change', sync);
+  sync();
+}
+syncTermsGate('loginTerms', 'loginSubmitBtn');
+syncTermsGate('regTerms', 'regSubmitBtn');
+
 /* -- Login (patients by email; admins and doctors by username) -- */
 document.getElementById('loginForm').addEventListener('submit',function(e){
-  e.preventDefault();const err=document.getElementById('loginError');err.classList.remove('show');showLoading();
+  e.preventDefault();const err=document.getElementById('loginError');err.classList.remove('show');
+  if(!document.getElementById('loginTerms').checked){err.textContent='Please accept the Terms and Conditions to continue.';err.classList.add('show');return;}
+  showLoading();
   const ident=document.getElementById('loginId').value.trim();
   if(ident.indexOf('@')>=0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ident)){hideLoading();err.textContent = 'That does not look like a valid email address.';err.classList.add('show');return;}
   fetch('login.php',{method:'POST',body:new FormData(this)}).then(r=>r.text()).then(res=>{hideLoading();
@@ -1469,6 +1483,11 @@ function checkPasswordStrength(pw) {
 // Register form &mdash; validate address then submit
 document.getElementById('registerForm').addEventListener('submit', function(e) {
     e.preventDefault();
+
+    if (!document.getElementById('regTerms').checked) {
+        showToast('Please accept the Terms and Conditions to continue.', 'error');
+        return;
+    }
 
     const password        = document.getElementById('regPassword').value;
     const confirmPassword = document.getElementById('regConfirmPassword').value;
