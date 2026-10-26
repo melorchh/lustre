@@ -536,7 +536,7 @@ export default function AdminHistory() {
       </Card>
 
       {/* ---- stats ---- */}
-      <StatGrid>
+      <StatGrid className="ap-stat-grid--seven">
         <StatCard icon={<IconAppointments />} label="All appointments" value={stats.allAppointments ?? appointments.length} hint="Archived visits" />
         <StatCard icon={<IconCheck />} label="Completed" value={stats.completed ?? 0} hint="Served visits" tone="slate" />
         <StatCard icon={<IconAppointments />} label="Cancelled" value={stats.cancelled ?? 0} hint="Did not push through" tone="rose" />

@@ -29,12 +29,12 @@ export function StatCard({
 }) {
   return (
     <div className={`ap-stat ap-stat--${tone}`}>
-      {icon ? <span className="ap-stat-icon">{icon}</span> : null}
-      <span className="ap-stat-body">
+      <span className="ap-stat-label">{label}</span>
+      <span className="ap-stat-main">
         <span className="ap-stat-value">{value}</span>
-        <span className="ap-stat-label">{label}</span>
-        {hint ? <span className="ap-stat-hint">{hint}</span> : null}
+        {icon ? <span className="ap-stat-icon">{icon}</span> : null}
       </span>
+      {hint ? <span className="ap-stat-hint">{hint}</span> : null}
     </div>
   );
 }
