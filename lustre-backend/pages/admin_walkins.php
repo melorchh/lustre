@@ -4,6 +4,8 @@ if (!isset($_SESSION["admin_id"])) { header("Location: admin_login.php"); exit; 
 require_once __DIR__ . '/../src/staff_shell.php';
 require_once __DIR__ . '/../src/staff_data.php';
 
-$data  = admin_view_data($conn, 'walkins');
+$data  = admin_view_data($conn, 'walkins', array(
+    'date' => isset($_GET['date']) ? trim($_GET['date']) : '',
+));
 $staff = staff_identity('admin');
 render_staff_shell($staff, 'walkins', $data, 'admin_walkins', 'Walk-ins');

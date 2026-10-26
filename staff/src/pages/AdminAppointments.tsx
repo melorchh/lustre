@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Shell from '../Shell';
 import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime, fmtDateTime } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
-import type { AppointmentRow } from '../types';
+import { Modal } from '../components';
+import type { AppointmentRow, VitalRow } from '../types';
 
 interface HistoryEntry {
   appointment_id: number;
@@ -13,6 +14,16 @@ interface HistoryEntry {
   new_time: string;
   rescheduled_at: string;
 }
+
+const EMPTY_VITALS = {
+  visit_date: '',
+  weight_kg: '',
+  height_cm: '',
+  blood_pressure: '',
+  heart_rate: '',
+  fundal_height: '',
+  notes: '',
+};
 
 export default function AdminAppointments() {
   const data = getInitial();
@@ -26,8 +37,76 @@ export default function AdminAppointments() {
   const [qStatus, setQStatus] = useState('');
   const [qPriority, setQPriority] = useState('');
   const [resultView, setResultView] = useState<AppointmentRow | null>(null);
+  const [vitalsFor, setVitalsFor] = useState<AppointmentRow | null>(null);
+  const [vitalsForm, setVitalsForm] = useState({ ...EMPTY_VITALS });
+  const [vitalsTouched, setVitalsTouched] = useState(false);
 
   const stats = (data.data.stats as Record<string, number>) || {};
+
+  // Prefill existing vitals for the selected appointment unless the user
+  // already started typing.
+  useEffect(() => {
+    if (!vitalsFor) return;
+    let alive = true;
+    fetch(`client_vitals_api.php?appointment_id=${vitalsFor.id}`, {
+      headers: { 'X-Requested-With': 'LustreStaff' },
+      cache: 'no-store',
+    })
+      .then((r) => r.json())
+      .then((json: { ok?: boolean; vitals?: VitalRow[] }) => {
+        if (!alive || !json?.ok || !json.vitals?.length) return;
+        if (vitalsTouched) return;
+        const v = json.vitals[0];
+        setVitalsForm({
+          visit_date: String(v.visit_date || '').slice(0, 10),
+          weight_kg: v.weight_kg != null ? String(v.weight_kg) : '',
+          height_cm: v.height_cm != null ? String(v.height_cm) : '',
+          blood_pressure: v.blood_pressure || '',
+          heart_rate: v.heart_rate != null ? String(v.heart_rate) : '',
+          fundal_height: v.fundal_height != null ? String(v.fundal_height) : '',
+          notes: v.notes || '',
+        });
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vitalsFor?.id]);
+
+  function openVitals(a: AppointmentRow) {
+    setVitalsTouched(false);
+    setVitalsForm({
+      ...EMPTY_VITALS,
+      visit_date: String(a.appointment_date || '').slice(0, 10),
+    });
+    setVitalsFor(a);
+  }
+
+  async function saveVitals() {
+    if (!vitalsFor) return;
+    if (!vitalsForm.visit_date) { showToast('Visit date is required', 'error'); return; }
+    const hasMeasurement = ['weight_kg', 'height_cm', 'blood_pressure', 'heart_rate', 'fundal_height']
+      .some((k) => String((vitalsForm as Record<string, string>)[k] || '').trim() !== '');
+    if (!hasMeasurement) { showToast('Enter at least one vital sign measurement', 'error'); return; }
+    showLoading();
+    try {
+      const res = await postAction('admin_vitals_action.php', {
+        action: 'save_appointment_vitals',
+        patient_id: vitalsFor.patient_id,
+        appointment_id: vitalsFor.id,
+        ...vitalsForm,
+      });
+      if (isSuccess(res)) {
+        const id = vitalsFor.id;
+        setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, vital_count: Math.max(1, a.vital_count || 0) } : a)));
+        showToast('Vitals saved!', 'success');
+        setVitalsFor(null);
+      } else showToast(res.replace(/^error:\s*/i, ''), 'error');
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Error', 'error');
+    } finally {
+      hideLoading();
+    }
+  }
 
   const historyByAppt = useMemo(() => {
     const map: Record<number, HistoryEntry[]> = {};
@@ -209,6 +288,15 @@ export default function AdminAppointments() {
                         <button type="button" className="btn-slip" title="Print appointment slip" onClick={() => printSlip(a)}>
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" rx="1" /></svg> Slip
                         </button>
+                        <button
+                          type="button"
+                          className="btn-slip"
+                          title={(a.vital_count || 0) > 0 ? 'Edit recorded vitals' : 'Record vitals for this appointment'}
+                          onClick={() => openVitals(a)}
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg> Vitals
+                          {(a.vital_count || 0) > 0 && <span className="vitals-check">&#10003;</span>}
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -241,6 +329,58 @@ export default function AdminAppointments() {
           </div>
         </div>
       )}
+
+      <Modal open={!!vitalsFor} onClose={() => setVitalsFor(null)}>
+        <h2>Record Vitals</h2>
+        {vitalsFor && (
+          <div style={{ margin: '-.35rem 0 1rem', fontSize: '.92rem', color: 'var(--gray-600)' }}>
+            <strong>{vitalsFor.patient_name}</strong> &middot; {vitalsFor.unique_code || `#${vitalsFor.id}`} &middot; {fmtDate(vitalsFor.appointment_date)}
+          </div>
+        )}
+        <div
+          onChange={() => setVitalsTouched(true)}
+          onInput={() => setVitalsTouched(true)}
+        >
+          <div className="form-grid">
+            <div className="form-group">
+              <label>Visit Date *</label>
+              <input type="date" className="form-input" required value={vitalsForm.visit_date} onChange={(e) => setVitalsForm({ ...vitalsForm, visit_date: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label>Weight (kg)</label>
+              <input type="number" className="form-input" step="0.1" min="0" placeholder="e.g. 58.5" value={vitalsForm.weight_kg} onChange={(e) => setVitalsForm({ ...vitalsForm, weight_kg: e.target.value })} />
+            </div>
+          </div>
+          <div className="form-grid">
+            <div className="form-group">
+              <label>Height (cm)</label>
+              <input type="number" className="form-input" step="0.1" min="0" placeholder="e.g. 160.0" value={vitalsForm.height_cm} onChange={(e) => setVitalsForm({ ...vitalsForm, height_cm: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label>Blood Pressure</label>
+              <input type="text" className="form-input" placeholder="e.g. 110/70" value={vitalsForm.blood_pressure} onChange={(e) => setVitalsForm({ ...vitalsForm, blood_pressure: e.target.value })} />
+            </div>
+          </div>
+          <div className="form-grid">
+            <div className="form-group">
+              <label>Heart Rate (bpm)</label>
+              <input type="number" className="form-input" min="0" max="250" placeholder="e.g. 78" value={vitalsForm.heart_rate} onChange={(e) => setVitalsForm({ ...vitalsForm, heart_rate: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label>Fundal Height (cm)</label>
+              <input type="number" className="form-input" step="0.1" min="0" max="50" placeholder="e.g. 24.0" value={vitalsForm.fundal_height} onChange={(e) => setVitalsForm({ ...vitalsForm, fundal_height: e.target.value })} />
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Notes</label>
+            <textarea className="form-input" rows={2} style={{ minHeight: 74 }} placeholder="Optional notes" value={vitalsForm.notes} onChange={(e) => setVitalsForm({ ...vitalsForm, notes: e.target.value })} />
+          </div>
+        </div>
+        <div className="form-actions">
+          <button type="button" className="btn-secondary" onClick={() => setVitalsFor(null)}>Cancel</button>
+          <button type="button" className="btn-primary" onClick={saveVitals}>Save Vitals</button>
+        </div>
+      </Modal>
     </Shell>
   );
 }

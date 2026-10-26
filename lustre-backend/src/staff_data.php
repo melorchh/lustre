@@ -35,6 +35,19 @@ function admin_view_data($conn, $view, array $params = array())
     switch ($view) {
 
     case 'dashboard':
+        $todayWalkins = api_all($conn->query(
+            "SELECT w.id, w.arrival_date, w.arrival_time, w.status, w.test_procedure,
+                    p.name AS patient_name, p.patient_type, p.contact,
+                    d.id AS doctor_id, d.name AS doctor_name, d.specialty
+             FROM walk_ins w JOIN patients p ON w.patient_id=p.id JOIN doctors d ON w.doctor_id=d.id
+             WHERE w.arrival_date = CURRENT_DATE
+             ORDER BY d.name ASC, w.arrival_time ASC, w.created_at ASC, w.id ASC"));
+        $queueByDoctor = array();
+        foreach ($todayWalkins as $i => $w) {
+            $doc = (string)$w['doctor_name'];
+            $queueByDoctor[$doc] = ($queueByDoctor[$doc] ?? 0) + 1;
+            $todayWalkins[$i]['queue'] = $queueByDoctor[$doc];
+        }
         return array(
             'adminName' => (string)($_SESSION['admin_name'] ?? ''),
             'name'      => (string)($_SESSION['admin_name'] ?? ''),
@@ -46,6 +59,8 @@ function admin_view_data($conn, $view, array $params = array())
                 'totalAppointments' => staff_count($conn, "SELECT COUNT(*) c FROM appointments"),
                 'todayAppointments' => staff_count($conn, "SELECT COUNT(*) c FROM appointments WHERE appointment_date=CURRENT_DATE"),
                 'pendingAppointments' => staff_count($conn, "SELECT COUNT(*) c FROM appointments WHERE status='pending'"),
+                'confirmedAppointments' => staff_count($conn, "SELECT COUNT(*) c FROM appointments WHERE status='confirmed'"),
+                'walkinsToday' => staff_count($conn, "SELECT COUNT(*) c FROM walk_ins WHERE arrival_date=CURRENT_DATE"),
                 'pendingLabs' => staff_count($conn, "SELECT COUNT(*) c FROM lab_tests WHERE status='pending'"),
             ),
             'recentAppointments' => api_all($conn->query(
@@ -54,6 +69,14 @@ function admin_view_data($conn, $view, array $params = array())
                         p.name AS patient_name, d.name AS doctor_name, d.specialty
                  FROM appointments a JOIN patients p ON a.patient_id=p.id JOIN doctors d ON a.doctor_id=d.id
                  ORDER BY a.created_at DESC LIMIT 10")),
+            'rescheduleHistory' => api_all($conn->query(
+                "SELECT appointment_id, old_date, old_time, new_date, new_time, rescheduled_at
+                 FROM reschedule_history ORDER BY rescheduled_at DESC, id DESC")),
+            'todayWalkins' => $todayWalkins,
+            'patientsList' => api_all($conn->query("SELECT id, name, age, contact FROM patients ORDER BY name")),
+            'doctors' => api_all($conn->query("SELECT id, name, specialty, test_procedures FROM doctors ORDER BY name")),
+            'specialties' => array_values(array_filter(array_map(function ($r) { return $r['specialty']; },
+                api_all($conn->query("SELECT DISTINCT specialty FROM doctors ORDER BY specialty"))))),
             'todayAppointments' => api_all($conn->query(
                 "SELECT a.id, a.appointment_date, a.appointment_time, a.status, a.payment_status,
                         p.name AS patient_name, d.name AS doctor_name, d.specialty
@@ -100,6 +123,10 @@ function admin_view_data($conn, $view, array $params = array())
             'rescheduleHistory' => api_all($conn->query(
                 "SELECT appointment_id, old_date, old_time, new_date, new_time, rescheduled_at
                  FROM reschedule_history ORDER BY rescheduled_at DESC, id DESC")),
+            'patientsList' => api_all($conn->query("SELECT id, name, age, contact, address FROM patients ORDER BY name")),
+            'doctors' => api_all($conn->query("SELECT id, name, specialty, schedule, test_procedures FROM doctors ORDER BY name")),
+            'specialties' => array_values(array_filter(array_map(function ($r) { return $r['specialty']; },
+                api_all($conn->query("SELECT DISTINCT specialty FROM doctors ORDER BY specialty"))))),
         );
 
     case 'clients':
@@ -122,13 +149,49 @@ function admin_view_data($conn, $view, array $params = array())
                  ORDER BY a.appointment_date DESC, a.appointment_time DESC")),
             'doctors' => api_all($conn->query("SELECT id, name, specialty, test_procedures FROM doctors ORDER BY name")),
             'stats' => array(
-                'total' => staff_count($conn, "SELECT COUNT(*) c FROM patients"),
+                'total'   => staff_count($conn, "SELECT COUNT(*) c FROM patients"),
+                'active'  => staff_count($conn, "SELECT COUNT(DISTINCT patient_id) c FROM appointments WHERE status IN ('pending','confirmed')"),
+                'walkins' => staff_count($conn, "SELECT COUNT(*) c FROM patients WHERE is_walk_in = 1 OR is_walk_in = TRUE"),
             ),
         );
 
     case 'doctors':
         require_once __DIR__ . '/staff_auth.php';
         ensure_doctor_accounts_table($conn);
+        // Same one-time seed the legacy page ran so every doctor offers the
+        // default consultation services. Flagged so later removals stay removed.
+        $conn->query("CREATE TABLE IF NOT EXISTS app_settings (
+            skey VARCHAR(64) PRIMARY KEY,
+            sval VARCHAR(255) NOT NULL DEFAULT ''
+        )");
+        $seeded = $conn->query("SELECT sval FROM app_settings WHERE skey = 'default_test_procedures_v2'");
+        if (!$seeded || (int)$seeded->num_rows === 0) {
+            $other    = 'Other (specify below)';
+            $defaults = array('General Consultation', 'Follow-up Consultation', 'Diagnostic Procedure');
+            $rows     = $conn->query("SELECT id, test_procedures FROM doctors");
+            if ($rows) {
+                $upd = $conn->prepare("UPDATE doctors SET test_procedures = ? WHERE id = ?");
+                while ($row = $rows->fetch_assoc()) {
+                    $orig  = array_values(array_filter(array_map('trim', explode("\n", (string)($row['test_procedures'] ?? '')))));
+                    $lines = array_values(array_filter($orig, function ($x) use ($other) { return $x !== $other; }));
+                    $changed = count($lines) !== count($orig);
+                    foreach ($defaults as $d) {
+                        if (!in_array($d, $lines, true)) { $lines[] = $d; $changed = true; }
+                    }
+                    if ($changed) {
+                        $val = implode("\n", $lines);
+                        $id  = (int)$row['id'];
+                        $upd->bind_param("si", $val, $id);
+                        $upd->execute();
+                    }
+                }
+                $upd->close();
+            }
+            $conn->query("INSERT INTO app_settings (skey, sval) VALUES ('default_test_procedures_v2', '1') ON CONFLICT (skey) DO NOTHING");
+        }
+        $accounts = api_all($conn->query(
+            "SELECT da.id AS id, da.id AS account_id, da.username, da.created_at, d.id AS doctor_id, d.name AS doctor_name, d.specialty
+             FROM doctor_accounts da JOIN doctors d ON da.doctor_id=d.id ORDER BY d.name"));
         return array(
             'doctors' => api_all($conn->query(
                 "SELECT d.id, d.name, d.specialty, d.schedule, d.experience, d.created_at, d.test_procedures,
@@ -136,12 +199,11 @@ function admin_view_data($conn, $view, array $params = array())
                  FROM doctors d LEFT JOIN appointments a ON d.id=a.doctor_id
                  GROUP BY d.id, d.name, d.specialty, d.schedule, d.experience, d.created_at, d.test_procedures
                  ORDER BY d.name")),
-            'accounts' => api_all($conn->query(
-                "SELECT da.id AS account_id, da.username, da.created_at, d.id AS doctor_id, d.name AS doctor_name, d.specialty
-                 FROM doctor_accounts da JOIN doctors d ON da.doctor_id=d.id ORDER BY d.name")),
+            'accounts' => $accounts,
             'specialties' => array_values(array_filter(array_map(function ($r) { return $r['specialty']; }, api_all($conn->query("SELECT DISTINCT specialty FROM doctors ORDER BY specialty"))))),
             'stats' => array(
-                'total' => staff_count($conn, "SELECT COUNT(*) c FROM doctors"),
+                'total'        => staff_count($conn, "SELECT COUNT(*) c FROM doctors"),
+                'withAccounts' => staff_count($conn, "SELECT COUNT(*) c FROM doctor_accounts"),
             ),
         );
 
@@ -163,6 +225,32 @@ function admin_view_data($conn, $view, array $params = array())
                         d.name AS doctor_name, d.specialty, a.appointment_date, a.appointment_time
                  FROM lab_tests lt JOIN patients p ON lt.patient_id=p.id JOIN doctors d ON lt.doctor_id=d.id
                  LEFT JOIN appointments a ON lt.appointment_id=a.id ORDER BY lt.created_at DESC")),
+            'patients' => api_all($conn->query("SELECT id, name, email FROM patients ORDER BY name")),
+            'doctors' => api_all($conn->query("SELECT id, name, specialty FROM doctors ORDER BY name")),
+            'testTypes' => array(
+                'Complete Blood Count (CBC)',
+                'Blood Typing',
+                'Blood Sugar (FBS/RBS)',
+                'HbA1c',
+                'Lipid Profile',
+                'Liver Function Test (LFT)',
+                'Kidney Function Test (KFT)',
+                'Urinalysis',
+                'Pregnancy Test (hCG)',
+                'Pap Smear',
+                'Ultrasound (Obstetric)',
+                'Ultrasound (Pelvic)',
+                'Chest X-Ray',
+                'ECG / EKG',
+                'Hepatitis B Screening',
+                'HIV Screening',
+                'Thyroid Function Test',
+                'VDRL / Syphilis Test',
+                'Fetal Anomaly Scan',
+                'Non-Stress Test (NST)',
+                'Amniotic Fluid Index (AFI)',
+                'Other',
+            ),
             'stats' => array(
                 'total'       => staff_count($conn, "SELECT COUNT(*) c FROM lab_tests"),
                 'pending'     => staff_count($conn, "SELECT COUNT(*) c FROM lab_tests WHERE status='pending'"),
@@ -172,8 +260,58 @@ function admin_view_data($conn, $view, array $params = array())
         );
 
     case 'vitals':
+        $patients = api_all($conn->query("SELECT id, name, email FROM patients ORDER BY name"));
+        $selectedId = (int)$get('patient', 0);
+        $selectedName = '';
+        if ($selectedId <= 0 && !empty($patients)) {
+            $selectedId = (int)$patients[0]['id'];
+        }
+        if ($selectedId > 0) {
+            $pStmt = $conn->prepare("SELECT name FROM patients WHERE id = ?");
+            $pStmt->bind_param("i", $selectedId);
+            $pStmt->execute();
+            $pRow = api_one($pStmt->get_result());
+            $pStmt->close();
+            if ($pRow) { $selectedName = (string)$pRow['name']; }
+        }
+        $vaccList = array();
+        $summary  = array('next_due' => 'None scheduled');
+        if ($selectedId > 0) {
+            $vStmt = $conn->prepare(
+                "SELECT vc.id, vc.patient_id, vc.vaccine_name, vc.dose_label, vc.administered_date,
+                        vc.next_due_date, vc.notes, vc.created_at
+                 FROM vaccinations vc WHERE vc.patient_id = ? ORDER BY vc.administered_date DESC");
+            $vStmt->bind_param("i", $selectedId);
+            $vStmt->execute();
+            $vaccList = api_all($vStmt->get_result());
+            $vStmt->close();
+
+            $nStmt = $conn->prepare(
+                "SELECT vaccine_name, dose_label, next_due_date FROM vaccinations
+                 WHERE patient_id = ? AND next_due_date IS NOT NULL AND next_due_date >= CURRENT_DATE
+                 ORDER BY next_due_date ASC LIMIT 1");
+            $nStmt->bind_param("i", $selectedId);
+            $nStmt->execute();
+            $next = api_one($nStmt->get_result());
+            $nStmt->close();
+            if ($next) {
+                $summary['next_due'] = $next['vaccine_name'] . ' ' . $next['dose_label'] . ' — '
+                    . date('M j, Y', strtotime($next['next_due_date']));
+            }
+        }
+        $slots = array();
+        for ($t = strtotime('08:00'); $t < strtotime('17:00'); $t += 1800) {
+            $slots[] = date('H:i', $t) . ':00';
+        }
         return array(
-            'vaccinations' => api_all($conn->query(
+            'patients'    => $patients,
+            'doctors'     => api_all($conn->query("SELECT id, name, specialty FROM doctors ORDER BY name")),
+            'selectedId'  => $selectedId,
+            'selectedName'=> $selectedName,
+            'summary'     => $summary,
+            'slots'       => $slots,
+            'vaccinations'=> $vaccList,
+            'allVaccinations' => api_all($conn->query(
                 "SELECT vc.id, vc.patient_id, vc.vaccine_name, vc.dose_label, vc.administered_date,
                         vc.next_due_date, vc.notes, vc.created_at, p.name AS patient_name
                  FROM vaccinations vc JOIN patients p ON vc.patient_id=p.id ORDER BY vc.administered_date DESC")),
@@ -187,12 +325,13 @@ function admin_view_data($conn, $view, array $params = array())
     case 'walkins':
         $sel_date = (string)$get('date', date('Y-m-d'));
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $sel_date)) { $sel_date = date('Y-m-d'); }
-        $stats  = array('total' => 0, 'waiting' => 0, 'in_progress' => 0, 'completed' => 0);
+        $stats  = array('total' => 0, 'waiting' => 0, 'in_progress' => 0, 'completed' => 0, 'cancelled' => 0);
         $sstmt = $conn->prepare("SELECT
             COUNT(*) AS total,
             SUM((status='waiting')::int) AS waiting,
             SUM((status='in_service')::int) AS in_service,
-            SUM((status='served')::int) AS served
+            SUM((status='served')::int) AS served,
+            SUM((status='cancelled')::int) AS cancelled
             FROM walk_ins WHERE arrival_date = ?");
         $sstmt->bind_param("s", $sel_date);
         $sstmt->execute();
@@ -203,6 +342,7 @@ function admin_view_data($conn, $view, array $params = array())
             $stats['waiting']     = (int)$srow['waiting'];
             $stats['in_progress'] = (int)$srow['in_service'];
             $stats['completed']   = (int)$srow['served'];
+            $stats['cancelled']   = (int)$srow['cancelled'];
         }
         $wstmt = $conn->prepare(
             "SELECT w.id, w.arrival_date, w.arrival_time, w.status, w.created_at, w.test_procedure,
@@ -214,8 +354,11 @@ function admin_view_data($conn, $view, array $params = array())
         $wstmt->execute();
         $walkins = api_all($wstmt->get_result());
         $wstmt->close();
+        $queues = array();
         foreach ($walkins as $i => $w) {
-            $walkins[$i]['queue'] = $i + 1;
+            $did = (int)$w['doctor_id'];
+            $queues[$did] = ($queues[$did] ?? 0) + 1;
+            $walkins[$i]['queue'] = $queues[$did];
         }
         return array(
             'date'    => $sel_date,
@@ -274,20 +417,44 @@ function admin_view_data($conn, $view, array $params = array())
         switch ($group) {
             case 'week':
                 $labelExpr = "(a.appointment_date - ((extract(isodow from a.appointment_date)::int - 1) * interval '1 day'))::date AS bucket";
-                $groupBy = $labelExpr; $sortExpr = $labelExpr; break;
+                $groupBy = "(a.appointment_date - ((extract(isodow from a.appointment_date)::int - 1) * interval '1 day'))::date";
+                $sortExpr = $groupBy; break;
             case 'month':
                 $labelExpr = "to_char(a.appointment_date, 'YYYY-MM') AS bucket";
-                $groupBy = "to_char(a.appointment_date, 'YYYY-MM')"; $sortExpr = "MIN(a.appointment_date)"; break;
+                $groupBy = "to_char(a.appointment_date, 'YYYY-MM')";
+                $sortExpr = "MIN(a.appointment_date)"; break;
             default:
                 $labelExpr = "a.appointment_date AS bucket";
-                $groupBy = "a.appointment_date"; $sortExpr = "a.appointment_date";
+                $groupBy = "a.appointment_date";
+                $sortExpr = "a.appointment_date";
         }
         $gRes = $run("SELECT $labelExpr, COUNT(a.id) AS appts, COUNT(DISTINCT a.patient_id) AS patients,
-                             SUM((a.status='completed')::int) AS completed, SUM((a.status='cancelled')::int) AS cancelled
+                             SUM((a.status='completed')::int) AS completed, SUM((a.status='cancelled')::int) AS cancelled,
+                             SUM((a.payment_status='paid')::int) AS paid
                       FROM appointments a WHERE $where GROUP BY $groupBy ORDER BY $sortExpr ASC");
-        $byDay = array();
-        while ($gRow = $gRes->fetch_assoc()) {
-            $byDay[] = array('date' => $gRow['bucket'], 'count' => (int)$gRow['appts']);
+        $breakdown = array();
+        if ($gRes) {
+            while ($gRow = $gRes->fetch_assoc()) {
+                $bucket = (string)$gRow['bucket'];
+                if ($group === 'week') {
+                    $label = 'Week of ' . date('M j, Y', strtotime($bucket));
+                } elseif ($group === 'month') {
+                    $label = date('M Y', strtotime($bucket . '-01'));
+                } else {
+                    $label = date('M j, Y', strtotime($bucket));
+                }
+                $paid = (int)$gRow['paid'];
+                $breakdown[] = array(
+                    'bucket'    => $bucket,
+                    'label'     => $label,
+                    'appts'     => (int)$gRow['appts'],
+                    'patients'  => (int)$gRow['patients'],
+                    'completed' => (int)$gRow['completed'],
+                    'cancelled' => (int)$gRow['cancelled'],
+                    'paid'      => $paid,
+                    'revenue'   => $paid * 500,
+                );
+            }
         }
 
         $byDoctor = api_all($run("SELECT d.name AS doctor_name, d.specialty, COUNT(a.id) AS count
@@ -300,8 +467,20 @@ function admin_view_data($conn, $view, array $params = array())
 
         return array(
             'range'     => array('from' => $from, 'to' => $to),
+            'filters'   => array('period' => $period, 'group' => $group, 'status' => $status,
+                                 'payment' => $payment, 'doctor_id' => $doctorId),
             'summary'   => $summary,
-            'byDay'     => $byDay,
+            'metrics'   => array(
+                'appointments' => $summary['total'],
+                'patients'     => $summary['patients'],
+                'completed'    => $summary['completed'],
+                'cancelled'    => $summary['cancelled'],
+                'paid'         => (int)round($summary['revenue'] / 500),
+                'revenue'      => $summary['revenue'],
+            ),
+            'breakdown' => $breakdown,
+            'byDay'     => $breakdown,
+            'doctors'   => api_all($conn->query("SELECT id, name, specialty FROM doctors ORDER BY name")),
             'byDoctor'  => $byDoctor,
             'byService' => $byService,
             'byStatus'  => $byStatus,
@@ -309,18 +488,69 @@ function admin_view_data($conn, $view, array $params = array())
         );
 
     case 'history':
+        $appointments = api_all($conn->query(
+            "SELECT a.id, a.appointment_date, a.appointment_time, a.status, a.payment_status,
+                    a.created_at, a.updated_at, a.reschedule_count, a.last_rescheduled_at, a.appointment_duration,
+                    p.name AS patient_name, p.email AS patient_email, p.contact,
+                    p.address AS patient_address, p.age AS patient_age, d.name AS doctor_name, d.specialty
+             FROM appointments a JOIN patients p ON a.patient_id=p.id JOIN doctors d ON a.doctor_id=d.id
+             WHERE a.status IN ('completed','cancelled') ORDER BY a.updated_at DESC"));
+        $labTests = api_all($conn->query(
+            "SELECT lt.id, lt.test_type, lt.priority, lt.status, lt.scheduled_date, lt.result, lt.notes,
+                    lt.created_at, lt.updated_at,
+                    p.name AS patient_name, p.email AS patient_email, d.name AS doctor_name, d.specialty
+             FROM lab_tests lt JOIN patients p ON lt.patient_id=p.id JOIN doctors d ON lt.doctor_id=d.id
+             WHERE lt.status IN ('completed','cancelled') ORDER BY lt.updated_at DESC"));
+        $vitals = api_all($conn->query(
+            "SELECT v.id, v.visit_date, v.weight_kg, v.blood_pressure, v.heart_rate, v.fundal_height,
+                    v.notes, v.created_at, p.name AS patient_name, p.email AS patient_email
+             FROM vitals v JOIN patients p ON v.patient_id=p.id ORDER BY v.visit_date DESC"));
+        $vaccinations = api_all($conn->query(
+            "SELECT va.id, va.vaccine_name, va.dose_label, va.administered_date, va.next_due_date,
+                    va.notes, va.created_at, p.name AS patient_name, p.email AS patient_email
+             FROM vaccinations va JOIN patients p ON va.patient_id=p.id ORDER BY va.administered_date DESC"));
+        $historyMap = array();
+        $hRows = api_all($conn->query(
+            "SELECT appointment_id, old_date, old_time, new_date, new_time, rescheduled_at
+             FROM reschedule_history ORDER BY rescheduled_at DESC, id DESC"));
+        foreach ($hRows as $h) {
+            $historyMap[(int)$h['appointment_id']][] = $h;
+        }
+        $archiveDays = array('appointments' => array(), 'labtests' => array(), 'vitals' => array(), 'vaccinations' => array());
+        foreach ($appointments as $a) {
+            $day = substr((string)$a['updated_at'], 0, 10);
+            $archiveDays['appointments'][$day] = ($archiveDays['appointments'][$day] ?? 0) + 1;
+        }
+        foreach ($labTests as $l) {
+            $day = substr((string)$l['updated_at'], 0, 10);
+            $archiveDays['labtests'][$day] = ($archiveDays['labtests'][$day] ?? 0) + 1;
+        }
+        foreach ($vitals as $v) {
+            $day = substr((string)$v['created_at'], 0, 10);
+            $archiveDays['vitals'][$day] = ($archiveDays['vitals'][$day] ?? 0) + 1;
+        }
+        foreach ($vaccinations as $vc) {
+            $day = substr((string)$vc['created_at'], 0, 10);
+            $archiveDays['vaccinations'][$day] = ($archiveDays['vaccinations'][$day] ?? 0) + 1;
+        }
         return array(
             'stats' => array(
-                'appointments' => staff_count($conn, "SELECT COUNT(*) c FROM appointments WHERE status IN ('completed','cancelled')"),
-                'walkins'      => staff_count($conn, "SELECT COUNT(*) c FROM walk_ins WHERE status='served'"),
+                'allAppointments' => staff_count($conn, "SELECT COUNT(*) c FROM appointments"),
+                'appointments'    => staff_count($conn, "SELECT COUNT(*) c FROM appointments WHERE status IN ('completed','cancelled')"),
+                'completed'       => staff_count($conn, "SELECT COUNT(*) c FROM appointments WHERE status='completed'"),
+                'cancelled'       => staff_count($conn, "SELECT COUNT(*) c FROM appointments WHERE status='cancelled'"),
+                'paid'            => staff_count($conn, "SELECT COUNT(*) c FROM appointments WHERE payment_status='paid'"),
+                'labDone'         => staff_count($conn, "SELECT COUNT(*) c FROM lab_tests WHERE status='completed'"),
+                'vitals'          => staff_count($conn, "SELECT COUNT(*) c FROM vitals"),
+                'vaccinations'    => staff_count($conn, "SELECT COUNT(*) c FROM vaccinations"),
+                'walkins'         => staff_count($conn, "SELECT COUNT(*) c FROM walk_ins WHERE status='served'"),
             ),
-            'appointments' => api_all($conn->query(
-                "SELECT a.id, a.appointment_date, a.appointment_time, a.status, a.payment_status,
-                        a.created_at, a.updated_at, a.reschedule_count, a.last_rescheduled_at, a.appointment_duration,
-                        p.name AS patient_name, p.email AS patient_email, p.contact,
-                        p.address AS patient_address, p.age AS patient_age, d.name AS doctor_name, d.specialty
-                 FROM appointments a JOIN patients p ON a.patient_id=p.id JOIN doctors d ON a.doctor_id=d.id
-                 WHERE a.status IN ('completed','cancelled') ORDER BY a.updated_at DESC")),
+            'appointments'  => $appointments,
+            'labTests'      => $labTests,
+            'vitals'        => $vitals,
+            'vaccinations'  => $vaccinations,
+            'rescheduleHistory' => $historyMap,
+            'archiveDays'   => $archiveDays,
             'walkins' => api_all($conn->query(
                 "SELECT w.id, w.arrival_date, w.arrival_time, w.status, w.test_procedure, w.created_at,
                         p.name AS patient_name, d.name AS doctor_name

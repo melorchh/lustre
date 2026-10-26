@@ -1,142 +1,173 @@
 import { useMemo, useState } from 'react';
 import Shell from '../Shell';
-import { getInitial, postAction, isSuccess, fmtDate, fmtTime } from '../api';
+import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
-import { Modal } from '../components';
-import type { DoctorRow, WalkinRow } from '../types';
+import type { WalkinRow } from '../types';
+
+const STATUSES = ['waiting', 'in_service', 'served', 'cancelled'];
+
+function statusLabel(s: string): string {
+  if (s === 'in_service') return 'In Service';
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : '—';
+}
+
+function badgeClass(s: string): string {
+  if (s === 'served') return 'badge-completed';
+  if (s === 'in_service') return 'badge-confirmed';
+  if (s === 'cancelled') return 'badge-cancelled';
+  return 'badge-pending';
+}
 
 export default function AdminWalkins() {
   const d = getInitial().data as {
+    date?: string;
     walkins?: WalkinRow[];
-    doctors?: DoctorRow[];
-    tests?: string[];
     stats?: Record<string, number>;
   };
   const { showToast } = useToast();
+  const today = new Date().toISOString().slice(0, 10);
+  const [date, setDate] = useState<string>(d.date || today);
   const [walkins, setWalkins] = useState<WalkinRow[]>(d.walkins || []);
-  const doctors = d.doctors || [];
-  const tests = d.tests || [];
+  const [stats, setStats] = useState<Record<string, number>>(d.stats || {});
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
-  const [addOpen, setAddOpen] = useState(false);
-  const [form, setForm] = useState({
-    name: '', contact: '', email: '', address: '', patient_type: '', age: '', gender: '',
-    weight_kg: '', height_cm: '', test_procedure: '', doctor_id: '',
-  });
-  const stats = d.stats || {};
 
   const filtered = useMemo(() => walkins.filter((w) => {
-    if (q && !`${w.patient_name} ${w.contact}`.toLowerCase().includes(q.toLowerCase())) return false;
+    if (q && !`${w.patient_name} ${w.contact} ${w.test_procedure}`.toLowerCase().includes(q.toLowerCase())) return false;
     if (status && w.status !== status) return false;
     return true;
   }), [walkins, q, status]);
 
-  async function addWalkin() {
-    if (!form.name.trim()) { showToast('Patient name required', 'error'); return; }
+  const groups = useMemo(() => {
+    const out: { doctor: string; specialty: string; rows: WalkinRow[] }[] = [];
+    for (const w of filtered) {
+      const name = w.doctor_name || 'Unassigned';
+      let g = out.find((x) => x.doctor === name);
+      if (!g) {
+        g = { doctor: name, specialty: w.specialty || '', rows: [] };
+        out.push(g);
+      }
+      g.rows.push(w);
+    }
+    return out;
+  }, [filtered]);
+
+  async function loadDate(next: string) {
+    setDate(next);
     showLoading();
     try {
-      const res = await postAction('admin_walkin_action.php', { action: 'add_walkin', ...form });
-      if (isSuccess(res)) { showToast('Walk-in registered', 'success'); setAddOpen(false); refresh(); }
-      else showToast(res.replace(/^error:\s*/i, ''), 'error');
-    } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error'); }
-    finally { hideLoading(); }
+      const json = await fetchData<{ data?: { walkins?: WalkinRow[]; stats?: Record<string, number> } }>(
+        'api_admin_data.php',
+        { view: 'walkins', date: next },
+      );
+      if (json?.data) {
+        setWalkins(json.data.walkins || []);
+        setStats(json.data.stats || {});
+      }
+      try {
+        window.history.replaceState(null, '', `admin_walkins.php?date=${next}`);
+      } catch {
+        /* ignore */
+      }
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Error', 'error');
+    } finally {
+      hideLoading();
+    }
   }
 
-  function refresh() {
-    fetch('api_admin_data.php?view=walkins', { headers: { 'X-Requested-With': 'LustreStaff' }, cache: 'no-store' })
-      .then((r) => r.json())
-      .then((json) => { if (json?.data) setWalkins(json.data.walkins || []); })
-      .catch(() => {});
+  async function updateStatus(id: number, next: string) {
+    showLoading();
+    try {
+      const res = await postAction('admin_walkin_action.php', {
+        action: 'update_status',
+        walkin_id: id,
+        status: next,
+      });
+      if (isSuccess(res)) {
+        setWalkins((prev) => prev.map((w) => (w.id === id ? { ...w, status: next } : w)));
+        showToast('Status updated!', 'success');
+        loadDate(date);
+      } else showToast(res.replace(/^error:\s*/i, ''), 'error');
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Error', 'error');
+    } finally {
+      hideLoading();
+    }
   }
 
   return (
     <Shell active="walkins" title="Walk-ins">
       <div className="stats-grid">
-        <div className="stat-card"><div className="stat-number">{stats.today ?? 0}</div><div className="stat-label">Today</div></div>
+        <div className="stat-card"><div className="stat-number">{stats.total ?? 0}</div><div className="stat-label">Total</div></div>
         <div className="stat-card" style={{ borderTopColor: '#f59e0b' }}><div className="stat-number" style={{ color: '#f59e0b' }}>{stats.waiting ?? 0}</div><div className="stat-label">Waiting</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#0ea5e9' }}><div className="stat-number" style={{ color: '#0ea5e9' }}>{stats.in_progress ?? 0}</div><div className="stat-label">In Progress</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#10b981' }}><div className="stat-number" style={{ color: '#10b981' }}>{stats.completed ?? 0}</div><div className="stat-label">Completed</div></div>
+        <div className="stat-card" style={{ borderTopColor: '#0ea5e9' }}><div className="stat-number" style={{ color: '#0ea5e9' }}>{stats.in_progress ?? 0}</div><div className="stat-label">In Service</div></div>
+        <div className="stat-card" style={{ borderTopColor: '#10b981' }}><div className="stat-number" style={{ color: '#10b981' }}>{stats.completed ?? 0}</div><div className="stat-label">Served</div></div>
+        <div className="stat-card" style={{ borderTopColor: '#ef4444' }}><div className="stat-number" style={{ color: '#ef4444' }}>{stats.cancelled ?? 0}</div><div className="stat-label">Cancelled</div></div>
       </div>
 
       <div className="content-card">
         <div className="card-head">
-          <h2>Walk-in Queue</h2>
-          <button className="btn-primary" onClick={() => setAddOpen(true)}>+ Register Walk-in</button>
+          <div>
+            <h2 style={{ marginBottom: 4 }}>Walk-ins Queue</h2>
+            <small style={{ color: '#64748b' }}>Dynamic queue number per doctor for the selected date.</small>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '.6rem', flexWrap: 'wrap' }}>
+            <div>
+              <label className="form-label" style={{ marginTop: 0 }}>Date</label>
+              <input
+                type="date"
+                className="form-input"
+                style={{ width: 180, marginBottom: 0 }}
+                max={today}
+                value={date}
+                onChange={(e) => loadDate(e.target.value || today)}
+              />
+            </div>
+          </div>
         </div>
+
         <div className="apt-toolbar">
-          <input type="search" className="apt-search" placeholder="Search patient..." value={q} onChange={(e) => setQ(e.target.value)} />
+          <input type="search" className="apt-search" placeholder="Search patient, contact or procedure..." value={q} onChange={(e) => setQ(e.target.value)} />
           <select className="apt-select" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">All Statuses</option>
-            <option value="waiting">Waiting</option>
-            <option value="in-progress">In Progress</option>
-            <option value="completed">Completed</option>
+            {STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
           </select>
         </div>
-        <div className="table-scroll"><table>
-          <thead><tr><th>#</th><th>Patient</th><th>Type</th><th>Procedure</th><th>Doctor</th><th>Arrived</th><th>Status</th></tr></thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr><td colSpan={7} className="empty-state-row">No walk-ins.</td></tr>
-            ) : filtered.map((w) => (
-              <tr key={w.id}>
-                <td>{w.queue ?? `#${w.id}`}</td>
-                <td><strong>{w.patient_name}</strong><br /><small style={{ color: '#64748b' }}>{w.contact}</small></td>
-                <td>{w.patient_type ? <span className="pill">{w.patient_type.replace(/_/g, ' ')}</span> : '—'}</td>
-                <td>{w.test_procedure || '—'}</td>
-                <td>{w.doctor_name ? `Dr. ${w.doctor_name}` : '—'}</td>
-                <td>{w.arrival_time ? fmtTime(w.arrival_time) : fmtDate(w.arrival_date)}</td>
-                <td><span className={`badge badge-${w.status === 'served' ? 'completed' : w.status === 'in_service' ? 'confirmed' : 'pending'}`}>{w.status.replace(/_/g, ' ')}</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table></div>
-      </div>
 
-      <Modal open={addOpen} onClose={() => setAddOpen(false)}>
-        <h2>Register Walk-in</h2>
-        <label className="form-label">Patient Name</label>
-        <input className="form-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <label className="form-label">Contact</label>
-        <input className="form-input" value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} />
-        <label className="form-label">Email</label>
-        <input className="form-input" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-        <label className="form-label">Address</label>
-        <input className="form-input" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-        <label className="form-label">Patient Type</label>
-        <select className="form-dropdown form-input" value={form.patient_type} onChange={(e) => setForm({ ...form, patient_type: e.target.value })}>
-          <option value="">Select type</option>
-          <option value="infant">Infant (1-2)</option>
-          <option value="child">Child (3-12)</option>
-          <option value="adolescent">Adolescent (13-17)</option>
-          <option value="adult">Adult (18-59)</option>
-          <option value="elderly">Elderly (60+)</option>
-        </select>
-        <label className="form-label">Age</label>
-        <input className="form-input" type="number" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
-        <label className="form-label">Gender</label>
-        <select className="form-dropdown form-input" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
-          <option value="">Select gender</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-        </select>
-        <label className="form-label">Weight (kg)</label>
-        <input className="form-input" type="number" value={form.weight_kg} onChange={(e) => setForm({ ...form, weight_kg: e.target.value })} />
-        <label className="form-label">Height (cm)</label>
-        <input className="form-input" type="number" value={form.height_cm} onChange={(e) => setForm({ ...form, height_cm: e.target.value })} />
-        <label className="form-label">Test / Procedure</label>
-        <input className="form-input" list="testList" value={form.test_procedure} onChange={(e) => setForm({ ...form, test_procedure: e.target.value })} />
-        <datalist id="testList">{tests.map((t) => <option key={t} value={t} />)}</datalist>
-        <label className="form-label">Assign Doctor</label>
-        <select className="form-dropdown form-input" value={form.doctor_id} onChange={(e) => setForm({ ...form, doctor_id: e.target.value })}>
-          <option value="">Select doctor</option>
-          {doctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name} — {doc.specialty}</option>)}
-        </select>
-        <div className="form-actions">
-          <button className="btn-secondary" onClick={() => setAddOpen(false)}>Cancel</button>
-          <button className="btn-primary" onClick={addWalkin}>Register</button>
-        </div>
-      </Modal>
+        {groups.length === 0 ? (
+          <div className="empty-state-row" style={{ textAlign: 'center', color: '#94a3b8', padding: '1.5rem 0' }}>
+            No walk-ins for {fmtDate(date)}.
+          </div>
+        ) : groups.map((g) => (
+          <div className="walkin-doctor-group" key={g.doctor} style={{ marginTop: 18 }}>
+            <h3 style={{ margin: '0 0 8px', color: '#0f172a' }}>
+              Dr. {g.doctor} {g.specialty ? <small style={{ color: '#64748b', fontWeight: 400 }}>({g.specialty})</small> : null}
+            </h3>
+            <div className="table-scroll"><table>
+              <thead><tr><th>Queue</th><th>Patient</th><th>Type</th><th>Arrival</th><th>Test / Procedure</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                {g.rows.map((w) => (
+                  <tr key={w.id}>
+                    <td><span className="badge" style={{ background: '#16a34a', color: '#fff', fontSize: '1rem', fontWeight: 800 }}>#{w.queue ?? w.id}</span></td>
+                    <td><strong>{w.patient_name}</strong><br /><small style={{ color: '#64748b' }}>{w.contact}</small></td>
+                    <td>{w.patient_type ? <span className="pill">{w.patient_type.replace(/_/g, ' ')}</span> : '—'}</td>
+                    <td>{fmtTime(w.arrival_time)}</td>
+                    <td>{w.test_procedure || '—'}</td>
+                    <td><span className={`badge ${badgeClass(w.status)}`}>{statusLabel(w.status)}</span></td>
+                    <td>
+                      <select className="action-select" value={w.status} onChange={(e) => updateStatus(w.id, e.target.value)}>
+                        {STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table></div>
+          </div>
+        ))}
+      </div>
     </Shell>
   );
 }
