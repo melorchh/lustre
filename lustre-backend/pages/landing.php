@@ -704,7 +704,7 @@ function checkFpPasswordStrength(pw){
       const todayCheck = new Date();
       todayCheck.setHours(0,0,0,0);
       pickCheck.setHours(0,0,0,0);
-      if (pickCheck.getFullYear() === todayCheck.getFullYear() || pickCheck > todayCheck) {
+      if (pickCheck.getFullYear() >= todayCheck.getFullYear()) {
         showToast('Birthdate cannot be in the current year or future', 'error');
         hidden.value = '';
         input.value = '';
@@ -785,7 +785,7 @@ function checkFpPasswordStrength(pw){
       const isToday = ds === todayStr;
       const dt = new Date(viewY, viewM, d);
       dt.setHours(0,0,0,0);
-      const blocked = dt.getFullYear() === t.getFullYear() || dt > t;
+      const blocked = dt.getFullYear() >= t.getFullYear();
       const cls = ['reg-cal-btn'].concat(isSel?'active':[], isToday?'cal-today':[], blocked?'cal-future':[]).join(' ');
       cells += '<span class="reg-cal-day"><button type="button" class="'+cls+'" data-date="'+ds+'"'+(blocked?' disabled aria-disabled="true"':'')+'>'+d+'</button></span>';
     }
@@ -796,11 +796,18 @@ function checkFpPasswordStrength(pw){
   // widened automatically if the arrows navigated outside that range.
   function yearOptionsHTML(){
     const nowY = new Date().getFullYear();
-    const max = Math.max(nowY, viewY);
+    const max = nowY - 1;
     const min = Math.min(nowY - 100, viewY);
     let opts = '';
-    for (let y = max; y >= min; y--){
+    const start = Math.max(max, viewY);
+    const end = Math.min(min, max);
+    for (let y = start; y >= end; y--){
       opts += '<option value="'+y+'"'+(y===viewY?' selected':'')+'>'+y+'</option>';
+    }
+    if (opts === '') {
+      for (let y = max; y >= nowY - 100; y--){
+        opts += '<option value="'+y+'"'+(y===viewY?' selected':'')+'>'+y+'</option>';
+      }
     }
     return opts;
   }
@@ -927,7 +934,7 @@ function checkFpPasswordStrength(pw){
         const todayCheck = new Date();
         todayCheck.setHours(0,0,0,0);
         pickCheck.setHours(0,0,0,0);
-        if (pickCheck.getFullYear() === todayCheck.getFullYear() || pickCheck > todayCheck) {
+        if (pickCheck.getFullYear() >= todayCheck.getFullYear()) {
           showToast('Birthdate cannot be in the current year or future', 'error');
           hidden.value = '';
           ageEl.value = '';
@@ -952,7 +959,7 @@ function checkFpPasswordStrength(pw){
       const todayCheck = new Date();
       todayCheck.setHours(0,0,0,0);
       pickCheck.setHours(0,0,0,0);
-      if (pickCheck.getFullYear() === todayCheck.getFullYear() || pickCheck > todayCheck) {
+      if (pickCheck.getFullYear() >= todayCheck.getFullYear()) {
         showToast('Birthdate cannot be in the current year or future', 'error');
         input.value = hidden.value ? formatLong(new Date(hidden.value + 'T00:00:00')) : '';
         input.classList.toggle('placeholder', !hidden.value);
@@ -1290,7 +1297,7 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
     const todayDt = new Date();
     todayDt.setHours(0,0,0,0);
     bdayDt.setHours(0,0,0,0);
-    if (bdayDt.getFullYear() === todayDt.getFullYear() || bdayDt > todayDt) {
+    if (bdayDt.getFullYear() >= todayDt.getFullYear()) {
         showToast('Birthdate cannot be in the current year or future', 'error');
         return;
     }
