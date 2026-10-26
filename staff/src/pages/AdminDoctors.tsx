@@ -3,7 +3,7 @@ import Shell from '../Shell';
 import { getInitial, fetchData, postAction, isSuccess, fmtDate } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
-import { Modal } from '../components';
+import { Modal, Select } from '../components';
 import { Card, EmptyState, Field, FilterBar, FormSection, ModalHead, Stack, StatCard, StatGrid } from '../ui';
 import { IconDoctors, IconLab, IconSearch } from '../icons';
 import type { DoctorRow } from '../types';
@@ -324,12 +324,12 @@ export default function AdminDoctors() {
           <FormSection title="Create new account" hint="Username and a password of at least 8 characters">
             <div className="form-grid">
               <Field label="Doctor">
-                <select className="form-input" value={acctCreate.doctor_id} onChange={(e) => setAcctCreate({ ...acctCreate, doctor_id: e.target.value })}>
+                <Select className="form-input" value={acctCreate.doctor_id} onChange={(e) => setAcctCreate({ ...acctCreate, doctor_id: e.target.value })}>
                   <option value="">Select doctor</option>
                   {doctors.map((doc) => (
                     <option key={doc.id} value={doc.id}>Dr. {doc.name} — {doc.specialty}</option>
                   ))}
-                </select>
+                </Select>
               </Field>
               <Field label="Username">
                 <input type="text" className="form-input" maxLength={30} placeholder="e.g. dr_dela_cruz" value={acctCreate.username} onChange={(e) => setAcctCreate({ ...acctCreate, username: e.target.value })} />

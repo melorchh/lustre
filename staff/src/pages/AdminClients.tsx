@@ -1,6 +1,7 @@
 import { Fragment, useMemo, useState } from 'react';
 import Shell from '../Shell';
 import { getInitial, fmtDate, fmtTime } from '../api';
+import { Select } from '../components';
 import { Card, EmptyState, Field, FilterBar, Stack, StatCard, StatGrid } from '../ui';
 import { IconChevronRight, IconPatients, IconSearch, IconWalkins } from '../icons';
 import type { PatientRow } from '../types';
@@ -117,14 +118,14 @@ export default function AdminClients() {
               />
             </Field>
             <Field label="Patient type">
-              <select className="apt-select" value={type} onChange={(e) => setType(e.target.value)}>
+              <Select className="apt-select" value={type} onChange={(e) => setType(e.target.value)}>
                 <option value="">All types</option>
                 <option value="infant">Infant</option>
                 <option value="child">Child</option>
                 <option value="adolescent">Adolescent</option>
                 <option value="adult">Adult</option>
                 <option value="elderly">Elderly</option>
-              </select>
+              </Select>
             </Field>
           </FilterBar>
 

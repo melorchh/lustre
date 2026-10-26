@@ -3,7 +3,7 @@ import Shell from '../Shell';
 import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
-import { Modal } from '../components';
+import { Modal, Select } from '../components';
 import { Card, EmptyState, Field, FilterBar, FormSection, ModalHead, Stack, StatCard, StatGrid } from '../ui';
 import { IconClock, IconSearch, IconVitals } from '../icons';
 import type { VaccinationRow } from '../types';
@@ -212,7 +212,7 @@ export default function AdminVitals() {
             >
               <FilterBar>
                 <Field label="Patient" className="ap-field--grow">
-                  <select
+                  <Select
                     id="patientSelect"
                     className="apt-select"
                     value={selectedId}
@@ -221,7 +221,7 @@ export default function AdminVitals() {
                     {patients.map((p) => (
                       <option key={p.id} value={p.id}>{p.name}{p.email ? ` — ${p.email}` : ''}</option>
                     ))}
-                  </select>
+                  </Select>
                 </Field>
                 <Field label="Search" className="ap-field--grow">
                   <div className="ap-input-icon">
@@ -290,15 +290,15 @@ export default function AdminVitals() {
           />
           <div className="form-grid">
             <Field label="Vaccine name *">
-              <select className="form-input" value={form.vaccine_name} onChange={(e) => setForm({ ...form, vaccine_name: e.target.value })}>
+              <Select className="form-input" value={form.vaccine_name} onChange={(e) => setForm({ ...form, vaccine_name: e.target.value })}>
                 <option value="">Select vaccine</option>
                 {VACCINES.map((v) => <option key={v} value={v}>{v}</option>)}
-              </select>
+              </Select>
             </Field>
             <Field label="Dose given">
-              <select className="form-input" value={form.dose_label} onChange={(e) => setForm({ ...form, dose_label: e.target.value })}>
+              <Select className="form-input" value={form.dose_label} onChange={(e) => setForm({ ...form, dose_label: e.target.value })}>
                 {['Dose 1', 'Dose 2', 'Dose 3', 'Dose 4', 'Booster'].map((v) => <option key={v} value={v}>{v}</option>)}
-              </select>
+              </Select>
             </Field>
           </div>
           {form.vaccine_name === 'Other' && (
@@ -317,15 +317,15 @@ export default function AdminVitals() {
           <FormSection title="Next-dose booking" hint="Optional — books a pending appointment">
             <div className="form-grid ap-mt-0">
               <Field label="Doctor">
-                <select className="form-input" value={form.doctor_id} onChange={(e) => setForm({ ...form, doctor_id: e.target.value })}>
+                <Select className="form-input" value={form.doctor_id} onChange={(e) => setForm({ ...form, doctor_id: e.target.value })}>
                   {doctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name}</option>)}
-                </select>
+                </Select>
               </Field>
               <Field label="Preferred time">
-                <select className="form-input" value={form.appointment_time} onChange={(e) => setForm({ ...form, appointment_time: e.target.value })}>
+                <Select className="form-input" value={form.appointment_time} onChange={(e) => setForm({ ...form, appointment_time: e.target.value })}>
                   <option value="">Earliest available</option>
                   {slots.map((s) => <option key={s} value={s}>{fmtTime(s)}</option>)}
-                </select>
+                </Select>
               </Field>
             </div>
             <p className="form-hint">

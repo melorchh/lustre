@@ -2,7 +2,7 @@ import { Fragment, useState } from 'react';
 import Shell from '../Shell';
 import { getInitial, fmtDate, fmtTime } from '../api';
 import { useToast } from '../hooks';
-import { Modal } from '../components';
+import { Modal, Select } from '../components';
 import { Card, EmptyState, Field, FilterBar, ModalHead, Stack, StatCard, StatGrid } from '../ui';
 import {
   IconAppointments, IconCheck, IconLab, IconPrint, IconSearch, IconVaccine, IconVitals,
@@ -433,7 +433,7 @@ export default function AdminHistory() {
             <div className="pdf-cal-head">
               <div className="pdf-cal-sels">
                 <button type="button" className="pdf-cal-arrow" onClick={() => goMonth(-1)} disabled={pdfMonth <= 0} aria-label="Previous month">&lsaquo;</button>
-                <select
+                <Select
                   className="action-select"
                   aria-label="Month"
                   value={calMonth}
@@ -443,8 +443,8 @@ export default function AdminHistory() {
                   }}
                 >
                   {MONTH_NAMES.map((m, i) => <option key={m} value={i}>{m}</option>)}
-                </select>
-                <select
+                </Select>
+                <Select
                   className="action-select"
                   aria-label="Year"
                   value={calYear}
@@ -456,7 +456,7 @@ export default function AdminHistory() {
                   {Array.from({ length: yearRange.max - yearRange.min + 1 }, (_, i) => yearRange.max - i).map((y) => (
                     <option key={y} value={y}>{y}</option>
                   ))}
-                </select>
+                </Select>
                 <button type="button" className="pdf-cal-arrow" onClick={() => goMonth(1)} disabled={pdfMonth >= nowMonthIndex()} aria-label="Next month">&rsaquo;</button>
               </div>
             </div>
@@ -585,18 +585,18 @@ export default function AdminHistory() {
               <input type="search" className="apt-search" placeholder="Any" value={filters.aptAge} onChange={(e) => setFilter('aptAge', e.target.value)} />
             </Field>
             <Field label="Status">
-              <select className="apt-select" value={filters.aptStatus} onChange={(e) => setFilter('aptStatus', e.target.value)}>
+              <Select className="apt-select" value={filters.aptStatus} onChange={(e) => setFilter('aptStatus', e.target.value)}>
                 <option value="">All statuses</option>
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
-              </select>
+              </Select>
             </Field>
             <Field label="Payment">
-              <select className="apt-select" value={filters.aptPay} onChange={(e) => setFilter('aptPay', e.target.value)}>
+              <Select className="apt-select" value={filters.aptPay} onChange={(e) => setFilter('aptPay', e.target.value)}>
                 <option value="">All payments</option>
                 <option value="paid">Paid</option>
                 <option value="pending">Unpaid</option>
-              </select>
+              </Select>
             </Field>
           </FilterBar>
           <div className="table-scroll">
@@ -714,19 +714,19 @@ export default function AdminHistory() {
               <input type="search" className="apt-search" placeholder="Search test type..." value={filters.labTest} onChange={(e) => setFilter('labTest', e.target.value)} />
             </Field>
             <Field label="Status">
-              <select className="apt-select" value={filters.labStatus} onChange={(e) => setFilter('labStatus', e.target.value)}>
+              <Select className="apt-select" value={filters.labStatus} onChange={(e) => setFilter('labStatus', e.target.value)}>
                 <option value="">All statuses</option>
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
-              </select>
+              </Select>
             </Field>
             <Field label="Priority">
-              <select className="apt-select" value={filters.labPriority} onChange={(e) => setFilter('labPriority', e.target.value)}>
+              <Select className="apt-select" value={filters.labPriority} onChange={(e) => setFilter('labPriority', e.target.value)}>
                 <option value="">All priorities</option>
                 <option value="normal">Normal</option>
                 <option value="urgent">Urgent</option>
                 <option value="stat">STAT</option>
-              </select>
+              </Select>
             </Field>
           </FilterBar>
           <div className="table-scroll">

@@ -3,7 +3,7 @@ import Shell from '../Shell';
 import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime, fmtDateTime, firstName } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
-import { Modal } from '../components';
+import { Modal, Select } from '../components';
 import { Card, EmptyState, ModalHead, Stack, StatCard, StatGrid } from '../ui';
 import {
   IconAppointments, IconCheck, IconChevronRight, IconClock, IconDoctors, IconLab,
@@ -431,15 +431,15 @@ export default function AdminDashboard() {
                     </td>
                     <td>
                       <div className="ap-row-actions">
-                        <select className="action-select" value={a.status} onChange={(e) => updateStatus(a.id, e.target.value)}>
+                        <Select className="action-select" value={a.status} onChange={(e) => updateStatus(a.id, e.target.value)}>
                           {['pending', 'confirmed', 'completed', 'cancelled'].map((o) => (
                             <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>
                           ))}
-                        </select>
-                        <select className="action-select" value={a.payment_status} onChange={(e) => updatePayment(a.id, e.target.value)}>
+                        </Select>
+                        <Select className="action-select" value={a.payment_status} onChange={(e) => updatePayment(a.id, e.target.value)}>
                           <option value="pending">Unpaid</option>
                           <option value="paid">Paid</option>
-                        </select>
+                        </Select>
                         <button type="button" className="btn-slip" title="Print appointment slip" onClick={() => printSlip(a)}>
                           <IconPrint size={16} /> Print slip
                         </button>
@@ -498,20 +498,20 @@ export default function AdminDashboard() {
       <Modal open={apptOpen} onClose={() => setApptOpen(false)}>
         <ModalHead title="New appointment" hint="Book a slot for a registered patient." />
         <label className="form-label">Patient *</label>
-        <select className="form-dropdown form-input" value={apptForm.patient_id} onChange={(e) => setApptForm({ ...apptForm, patient_id: e.target.value })}>
+        <Select className="form-dropdown form-input" value={apptForm.patient_id} onChange={(e) => setApptForm({ ...apptForm, patient_id: e.target.value })}>
           <option value="">Select patient...</option>
           {patientsList.map((p) => (
             <option key={p.id} value={p.id}>{p.name}{p.age !== null && p.age !== undefined ? ` (${p.age} yrs)` : ''}</option>
           ))}
-        </select>
+        </Select>
 
         <label className="form-label">Doctor *</label>
-        <select className="form-dropdown form-input" value={apptForm.doctor_id} onChange={(e) => setApptForm({ ...apptForm, doctor_id: e.target.value, time: '' })}>
+        <Select className="form-dropdown form-input" value={apptForm.doctor_id} onChange={(e) => setApptForm({ ...apptForm, doctor_id: e.target.value, time: '' })}>
           <option value="">Select doctor...</option>
           {doctors.map((doc) => (
             <option key={doc.id} value={doc.id}>Dr. {doc.name} ({doc.specialty})</option>
           ))}
-        </select>
+        </Select>
 
         <div className="form-grid">
           <div className="form-group">
@@ -520,10 +520,10 @@ export default function AdminDashboard() {
           </div>
           <div className="form-group">
             <label>Time *</label>
-            <select className="form-dropdown form-input" value={apptForm.time} disabled={!apptForm.doctor_id || !apptForm.date} onChange={(e) => setApptForm({ ...apptForm, time: e.target.value })}>
+            <Select className="form-dropdown form-input" value={apptForm.time} disabled={!apptForm.doctor_id || !apptForm.date} onChange={(e) => setApptForm({ ...apptForm, time: e.target.value })}>
               <option value="">{slotLoading ? 'Loading...' : (!apptForm.doctor_id || !apptForm.date) ? 'Select doctor & date first' : slots.length === 0 ? 'No slots available' : 'Select time...'}</option>
               {slots.map((s) => <option key={s} value={s}>{fmtTime(s)}</option>)}
-            </select>
+            </Select>
           </div>
         </div>
         <p className="form-hint">Pick a doctor to see available dates &amp; times. Duration is 2 hours / visit.</p>
@@ -567,33 +567,33 @@ export default function AdminDashboard() {
         <div className="form-grid">
           <div className="form-group">
             <label>Specialty</label>
-            <select className="form-dropdown form-input" value={walkinForm.specialty} onChange={(e) => setWalkinForm({ ...walkinForm, specialty: e.target.value, doctor_id: '', test_procedure: '', other: '' })}>
+            <Select className="form-dropdown form-input" value={walkinForm.specialty} onChange={(e) => setWalkinForm({ ...walkinForm, specialty: e.target.value, doctor_id: '', test_procedure: '', other: '' })}>
               <option value="">All specialties</option>
               {specialties.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="form-group">
             <label>Doctor *</label>
-            <select className="form-dropdown form-input" value={walkinForm.doctor_id} onChange={(e) => setWalkinForm({ ...walkinForm, doctor_id: e.target.value, test_procedure: '', other: '' })}>
+            <Select className="form-dropdown form-input" value={walkinForm.doctor_id} onChange={(e) => setWalkinForm({ ...walkinForm, doctor_id: e.target.value, test_procedure: '', other: '' })}>
               <option value="">Select Doctor</option>
               {walkinDoctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name} ({doc.specialty})</option>)}
-            </select>
+            </Select>
           </div>
           <div className="form-group">
             <label>Test / Procedure</label>
-            <select className="form-dropdown form-input" value={walkinForm.test_procedure} disabled={!walkinForm.doctor_id} onChange={(e) => setWalkinForm({ ...walkinForm, test_procedure: e.target.value, other: e.target.value === OTHER_PROC ? walkinForm.other : '' })}>
+            <Select className="form-dropdown form-input" value={walkinForm.test_procedure} disabled={!walkinForm.doctor_id} onChange={(e) => setWalkinForm({ ...walkinForm, test_procedure: e.target.value, other: e.target.value === OTHER_PROC ? walkinForm.other : '' })}>
               <option value="" disabled>{walkinForm.doctor_id ? 'Select Test / Procedure' : 'Select a doctor first'}</option>
               {doctorProcs.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
+            </Select>
             {walkinForm.test_procedure === OTHER_PROC && (
               <input type="text" className="form-input" style={{ marginTop: '.55rem' }} placeholder="Specify test / procedure..." value={walkinForm.other} onChange={(e) => setWalkinForm({ ...walkinForm, other: e.target.value })} />
             )}
           </div>
           <div className="form-group">
             <label>Arrival Time</label>
-            <select className="form-dropdown form-input" value={walkinForm.arrival_time} onChange={(e) => setWalkinForm({ ...walkinForm, arrival_time: e.target.value })}>
+            <Select className="form-dropdown form-input" value={walkinForm.arrival_time} onChange={(e) => setWalkinForm({ ...walkinForm, arrival_time: e.target.value })}>
               {arrival.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+            </Select>
           </div>
         </div>
         <div className="form-grid">
@@ -609,11 +609,11 @@ export default function AdminDashboard() {
         <div className="form-grid">
           <div className="form-group">
             <label>Gender *</label>
-            <select className="form-dropdown form-input" value={walkinForm.gender} onChange={(e) => setWalkinForm({ ...walkinForm, gender: e.target.value })}>
+            <Select className="form-dropdown form-input" value={walkinForm.gender} onChange={(e) => setWalkinForm({ ...walkinForm, gender: e.target.value })}>
               <option value="">Select Gender</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
-            </select>
+            </Select>
           </div>
           <div className="form-group">
             <label>Address</label>
@@ -623,14 +623,14 @@ export default function AdminDashboard() {
         <div className="form-grid">
           <div className="form-group">
             <label>Patient Type</label>
-            <select className="form-dropdown form-input" value={walkinForm.patient_type} onChange={(e) => setWalkinForm({ ...walkinForm, patient_type: e.target.value, age: '' })}>
+            <Select className="form-dropdown form-input" value={walkinForm.patient_type} onChange={(e) => setWalkinForm({ ...walkinForm, patient_type: e.target.value, age: '' })}>
               <option value="">Select Type</option>
               <option value="infant">Infant</option>
               <option value="child">Child</option>
               <option value="adolescent">Adolescent</option>
               <option value="adult">Adult</option>
               <option value="elderly">Elderly</option>
-            </select>
+            </Select>
           </div>
           <div className="form-group">
             <label>Age</label>

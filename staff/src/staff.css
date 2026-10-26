@@ -1481,6 +1481,162 @@ button.resched-badge:hover {
 .admin-portal select option:disabled {
   color: var(--ap-faint);
 }
+/* --- custom dropdown (the closed control AND the opened list) --- */
+.ap-select {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+.ap-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 40px;
+  padding: 0.35rem 0.68rem 0.35rem 0.72rem;
+  border: 1.5px solid var(--ap-border-strong);
+  border-radius: 10px;
+  background-color: var(--ap-surface);
+  color: var(--ap-text);
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.ap-select-trigger:hover:not(:disabled) {
+  border-color: var(--ap-accent);
+  background-color: var(--ap-surface-2);
+}
+.ap-select-trigger:focus-visible,
+.ap-select-trigger[aria-expanded="true"] {
+  outline: none;
+  border-color: var(--ap-accent);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.13);
+}
+.ap-select-trigger:disabled {
+  border-color: var(--ap-border);
+  background-color: var(--ap-surface-3);
+  color: var(--ap-faint);
+  -webkit-text-fill-color: var(--ap-faint);
+  cursor: not-allowed;
+}
+.ap-select-trigger.is-placeholder .ap-select-value {
+  color: var(--ap-faint);
+  font-weight: 500;
+}
+.ap-select-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ap-select-caret {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  color: var(--ap-accent);
+  opacity: 0.9;
+  transition: transform 0.16s ease;
+}
+.ap-select-trigger[aria-expanded="true"] .ap-select-caret {
+  transform: rotate(180deg);
+}
+.ap-select-menu {
+  position: fixed;
+  z-index: 2600;
+  padding: 0.3rem;
+  border: 1px solid var(--ap-border-strong);
+  border-radius: 12px;
+  background: var(--ap-surface);
+  box-shadow:
+    0 26px 50px -30px rgba(9, 30, 18, 0.5),
+    0 2px 6px rgba(9, 30, 18, 0.06);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: ap-select-in 0.12s ease-out;
+}
+@keyframes ap-select-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.ap-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.46rem 0.55rem;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--ap-text);
+  cursor: pointer;
+}
+.ap-select-option-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ap-select-option.is-active {
+  background: var(--ap-surface-3);
+}
+.ap-select-option.is-selected {
+  color: var(--ap-accent);
+  font-weight: 700;
+}
+.ap-select-option.is-selected-placeholder {
+  color: var(--ap-faint);
+  font-weight: 500;
+}
+.ap-select-option.is-disabled {
+  color: var(--ap-faint);
+  cursor: not-allowed;
+}
+.ap-select-check {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+}
+.ap-row-actions .ap-select-trigger {
+  min-height: 34px;
+  padding: 0.2rem 0.55rem 0.2rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+}
+.pdf-cal-sels .ap-select {
+  width: auto;
+  max-width: 130px;
+}
+[data-theme="dark"] .ap-select-trigger:focus-visible,
+[data-theme="dark"] .ap-select-trigger[aria-expanded="true"] {
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
+}
+[data-theme="dark"] .ap-select-menu {
+  box-shadow:
+    0 26px 52px -26px rgba(0, 0, 0, 0.85),
+    0 2px 8px rgba(0, 0, 0, 0.45);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ap-select-menu {
+    animation: none;
+  }
+  .ap-select-caret {
+    transition: none;
+  }
+}
 .admin-portal .form-input::placeholder,
 .admin-portal .apt-search::placeholder {
   color: var(--ap-faint);

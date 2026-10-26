@@ -3,7 +3,7 @@ import Shell from '../Shell';
 import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
-import { Modal } from '../components';
+import { Modal, Select } from '../components';
 import { Card, EmptyState, Field, FilterBar, ModalHead, Stack, StatCard, StatGrid } from '../ui';
 import { IconCheck, IconClock, IconLab, IconSearch } from '../icons';
 import type { LabTestRow } from '../types';
@@ -210,16 +210,16 @@ export default function AdminLaboratory() {
           >
             <div className="form-grid">
               <Field label="Patient">
-                <select className="form-input" value={req.patient_id} onChange={(e) => setReq({ ...req, patient_id: e.target.value })}>
+                <Select className="form-input" value={req.patient_id} onChange={(e) => setReq({ ...req, patient_id: e.target.value })}>
                   <option value="">Select patient</option>
                   {patients.map((p) => <option key={p.id} value={p.id}>{p.name}{p.email ? ` — ${p.email}` : ''}</option>)}
-                </select>
+                </Select>
               </Field>
               <Field label="Requesting doctor">
-                <select className="form-input" value={req.doctor_id} onChange={(e) => setReq({ ...req, doctor_id: e.target.value })}>
+                <Select className="form-input" value={req.doctor_id} onChange={(e) => setReq({ ...req, doctor_id: e.target.value })}>
                   <option value="">Select doctor</option>
                   {doctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name} — {doc.specialty}</option>)}
-                </select>
+                </Select>
               </Field>
             </div>
 
@@ -246,11 +246,11 @@ export default function AdminLaboratory() {
 
             <div className="form-grid ap-mt">
               <Field label="Priority">
-                <select className="form-input" value={req.priority} onChange={(e) => setReq({ ...req, priority: e.target.value })}>
+                <Select className="form-input" value={req.priority} onChange={(e) => setReq({ ...req, priority: e.target.value })}>
                   <option value="normal">Normal</option>
                   <option value="urgent">Urgent</option>
                   <option value="stat">STAT (immediate)</option>
-                </select>
+                </Select>
               </Field>
               <Field label="Scheduled date">
                 <input type="date" className="form-input" min={today} value={req.scheduled_date} onChange={(e) => setReq({ ...req, scheduled_date: e.target.value })} />
@@ -280,20 +280,20 @@ export default function AdminLaboratory() {
               </div>
             </Field>
             <Field label="Status">
-              <select className="apt-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+              <Select className="apt-select" value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option value="">All statuses</option>
                 <option value="pending">Pending</option>
                 <option value="processing">Processing</option>
                 <option value="completed">Completed</option>
-              </select>
+              </Select>
             </Field>
             <Field label="Priority">
-              <select className="apt-select" value={priority} onChange={(e) => setPriority(e.target.value)}>
+              <Select className="apt-select" value={priority} onChange={(e) => setPriority(e.target.value)}>
                 <option value="">All priorities</option>
                 <option value="normal">Normal</option>
                 <option value="urgent">Urgent</option>
                 <option value="stat">STAT</option>
-              </select>
+              </Select>
             </Field>
           </FilterBar>
 
@@ -329,9 +329,9 @@ export default function AdminLaboratory() {
                   </td>
                   <td>
                     <div className="ap-row-actions ap-row-actions--status">
-                      <select className="action-select" value={t.status} onChange={(e) => updateStatus(t.id, e.target.value)}>
+                      <Select className="action-select" value={t.status} onChange={(e) => updateStatus(t.id, e.target.value)}>
                         {['pending', 'processing', 'completed'].map((o) => <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
-                      </select>
+                      </Select>
                     </div>
                   </td>
                   <td>
@@ -358,12 +358,12 @@ export default function AdminLaboratory() {
           hint={resultFor ? `${resultFor.test_type} · ${resultFor.patient_name} · Dr. ${resultFor.doctor_name}` : undefined}
         />
         <Field label="Status">
-          <select className="form-input" value={resultForm.status} onChange={(e) => setResultForm({ ...resultForm, status: e.target.value })}>
+          <Select className="form-input" value={resultForm.status} onChange={(e) => setResultForm({ ...resultForm, status: e.target.value })}>
             <option value="pending">Pending</option>
             <option value="processing">Processing</option>
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
-          </select>
+          </Select>
         </Field>
         <Field label="Lab result / findings" className="ap-mt">
           <textarea className="form-input" rows={6} placeholder="Detailed results, findings and interpretation..." value={resultForm.result} onChange={(e) => setResultForm({ ...resultForm, result: e.target.value })} />

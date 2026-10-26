@@ -3,6 +3,7 @@ import Shell from '../Shell';
 import { getInitial, fetchData, fmtDate } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
+import { Select } from '../components';
 import { Card, EmptyState, Field, FilterBar, Stack, StatCard, StatGrid } from '../ui';
 import { IconAppointments, IconCheck, IconPatients, IconPrint, IconReports, IconVitals } from '../icons';
 
@@ -330,36 +331,36 @@ export default function AdminReports() {
               />
             </Field>
             <Field label="Group by" className="ap-field--select">
-              <select className="apt-select" value={filters.group} onChange={(e) => apply({ group: e.target.value, period: filters.period })}>
+              <Select className="apt-select" value={filters.group} onChange={(e) => apply({ group: e.target.value, period: filters.period })}>
                 <option value="date">Daily</option>
                 <option value="week">Weekly</option>
                 <option value="month">Monthly</option>
-              </select>
+              </Select>
             </Field>
             <Field label="Status" className="ap-field--select">
-              <select className="apt-select" value={filters.status} onChange={(e) => setField('status', e.target.value)}>
+              <Select className="apt-select" value={filters.status} onChange={(e) => setField('status', e.target.value)}>
                 <option value="">All statuses</option>
                 {['pending', 'confirmed', 'completed', 'cancelled'].map((s) => (
                   <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
                 ))}
-              </select>
+              </Select>
             </Field>
             <Field label="Payment" className="ap-field--select">
-              <select className="apt-select" value={filters.payment} onChange={(e) => setField('payment', e.target.value)}>
+              <Select className="apt-select" value={filters.payment} onChange={(e) => setField('payment', e.target.value)}>
                 <option value="">All payments</option>
                 <option value="paid">Paid</option>
                 <option value="pending">Unpaid</option>
-              </select>
+              </Select>
             </Field>
             <Field label="Doctor" className="ap-field--select">
-              <select className="apt-select" value={filters.doctor_id} onChange={(e) => setField('doctor_id', e.target.value)}>
+              <Select className="apt-select" value={filters.doctor_id} onChange={(e) => setField('doctor_id', e.target.value)}>
                 <option value="">All doctors</option>
                 {doctors.map((doc) => (
                   <option key={doc.id} value={doc.id}>
                     {doc.name}{doc.specialty ? ` (${doc.specialty})` : ''}
                   </option>
                 ))}
-              </select>
+              </Select>
             </Field>
           </FilterBar>
         </Card>

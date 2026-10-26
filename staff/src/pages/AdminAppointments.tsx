@@ -3,7 +3,7 @@ import Shell from '../Shell';
 import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime, fmtDateTime } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
-import { Modal } from '../components';
+import { Modal, Select } from '../components';
 import { Card, EmptyState, Field, FilterBar, ModalHead, Stack, StatCard, StatGrid } from '../ui';
 import {
   IconAppointments, IconCheck, IconClock, IconPatients, IconPrint, IconSearch, IconVitals,
@@ -237,20 +237,20 @@ export default function AdminAppointments() {
               <input type="search" className="apt-search" placeholder="Any" value={qAge} onChange={(e) => setQAge(e.target.value)} />
             </Field>
             <Field label="Status">
-              <select className="apt-select filter-select" value={qStatus} onChange={(e) => setQStatus(e.target.value)}>
+              <Select className="apt-select filter-select" value={qStatus} onChange={(e) => setQStatus(e.target.value)}>
                 <option value="">All statuses</option>
                 <option value="pending">Pending</option>
                 <option value="confirmed">Confirmed</option>
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
-              </select>
+              </Select>
             </Field>
             <Field label="Priority">
-              <select className="apt-select filter-select" value={qPriority} onChange={(e) => setQPriority(e.target.value)}>
+              <Select className="apt-select filter-select" value={qPriority} onChange={(e) => setQPriority(e.target.value)}>
                 <option value="">All priorities</option>
                 <option value="urgent">Urgent</option>
                 <option value="normal">Normal</option>
-              </select>
+              </Select>
             </Field>
           </FilterBar>
 
@@ -295,9 +295,9 @@ export default function AdminAppointments() {
                     <td>{fmtTime(a.appointment_time)}</td>
                     <td>
                       <div className="ap-row-actions ap-row-actions--status">
-                        <select className="action-select" value={a.status} onChange={(e) => updateStatus(a.id, e.target.value)}>
+                        <Select className="action-select" value={a.status} onChange={(e) => updateStatus(a.id, e.target.value)}>
                           {['pending', 'confirmed', 'completed', 'cancelled'].map((o) => <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
-                        </select>
+                        </Select>
                         {(a.reschedule_count || hist.length > 0) ? (
                           <span className="resched-tip">
                             <span className="resched-badge">&#10227; Rescheduled{(a.reschedule_count || 0) > 1 ? ` x${a.reschedule_count}` : ''}</span>
@@ -319,10 +319,10 @@ export default function AdminAppointments() {
                       </div>
                     </td>
                     <td>
-                      <select className="action-select" value={a.payment_status} onChange={(e) => updatePayment(a.id, e.target.value)}>
+                      <Select className="action-select" value={a.payment_status} onChange={(e) => updatePayment(a.id, e.target.value)}>
                         <option value="pending">Unpaid</option>
                         <option value="paid">Paid</option>
-                      </select>
+                      </Select>
                     </td>
                     <td>
                       {hasResult ? (
