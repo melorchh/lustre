@@ -1250,12 +1250,36 @@ footer .footer-copy {
   box-shadow: 0 6px 20px rgba(13, 148, 136, 0.3);
   min-height: 52px;
 }
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 28px rgba(13, 148, 136, 0.4);
 }
 .btn-full {
   width: 100%;
+}
+.submit-btn:disabled,
+.btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.terms-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--gray-600);
+  cursor: pointer;
+}
+.terms-check input {
+  width: 18px;
+  height: 18px;
+  margin: 0.12rem 0 0;
+  accent-color: var(--green);
+  flex: 0 0 auto;
+  cursor: pointer;
 }
 
 .modal-switch {
