@@ -3,6 +3,7 @@ import Shell from '../Shell';
 import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
+import { Select } from '../components';
 import { Card, EmptyState, Field, FilterBar, Stack, StatCard, StatGrid } from '../ui';
 import { IconCheck, IconClock, IconSearch, IconWalkins } from '../icons';
 import type { WalkinRow } from '../types';
@@ -133,10 +134,10 @@ export default function AdminWalkins() {
               </div>
             </Field>
             <Field label="Status">
-              <select className="apt-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+              <Select className="apt-select" value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option value="">All statuses</option>
                 {STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
-              </select>
+              </Select>
             </Field>
           </FilterBar>
 
@@ -167,9 +168,9 @@ export default function AdminWalkins() {
                       <td><span className={`badge ${badgeClass(w.status)}`}>{statusLabel(w.status)}</span></td>
                       <td>
                         <div className="ap-row-actions ap-row-actions--status">
-                          <select className="action-select" value={w.status} onChange={(e) => updateStatus(w.id, e.target.value)}>
+                          <Select className="action-select" value={w.status} onChange={(e) => updateStatus(w.id, e.target.value)}>
                             {STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
-                          </select>
+                          </Select>
                         </div>
                       </td>
                     </tr>

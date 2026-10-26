@@ -3,7 +3,7 @@ import Shell from '../Shell';
 import { getInitial, postAction, isSuccess, fmtTime } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
-import { Modal } from '../components';
+import { Modal, Select } from '../components';
 import { Card, EmptyState, Field, FilterBar, FormSection, ModalHead, Stack, StatCard, StatGrid } from '../ui';
 import { IconCheck, IconSchedules, IconWalkins } from '../icons';
 import type { DoctorRow, ScheduleRow, TimeBlockRow } from '../types';
@@ -111,10 +111,10 @@ export default function AdminSchedules() {
         >
           <FilterBar>
             <Field label="Doctor">
-              <select className="apt-select" value={doctorId} onChange={(e) => setDoctorId(e.target.value)}>
+              <Select className="apt-select" value={doctorId} onChange={(e) => setDoctorId(e.target.value)}>
                 <option value="">All doctors</option>
                 {doctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name}</option>)}
-              </select>
+              </Select>
             </Field>
           </FilterBar>
 
@@ -156,14 +156,14 @@ export default function AdminSchedules() {
             >
               <div className="ap-inline-form">
                 <Field label="From">
-                  <select className="form-input" value={schedForm.start_day} onChange={(e) => setSchedForm({ ...schedForm, start_day: e.target.value })}>
+                  <Select className="form-input" value={schedForm.start_day} onChange={(e) => setSchedForm({ ...schedForm, start_day: e.target.value })}>
                     {DAYS.map((day) => <option key={day} value={day}>{day}</option>)}
-                  </select>
+                  </Select>
                 </Field>
                 <Field label="To">
-                  <select className="form-input" value={schedForm.end_day} onChange={(e) => setSchedForm({ ...schedForm, end_day: e.target.value })}>
+                  <Select className="form-input" value={schedForm.end_day} onChange={(e) => setSchedForm({ ...schedForm, end_day: e.target.value })}>
                     {DAYS.map((day) => <option key={day} value={day}>{day}</option>)}
-                  </select>
+                  </Select>
                 </Field>
                 <Field label="Start time">
                   <input className="form-input" type="time" value={schedForm.start_time} onChange={(e) => setSchedForm({ ...schedForm, start_time: e.target.value })} />
@@ -223,23 +223,23 @@ export default function AdminSchedules() {
         />
         <div className="form-grid">
           <Field label="Doctor">
-            <select className="form-input" value={blockForm.doctor_id} onChange={(e) => setBlockForm({ ...blockForm, doctor_id: e.target.value })}>
+            <Select className="form-input" value={blockForm.doctor_id} onChange={(e) => setBlockForm({ ...blockForm, doctor_id: e.target.value })}>
               <option value="">Select doctor</option>
               {doctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name}</option>)}
-            </select>
+            </Select>
           </Field>
           <Field label="Type">
-            <select className="form-input" value={blockForm.block_type} onChange={(e) => setBlockForm({ ...blockForm, block_type: e.target.value })}>
+            <Select className="form-input" value={blockForm.block_type} onChange={(e) => setBlockForm({ ...blockForm, block_type: e.target.value })}>
               <option value="date">Specific date</option>
               <option value="weekly">Weekly (recurring day)</option>
               <option value="week">Date range</option>
-            </select>
+            </Select>
           </Field>
           {blockForm.block_type === 'weekly' ? (
             <Field label="Day of week">
-              <select className="form-input" value={blockForm.day_of_week} onChange={(e) => setBlockForm({ ...blockForm, day_of_week: e.target.value })}>
+              <Select className="form-input" value={blockForm.day_of_week} onChange={(e) => setBlockForm({ ...blockForm, day_of_week: e.target.value })}>
                 {DAYS.map((day) => <option key={day} value={day}>{day}</option>)}
-              </select>
+              </Select>
             </Field>
           ) : (
             <>
