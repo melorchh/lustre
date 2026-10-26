@@ -426,7 +426,7 @@ if (isset($_SESSION["patient_id"])) {
     <div class="chatbot-messages" id="chatbotMessages">
       <div class="chatbot-message bot-message">
         <div class="msg-avatar"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-        <p>Hello! I'm MedBot. How can I help you today?</p>
+        <p>Good day, and welcome to LustreMDC Clinics &amp; Diagnostics. I am MedBot, your virtual assistant. How may I assist you today?</p>
       </div>
     </div>
     <div class="chatbot-input-area">
