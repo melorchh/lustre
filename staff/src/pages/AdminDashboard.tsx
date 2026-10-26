@@ -322,7 +322,7 @@ export default function AdminDashboard() {
           <button type="button" className="ap-btn ap-btn--solid" onClick={openAppt}>
             <IconPlus size={18} /> New Appointment
           </button>
-          <button type="button" className="ap-btn ap-btn--ghost" onClick={openWalkin}>
+          <button type="button" className="ap-btn ap-btn--amber" onClick={openWalkin}>
             <IconWalkins size={18} /> Register Walk-in
           </button>
         </div>
@@ -333,8 +333,8 @@ export default function AdminDashboard() {
         <StatCard icon={<IconDoctors />} label="Doctors" value={stats.totalDoctors ?? 0} hint="Available specialists" tone="blue" />
         <StatCard icon={<IconAppointments />} label="Today" value={stats.todayAppointments ?? 0} hint="Appointments scheduled" tone="violet" />
         <StatCard icon={<IconWalkins />} label="Walk-ins" value={stats.walkinsToday ?? 0} hint="Registered today" tone="amber" />
-        <StatCard icon={<IconClock />} label="Pending" value={stats.pendingAppointments ?? 0} hint="Awaiting confirmation" tone="amber" />
-        <StatCard icon={<IconCheck />} label="Confirmed" value={stats.confirmedAppointments ?? 0} hint="Ready to serve" />
+        <StatCard icon={<IconClock />} label="Pending" value={stats.pendingAppointments ?? 0} hint="Awaiting confirmation" tone="rose" />
+        <StatCard icon={<IconCheck />} label="Confirmed" value={stats.confirmedAppointments ?? 0} hint="Ready to serve" tone="teal" />
         <StatCard icon={<IconReports />} label="All appointments" value={stats.totalAppointments ?? 0} hint="Lifetime records" tone="slate" />
       </StatGrid>
 

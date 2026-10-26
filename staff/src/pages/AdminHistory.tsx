@@ -543,7 +543,7 @@ export default function AdminHistory() {
         <StatCard icon={<IconCheck />} label="Payments collected" value={stats.paid ?? 0} hint="Paid visits" tone="amber" />
         <StatCard icon={<IconLab />} label="Lab tests done" value={stats.labDone ?? 0} hint="Results released" tone="blue" />
         <StatCard icon={<IconVitals />} label="Vitals recorded" value={stats.vitals ?? 0} hint="Patient check-ins" tone="violet" />
-        <StatCard icon={<IconVaccine />} label="Vaccinations" value={stats.vaccinations ?? 0} hint="Doses administered" tone="green" />
+        <StatCard icon={<IconVaccine />} label="Vaccinations" value={stats.vaccinations ?? 0} hint="Doses administered" tone="teal" />
       </StatGrid>
 
       {/* ---- tabs ---- */}
