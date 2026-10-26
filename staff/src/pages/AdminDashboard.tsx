@@ -328,7 +328,7 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      <StatGrid>
+      <StatGrid className="ap-stat-grid--seven">
         <StatCard icon={<IconPatients />} label="Patients" value={stats.totalPatients ?? 0} hint="Registered in the clinic" />
         <StatCard icon={<IconDoctors />} label="Doctors" value={stats.totalDoctors ?? 0} hint="Available specialists" tone="blue" />
         <StatCard icon={<IconAppointments />} label="Today" value={stats.todayAppointments ?? 0} hint="Appointments scheduled" tone="violet" />
