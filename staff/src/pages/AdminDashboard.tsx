@@ -49,9 +49,11 @@ function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+const ARRIVAL_START_MIN = 8 * 60;
+
 function arrivalOptions(): { value: string; label: string }[] {
   const out: { value: string; label: string }[] = [];
-  for (let m = 0; m < 24 * 60; m += 5) {
+  for (let m = ARRIVAL_START_MIN; m < 24 * 60; m += 5) {
     const h = Math.floor(m / 60);
     const mm = m % 60;
     const value = `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
@@ -62,7 +64,9 @@ function arrivalOptions(): { value: string; label: string }[] {
 
 function nowHM(): string {
   const d = new Date();
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  let m = Math.max(ARRIVAL_START_MIN, d.getHours() * 60 + d.getMinutes());
+  m -= m % 5;
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 }
 
 export default function AdminDashboard() {
