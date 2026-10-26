@@ -305,7 +305,7 @@ if (isset($_SESSION["patient_id"])) {
                 </select>
 
                 <span class="address-label">Municipality / City</span>
-                <select name="municipality_name" id="regMunicipality" class="form-dropdown" required onchange="loadBarangays()" disabled>
+                <select name="municipality_name" id="regMunicipality" class="form-dropdown" required onchange="loadBarangays(); updateFullAddress()" disabled>
                     <option value="">Select Municipality / City</option>
                 </select>
 
@@ -313,6 +313,9 @@ if (isset($_SESSION["patient_id"])) {
                 <select name="barangay_name" id="regBarangay" class="form-dropdown" required disabled onchange="updateFullAddress()">
                     <option value="">Select Barangay</option>
                 </select>
+
+                <span class="address-label">ZIP Code</span>
+                <input type="text" name="zip_code" id="regZip" placeholder="Auto-filled from city / municipality" readonly style="background:#f1f5f9;cursor:not-allowed;">
 
                 <span class="address-label">House No. / Street / Subdivision</span>
                 <input type="text" name="street" id="regStreet" placeholder="e.g. 123 Rizal St., Sunset Subd." required oninput="updateFullAddress()">
@@ -1000,6 +1003,186 @@ function checkFpPasswordStrength(pw){
 // -- Philippine Address Cascading Dropdowns (PSGC API) ----------------
 const PSGC = 'https://psgc.gitlab.io/api';
 
+// ZIP codes for cities/municipalities in NCR and Region IV-A (PSGC code -> ZIP)
+const ZIP_BY_MUNICIPALITY = {
+  "041001000": "4211",
+  "041002000": "4205",
+  "041003000": "4213",
+  "041004000": "4219",
+  "041005000": "4200",
+  "041006000": "4201",
+  "041007000": "4212",
+  "041008000": "4215",
+  "041009000": "4222",
+  "041010000": "4230",
+  "041011000": "4221",
+  "041012000": "4209",
+  "041013000": "4216",
+  "041014000": "4217",
+  "041015000": "4229",
+  "041016000": "4202",
+  "041017000": "4233",
+  "041018000": "4223",
+  "041019000": "4231",
+  "041020000": "4224",
+  "041021000": "4225",
+  "041022000": "4227",
+  "041023000": "4226",
+  "041024000": "4210",
+  "041025000": "4207",
+  "041026000": "4204",
+  "041027000": "4206",
+  "041028000": "4234",
+  "041029000": "4208",
+  "041030000": "4220",
+  "041031000": "4232",
+  "041032000": "4228",
+  "041033000": "4203",
+  "041034000": "4214",
+  "042101000": "4123",
+  "042102000": "4119",
+  "042103000": "4102",
+  "042104000": "4116",
+  "042105000": "4100",
+  "042106000": "4114",
+  "042107000": "4124",
+  "042108000": "4107",
+  "042109000": "4103",
+  "042110000": "4122",
+  "042111000": "4104",
+  "042112000": "4113",
+  "042113000": "4112",
+  "042114000": "4121",
+  "042115000": "4110",
+  "042116000": "4105",
+  "042117000": "4106",
+  "042118000": "4118",
+  "042119000": "4120",
+  "042120000": "4108",
+  "042121000": "4111",
+  "042122000": "4109",
+  "042123000": "4117",
+  "043401000": "4001",
+  "043402000": "4033",
+  "043403000": "4024",
+  "043404000": "4025",
+  "043405000": "4027",
+  "043406000": "4012",
+  "043407000": "4013",
+  "043408000": "4021",
+  "043409000": "4015",
+  "043410000": "4004",
+  "043411000": "4030",
+  "043412000": "4032",
+  "043413000": "4014",
+  "043414000": "4020",
+  "043415000": "4007",
+  "043416000": "4005",
+  "043417000": "4002",
+  "043418000": "4016",
+  "043419000": "4008",
+  "043420000": "4017",
+  "043421000": "4018",
+  "043422000": "4010",
+  "043423000": "4003",
+  "043424000": "4000",
+  "043425000": "4023",
+  "043426000": "4009",
+  "043427000": "4022",
+  "043428000": "4026",
+  "043429000": "4019",
+  "043430000": "4011",
+  "045601000": "4304",
+  "045602000": "4333",
+  "045603000": "4331",
+  "045605000": "4320",
+  "045606000": "4340",
+  "045607000": "4318",
+  "045608000": "4323",
+  "045610000": "4311",
+  "045615000": "4326",
+  "045616000": "4310",
+  "045617000": "4338",
+  "045618000": "4319",
+  "045619000": "4307",
+  "045620000": "4336",
+  "045621000": "4342",
+  "045622000": "4316",
+  "045623000": "4328",
+  "045624000": "4301",
+  "045625000": "4309",
+  "045627000": "4330",
+  "045628000": "4312",
+  "045629000": "4303",
+  "045630000": "4302",
+  "045631000": "4337",
+  "045632000": "4341",
+  "045633000": "4334",
+  "045634000": "4308",
+  "045635000": "4306",
+  "045636000": "4339",
+  "045637000": "4332",
+  "045638000": "4335",
+  "045639000": "4329",
+  "045640000": "4314",
+  "045641000": "4324",
+  "045642000": "4315",
+  "045644000": "4313",
+  "045645000": "4322",
+  "045646000": "4321",
+  "045647000": "4327",
+  "045648000": "4325",
+  "045649000": "4305",
+  "045801000": "1930",
+  "045802000": "1870",
+  "045803000": "1970",
+  "045804000": "1940",
+  "045805000": "1900",
+  "045806000": "1950",
+  "045807000": "1990",
+  "045808000": "1860",
+  "045809000": "1960",
+  "045810000": "1910",
+  "045811000": "1850",
+  "045812000": "1980",
+  "045813000": "1920",
+  "045814000": "1880",
+  "133900000": "1000",
+  "133902000": "1006",
+  "133903000": "1001",
+  "133907000": "1005",
+  "133908000": "1000",
+  "133909000": "1002",
+  "133910000": "1004",
+  "133911000": "1007",
+  "133912000": "1011",
+  "133913000": "1018",
+  "133914000": "1009",
+  "137401000": "1550",
+  "137402000": "1800",
+  "137403000": "1600",
+  "137404000": "1100",
+  "137405000": "1500",
+  "137501000": "1400",
+  "137502000": "1470",
+  "137503000": "1485",
+  "137504000": "1440",
+  "137601000": "1740",
+  "137602000": "1200",
+  "137603000": "1770",
+  "137604000": "1700",
+  "137605000": "1300",
+  "137606000": "1620",
+  "137607000": "1630"
+};
+
+function updateZipCode() {
+    const munSel = document.getElementById('regMunicipality');
+    const zipEl  = document.getElementById('regZip');
+    if (!munSel || !zipEl) return;
+    zipEl.value = ZIP_BY_MUNICIPALITY[munSel.value] || '';
+}
+
 // Load regions (restricted to NCR and Region IV-A)
 fetch(`${PSGC}/regions/`)
     .then(r => r.json())
@@ -1215,18 +1398,21 @@ function loadBarangays() {
 }
 
 function updateFullAddress() {
+    updateZipCode();
+
     const street   = document.getElementById('regStreet').value.trim();
     const brgySel  = document.getElementById('regBarangay');
     const munSel   = document.getElementById('regMunicipality');
     const provSel  = document.getElementById('regProvince');
     const regionSel= document.getElementById('regRegion');
+    const zipText  = document.getElementById('regZip').value.trim();
 
     const brgyText   = brgySel.selectedIndex > 0 ? brgySel.options[brgySel.selectedIndex].text : '';
     const munText    = munSel.selectedIndex  > 0 ? munSel.options[munSel.selectedIndex].text   : '';
     const provText   = provSel.selectedIndex > 0 && provSel.options[provSel.selectedIndex].text !== 'Select Province' ? provSel.options[provSel.selectedIndex].text : '';
     const regionText = regionSel.selectedIndex > 0 && regionSel.options[regionSel.selectedIndex].text !== 'Select Region' ? regionSel.options[regionSel.selectedIndex].text : '';
 
-    const parts = [street, brgyText, munText, provText, regionText].filter(p => p);
+    const parts = [street, brgyText, munText, provText, regionText, zipText].filter(p => p);
     document.getElementById('regFullAddress').value = parts.join(', ');
 }
 
