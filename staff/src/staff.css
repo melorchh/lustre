@@ -1309,7 +1309,8 @@ button.resched-badge:hover {
   color: var(--ap-faint);
   pointer-events: none;
 }
-.admin-portal .ap-input-icon .apt-search {
+.admin-portal .ap-input-icon input.apt-search,
+.admin-portal .ap-input-icon input.form-input {
   padding-left: 2rem;
 }
 
