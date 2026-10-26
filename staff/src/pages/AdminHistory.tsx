@@ -3,6 +3,10 @@ import Shell from '../Shell';
 import { getInitial, fmtDate, fmtTime } from '../api';
 import { useToast } from '../hooks';
 import { Modal } from '../components';
+import { Card, EmptyState, Field, FilterBar, ModalHead, Stack, StatCard, StatGrid } from '../ui';
+import {
+  IconAppointments, IconCheck, IconLab, IconPrint, IconSearch, IconVaccine, IconVitals,
+} from '../icons';
 import type { AppointmentRow, LabTestRow, VaccinationRow, VitalRow } from '../types';
 
 type TabKey = 'appointments' | 'labtests' | 'vitals' | 'vaccinations';
@@ -288,6 +292,22 @@ export default function AdminHistory() {
     setFilters((prev) => ({ ...prev, [key]: value }));
   }
 
+  function resetAptFilters() {
+    setFilters((prev) => ({ ...prev, aptName: '', aptAddress: '', aptAge: '', aptStatus: '', aptPay: '' }));
+  }
+
+  function resetLabFilters() {
+    setFilters((prev) => ({ ...prev, labPatient: '', labDoctor: '', labTest: '', labStatus: '', labPriority: '' }));
+  }
+
+  function resetVitalFilters() {
+    setFilters((prev) => ({ ...prev, vitalSearch: '' }));
+  }
+
+  function resetVaccFilters() {
+    setFilters((prev) => ({ ...prev, vaccPatient: '', vaccVaccine: '', vaccDose: '' }));
+  }
+
   function slipRows(a: HistoryAppt): [string, string][] {
     return [
       ['Patient', a.patient_name || '\u2014'],
@@ -380,31 +400,20 @@ export default function AdminHistory() {
 
   return (
     <Shell active="history" title="Archives">
-      <div className="archive-hero">
-        <div className="archive-hero-tag">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="17" rx="3" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-          Record Archive
+      <Stack>
+      <div className="ap-hero">
+        <div className="ap-hero-copy">
+          <span className="ap-hero-eyebrow">Record archive</span>
+          <h1>History &amp; archives</h1>
+          <p>Complete archive of completed and cancelled appointments, lab tests, vitals and vaccinations.</p>
         </div>
-        <h1>History &amp; Archives</h1>
-        <p>Complete archive of all completed and cancelled appointments and lab tests.</p>
       </div>
 
       {/* ---- day archive PDF downloader ---- */}
-      <div className="pdf-panel">
-        <div className="pdf-panel-top">
-          <div className="pdf-panel-title">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Download Day Archive PDF
-          </div>
+      <Card
+        title="Download day archive PDF"
+        subtitle="Pick a record type, then a day with archived records."
+        actions={
           <div className="pdf-type-switch">
             {TABS.map((t) => (
               <button
@@ -417,8 +426,8 @@ export default function AdminHistory() {
               </button>
             ))}
           </div>
-        </div>
-
+        }
+      >
         <div className="pdf-panel-body">
           <div className="pdf-cal-col">
             <div className="pdf-cal-head">
@@ -524,18 +533,18 @@ export default function AdminHistory() {
             </button>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* ---- stats ---- */}
-      <div className="stats-grid">
-        <div className="stat-card"><div className="stat-number">{stats.allAppointments ?? appointments.length}</div><div className="stat-label">All Appointments</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#10b981' }}><div className="stat-number" style={{ color: '#10b981' }}>{stats.completed ?? 0}</div><div className="stat-label">Completed</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#ef4444' }}><div className="stat-number" style={{ color: '#ef4444' }}>{stats.cancelled ?? 0}</div><div className="stat-label">Cancelled</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#0ea5e9' }}><div className="stat-number" style={{ color: '#0ea5e9' }}>{stats.paid ?? 0}</div><div className="stat-label">Payments Collected</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#8b5cf6' }}><div className="stat-number" style={{ color: '#8b5cf6' }}>{stats.labDone ?? 0}</div><div className="stat-label">Lab Tests Done</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#a855f7' }}><div className="stat-number" style={{ color: '#a855f7' }}>{stats.vitals ?? 0}</div><div className="stat-label">Vitals Recorded</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#f43f5e' }}><div className="stat-number" style={{ color: '#f43f5e' }}>{stats.vaccinations ?? 0}</div><div className="stat-label">Vaccinations</div></div>
-      </div>
+      <StatGrid>
+        <StatCard icon={<IconAppointments />} label="All appointments" value={stats.allAppointments ?? appointments.length} hint="Archived visits" />
+        <StatCard icon={<IconCheck />} label="Completed" value={stats.completed ?? 0} hint="Served visits" tone="slate" />
+        <StatCard icon={<IconAppointments />} label="Cancelled" value={stats.cancelled ?? 0} hint="Did not push through" tone="rose" />
+        <StatCard icon={<IconCheck />} label="Payments collected" value={stats.paid ?? 0} hint="Paid visits" tone="amber" />
+        <StatCard icon={<IconLab />} label="Lab tests done" value={stats.labDone ?? 0} hint="Results released" tone="blue" />
+        <StatCard icon={<IconVitals />} label="Vitals recorded" value={stats.vitals ?? 0} hint="Patient check-ins" tone="violet" />
+        <StatCard icon={<IconVaccine />} label="Vaccinations" value={stats.vaccinations ?? 0} hint="Doses administered" tone="green" />
+      </StatGrid>
 
       {/* ---- tabs ---- */}
       <div className="tab-nav">
@@ -553,23 +562,43 @@ export default function AdminHistory() {
       </div>
 
       {tab === 'appointments' && (
-        <div className="content-card">
-          <div className="search-filter-bar">
-            <input type="search" placeholder="Search patient name..." value={filters.aptName} onChange={(e) => setFilter('aptName', e.target.value)} />
-            <input type="search" placeholder="Search address..." value={filters.aptAddress} onChange={(e) => setFilter('aptAddress', e.target.value)} />
-            <input type="search" className="sfb-age" placeholder="Search age..." value={filters.aptAge} onChange={(e) => setFilter('aptAge', e.target.value)} />
-            <select className="filter-select" value={filters.aptStatus} onChange={(e) => setFilter('aptStatus', e.target.value)}>
-              <option value="">All Statuses</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-            <select className="filter-select" value={filters.aptPay} onChange={(e) => setFilter('aptPay', e.target.value)}>
-              <option value="">All Payments</option>
-              <option value="paid">Paid</option>
-              <option value="pending">Unpaid</option>
-            </select>
-            <span className="result-count">{countLabel(filteredAppts.length)} shown</span>
-          </div>
+        <Card
+          title="Archived appointments"
+          subtitle={`${countLabel(filteredAppts.length)} shown`}
+          actions={
+            (filters.aptName || filters.aptAddress || filters.aptAge || filters.aptStatus || filters.aptPay)
+              ? <button type="button" className="ap-btn-text" onClick={resetAptFilters}>Reset filters</button>
+              : undefined
+          }
+        >
+          <FilterBar>
+            <Field label="Patient" className="ap-field--grow">
+              <div className="ap-input-icon">
+                <IconSearch size={16} />
+                <input type="search" className="apt-search" placeholder="Search patient name..." value={filters.aptName} onChange={(e) => setFilter('aptName', e.target.value)} />
+              </div>
+            </Field>
+            <Field label="Address" className="ap-field--grow">
+              <input type="search" className="apt-search" placeholder="Search address..." value={filters.aptAddress} onChange={(e) => setFilter('aptAddress', e.target.value)} />
+            </Field>
+            <Field label="Age" className="ap-field--xs">
+              <input type="search" className="apt-search" placeholder="Any" value={filters.aptAge} onChange={(e) => setFilter('aptAge', e.target.value)} />
+            </Field>
+            <Field label="Status">
+              <select className="apt-select" value={filters.aptStatus} onChange={(e) => setFilter('aptStatus', e.target.value)}>
+                <option value="">All statuses</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </Field>
+            <Field label="Payment">
+              <select className="apt-select" value={filters.aptPay} onChange={(e) => setFilter('aptPay', e.target.value)}>
+                <option value="">All payments</option>
+                <option value="paid">Paid</option>
+                <option value="pending">Unpaid</option>
+              </select>
+            </Field>
+          </FilterBar>
           <div className="table-scroll">
             <table>
               <thead>
@@ -585,7 +614,15 @@ export default function AdminHistory() {
               </thead>
               <tbody>
                 {filteredAppts.length === 0 ? (
-                  <tr><td colSpan={7} className="empty-state-row">No archived appointments yet.</td></tr>
+                  <tr>
+                    <td colSpan={7}>
+                      <EmptyState
+                        icon={<IconAppointments size={20} />}
+                        title="No archived appointments"
+                        hint="Completed and cancelled visits will appear here."
+                      />
+                    </td>
+                  </tr>
                 ) : apptGroups.map(([day, rows]) => (
                   <Fragment key={day}>
                     <DayHeader
@@ -601,13 +638,13 @@ export default function AdminHistory() {
                       return (
                         <tr key={a.id}>
                           <td>
-                            <div className="cell-name">{a.patient_name}</div>
-                            <div className="cell-sub">{a.patient_email}</div>
-                            {a.contact ? <div className="cell-sub">{a.contact}</div> : null}
+                            <span className="ap-strong">{a.patient_name}</span>
+                            <small className="ap-sub">{a.patient_email || 'No email on file'}</small>
+                            {a.contact ? <small className="ap-sub">{a.contact}</small> : null}
                           </td>
                           <td>
-                            <strong>Dr. {a.doctor_name}</strong><br />
-                            <small style={{ color: '#64748b' }}>{a.specialty}</small>
+                            <span>Dr. {a.doctor_name}</span>
+                            <small className="ap-sub">{a.specialty}</small>
                           </td>
                           <td>{fmtDate(a.appointment_date)}</td>
                           <td>{fmtTime(a.appointment_time)}</td>
@@ -632,11 +669,13 @@ export default function AdminHistory() {
                             </span>
                           </td>
                           <td>
-                            {fmtDate(a.updated_at)}<br />
-                            <small style={{ color: '#94a3b8' }}>{timeFromTs(a.updated_at)}</small>
-                            <div style={{ marginTop: 7 }}>
+                            <span className="ap-updated">
+                              {fmtDate(a.updated_at)}
+                              <small>{timeFromTs(a.updated_at)}</small>
+                            </span>
+                            <div className="ap-updated-actions">
                               <button type="button" className="btn-slip" title="Print appointment slip" onClick={() => setSlipFor(a)}>
-                                Print Slip
+                                <IconPrint size={15} /> Slip
                               </button>
                             </div>
                           </td>
@@ -648,28 +687,48 @@ export default function AdminHistory() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
 
       {tab === 'labtests' && (
-        <div className="content-card">
-          <div className="search-filter-bar">
-            <input type="search" placeholder="Search patient..." value={filters.labPatient} onChange={(e) => setFilter('labPatient', e.target.value)} />
-            <input type="search" placeholder="Search doctor..." value={filters.labDoctor} onChange={(e) => setFilter('labDoctor', e.target.value)} />
-            <input type="search" placeholder="Search test type..." value={filters.labTest} onChange={(e) => setFilter('labTest', e.target.value)} />
-            <select className="filter-select" value={filters.labStatus} onChange={(e) => setFilter('labStatus', e.target.value)}>
-              <option value="">All Statuses</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-            <select className="filter-select" value={filters.labPriority} onChange={(e) => setFilter('labPriority', e.target.value)}>
-              <option value="">All Priorities</option>
-              <option value="normal">Normal</option>
-              <option value="urgent">Urgent</option>
-              <option value="stat">STAT</option>
-            </select>
-            <span className="result-count">{countLabel(filteredLabs.length)} shown</span>
-          </div>
+        <Card
+          title="Archived lab tests"
+          subtitle={`${countLabel(filteredLabs.length)} shown`}
+          actions={
+            (filters.labPatient || filters.labDoctor || filters.labTest || filters.labStatus || filters.labPriority)
+              ? <button type="button" className="ap-btn-text" onClick={resetLabFilters}>Reset filters</button>
+              : undefined
+          }
+        >
+          <FilterBar>
+            <Field label="Patient" className="ap-field--grow">
+              <div className="ap-input-icon">
+                <IconSearch size={16} />
+                <input type="search" className="apt-search" placeholder="Search patient..." value={filters.labPatient} onChange={(e) => setFilter('labPatient', e.target.value)} />
+              </div>
+            </Field>
+            <Field label="Doctor" className="ap-field--grow">
+              <input type="search" className="apt-search" placeholder="Search doctor..." value={filters.labDoctor} onChange={(e) => setFilter('labDoctor', e.target.value)} />
+            </Field>
+            <Field label="Test type" className="ap-field--grow">
+              <input type="search" className="apt-search" placeholder="Search test type..." value={filters.labTest} onChange={(e) => setFilter('labTest', e.target.value)} />
+            </Field>
+            <Field label="Status">
+              <select className="apt-select" value={filters.labStatus} onChange={(e) => setFilter('labStatus', e.target.value)}>
+                <option value="">All statuses</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </Field>
+            <Field label="Priority">
+              <select className="apt-select" value={filters.labPriority} onChange={(e) => setFilter('labPriority', e.target.value)}>
+                <option value="">All priorities</option>
+                <option value="normal">Normal</option>
+                <option value="urgent">Urgent</option>
+                <option value="stat">STAT</option>
+              </select>
+            </Field>
+          </FilterBar>
           <div className="table-scroll">
             <table>
               <thead>
@@ -686,7 +745,15 @@ export default function AdminHistory() {
               </thead>
               <tbody>
                 {filteredLabs.length === 0 ? (
-                  <tr><td colSpan={8} className="empty-state-row">No archived lab tests yet.</td></tr>
+                  <tr>
+                    <td colSpan={8}>
+                      <EmptyState
+                        icon={<IconLab size={20} />}
+                        title="No archived lab tests"
+                        hint="Completed and cancelled lab requests will appear here."
+                      />
+                    </td>
+                  </tr>
                 ) : labGroups.map(([day, rows]) => (
                   <Fragment key={day}>
                     <DayHeader
@@ -699,14 +766,14 @@ export default function AdminHistory() {
                     {!dayCollapsed(`labtests:${day}`) && rows.map((l) => (
                       <tr key={l.id}>
                         <td>
-                          <div className="cell-name">{l.patient_name}</div>
-                          <div className="cell-sub">{l.patient_email}</div>
+                          <span className="ap-strong">{l.patient_name}</span>
+                          <small className="ap-sub">{l.patient_email || 'No email on file'}</small>
                         </td>
                         <td>
-                          <strong>Dr. {l.doctor_name}</strong><br />
-                          <small style={{ color: '#64748b' }}>{l.specialty}</small>
+                          <span>Dr. {l.doctor_name}</span>
+                          <small className="ap-sub">{l.specialty}</small>
                         </td>
-                        <td><strong>{l.test_type}</strong></td>
+                        <td><span className="ap-strong">{l.test_type}</span></td>
                         <td><span className={`badge badge-${l.priority}`}>{String(l.priority || '').toUpperCase()}</span></td>
                         <td><span className={`badge badge-${l.status}`}>{cap(l.status)}</span></td>
                         <td>{l.scheduled_date ? fmtDate(l.scheduled_date) : '\u2014'}</td>
@@ -714,12 +781,14 @@ export default function AdminHistory() {
                           {l.result ? (
                             <button type="button" className="btn-view btn-xs" onClick={() => setResultFor(l)}>View</button>
                           ) : (
-                            <span style={{ color: '#94a3b8', fontSize: '.82rem' }}>No result</span>
+                            <span className="ap-none">No result</span>
                           )}
                         </td>
                         <td>
-                          {fmtDate(l.updated_at)}<br />
-                          <small style={{ color: '#94a3b8' }}>{timeFromTs(l.updated_at)}</small>
+                          <span className="ap-updated">
+                            {fmtDate(l.updated_at)}
+                            <small>{timeFromTs(l.updated_at)}</small>
+                          </span>
                         </td>
                       </tr>
                     ))}
@@ -728,15 +797,23 @@ export default function AdminHistory() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
 
       {tab === 'vitals' && (
-        <div className="content-card">
-          <div className="search-filter-bar">
-            <input type="search" placeholder="Search patient name..." value={filters.vitalSearch} onChange={(e) => setFilter('vitalSearch', e.target.value)} />
-            <span className="result-count">{countLabel(filteredVitals.length)} shown</span>
-          </div>
+        <Card
+          title="Archived vitals"
+          subtitle={`${countLabel(filteredVitals.length)} shown`}
+          actions={filters.vitalSearch ? <button type="button" className="ap-btn-text" onClick={resetVitalFilters}>Reset filters</button> : undefined}
+        >
+          <FilterBar>
+            <Field label="Search" className="ap-field--grow">
+              <div className="ap-input-icon">
+                <IconSearch size={16} />
+                <input type="search" className="apt-search" placeholder="Search patient name..." value={filters.vitalSearch} onChange={(e) => setFilter('vitalSearch', e.target.value)} />
+              </div>
+            </Field>
+          </FilterBar>
           <div className="table-scroll">
             <table>
               <thead>
@@ -753,7 +830,15 @@ export default function AdminHistory() {
               </thead>
               <tbody>
                 {filteredVitals.length === 0 ? (
-                  <tr><td colSpan={8} className="empty-state-row">No vitals recorded yet.</td></tr>
+                  <tr>
+                    <td colSpan={8}>
+                      <EmptyState
+                        icon={<IconVitals size={20} />}
+                        title="No archived vitals"
+                        hint="Vitals recorded during visits will be grouped by day here."
+                      />
+                    </td>
+                  </tr>
                 ) : vitalGroups.map(([day, rows]) => (
                   <Fragment key={day}>
                     <DayHeader
@@ -766,22 +851,24 @@ export default function AdminHistory() {
                     {!dayCollapsed(`vitals:${day}`) && rows.map((v) => (
                       <tr key={v.id}>
                         <td>
-                          <div className="cell-name">{v.patient_name}</div>
-                          <div className="cell-sub">{v.patient_email}</div>
+                          <span className="ap-strong">{v.patient_name}</span>
+                          <small className="ap-sub">{v.patient_email || 'No email on file'}</small>
                         </td>
-                        <td><strong>{fmtDate(v.visit_date)}</strong></td>
+                        <td><span className="ap-strong">{fmtDate(v.visit_date)}</span></td>
                         <td>{v.weight_kg ? `${v.weight_kg} kg` : '\u2014'}</td>
                         <td><span className="badge badge-active">{v.blood_pressure || '\u2014'}</span></td>
                         <td>{v.heart_rate ? `${v.heart_rate} bpm` : '\u2014'}</td>
                         <td>{v.fundal_height ? `${v.fundal_height} cm` : '\u2014'}</td>
                         <td>
-                          <span className="cell-sub" style={{ maxWidth: 220, display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <span className="ap-sub ap-sub--inline ap-clip">
                             {v.notes || '\u2014'}
                           </span>
                         </td>
                         <td>
-                          {fmtDate(v.created_at)}<br />
-                          <small style={{ color: '#94a3b8' }}>{timeFromTs(v.created_at)}</small>
+                          <span className="ap-updated">
+                            {fmtDate(v.created_at)}
+                            <small>{timeFromTs(v.created_at)}</small>
+                          </span>
                         </td>
                       </tr>
                     ))}
@@ -790,17 +877,33 @@ export default function AdminHistory() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
 
       {tab === 'vaccinations' && (
-        <div className="content-card">
-          <div className="search-filter-bar">
-            <input type="search" placeholder="Search patient..." value={filters.vaccPatient} onChange={(e) => setFilter('vaccPatient', e.target.value)} />
-            <input type="search" placeholder="Search vaccine..." value={filters.vaccVaccine} onChange={(e) => setFilter('vaccVaccine', e.target.value)} />
-            <input type="search" placeholder="Search dose..." value={filters.vaccDose} onChange={(e) => setFilter('vaccDose', e.target.value)} />
-            <span className="result-count">{countLabel(filteredVaccs.length)} shown</span>
-          </div>
+        <Card
+          title="Archived vaccinations"
+          subtitle={`${countLabel(filteredVaccs.length)} shown`}
+          actions={
+            (filters.vaccPatient || filters.vaccVaccine || filters.vaccDose)
+              ? <button type="button" className="ap-btn-text" onClick={resetVaccFilters}>Reset filters</button>
+              : undefined
+          }
+        >
+          <FilterBar>
+            <Field label="Patient" className="ap-field--grow">
+              <div className="ap-input-icon">
+                <IconSearch size={16} />
+                <input type="search" className="apt-search" placeholder="Search patient..." value={filters.vaccPatient} onChange={(e) => setFilter('vaccPatient', e.target.value)} />
+              </div>
+            </Field>
+            <Field label="Vaccine" className="ap-field--grow">
+              <input type="search" className="apt-search" placeholder="Search vaccine..." value={filters.vaccVaccine} onChange={(e) => setFilter('vaccVaccine', e.target.value)} />
+            </Field>
+            <Field label="Dose" className="ap-field--xs">
+              <input type="search" className="apt-search" placeholder="Any" value={filters.vaccDose} onChange={(e) => setFilter('vaccDose', e.target.value)} />
+            </Field>
+          </FilterBar>
           <div className="table-scroll">
             <table>
               <thead>
@@ -816,7 +919,15 @@ export default function AdminHistory() {
               </thead>
               <tbody>
                 {filteredVaccs.length === 0 ? (
-                  <tr><td colSpan={7} className="empty-state-row">No vaccination records yet.</td></tr>
+                  <tr>
+                    <td colSpan={7}>
+                      <EmptyState
+                        icon={<IconVaccine size={20} />}
+                        title="No archived vaccinations"
+                        hint="Doses administered at the clinic will be grouped by day here."
+                      />
+                    </td>
+                  </tr>
                 ) : vaccGroups.map(([day, rows]) => (
                   <Fragment key={day}>
                     <DayHeader
@@ -831,12 +942,12 @@ export default function AdminHistory() {
                       return (
                         <tr key={v.id}>
                           <td>
-                            <div className="cell-name">{v.patient_name}</div>
-                            <div className="cell-sub">{v.patient_email}</div>
+                            <span className="ap-strong">{v.patient_name}</span>
+                            <small className="ap-sub">{v.patient_email || 'No email on file'}</small>
                           </td>
-                          <td><strong>{v.vaccine_name}</strong></td>
-                          <td><span className="badge badge-normal">{v.dose_label}</span></td>
-                          <td><strong>{fmtDate(v.administered_date)}</strong></td>
+                          <td><span className="ap-strong">{v.vaccine_name}</span></td>
+                          <td><span className="pill">{v.dose_label}</span></td>
+                          <td><span className="ap-strong">{fmtDate(v.administered_date)}</span></td>
                           <td>
                             {v.next_due_date ? (
                               <span className={`badge ${due !== null && due <= 14 ? 'badge-due' : 'badge-done'}`}>{fmtDate(v.next_due_date)}</span>
@@ -845,13 +956,15 @@ export default function AdminHistory() {
                             )}
                           </td>
                           <td>
-                            <span className="cell-sub" style={{ maxWidth: 220, display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span className="ap-sub ap-sub--inline ap-clip">
                               {v.notes || '\u2014'}
                             </span>
                           </td>
                           <td>
-                            {fmtDate(v.created_at)}<br />
-                            <small style={{ color: '#94a3b8' }}>{timeFromTs(v.created_at)}</small>
+                            <span className="ap-updated">
+                              {fmtDate(v.created_at)}
+                              <small>{timeFromTs(v.created_at)}</small>
+                            </span>
                           </td>
                         </tr>
                       );
@@ -861,12 +974,16 @@ export default function AdminHistory() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
+      </Stack>
 
       {/* ---- appointment slip ---- */}
       <Modal open={!!slipFor} onClose={() => setSlipFor(null)} className="slip-modal">
-        <h2>Appointment Slip</h2>
+        <ModalHead
+          title="Appointment slip"
+          hint={slipFor ? `${slipFor.patient_name} · Dr. ${slipFor.doctor_name}` : undefined}
+        />
         {slipFor && (
           <div className="slip-body">
             <div className="slip-head">
@@ -887,40 +1004,38 @@ export default function AdminHistory() {
 
       {/* ---- reschedule history ---- */}
       <Modal open={!!reschedFor} onClose={() => setReschedFor(null)}>
-        <h2>Reschedule History</h2>
+        <ModalHead
+          title="Reschedule history"
+          hint={reschedFor ? `${reschedFor.patient_name} · Dr. ${reschedFor.doctor_name}` : undefined}
+        />
         {reschedFor && (
-          <>
-            <p style={{ color: '#64748b', margin: '0 0 1rem', fontSize: '.92rem' }}>
-              <strong style={{ color: '#0f172a' }}>{reschedFor.patient_name}</strong> &middot; Dr. {reschedFor.doctor_name}
-            </p>
-            {reschedEntries(reschedFor).length > 0 ? (
-              <ul className="list-plain">
-                {reschedEntries(reschedFor).map((e, i) => (
-                  <li className="list-row" key={i}>
-                    <div className="list-row-body">
-                      <strong>
-                        {fmtDate(e.old_date)} &middot; {fmtTime(e.old_time)}
-                        {' \u2192 '}
-                        {fmtDate(e.new_date)} &middot; {fmtTime(e.new_time)}
-                      </strong>
-                      <span className="cell-sub">rescheduled on {fmtDate(e.rescheduled_at)} {timeFromTs(e.rescheduled_at)}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : reschedFor.last_rescheduled_at ? (
-              <ul className="list-plain">
-                <li className="list-row">
+          reschedEntries(reschedFor).length > 0 ? (
+            <ul className="list-plain">
+              {reschedEntries(reschedFor).map((e, i) => (
+                <li className="list-row" key={i}>
                   <div className="list-row-body">
-                    <strong>Rescheduled {'\u2192'} {fmtDate(reschedFor.appointment_date)} {fmtTime(reschedFor.appointment_time)}</strong>
-                    <span className="cell-sub">last rescheduled on {fmtDate(reschedFor.last_rescheduled_at)} {timeFromTs(reschedFor.last_rescheduled_at)}</span>
+                    <strong>
+                      {fmtDate(e.old_date)} &middot; {fmtTime(e.old_time)}
+                      {' \u2192 '}
+                      {fmtDate(e.new_date)} &middot; {fmtTime(e.new_time)}
+                    </strong>
+                    <span className="ap-sub ap-sub--inline">rescheduled on {fmtDate(e.rescheduled_at)} {timeFromTs(e.rescheduled_at)}</span>
                   </div>
                 </li>
-              </ul>
-            ) : (
-              <div className="empty-note">This appointment was rescheduled.</div>
-            )}
-          </>
+              ))}
+            </ul>
+          ) : reschedFor.last_rescheduled_at ? (
+            <ul className="list-plain">
+              <li className="list-row">
+                <div className="list-row-body">
+                  <strong>Rescheduled {'\u2192'} {fmtDate(reschedFor.appointment_date)} {fmtTime(reschedFor.appointment_time)}</strong>
+                  <span className="ap-sub ap-sub--inline">last rescheduled on {fmtDate(reschedFor.last_rescheduled_at)} {timeFromTs(reschedFor.last_rescheduled_at)}</span>
+                </div>
+              </li>
+            </ul>
+          ) : (
+            <div className="empty-note">This appointment was rescheduled.</div>
+          )
         )}
         <div className="form-actions">
           <button className="btn-secondary" onClick={() => setReschedFor(null)}>Close</button>
@@ -929,24 +1044,25 @@ export default function AdminHistory() {
 
       {/* ---- lab result ---- */}
       <Modal open={!!resultFor} onClose={() => setResultFor(null)}>
-        <h2>{resultFor?.test_type || 'Lab Result'}</h2>
+        <ModalHead
+          title={resultFor?.test_type || 'Lab result'}
+          hint={resultFor ? `${resultFor.patient_name} · Dr. ${resultFor.doctor_name}` : undefined}
+        />
         {resultFor && (
           <>
-            <div className="result-meta-grid">
-              <div className="result-meta-item"><label>Patient</label><span>{resultFor.patient_name}</span></div>
-              <div className="result-meta-item"><label>Doctor</label><span>Dr. {resultFor.doctor_name}</span></div>
-              <div className="result-meta-item"><label>Scheduled</label><span>{resultFor.scheduled_date ? fmtDate(resultFor.scheduled_date) : '\u2014'}</span></div>
-              <div className="result-meta-item"><label>Status</label><span>{cap(resultFor.status)}</span></div>
+            <div className="client-detail-grid ap-detail-grid">
+              <div><span>Patient</span><strong>{resultFor.patient_name}</strong></div>
+              <div><span>Doctor</span><strong>Dr. {resultFor.doctor_name}</strong></div>
+              <div><span>Test</span><strong>{resultFor.test_type}</strong></div>
+              <div><span>Scheduled</span><strong>{resultFor.scheduled_date ? fmtDate(resultFor.scheduled_date) : '\u2014'}</strong></div>
+              <div><span>Status</span><strong style={{ textTransform: 'capitalize' }}>{cap(resultFor.status)}</strong></div>
             </div>
-            <div className="result-divider" />
-            <div className="result-section-label">Findings / Result</div>
-            <div className={`result-content-box${resultFor.result ? '' : ' empty'}`}>
-              {resultFor.result || 'No result recorded.'}
-            </div>
+            <label className="form-label">Findings / result</label>
+            <div className="ap-result-body">{resultFor.result || 'No result recorded.'}</div>
             {resultFor.notes && resultFor.notes.trim() ? (
               <>
-                <div className="result-section-label">Clinical Notes</div>
-                <div className="result-content-box">{resultFor.notes}</div>
+                <label className="form-label ap-mt">Clinical notes</label>
+                <div className="ap-result-body">{resultFor.notes}</div>
               </>
             ) : null}
           </>

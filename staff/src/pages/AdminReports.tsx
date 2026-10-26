@@ -3,6 +3,8 @@ import Shell from '../Shell';
 import { getInitial, fetchData, fmtDate } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
+import { Card, EmptyState, Field, FilterBar, Stack, StatCard, StatGrid } from '../ui';
+import { IconAppointments, IconCheck, IconPatients, IconPrint, IconReports, IconVitals } from '../icons';
 
 interface BreakdownRow {
   bucket: string;
@@ -247,11 +249,14 @@ export default function AdminReports() {
       body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;padding:24px;margin:0;background:#fff}
       h2{margin:0 0 8px;font-size:20px}
       h3{font-size:13px;color:#15803d;letter-spacing:.06em;text-transform:uppercase;margin:18px 0 8px}
+      .ap-card-heading p{font-size:12px;color:#475569;margin:2px 0 12px}
+      .ap-card-actions{display:none !important}
       .report-meta{display:flex;flex-wrap:wrap;gap:4px 22px;color:#475569;font-size:12px;margin-bottom:14px}
-      .stats-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:10px 0 4px}
-      .stat-card{border:1px solid #e2e8f0;border-top:3px solid #16a34a;border-radius:9px;padding:9px 10px}
-      .stat-number{font-size:20px;font-weight:800;line-height:1.2}
-      .stat-label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+      .ap-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 4px}
+      .ap-stat{display:flex;gap:8px;border:1px solid #e2e8f0;border-radius:9px;padding:9px 10px}
+      .ap-stat-icon,.ap-stat-hint{display:none}
+      .ap-stat-value{font-size:20px;font-weight:800;line-height:1.2}
+      .ap-stat-label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
       .chart-switch{display:none !important}
       .report-chart{width:100%;height:auto;max-height:300px}
       .table-scroll{overflow:visible !important}
@@ -260,7 +265,7 @@ export default function AdminReports() {
       th{background:#f8fafc;color:#475569;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
       tfoot td{font-weight:700;background:#f8fafc}
       .report-note{font-size:10px;color:#94a3b8;margin-top:12px;padding-top:9px;border-top:1px solid #e2e8f0}
-      .empty-state-row{text-align:center;color:#94a3b8}
+      .ap-empty{text-align:center;color:#94a3b8;padding:18px}
       .chart-empty{border:1px dashed #e2e8f0;border-radius:8px;padding:24px;text-align:center;color:#94a3b8}
     `;
     w.document.write(
@@ -285,168 +290,180 @@ export default function AdminReports() {
 
   return (
     <Shell active="reports" title="Reports">
-      <div className="content-card report-filters">
-        <div className="report-toolbar">
-          <div className="report-presets">
-            {PRESETS.map((p) => (
+      <Stack>
+        <Card
+          title="Report filters"
+          subtitle={`Showing ${periodLabel.toLowerCase()} · grouped ${groupLabel.toLowerCase()}`}
+          actions={<button type="button" className="btn-primary" onClick={() => apply()}>Generate report</button>}
+        >
+          <FilterBar>
+            <Field label="Quick range">
+              <div className="report-presets">
+                {PRESETS.map((p) => (
+                  <button
+                    key={p.key || 'all'}
+                    type="button"
+                    className={filters.period === p.key ? 'on' : ''}
+                    onClick={() => apply({ period: p.key, from: '', to: '' })}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </Field>
+            <Field label="From" className="ap-field--date">
+              <input
+                type="date"
+                className="form-input"
+                value={filters.from}
+                onChange={(e) => setField('from', e.target.value)}
+                onInput={() => filters.period && setField('period', '')}
+              />
+            </Field>
+            <Field label="To" className="ap-field--date">
+              <input
+                type="date"
+                className="form-input"
+                value={filters.to}
+                onChange={(e) => setField('to', e.target.value)}
+                onInput={() => filters.period && setField('period', '')}
+              />
+            </Field>
+            <Field label="Group by" className="ap-field--select">
+              <select className="apt-select" value={filters.group} onChange={(e) => apply({ group: e.target.value, period: filters.period })}>
+                <option value="date">Daily</option>
+                <option value="week">Weekly</option>
+                <option value="month">Monthly</option>
+              </select>
+            </Field>
+            <Field label="Status" className="ap-field--select">
+              <select className="apt-select" value={filters.status} onChange={(e) => setField('status', e.target.value)}>
+                <option value="">All statuses</option>
+                {['pending', 'confirmed', 'completed', 'cancelled'].map((s) => (
+                  <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Payment" className="ap-field--select">
+              <select className="apt-select" value={filters.payment} onChange={(e) => setField('payment', e.target.value)}>
+                <option value="">All payments</option>
+                <option value="paid">Paid</option>
+                <option value="pending">Unpaid</option>
+              </select>
+            </Field>
+            <Field label="Doctor" className="ap-field--select">
+              <select className="apt-select" value={filters.doctor_id} onChange={(e) => setField('doctor_id', e.target.value)}>
+                <option value="">All doctors</option>
+                {doctors.map((doc) => (
+                  <option key={doc.id} value={doc.id}>
+                    {doc.name}{doc.specialty ? ` (${doc.specialty})` : ''}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </FilterBar>
+        </Card>
+
+        <Card
+          id="report-sheet"
+          className="report-sheet"
+          title="Patient & appointment report"
+          subtitle={`${periodLabel} · ${groupLabel} breakdown · generated ${generated}`}
+          actions={
+            <button type="button" className="btn-secondary" onClick={printReport}>
+              <IconPrint size={16} /> Print / PDF
+            </button>
+          }
+        >
+          <StatGrid>
+            <StatCard icon={<IconAppointments />} label="Appointments" value={metrics.appointments ?? 0} hint="Booked in range" />
+            <StatCard icon={<IconPatients />} label="Unique patients" value={metrics.patients ?? 0} hint="Distinct patients seen" tone="blue" />
+            <StatCard icon={<IconCheck />} label="Completed" value={metrics.completed ?? 0} hint="Finished visits" tone="slate" />
+            <StatCard icon={<IconAppointments />} label="Cancelled" value={metrics.cancelled ?? 0} hint="Did not push through" tone="rose" />
+            <StatCard icon={<IconVitals />} label="Paid visits" value={metrics.paid ?? 0} hint="Settled at the counter" tone="amber" />
+            <StatCard icon={<IconReports />} label="Est. revenue" value={fmtMoney(metrics.revenue ?? 0)} hint="Paid visits × ₱500" tone="violet" />
+          </StatGrid>
+
+          <div className="report-meta">
+            <span>Period: <strong>{periodLabel}</strong></span>
+            <span>Grouped: <strong>{groupLabel}</strong></span>
+            <span>Generated: <strong>{generated}</strong></span>
+          </div>
+
+          <h3 className="report-section">{groupLabel} patient trend</h3>
+          <div className="chart-switch">
+            <span className="chart-switch-label">Show:</span>
+            {CHART_FIELDS.map((f) => (
               <button
-                key={p.key || 'all'}
+                key={f.key}
                 type="button"
-                className={filters.period === p.key ? 'on' : ''}
-                onClick={() => apply({ period: p.key, from: '', to: '' })}
+                className={`chart-chip${chartField === f.key ? ' active' : ''}`}
+                onClick={() => setChartField(f.key)}
               >
-                {p.label}
+                {f.label}
               </button>
             ))}
           </div>
+          <ReportChart rows={rows} field={chartField} />
 
-          <div className="field">
-            <label>From</label>
-            <input
-              type="date"
-              className="form-input"
-              value={filters.from}
-              onChange={(e) => setField('from', e.target.value)}
-              onInput={() => filters.period && setField('period', '')}
-            />
-          </div>
-          <div className="field">
-            <label>To</label>
-            <input
-              type="date"
-              className="form-input"
-              value={filters.to}
-              onChange={(e) => setField('to', e.target.value)}
-              onInput={() => filters.period && setField('period', '')}
-            />
-          </div>
-          <div className="field">
-            <label>Group By</label>
-            <select className="form-dropdown" value={filters.group} onChange={(e) => apply({ group: e.target.value, period: filters.period })}>
-              <option value="date">Daily</option>
-              <option value="week">Weekly</option>
-              <option value="month">Monthly</option>
-            </select>
-          </div>
-          <div className="field">
-            <label>Status</label>
-            <select className="form-dropdown" value={filters.status} onChange={(e) => setField('status', e.target.value)}>
-              <option value="">All Statuses</option>
-              {['pending', 'confirmed', 'completed', 'cancelled'].map((s) => (
-                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label>Payment</label>
-            <select className="form-dropdown" value={filters.payment} onChange={(e) => setField('payment', e.target.value)}>
-              <option value="">All Payments</option>
-              <option value="paid">Paid</option>
-              <option value="pending">Unpaid</option>
-            </select>
-          </div>
-          <div className="field">
-            <label>Doctor</label>
-            <select className="form-dropdown" value={filters.doctor_id} onChange={(e) => setField('doctor_id', e.target.value)}>
-              <option value="">All Doctors</option>
-              {doctors.map((doc) => (
-                <option key={doc.id} value={doc.id}>
-                  {doc.name}{doc.specialty ? ` (${doc.specialty})` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <button type="button" className="btn-primary" onClick={() => apply()}>Generate Report</button>
-          </div>
-          <div className="field">
-            <button type="button" className="btn-secondary" onClick={printReport}>Print / PDF</button>
-          </div>
-        </div>
-      </div>
-
-      <div className="content-card report-sheet" id="report-sheet">
-        <h2>Patient &amp; Appointment Report</h2>
-        <div className="report-meta">
-          <span>Period: <strong>{periodLabel}</strong></span>
-          <span>Grouped: <strong>{filters.group.charAt(0).toUpperCase() + filters.group.slice(1)}</strong></span>
-          <span>Generated: <strong>{generated}</strong></span>
-        </div>
-
-        <div className="stats-grid">
-          <div className="stat-card"><div className="stat-number">{metrics.appointments ?? 0}</div><div className="stat-label">Appointments</div></div>
-          <div className="stat-card" style={{ borderTopColor: '#8b5cf6' }}><div className="stat-number" style={{ color: '#8b5cf6' }}>{metrics.patients ?? 0}</div><div className="stat-label">Unique Patients</div></div>
-          <div className="stat-card" style={{ borderTopColor: '#10b981' }}><div className="stat-number" style={{ color: '#10b981' }}>{metrics.completed ?? 0}</div><div className="stat-label">Completed</div></div>
-          <div className="stat-card" style={{ borderTopColor: '#ef4444' }}><div className="stat-number" style={{ color: '#ef4444' }}>{metrics.cancelled ?? 0}</div><div className="stat-label">Cancelled</div></div>
-          <div className="stat-card" style={{ borderTopColor: '#f59e0b' }}><div className="stat-number" style={{ color: '#f59e0b' }}>{metrics.paid ?? 0}</div><div className="stat-label">Paid Visits</div></div>
-          <div className="stat-card" style={{ borderTopColor: '#0ea5e9' }}><div className="stat-number" style={{ color: '#0ea5e9' }}>{fmtMoney(metrics.revenue ?? 0)}</div><div className="stat-label">Est. Revenue</div></div>
-        </div>
-
-        <h3 className="report-section">{groupLabel} Patient Trend</h3>
-        <div className="chart-switch">
-          <span className="chart-switch-label">Show:</span>
-          {CHART_FIELDS.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              className={`chart-chip${chartField === f.key ? ' active' : ''}`}
-              onClick={() => setChartField(f.key)}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-        <ReportChart rows={rows} field={chartField} />
-
-        <h3 className="report-section">{groupLabel} Breakdown</h3>
-        <div className="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>{groupLabel}</th>
-                <th>Appointments</th>
-                <th>Unique Patients</th>
-                <th>Completed</th>
-                <th>Cancelled</th>
-                <th>Paid</th>
-                <th>Est. Revenue</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length === 0 ? (
-                <tr><td colSpan={7} className="empty-state-row">No records match the selected filters.</td></tr>
-              ) : rows.map((r) => (
-                <tr key={r.bucket}>
-                  <td><strong>{r.label}</strong></td>
-                  <td>{r.appts}</td>
-                  <td>{r.patients}</td>
-                  <td>{r.completed}</td>
-                  <td>{r.cancelled}</td>
-                  <td>{r.paid}</td>
-                  <td>{fmtMoney(Number(r.paid || 0) * 500)}</td>
-                </tr>
-              ))}
-            </tbody>
-            {rows.length > 0 && (
-              <tfoot>
+          <h3 className="report-section">{groupLabel} breakdown</h3>
+          <div className="table-scroll">
+            <table>
+              <thead>
                 <tr>
-                  <td>Total</td>
-                  <td>{totals.appts}</td>
-                  <td>{totals.patients}</td>
-                  <td>{totals.completed}</td>
-                  <td>{totals.cancelled}</td>
-                  <td>{totals.paid}</td>
-                  <td>{fmtMoney(totals.revenue)}</td>
+                  <th>{groupLabel}</th>
+                  <th>Appointments</th>
+                  <th>Unique patients</th>
+                  <th>Completed</th>
+                  <th>Cancelled</th>
+                  <th>Paid</th>
+                  <th>Est. revenue</th>
                 </tr>
-              </tfoot>
-            )}
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={7}>
+                      <EmptyState
+                        icon={<IconReports size={20} />}
+                        title="No records match these filters"
+                        hint="Widen the date range or clear the status, payment or doctor filters."
+                      />
+                    </td>
+                  </tr>
+                ) : rows.map((r) => (
+                  <tr key={r.bucket}>
+                    <td><span className="ap-strong">{r.label}</span></td>
+                    <td>{r.appts}</td>
+                    <td>{r.patients}</td>
+                    <td>{r.completed}</td>
+                    <td>{r.cancelled}</td>
+                    <td>{r.paid}</td>
+                    <td><span className="ap-strong">{fmtMoney(Number(r.paid || 0) * 500)}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+              {rows.length > 0 && (
+                <tfoot>
+                  <tr>
+                    <td>Total</td>
+                    <td>{totals.appts}</td>
+                    <td>{totals.patients}</td>
+                    <td>{totals.completed}</td>
+                    <td>{totals.cancelled}</td>
+                    <td>{totals.paid}</td>
+                    <td>{fmtMoney(totals.revenue)}</td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
 
-        <div className="report-note">
-          * Estimated revenue = paid visits &times; {'\u20b1'}500. No billing amount is stored in the appointment record.
-        </div>
-      </div>
+          <div className="report-note">
+            * Estimated revenue = paid visits &times; {'\u20b1'}500. No billing amount is stored in the appointment record.
+          </div>
+        </Card>
+      </Stack>
     </Shell>
   );
 }

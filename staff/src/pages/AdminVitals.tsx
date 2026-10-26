@@ -4,6 +4,8 @@ import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime } from '
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
 import { Modal } from '../components';
+import { Card, EmptyState, Field, FilterBar, FormSection, ModalHead, Stack, StatCard, StatGrid } from '../ui';
+import { IconClock, IconSearch, IconVitals } from '../icons';
 import type { VaccinationRow } from '../types';
 
 interface PatientOption {
@@ -194,125 +196,152 @@ export default function AdminVitals() {
 
   return (
     <Shell active="vitals" title="Vaccines">
-      <div className="stats-grid">
-        <div className="stat-card"><div className="stat-number">{stats.total ?? 0}</div><div className="stat-label">Total Records</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#0ea5e9' }}><div className="stat-number" style={{ color: '#0ea5e9' }}>{stats.thisMonth ?? 0}</div><div className="stat-label">This Month</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#f59e0b' }}><div className="stat-number" style={{ color: '#f59e0b' }}>{stats.dueSoon ?? 0}</div><div className="stat-label">Due Soon (30 days)</div></div>
-      </div>
+      <Stack>
+        <StatGrid>
+          <StatCard icon={<IconVitals />} label="Total records" value={stats.total ?? 0} hint="Doses administered" />
+          <StatCard icon={<IconVitals />} label="This month" value={stats.thisMonth ?? 0} hint="Given in the last 30 days" tone="blue" />
+          <StatCard icon={<IconClock />} label="Due soon" value={stats.dueSoon ?? 0} hint="Next dose within 30 days" tone="amber" />
+        </StatGrid>
 
-      {selectedId > 0 && (
-        <>
-          <div className="patient-picker">
-            <label htmlFor="patientSelect">Patient:</label>
-            <select
-              id="patientSelect"
-              className="form-dropdown"
-              value={selectedId}
-              onChange={(e) => loadPatient(Number(e.target.value))}
+        {selectedId > 0 ? (
+          <>
+            <Card
+              title="Vaccination record"
+              subtitle={selectedName ? `Doses on file for ${selectedName}` : undefined}
+              actions={<button type="button" className="btn-add" onClick={openModal}>Add vaccination</button>}
             >
-              {patients.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}{p.email ? ` — ${p.email}` : ''}</option>
-              ))}
-            </select>
-          </div>
+              <FilterBar>
+                <Field label="Patient" className="ap-field--grow">
+                  <select
+                    id="patientSelect"
+                    className="apt-select"
+                    value={selectedId}
+                    onChange={(e) => loadPatient(Number(e.target.value))}
+                  >
+                    {patients.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}{p.email ? ` — ${p.email}` : ''}</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Search" className="ap-field--grow">
+                  <div className="ap-input-icon">
+                    <IconSearch size={16} />
+                    <input type="search" className="apt-search" placeholder="Search vaccine or dose..." value={q} onChange={(e) => setQ(e.target.value)} />
+                  </div>
+                </Field>
+              </FilterBar>
 
-          <div className="summary-chips">
-            <div className="summary-chip"><label>Patient</label><strong>{selectedName}</strong></div>
-            <div className="summary-chip"><label>Next Vaccine Due</label><strong style={{ fontSize: '1rem' }}>{nextDue}</strong></div>
-          </div>
+              <div className="ap-context">
+                <div className="ap-context-item">
+                  <span>Patient</span>
+                  <strong>{selectedName || '—'}</strong>
+                </div>
+                <div className="ap-context-item">
+                  <span>Next vaccine due</span>
+                  <strong>{nextDue}</strong>
+                </div>
+              </div>
 
-          <div className="content-card">
-            <div className="section-head">
-              <h2>Vaccination Record</h2>
-              <button type="button" className="btn-add" onClick={openModal}>+ Add Vaccination</button>
-            </div>
-            <div className="apt-toolbar">
-              <input type="search" className="apt-search" placeholder="Search vaccine or dose..." value={q} onChange={(e) => setQ(e.target.value)} />
-            </div>
-            <div className="table-scroll"><table>
-              <thead><tr><th>Vaccine</th><th>Dose</th><th>Administered</th><th>Next Due</th><th>Notes</th><th>Actions</th></tr></thead>
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr><td colSpan={6} className="empty-state-row">No vaccination records for this patient yet.</td></tr>
-                ) : filtered.map((v) => (
-                  <tr key={v.id}>
-                    <td><strong>{v.vaccine_name}</strong></td>
-                    <td><span className="badge badge-normal">{v.dose_label}</span></td>
-                    <td><strong>{fmtDate(v.administered_date)}</strong></td>
-                    <td>{dueBadge(v)}</td>
-                    <td><span className="cell-sub">{v.notes || '—'}</span></td>
-                    <td>
-                      <button type="button" className="btn-delete btn-xs" onClick={() => deleteVaccination(v)}>Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table></div>
-          </div>
-        </>
-      )}
-
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
-        <h2>Add Vaccination</h2>
-        <div className="form-grid">
-          <div className="form-group">
-            <label>Vaccine Name *</label>
-            <select className="form-dropdown" value={form.vaccine_name} onChange={(e) => setForm({ ...form, vaccine_name: e.target.value })}>
-              <option value="">Select Vaccine</option>
-              {VACCINES.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Dose Given</label>
-            <select className="form-dropdown" value={form.dose_label} onChange={(e) => setForm({ ...form, dose_label: e.target.value })}>
-              {['Dose 1', 'Dose 2', 'Dose 3', 'Dose 4', 'Booster'].map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-          </div>
-        </div>
-        {form.vaccine_name === 'Other' && (
-          <div className="form-group">
-            <label>Specify Vaccine</label>
-            <input className="form-input" placeholder="Enter vaccine name" value={form.vaccine_other} onChange={(e) => setForm({ ...form, vaccine_other: e.target.value })} />
-          </div>
+              <div className="table-scroll"><table>
+                <thead><tr><th>Vaccine</th><th>Dose</th><th>Administered</th><th>Next due</th><th>Notes</th><th>Actions</th></tr></thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={6}>
+                        <EmptyState
+                          icon={<IconVitals size={20} />}
+                          title="No vaccination records"
+                          hint={q ? 'No doses match that search.' : 'Add the first vaccination for this patient.'}
+                        />
+                      </td>
+                    </tr>
+                  ) : filtered.map((v) => (
+                    <tr key={v.id}>
+                      <td><span className="ap-strong">{v.vaccine_name}</span></td>
+                      <td><span className="pill">{v.dose_label}</span></td>
+                      <td>{fmtDate(v.administered_date)}</td>
+                      <td>{dueBadge(v)}</td>
+                      <td><span className="ap-sub ap-sub--inline">{v.notes || '—'}</span></td>
+                      <td>
+                        <div className="ap-row-actions ap-row-actions--inline">
+                          <button type="button" className="btn-delete btn-xs" onClick={() => deleteVaccination(v)}>Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table></div>
+            </Card>
+          </>
+        ) : (
+          <Card title="Vaccination record">
+            <EmptyState
+              icon={<IconVitals size={20} />}
+              title="No patients available"
+              hint="Register a patient before recording vaccinations."
+            />
+          </Card>
         )}
-        <div className="form-grid">
-          <div className="form-group">
-            <label>Administered Date *</label>
-            <input type="date" className="form-input" max={today} value={form.administered_date} onChange={(e) => setForm({ ...form, administered_date: e.target.value })} />
+
+        <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
+          <ModalHead
+            title="Add vaccination"
+            hint={selectedName ? `Recording a dose for ${selectedName}.` : undefined}
+          />
+          <div className="form-grid">
+            <Field label="Vaccine name *">
+              <select className="form-input" value={form.vaccine_name} onChange={(e) => setForm({ ...form, vaccine_name: e.target.value })}>
+                <option value="">Select vaccine</option>
+                {VACCINES.map((v) => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </Field>
+            <Field label="Dose given">
+              <select className="form-input" value={form.dose_label} onChange={(e) => setForm({ ...form, dose_label: e.target.value })}>
+                {['Dose 1', 'Dose 2', 'Dose 3', 'Dose 4', 'Booster'].map((v) => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </Field>
           </div>
-          <div className="form-group">
-            <label>Next Due Date</label>
-            <input type="date" className="form-input" min={today} value={form.next_due_date} onChange={(e) => setForm({ ...form, next_due_date: e.target.value })} />
+          {form.vaccine_name === 'Other' && (
+            <Field label="Specify vaccine" className="ap-mt">
+              <input className="form-input" placeholder="Enter vaccine name" value={form.vaccine_other} onChange={(e) => setForm({ ...form, vaccine_other: e.target.value })} />
+            </Field>
+          )}
+          <div className="form-grid ap-mt">
+            <Field label="Administered date *">
+              <input type="date" className="form-input" max={today} value={form.administered_date} onChange={(e) => setForm({ ...form, administered_date: e.target.value })} />
+            </Field>
+            <Field label="Next due date">
+              <input type="date" className="form-input" min={today} value={form.next_due_date} onChange={(e) => setForm({ ...form, next_due_date: e.target.value })} />
+            </Field>
           </div>
-        </div>
-        <div className="form-grid">
-          <div className="form-group">
-            <label>Doctor (for booking)</label>
-            <select className="form-dropdown" value={form.doctor_id} onChange={(e) => setForm({ ...form, doctor_id: e.target.value })}>
-              {doctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name}</option>)}
-            </select>
+          <FormSection title="Next-dose booking" hint="Optional — books a pending appointment">
+            <div className="form-grid ap-mt-0">
+              <Field label="Doctor">
+                <select className="form-input" value={form.doctor_id} onChange={(e) => setForm({ ...form, doctor_id: e.target.value })}>
+                  {doctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name}</option>)}
+                </select>
+              </Field>
+              <Field label="Preferred time">
+                <select className="form-input" value={form.appointment_time} onChange={(e) => setForm({ ...form, appointment_time: e.target.value })}>
+                  <option value="">Earliest available</option>
+                  {slots.map((s) => <option key={s} value={s}>{fmtTime(s)}</option>)}
+                </select>
+              </Field>
+            </div>
+            <p className="form-hint">
+              If a next due date is set, the system books a pending appointment for that dose using the chosen doctor and time.
+              The next free slot is picked when your preference is taken.
+            </p>
+          </FormSection>
+          <Field label="Notes" className="ap-mt">
+            <textarea className="form-input" rows={3} placeholder="Batch, remarks, or next-dose instructions..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+          </Field>
+          <div className="form-actions">
+            <button type="button" className="btn-secondary" onClick={() => setModalOpen(false)}>Cancel</button>
+            <button type="button" className="btn-primary" onClick={saveVaccination}>Save vaccination</button>
           </div>
-          <div className="form-group">
-            <label>Preferred Time (booking)</label>
-            <select className="form-dropdown" value={form.appointment_time} onChange={(e) => setForm({ ...form, appointment_time: e.target.value })}>
-              {slots.map((s) => <option key={s} value={s}>{fmtTime(s)}</option>)}
-            </select>
-          </div>
-        </div>
-        <p className="form-hint">
-          Set <strong>Dose Given</strong> to the dose administered now. If you also set a <strong>Next Due Date</strong>, the system
-          automatically books a pending appointment for the next dose on that date using the chosen doctor and time (the next free
-          slot is picked if your preference is taken).
-        </p>
-        <div className="form-group">
-          <label>Notes</label>
-          <textarea className="form-input" rows={3} placeholder="Batch, remarks, or next-dose instructions..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-        </div>
-        <div className="form-actions">
-          <button className="btn-secondary" onClick={() => setModalOpen(false)}>Cancel</button>
-          <button className="btn-primary" onClick={saveVaccination}>Save Vaccination</button>
-        </div>
-      </Modal>
+        </Modal>
+      </Stack>
     </Shell>
   );
 }

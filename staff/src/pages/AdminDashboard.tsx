@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import Shell from '../Shell';
-import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime, fmtDateTime } from '../api';
+import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime, fmtDateTime, firstName } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
 import { Modal } from '../components';
+import { Card, EmptyState, ModalHead, Stack, StatCard, StatGrid } from '../ui';
+import {
+  IconAppointments, IconCheck, IconChevronRight, IconClock, IconDoctors, IconLab,
+  IconPatients, IconPlus, IconPrint, IconReports, IconSchedules, IconVitals, IconWalkins,
+} from '../icons';
 import type { AppointmentRow, DoctorRow, PatientRow, WalkinRow } from '../types';
 
 interface HistoryEntry {
@@ -62,6 +67,12 @@ function nowHM(): string {
 
 export default function AdminDashboard() {
   const data = getInitial();
+  const adminName = String(data.staff?.name || '');
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const todayLabel = new Date().toLocaleDateString('en-PH', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+  });
   const { showToast } = useToast();
   const [bundle, setBundle] = useState(data.data as Record<string, unknown>);
 
@@ -300,45 +311,78 @@ export default function AdminDashboard() {
 
   return (
     <Shell active="dashboard" title="Dashboard">
-      <div className="stats-grid">
-        <div className="stat-card"><div className="stat-number">{stats.totalPatients ?? 0}</div><div className="stat-label">Patients</div></div>
-        <div className="stat-card"><div className="stat-number">{stats.totalDoctors ?? 0}</div><div className="stat-label">Doctors</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#f59e0b' }}><div className="stat-number" style={{ color: '#f59e0b' }}>{stats.pendingAppointments ?? 0}</div><div className="stat-label">Pending</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#10b981' }}><div className="stat-number" style={{ color: '#10b981' }}>{stats.confirmedAppointments ?? 0}</div><div className="stat-label">Confirmed</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#8b5cf6' }}><div className="stat-number" style={{ color: '#8b5cf6' }}>{stats.todayAppointments ?? 0}</div><div className="stat-label">Today</div></div>
-        <div className="stat-card"><div className="stat-number">{stats.totalAppointments ?? 0}</div><div className="stat-label">Total</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#f59e0b' }}><div className="stat-number" style={{ color: '#f59e0b' }}>{stats.walkinsToday ?? 0}</div><div className="stat-label">Walk-ins Today</div></div>
-      </div>
-
-      <div className="content-card">
-        <h2>Quick Actions</h2>
-        <div className="qa-primary">
-          <button type="button" className="qa-btn qa-btn--apt" onClick={openAppt}>
-            <span className="qa-btn-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="17" rx="3" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
-            </span>
-            <span className="qa-btn-body"><strong>New Appointment</strong><small>Book a slot at the counter</small></span>
-            <span className="qa-btn-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5l7 7-7 7" /></svg></span>
+      <Stack>
+      <section className="ap-hero">
+        <div className="ap-hero-copy">
+          <span className="ap-hero-eyebrow">Today at a glance</span>
+          <h1>{greeting}{adminName ? `, ${firstName(adminName)}` : ''}</h1>
+          <p>{todayLabel}</p>
+        </div>
+        <div className="ap-hero-actions">
+          <button type="button" className="ap-btn ap-btn--solid" onClick={openAppt}>
+            <IconPlus size={18} /> New Appointment
           </button>
-          <button type="button" className="qa-btn qa-btn--walkin" onClick={openWalkin}>
-            <span className="qa-btn-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></span>
-            <span className="qa-btn-body"><strong>Register Walk-In</strong><small>Add a counter patient</small></span>
-            <span className="qa-btn-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5l7 7-7 7" /></svg></span>
+          <button type="button" className="ap-btn ap-btn--ghost" onClick={openWalkin}>
+            <IconWalkins size={18} /> Register Walk-in
           </button>
         </div>
-        <div className="quick-actions">
-          <a href="admin_clients.php" className="quick-action"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg> View Patients</a>
-          <a href="admin_vitals.php" className="quick-action"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg> Record Vitals</a>
-          <a href="admin_laboratory.php" className="quick-action"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v6.3L4.5 17a2.5 2.5 0 0 0 2 4h11a2.5 2.5 0 0 0 2-4L14 8.3V2" /><path d="M8.5 2h7" /><path d="M7 15h10" /></svg> New Lab Test</a>
-          <a href="admin_doctors.php" className="quick-action"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="22" y1="11" x2="16" y2="11" /></svg> Manage Doctors</a>
-          <a href="admin_schedules.php" className="quick-action"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="17" rx="3" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> Schedules</a>
-          <a href="admin_walkins.php" className="quick-action"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.6 4.7L18 9.3l-4.4 1.6L12 15.6l-1.6-4.7L6 9.3l4.4-1.6z" /><path d="M5 20h14" /></svg> View Walk-ins</a>
-          <a href="admin_reports.php" className="quick-action"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="M7 15v-4" /><path d="M12 15V7" /><path d="M17 15v-6" /></svg> View Reports</a>
-        </div>
-      </div>
+      </section>
 
-      <div className="content-card">
-        <h2>Recent Appointments</h2>
+      <StatGrid>
+        <StatCard icon={<IconPatients />} label="Patients" value={stats.totalPatients ?? 0} hint="Registered in the clinic" />
+        <StatCard icon={<IconDoctors />} label="Doctors" value={stats.totalDoctors ?? 0} hint="Available specialists" tone="blue" />
+        <StatCard icon={<IconAppointments />} label="Today" value={stats.todayAppointments ?? 0} hint="Appointments scheduled" tone="violet" />
+        <StatCard icon={<IconWalkins />} label="Walk-ins" value={stats.walkinsToday ?? 0} hint="Registered today" tone="amber" />
+        <StatCard icon={<IconClock />} label="Pending" value={stats.pendingAppointments ?? 0} hint="Awaiting confirmation" tone="amber" />
+        <StatCard icon={<IconCheck />} label="Confirmed" value={stats.confirmedAppointments ?? 0} hint="Ready to serve" />
+        <StatCard icon={<IconReports />} label="All appointments" value={stats.totalAppointments ?? 0} hint="Lifetime records" tone="slate" />
+      </StatGrid>
+
+      <Card title="Quick actions" subtitle="Jump straight to the counter tasks you use most">
+        <div className="ap-quick-grid">
+          <a href="admin_clients.php" className="ap-quick">
+            <span className="ap-quick-icon"><IconPatients size={18} /></span>
+            <span className="ap-quick-body"><strong>Patient directory</strong><small>Search and open profiles</small></span>
+            <IconChevronRight size={16} />
+          </a>
+          <a href="admin_vitals.php" className="ap-quick">
+            <span className="ap-quick-icon"><IconVitals size={18} /></span>
+            <span className="ap-quick-body"><strong>Record vitals</strong><small>Vaccines and measurements</small></span>
+            <IconChevronRight size={16} />
+          </a>
+          <a href="admin_laboratory.php" className="ap-quick">
+            <span className="ap-quick-icon"><IconLab size={18} /></span>
+            <span className="ap-quick-body"><strong>Laboratory</strong><small>Requests, results and releases</small></span>
+            <IconChevronRight size={16} />
+          </a>
+          <a href="admin_doctors.php" className="ap-quick">
+            <span className="ap-quick-icon"><IconDoctors size={18} /></span>
+            <span className="ap-quick-body"><strong>Doctors</strong><small>Profiles and specialties</small></span>
+            <IconChevronRight size={16} />
+          </a>
+          <a href="admin_schedules.php" className="ap-quick">
+            <span className="ap-quick-icon"><IconSchedules size={18} /></span>
+            <span className="ap-quick-body"><strong>Schedules</strong><small>Weekly availability blocks</small></span>
+            <IconChevronRight size={16} />
+          </a>
+          <a href="admin_walkins.php" className="ap-quick">
+            <span className="ap-quick-icon"><IconWalkins size={18} /></span>
+            <span className="ap-quick-body"><strong>Walk-in queue</strong><small>Today's counter patients</small></span>
+            <IconChevronRight size={16} />
+          </a>
+          <a href="admin_reports.php" className="ap-quick">
+            <span className="ap-quick-icon"><IconReports size={18} /></span>
+            <span className="ap-quick-body"><strong>Reports</strong><small>Clinic activity and exports</small></span>
+            <IconChevronRight size={16} />
+          </a>
+        </div>
+      </Card>
+
+      <Card
+        title="Recent appointments"
+        subtitle={`${recent.length} most recent booking${recent.length === 1 ? '' : 's'}`}
+        actions={<a className="ap-link" href="admin_appointments.php">View all <IconChevronRight size={14} /></a>}
+      >
         <div className="table-scroll">
           <table>
             <thead><tr><th>#</th><th>Patient</th><th>Doctor</th><th>Date</th><th>Time</th><th>Status</th><th>Payment</th><th>Actions</th></tr></thead>
@@ -349,9 +393,9 @@ export default function AdminDashboard() {
                 const hist = historyByAppt[a.id] || [];
                 return (
                   <tr key={a.id}>
-                    <td style={{ color: '#94a3b8', fontWeight: 700 }}>#{a.id}</td>
+                    <td className="ap-id">#{a.id}</td>
                     <td><strong>{a.patient_name}</strong></td>
-                    <td>Dr. {a.doctor_name}<br /><small style={{ color: '#64748b' }}>{a.specialty}</small></td>
+                    <td>Dr. {a.doctor_name}<br /><small>{a.specialty}</small></td>
                     <td>{fmtDate(a.appointment_date)}</td>
                     <td>{fmtTime(a.appointment_time)}</td>
                     <td>
@@ -386,7 +430,7 @@ export default function AdminDashboard() {
                       </span>
                     </td>
                     <td>
-                      <div className="apt-actions" style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 160 }}>
+                      <div className="ap-row-actions">
                         <select className="action-select" value={a.status} onChange={(e) => updateStatus(a.id, e.target.value)}>
                           {['pending', 'confirmed', 'completed', 'cancelled'].map((o) => (
                             <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>
@@ -397,7 +441,7 @@ export default function AdminDashboard() {
                           <option value="paid">Paid</option>
                         </select>
                         <button type="button" className="btn-slip" title="Print appointment slip" onClick={() => printSlip(a)}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" rx="1" /></svg> Print Slip
+                          <IconPrint size={16} /> Print slip
                         </button>
                       </div>
                     </td>
@@ -407,19 +451,23 @@ export default function AdminDashboard() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
-      <div className="content-card">
-        <div className="patients-header">
-          <h2 style={{ marginBottom: 0 }}>Today's Walk-ins</h2>
-          <a href="admin_walkins.php" className="btn-walkin" style={{ textDecoration: 'none' }}>View All Walk-ins</a>
-        </div>
+      <Card
+        title="Today's walk-ins"
+        subtitle={walkinsByDoctor.length ? `${todayWalkins.length} patient${todayWalkins.length === 1 ? '' : 's'} in the queue` : undefined}
+        actions={<a className="ap-link" href="admin_walkins.php">View all <IconChevronRight size={14} /></a>}
+      >
         {walkinsByDoctor.length === 0 ? (
-          <div className="empty-state-row" style={{ textAlign: 'center', color: '#94a3b8', padding: '1.5rem 0' }}>No walk-ins registered today yet.</div>
+          <EmptyState
+            icon={<IconWalkins size={20} />}
+            title="No walk-ins yet"
+            hint="Register a counter patient to start today's queue."
+          />
         ) : walkinsByDoctor.map((g) => (
-          <div className="walkin-doctor-group" key={g.doctor} style={{ marginTop: 18 }}>
-            <h3 style={{ margin: '0 0 8px', color: '#0f172a' }}>
-              Dr. {g.doctor} {g.specialty ? <small style={{ color: '#64748b', fontWeight: 400 }}>({g.specialty})</small> : null}
+          <div className="ap-group" key={g.doctor}>
+            <h3 className="ap-group-title">
+              Dr. {g.doctor} {g.specialty ? <small>({g.specialty})</small> : null}
             </h3>
             <div className="table-scroll">
               <table>
@@ -427,7 +475,7 @@ export default function AdminDashboard() {
                 <tbody>
                   {g.rows.map((w, i) => (
                     <tr key={w.id}>
-                      <td><span className="badge" style={{ background: '#16a34a', color: '#fff', fontSize: '1rem', fontWeight: 800 }}>#{w.queue ?? i + 1}</span></td>
+                      <td><span className="ap-queue">#{w.queue ?? i + 1}</span></td>
                       <td><strong>{w.patient_name}</strong></td>
                       <td><span className="badge badge-urgent">{w.patient_type ? w.patient_type.charAt(0).toUpperCase() + w.patient_type.slice(1) : '—'}</span></td>
                       <td>{fmtTime(w.arrival_time)}</td>
@@ -444,10 +492,11 @@ export default function AdminDashboard() {
             </div>
           </div>
         ))}
-      </div>
+      </Card>
+      </Stack>
 
       <Modal open={apptOpen} onClose={() => setApptOpen(false)}>
-        <h2>New Appointment</h2>
+        <ModalHead title="New appointment" hint="Book a slot for a registered patient." />
         <label className="form-label">Patient *</label>
         <select className="form-dropdown form-input" value={apptForm.patient_id} onChange={(e) => setApptForm({ ...apptForm, patient_id: e.target.value })}>
           <option value="">Select patient...</option>
@@ -514,7 +563,7 @@ export default function AdminDashboard() {
       </Modal>
 
       <Modal open={walkinOpen} onClose={() => setWalkinOpen(false)}>
-        <h2>Register Walk-In Client</h2>
+        <ModalHead title="Register walk-in client" hint="Add a counter patient to today's queue." />
         <div className="form-grid">
           <div className="form-group">
             <label>Specialty</label>
