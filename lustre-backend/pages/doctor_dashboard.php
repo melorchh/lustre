@@ -188,7 +188,7 @@ function fill_color($s) {
                                 <td><?php echo htmlspecialchars($w['procedure'] ?: '—'); ?></td>
                                 <td><?php echo htmlspecialchars($w['arrival']); ?></td>
                                 <td style="white-space:nowrap">
-                                    <select class="action-select" data-id="<?php echo $w['id']; ?>" data-prev="<?php echo htmlspecialchars($w['status']); ?>" onchange="updateWalkinStatus(this)" aria-label="Queue status">
+                                    <select class="action-select wq-status" data-id="<?php echo $w['id']; ?>" data-prev="<?php echo htmlspecialchars($w['status']); ?>" onchange="updateWalkinStatus(this)" aria-label="Queue status">
                                         <?php foreach (['waiting','in_service','served','cancelled'] as $opt): ?>
                                         <option value="<?php echo $opt; ?>" <?php echo $w['status']===$opt?'selected':''; ?>><?php echo ucfirst(str_replace('_',' ',$opt)); ?></option>
                                         <?php endforeach; ?>
@@ -525,15 +525,15 @@ function fill_color($s) {
                 '<td>'+wqEsc(w.procedure||'—')+'</td>' +
                 '<td>'+wqEsc(w.arrival)+'</td>' +
                 '<td style="white-space:nowrap">' +
-                    '<select class="action-select" data-id="'+w.id+'" data-prev="'+wqEsc(w.status)+'" onchange="updateWalkinStatus(this)" aria-label="Queue status">'+opts+'</select>' +
+                    '<select class="action-select wq-status" data-id="'+w.id+'" data-prev="'+wqEsc(w.status)+'" onchange="updateWalkinStatus(this)" aria-label="Queue status">'+opts+'</select>' +
                     resultBtn +
                     vitalsBtn +
                 '</td></tr>';
         }
         let wqBusy = false, wqPending = false;
         function wqSyncBadge(sel){
-            // Keep styling consistent with admin action-select
-            sel.className = 'action-select';
+            // Keep styling consistent with the Result / Vitals buttons
+            sel.className = 'action-select wq-status';
         }
         function refreshQueue(manual){
             if (wqBusy){ if (manual) wqPending = true; return; }
