@@ -302,6 +302,7 @@ export default function DashboardApp() {
       history.replaceState(null, '', window.location.pathname);
     }
   };
+  const startTour = () => setShowTour(true);
 
   const firstName = (patientName || 'Patient').split(' ')[0];
   const activeAppts = appointments.filter((a) => ['pending', 'confirmed'].includes(statusOf(a.status)));
@@ -325,6 +326,23 @@ export default function DashboardApp() {
               <span className="hero-tag">{"Patient Portal"}</span>
               <h1>{greeting()}, {firstName}</h1>
               <p>{"Here's what's happening with your health at LustreMDC today."}</p>
+              <button type="button" className="tour-replay" onClick={startTour}>
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M20 11a8 8 0 1 0-2.3 5.7" />
+                  <path d="M20 4v7h-7" />
+                </svg>
+                {"Replay tour"}
+              </button>
             </div>
           </div>
         </section>
