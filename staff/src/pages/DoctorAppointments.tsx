@@ -3,6 +3,8 @@ import Shell from '../Shell';
 import { getInitial, postAction, isSuccess, fmtDate, fmtTime } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
+import { Select } from '../components';
+import { StatCard, StatGrid } from '../ui';
 import type { AppointmentRow } from '../types';
 
 export default function DoctorAppointments() {
@@ -48,23 +50,23 @@ export default function DoctorAppointments() {
 
   return (
     <Shell active="appointments" title="Appointments">
-      <div className="stats-grid">
-        <div className="stat-card"><div className="stat-number">{stats.total ?? appointments.length}</div><div className="stat-label">Total</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#f59e0b' }}><div className="stat-number" style={{ color: '#f59e0b' }}>{stats.pending ?? 0}</div><div className="stat-label">Pending</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#10b981' }}><div className="stat-number" style={{ color: '#10b981' }}>{stats.completed ?? 0}</div><div className="stat-label">Completed</div></div>
-      </div>
+      <StatGrid>
+        <StatCard label="Total" value={stats.total ?? appointments.length} />
+        <StatCard label="Pending" value={stats.pending ?? 0} tone="amber" />
+        <StatCard label="Completed" value={stats.completed ?? 0} tone="teal" />
+      </StatGrid>
 
       <div className="content-card">
         <h2>My Appointments</h2>
         <div className="apt-toolbar">
           <input type="search" className="apt-search" placeholder="Search patient..." value={q} onChange={(e) => setQ(e.target.value)} />
-          <select className="apt-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+          <Select className="apt-select" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">All Statuses</option>
             <option value="pending">Pending</option>
             <option value="confirmed">Confirmed</option>
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
-          </select>
+          </Select>
         </div>
         <div className="table-scroll"><table>
           <thead><tr><th>ID</th><th>Patient</th><th>Service</th><th>Date</th><th>Time</th><th>Status</th><th>Result</th></tr></thead>
@@ -79,9 +81,9 @@ export default function DoctorAppointments() {
                 <td>{fmtDate(a.appointment_date)}</td>
                 <td>{fmtTime(a.appointment_time)}</td>
                 <td>
-                  <select className="action-select" value={a.status} onChange={(e) => updateStatus(a.id, e.target.value)}>
+                  <Select className="action-select" value={a.status} onChange={(e) => updateStatus(a.id, e.target.value)}>
                     {['pending', 'confirmed', 'completed', 'cancelled'].map((o) => <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
-                  </select>
+                  </Select>
                 </td>
                 <td>
                   <button className="btn-secondary btn-xs" onClick={() => { setResultFor(a); setResultText(a.result || ''); }}>

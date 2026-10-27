@@ -1,5 +1,6 @@
 import Shell from '../Shell';
 import { getInitial, fmtDate, fmtTime } from '../api';
+import { StatCard, StatGrid } from '../ui';
 import type { AppointmentRow, LabTestRow } from '../types';
 
 export default function DoctorDashboard() {
@@ -19,12 +20,12 @@ export default function DoctorDashboard() {
         <p>Your schedule and tasks for {fmtDate(new Date().toISOString())}.</p>
       </div>
 
-      <div className="stats-grid">
-        <div className="stat-card"><div className="stat-number">{stats.todayAppointments ?? 0}</div><div className="stat-label">Today's Appointments</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#f59e0b' }}><div className="stat-number" style={{ color: '#f59e0b' }}>{stats.pending ?? 0}</div><div className="stat-label">Pending</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#10b981' }}><div className="stat-number" style={{ color: '#10b981' }}>{stats.completed ?? 0}</div><div className="stat-label">Completed</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#8b5cf6' }}><div className="stat-number" style={{ color: '#8b5cf6' }}>{stats.pendingLabs ?? 0}</div><div className="stat-label">Pending Labs</div></div>
-      </div>
+      <StatGrid>
+        <StatCard label="Today's Appointments" value={stats.todayAppointments ?? 0} />
+        <StatCard label="Pending" value={stats.pending ?? 0} tone="amber" />
+        <StatCard label="Completed" value={stats.completed ?? 0} tone="teal" />
+        <StatCard label="Pending Labs" value={stats.pendingLabs ?? 0} tone="violet" />
+      </StatGrid>
 
       <div className="dashboard-grid">
         <div className="content-card">

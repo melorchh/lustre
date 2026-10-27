@@ -3,6 +3,8 @@ import Shell from '../Shell';
 import { getInitial, postAction, isSuccess, fmtDate, fmtTime } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
+import { Select } from '../components';
+import { StatCard, StatGrid } from '../ui';
 import type { LabTestRow } from '../types';
 
 export default function DoctorLaboratory() {
@@ -31,22 +33,22 @@ export default function DoctorLaboratory() {
 
   return (
     <Shell active="laboratory" title="Laboratory">
-      <div className="stats-grid">
-        <div className="stat-card"><div className="stat-number">{stats.total ?? tests.length}</div><div className="stat-label">Total</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#f59e0b' }}><div className="stat-number" style={{ color: '#f59e0b' }}>{stats.pending ?? 0}</div><div className="stat-label">Pending</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#10b981' }}><div className="stat-number" style={{ color: '#10b981' }}>{stats.completed ?? 0}</div><div className="stat-label">Completed</div></div>
-      </div>
+      <StatGrid>
+        <StatCard label="Total" value={stats.total ?? tests.length} />
+        <StatCard label="Pending" value={stats.pending ?? 0} tone="amber" />
+        <StatCard label="Completed" value={stats.completed ?? 0} tone="teal" />
+      </StatGrid>
 
       <div className="content-card">
         <h2>Lab Tests</h2>
         <div className="apt-toolbar">
           <input type="search" className="apt-search" placeholder="Search patient or test..." value={q} onChange={(e) => setQ(e.target.value)} />
-          <select className="apt-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+          <Select className="apt-select" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">All Statuses</option>
             <option value="pending">Pending</option>
             <option value="processing">Processing</option>
             <option value="completed">Completed</option>
-          </select>
+          </Select>
         </div>
         <div className="table-scroll"><table>
           <thead><tr><th>ID</th><th>Patient</th><th>Test</th><th>Priority</th><th>Scheduled</th><th>Status</th><th>Result</th></tr></thead>
@@ -77,7 +79,7 @@ function ResultInline({ value, onSave }: { value: string; onSave: (v: string) =>
   if (!editing) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <span>{value ? value : <span style={{ color: '#94a3b8' }}>None</span>}</span>
+        <span>{value ? value : <span className="ap-none">None</span>}</span>
         <button className="btn-secondary btn-xs" onClick={() => { setText(value); setEditing(true); }}>{value ? 'Edit' : 'Add'}</button>
       </div>
     );

@@ -12,6 +12,8 @@
     sel.__fd = true;
 
     var isSearchable = sel.hasAttribute('data-searchable');
+    var menuExtraClass = sel.getAttribute('data-menu-class');
+    var menuZ = sel.getAttribute('data-menu-z');
 
     var wrap = document.createElement('div');
     var kind = 'cd-default';
@@ -37,9 +39,14 @@
     var menuCls = 'cd-menu';
     if (kind === 'cd-form') menuCls += ' fd-form';
     else if (kind === 'cd-action') menuCls += ' fd-action';
-    menu.className = menuCls;
+    menu.className = menuCls + (menuExtraClass ? ' ' + menuExtraClass : '');
+    if (menuZ) menu.style.zIndex = menuZ;
     menu.setAttribute('role', 'listbox');
     document.body.appendChild(menu);
+
+    sel.__fdWrap = wrap;
+    sel.__fdMenu = menu;
+    sel.__fdClose = close;
 
     var open = false;
     var searchInput = null;
@@ -244,6 +251,8 @@
       build(sel);
     });
     document.querySelectorAll('form').forEach(function(f){
+      if (f.__fdResetBound) return;
+      f.__fdResetBound = true;
       f.addEventListener('reset', function(){
         setTimeout(function(){
           f.querySelectorAll('select[data-fd]').forEach(function(sel){
@@ -289,6 +298,20 @@
   // (e.g. cascading selects populated dynamically via innerHTML/appendChild).
   window.__fdResync = function(sel){
     if (sel && sel.__fdResync) sel.__fdResync();
+  };
+
+  // Public helper: tear down a custom dropdown whose native <select> is being
+  // removed from the DOM (e.g. a dropdown rendered inside a closing popup).
+  window.__fdDestroy = function(sel){
+    if (!sel) return;
+    if (sel.__fdClose) sel.__fdClose();
+    if (sel.__fdMenu && sel.__fdMenu.parentNode) sel.__fdMenu.parentNode.removeChild(sel.__fdMenu);
+    if (sel.__fdWrap && sel.__fdWrap.parentNode) sel.__fdWrap.parentNode.removeChild(sel.__fdWrap);
+    sel.__fdMenu = null;
+    sel.__fdWrap = null;
+    sel.__fdClose = null;
+    sel.__fd = false;
+    sel.removeAttribute('data-fd');
   };
 
   // ---- Change Password link in the sidebar user block ----

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import Shell from '../Shell';
 import { getInitial, fmtDate } from '../api';
+import { StatCard, StatGrid } from '../ui';
 import type { PatientRow } from '../types';
 
 export default function DoctorClients() {
@@ -15,10 +16,10 @@ export default function DoctorClients() {
 
   return (
     <Shell active="clients" title="Patients">
-      <div className="stats-grid">
-        <div className="stat-card"><div className="stat-number">{stats.total ?? patients.length}</div><div className="stat-label">My Patients</div></div>
-        <div className="stat-card" style={{ borderTopColor: '#10b981' }}><div className="stat-number" style={{ color: '#10b981' }}>{stats.active ?? 0}</div><div className="stat-label">Active</div></div>
-      </div>
+      <StatGrid>
+        <StatCard label="My Patients" value={stats.total ?? patients.length} />
+        <StatCard label="Active" value={stats.active ?? 0} tone="teal" />
+      </StatGrid>
 
       <div className="content-card">
         <h2>Patient List</h2>
@@ -33,8 +34,8 @@ export default function DoctorClients() {
             ) : filtered.map((p) => (
               <tr key={p.id}>
                 <td>#{p.id}</td>
-                <td><strong>{p.name}</strong><br /><small style={{ color: '#64748b' }}>{p.unique_code}</small></td>
-                <td>{p.email}<br /><small style={{ color: '#64748b' }}>{p.contact}</small></td>
+                <td><strong>{p.name}</strong><br /><small>{p.unique_code}</small></td>
+                <td>{p.email}<br /><small>{p.contact}</small></td>
                 <td>{p.age ?? '—'}</td>
                 <td>{p.appointment_count ?? 0}</td>
                 <td>{fmtDate(p.last_appointment)}</td>
