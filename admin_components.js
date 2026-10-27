@@ -322,6 +322,34 @@
       .catch(function(){});
   })();
 
+  // ---- Doctor: keep the mobile drawer in sync with Escape / viewport ----
+  (function(){
+    if (!document.body.classList.contains('doctor-page')) return;
+    var sidebar = document.getElementById('adminSidebar');
+    var overlay = document.getElementById('sidebarOverlay');
+    if (!sidebar || !overlay) return;
+
+    function closeDrawer(){
+      if (!sidebar.classList.contains('open')) return;
+      sidebar.classList.remove('open');
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function(e){
+      if (e.key !== 'Escape' && e.key !== 'Esc') return;
+      if (document.querySelector('.modal-overlay.active, .result-modal.active, .confirm-overlay.active')) return;
+      closeDrawer();
+    });
+
+    var desktop = window.matchMedia('(min-width: 901px)');
+    function syncViewport(){
+      if (desktop.matches) closeDrawer();
+    }
+    if (desktop.addEventListener) desktop.addEventListener('change', syncViewport);
+    else if (desktop.addListener) desktop.addListener(syncViewport);
+  })();
+
   /* Exposed so pages that re-render rows via innerHTML (live queues, etc.)
      can enhance newly inserted selects after the initial init. */
   window.fdEnhance = init;

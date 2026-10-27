@@ -692,3 +692,261 @@ html {
     padding: 1.3rem 1rem;
   }
 }
+
+/* =========================================================
+   MOTION + RESPONSIVE POLISH
+   Smooth shared transitions for the doctor shell, cards,
+   dialogs and drawer, plus mobile refinements that keep the
+   wide doctor tables and topbar usable on small screens.
+   ========================================================= */
+
+@keyframes doctorCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.doctor-page .content-card {
+  animation: doctorCardIn 0.4s var(--ease) both;
+}
+.doctor-page .stat-card {
+  animation: doctorCardIn 0.36s var(--ease) both;
+}
+.doctor-page .stats-grid .stat-card:nth-child(2) {
+  animation-delay: 0.04s;
+}
+.doctor-page .stats-grid .stat-card:nth-child(3) {
+  animation-delay: 0.08s;
+}
+.doctor-page .stats-grid .stat-card:nth-child(4) {
+  animation-delay: 0.12s;
+}
+.doctor-page .stats-grid .stat-card:nth-child(5) {
+  animation-delay: 0.16s;
+}
+.doctor-page .stats-grid .stat-card:nth-child(6) {
+  animation-delay: 0.2s;
+}
+.doctor-page .stats-grid .stat-card:nth-child(n + 7) {
+  animation-delay: 0.24s;
+}
+
+/* Drawer: slide with a transform so mobile opening stays on the
+   compositor, and keep the closed drawer out of the tab order. */
+@media (max-width: 900px) {
+  .doctor-page .admin-sidebar {
+    left: 0;
+    transform: translateX(-105%);
+    visibility: hidden;
+    will-change: transform;
+    transition: transform 0.28s var(--ease), visibility 0.28s var(--ease);
+  }
+  .doctor-page .admin-sidebar.open {
+    left: 0;
+    transform: none;
+    visibility: visible;
+  }
+}
+
+/* Overlay fades instead of popping in/out with display: none. */
+.doctor-page .sidebar-overlay {
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.24s ease, visibility 0.24s ease;
+}
+.doctor-page .sidebar-overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* Keep modal overlays mounted so closing fades, then replay the
+   dialog entrance animation whenever .active is added again. */
+.doctor-page .modal-overlay,
+.doctor-page .result-modal {
+  display: flex;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.22s ease, visibility 0.22s ease;
+}
+.doctor-page .modal-overlay.active,
+.doctor-page .result-modal.active {
+  display: flex;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.doctor-page .confirm-overlay {
+  display: grid;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.22s ease, visibility 0.22s ease;
+}
+.doctor-page .confirm-overlay.active {
+  display: grid;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.doctor-page .modal-overlay:not(.active) .modal-box,
+.doctor-page .result-modal:not(.active) .result-modal-box,
+.doctor-page .confirm-overlay:not(.active) .confirm-box {
+  animation: none;
+}
+.doctor-page .modal-overlay.active .modal-box,
+.doctor-page .result-modal.active .result-modal-box {
+  animation: meModalIn 0.34s var(--spring) both;
+}
+.doctor-page .confirm-overlay.active .confirm-box {
+  animation: confirmPop 0.34s var(--spring) both;
+}
+
+/* Touch-friendly scrolling for the wide doctor tables. */
+.doctor-page .table-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scroll-behavior: smooth;
+}
+
+.doctor-page .form-group input,
+.doctor-page .form-group select,
+.doctor-page .form-group textarea {
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+@media (max-width: 768px) {
+  /* The appointment ID is redundant on phones and costs a whole
+     column of horizontal scrolling. */
+  .doctor-page #apptTable th:nth-child(1),
+  .doctor-page #apptTable td:nth-child(1) {
+    display: none !important;
+  }
+  .doctor-page #apptTable th,
+  .doctor-page #apptTable td {
+    padding: 0.7rem 0.6rem;
+  }
+  .doctor-page #apptTable td:nth-child(2) {
+    min-width: 150px;
+  }
+  .doctor-page #apptTable td:nth-child(3) {
+    min-width: 100px;
+  }
+  .doctor-page #apptTable td:last-child {
+    min-width: 130px;
+  }
+}
+
+@media (max-width: 640px) {
+  .doctor-page .topbar-left {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .doctor-page .topbar-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .doctor-page .topbar-actions {
+    flex: 0 0 auto;
+    gap: 0.5rem;
+  }
+  .doctor-page .patients-header {
+    align-items: flex-start;
+  }
+  .doctor-page .cust-dropdown.cd-action {
+    width: 142px;
+  }
+  .doctor-page .cust-dropdown.cd-action .cd-btn {
+    padding: 0.5rem 1.8rem 0.5rem 0.7rem;
+    font-size: 0.9rem;
+  }
+  .doctor-page .modal-box,
+  .doctor-page .result-modal-box,
+  .doctor-page .confirm-box {
+    max-height: calc(100dvh - 1.5rem);
+    overscroll-behavior: contain;
+  }
+  .doctor-page .toast {
+    bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 480px) {
+  .doctor-page #apptTable td:nth-child(2) {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .doctor-page .admin-content {
+    padding: 0.9rem 0.75rem 1.8rem;
+  }
+  .doctor-page .topbar-title {
+    font-size: 1.02rem;
+  }
+  .doctor-page .stat-card {
+    padding: 0.85rem 0.75rem;
+  }
+  .doctor-page .stat-number {
+    font-size: 1.45rem;
+  }
+  .doctor-page .stat-label {
+    font-size: 0.8rem;
+  }
+  .doctor-page .btn-sm {
+    min-height: 42px;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.86rem;
+  }
+}
+
+@media (hover: none) {
+  .doctor-page .nav-item:hover {
+    transform: none;
+  }
+  .doctor-page .stat-card:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+  }
+  .doctor-page .btn-primary:hover,
+  .doctor-page .btn-secondary:hover,
+  .doctor-page .btn-add:hover,
+  .doctor-page .btn-danger:hover,
+  .doctor-page .btn-sm:hover {
+    transform: none;
+  }
+  .doctor-page tbody tr:hover,
+  .doctor-page .client-row:hover {
+    background: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .doctor-page .content-card,
+  .doctor-page .stat-card,
+  .doctor-page .modal-overlay.active .modal-box,
+  .doctor-page .result-modal.active .result-modal-box,
+  .doctor-page .confirm-overlay.active .confirm-box {
+    animation: none !important;
+  }
+  .doctor-page .stats-grid .stat-card {
+    animation-delay: 0s !important;
+  }
+  .doctor-page .admin-sidebar,
+  .doctor-page .sidebar-overlay,
+  .doctor-page .modal-overlay,
+  .doctor-page .result-modal,
+  .doctor-page .confirm-overlay {
+    transition: none !important;
+  }
+}
