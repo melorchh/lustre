@@ -76,17 +76,27 @@ export default function Shell({ page, title, patientName, children }: ShellProps
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       const target = e.target as HTMLElement | null;
       if (!target) return;
       const link = target.closest('a[href]') as HTMLAnchorElement | null;
       if (!link) return;
       const href = link.getAttribute('href') || '';
-      if (!href || href.startsWith('#') || href.startsWith('javascript') || href.startsWith('http') || link.getAttribute('target') === '_blank') return;
+      if (
+        !href ||
+        href.startsWith('#') ||
+        href.startsWith('javascript') ||
+        href.startsWith('http') ||
+        href.startsWith('mailto:') ||
+        href.startsWith('tel:') ||
+        link.hasAttribute('download') ||
+        link.getAttribute('target') === '_blank'
+      ) return;
       e.preventDefault();
       document.body.classList.add('page-leaving');
       window.setTimeout(() => {
         window.location.href = href;
-      }, 220);
+      }, 180);
     };
     document.addEventListener('click', onClick);
     return () => document.removeEventListener('click', onClick);
