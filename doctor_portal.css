@@ -1,0 +1,1005 @@
+/* ==========================================================================
+   LUSTRE — DOCTOR PORTAL THEME LAYER
+   --------------------------------------------------------------------------
+   Loaded only by doctor pages (legacy PHP) and the React doctor shell.
+   Everything is scoped to .doctor-page, so the admin portal is untouched.
+
+   Direction: Admin Design System v2 structure + the patient app's teal/cyan
+   palette, floating glass top bar, pill fields and Roboto type.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Palette + surface tokens
+   -------------------------------------------------------------------------- */
+.doctor-page {
+  --green: #0d9488;
+  --green-dark: #0f766e;
+  --green-deep: #115e59;
+  --green-mid: #14b8a6;
+  --green-light: #2dd4bf;
+  --green-pale: #f0fdfa;
+  --green-pale2: #ccfbf1;
+  --blue: #2563eb;
+  --blue-dark: #1d4ed8;
+  --blue-deep: #1e3a8a;
+  --blue-mid: #3b82f6;
+  --blue-light: #60a5fa;
+  --blue-pale: #eff6ff;
+  --blue-pale2: #dbeafe;
+  --white: #ffffff;
+  --off-white: #f4f8f7;
+  --gray-100: #e3eae8;
+  --gray-200: #cfdcd8;
+  --gray-400: #94a5a0;
+  --gray-600: #526760;
+  --gray-800: #22322e;
+  --shadow-sm: 0 1px 4px rgba(13, 148, 136, 0.09);
+  --shadow-md: 0 5px 22px rgba(13, 148, 136, 0.12);
+  --shadow-lg: 0 14px 44px rgba(13, 148, 136, 0.18);
+
+  --doctor-ink: #115e59;
+  --doctor-cyan: #22d3ee;
+  --doctor-glow: rgba(13, 148, 136, 0.18);
+  --doctor-glass: rgba(255, 255, 255, 0.78);
+  --doctor-glass-strong: rgba(255, 255, 255, 0.9);
+  --doctor-border: rgba(13, 148, 136, 0.14);
+  --doctor-border-strong: rgba(13, 148, 136, 0.24);
+  --doctor-ring: rgba(13, 148, 136, 0.16);
+  --doctor-field-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230d9488' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+  font-family: 'Roboto', 'Segoe UI', system-ui, sans-serif;
+}
+
+html[data-theme="dark"] .doctor-page {
+  --green: #0d9488;
+  --green-dark: #14b8a6;
+  --green-deep: #5eead4;
+  --green-mid: #14b8a6;
+  --green-light: #2dd4bf;
+  --green-pale: #10312d;
+  --green-pale2: #163b36;
+  --blue-pale: #17263f;
+  --blue-pale2: #1d3357;
+  --white: #161e2b;
+  --off-white: #0d1420;
+  --gray-100: #243047;
+  --gray-200: #31405a;
+  --gray-400: #8b9bb3;
+  --gray-600: #a9b7cc;
+  --gray-800: #e6ecf4;
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 5px 22px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 14px 44px rgba(0, 0, 0, 0.55);
+
+  --doctor-ink: #e6fffb;
+  --doctor-glow: rgba(20, 184, 166, 0.24);
+  --doctor-glass: rgba(22, 30, 43, 0.8);
+  --doctor-glass-strong: rgba(22, 30, 43, 0.92);
+  --doctor-border: rgba(45, 212, 191, 0.15);
+  --doctor-border-strong: rgba(45, 212, 191, 0.28);
+  --doctor-ring: rgba(45, 212, 191, 0.22);
+  --doctor-field-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232dd4bf' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* Only the legacy document owns the page background; the React shell paints
+   its own surface on .doctor-portal. */
+body.doctor-page {
+  background:
+    radial-gradient(1200px 520px at 88% -12%, rgba(13, 148, 136, 0.12), transparent 60%),
+    radial-gradient(900px 440px at -8% 32%, rgba(37, 99, 235, 0.07), transparent 55%),
+    linear-gradient(180deg, #f7fcfb 0%, var(--off-white) 42%);
+  color: var(--gray-800);
+  transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
+}
+
+html[data-theme="dark"] body.doctor-page {
+  background:
+    radial-gradient(1200px 520px at 88% -12%, rgba(13, 148, 136, 0.16), transparent 60%),
+    radial-gradient(900px 440px at -8% 32%, rgba(20, 184, 166, 0.07), transparent 55%),
+    var(--off-white);
+}
+
+/* --------------------------------------------------------------------------
+   2. Layout rhythm
+   -------------------------------------------------------------------------- */
+.doctor-page .admin-layout {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.doctor-page .admin-content {
+  padding: clamp(1.1rem, 2.2vw, 2rem) clamp(1rem, 2.4vw, 2.2rem) 2.6rem;
+  width: 100%;
+  min-width: 0;
+  animation: doctorPageFade 0.28s var(--ease) both;
+}
+
+@keyframes doctorPageFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.doctor-page .content-card + .content-card {
+  margin-top: 0.2rem;
+}
+
+/* --------------------------------------------------------------------------
+   3. Floating top bar (patient-app glass treatment)
+   -------------------------------------------------------------------------- */
+.doctor-page .topbar {
+  position: sticky;
+  top: 0.85rem;
+  z-index: 800;
+  margin-bottom: 1.5rem;
+  padding: 0.7rem 1rem 0.7rem 1.35rem;
+  gap: 1rem;
+  border: 1.5px solid var(--doctor-border);
+  border-radius: 22px;
+  background: var(--doctor-glass);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  backdrop-filter: blur(16px) saturate(1.15);
+  box-shadow:
+    0 14px 36px -22px rgba(13, 148, 136, 0.45),
+    0 3px 12px rgba(13, 148, 136, 0.08);
+  transition:
+    background 0.3s var(--ease),
+    border-color 0.3s var(--ease),
+    box-shadow 0.3s var(--ease);
+}
+
+.doctor-page .topbar:hover {
+  border-color: var(--doctor-border-strong);
+  box-shadow:
+    0 18px 44px -22px rgba(13, 148, 136, 0.52),
+    0 4px 14px rgba(13, 148, 136, 0.1);
+}
+
+html[data-theme="dark"] .doctor-page .topbar {
+  background: var(--doctor-glass);
+  box-shadow:
+    0 18px 44px -24px rgba(0, 0, 0, 0.8),
+    0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.doctor-page .topbar-title {
+  position: relative;
+  padding-left: 0.85rem;
+  color: var(--green-deep);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.doctor-page .topbar-title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 5px;
+  height: 1.4em;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--green-light), var(--green-dark));
+  transform: translateY(-50%);
+  box-shadow: 0 0 14px var(--doctor-glow);
+}
+
+.doctor-page .topbar-hello-label {
+  color: var(--gray-600);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+}
+
+.doctor-page .topbar-hello strong {
+  color: var(--green-deep);
+}
+
+.doctor-page .mobile-menu-btn,
+.doctor-page .theme-toggle {
+  border: 1.5px solid var(--doctor-border);
+  border-radius: 999px;
+  background: var(--doctor-glass-strong);
+  color: var(--green-dark);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s var(--ease),
+    box-shadow 0.2s ease;
+}
+
+.doctor-page .mobile-menu-btn:hover,
+.doctor-page .theme-toggle:hover {
+  border-color: var(--doctor-border-strong);
+  background: var(--green-pale);
+  color: var(--green-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(13, 148, 136, 0.16);
+}
+
+.doctor-page .avatar--topbar {
+  background: linear-gradient(135deg, var(--green-dark), var(--green-light));
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow:
+    0 0 0 4px rgba(13, 148, 136, 0.12),
+    0 6px 16px rgba(13, 148, 136, 0.24);
+}
+
+/* --------------------------------------------------------------------------
+   4. Sidebar rail
+   -------------------------------------------------------------------------- */
+.doctor-page .admin-sidebar {
+  background: var(--doctor-glass);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-right: 1.5px solid var(--doctor-border);
+  transition:
+    width 0.32s var(--ease),
+    background 0.3s var(--ease),
+    border-color 0.3s var(--ease);
+}
+
+html[data-theme="dark"] .doctor-page .admin-sidebar {
+  background: var(--doctor-glass);
+}
+
+.doctor-page .sidebar-overlay {
+  background: rgba(7, 38, 36, 0.5);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.doctor-page .loading-screen {
+  background: rgba(244, 248, 247, 0.84);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+html[data-theme="dark"] .doctor-page .loading-screen {
+  background: rgba(13, 20, 32, 0.84);
+}
+
+.doctor-page .sidebar-brand .brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.12);
+}
+
+.doctor-page .nav-item {
+  border-radius: 14px;
+  color: var(--gray-600);
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.22s var(--ease),
+    box-shadow 0.22s ease;
+}
+
+.doctor-page .nav-item:hover {
+  background: var(--green-pale);
+  color: var(--green-dark);
+  transform: translateX(2px);
+}
+
+.doctor-page .nav-item.active {
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.16), rgba(34, 211, 238, 0.09));
+  color: var(--green-dark);
+  box-shadow: inset 0 0 0 1px rgba(13, 148, 136, 0.16);
+}
+
+.doctor-page .nav-item.active::before {
+  background: linear-gradient(var(--green-light), var(--green-dark));
+  box-shadow: 0 0 12px var(--doctor-glow);
+}
+
+html[data-theme="dark"] .doctor-page .nav-item.active {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.2), rgba(34, 211, 238, 0.08));
+  color: var(--green-deep);
+  box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.2);
+}
+
+.doctor-page .btn-logout {
+  border-radius: 14px;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s var(--ease);
+}
+
+/* --------------------------------------------------------------------------
+   5. Cards, stats and page entrance
+   -------------------------------------------------------------------------- */
+@keyframes doctorRiseIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.doctor-page .stats-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.doctor-page .stat-card {
+  position: relative;
+  overflow: hidden;
+  border: 1.5px solid var(--doctor-border);
+  border-top-width: 3px;
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 253, 252, 0.98));
+  box-shadow: var(--shadow-sm);
+  animation: doctorRiseIn 0.45s var(--ease) both;
+  transition:
+    transform 0.25s var(--ease),
+    box-shadow 0.25s var(--ease),
+    border-color 0.25s ease;
+}
+
+html[data-theme="dark"] .doctor-page .stat-card {
+  background: linear-gradient(180deg, #18232f, var(--white));
+}
+
+.doctor-page .stat-card::after {
+  content: "";
+  position: absolute;
+  right: -30%;
+  top: -70%;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(13, 148, 136, 0.12), transparent 70%);
+  pointer-events: none;
+}
+
+.doctor-page .stat-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--doctor-border-strong);
+  box-shadow:
+    0 18px 34px -24px rgba(13, 148, 136, 0.5),
+    0 4px 12px rgba(13, 148, 136, 0.08);
+}
+
+.doctor-page .stats-grid > .stat-card:nth-child(2) {
+  animation-delay: 0.04s;
+}
+.doctor-page .stats-grid > .stat-card:nth-child(3) {
+  animation-delay: 0.08s;
+}
+.doctor-page .stats-grid > .stat-card:nth-child(4) {
+  animation-delay: 0.12s;
+}
+.doctor-page .stats-grid > .stat-card:nth-child(5) {
+  animation-delay: 0.16s;
+}
+.doctor-page .stats-grid > .stat-card:nth-child(6) {
+  animation-delay: 0.2s;
+}
+
+.doctor-page .stat-number {
+  position: relative;
+  z-index: 1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.doctor-page .stat-label {
+  position: relative;
+  z-index: 1;
+  color: var(--gray-600);
+  font-weight: 600;
+}
+
+.doctor-page .content-card {
+  border: 1.5px solid var(--doctor-border);
+  border-radius: 22px;
+  background: var(--doctor-glass-strong);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s var(--ease),
+    background 0.3s var(--ease);
+}
+
+.doctor-page .content-card:hover {
+  border-color: var(--doctor-border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.doctor-page .content-card h2 {
+  color: var(--green-deep);
+  letter-spacing: -0.015em;
+}
+
+/* --------------------------------------------------------------------------
+   6. Tables
+   -------------------------------------------------------------------------- */
+.doctor-page .table-scroll {
+  border: 1.5px solid var(--doctor-border);
+  border-radius: 18px;
+  background: var(--white);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.doctor-page table {
+  font-size: 1rem;
+}
+
+.doctor-page thead th {
+  background: var(--green-pale);
+  color: var(--green-deep);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.doctor-page tbody tr {
+  transition: background 0.18s ease;
+}
+
+.doctor-page tbody tr:hover {
+  background: rgba(13, 148, 136, 0.045);
+}
+
+html[data-theme="dark"] .doctor-page tbody tr:hover {
+  background: rgba(45, 212, 191, 0.07);
+}
+
+.doctor-page tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.doctor-page td a {
+  color: inherit;
+  text-decoration-color: rgba(13, 148, 136, 0.35);
+  text-underline-offset: 3px;
+  transition: color 0.18s ease, text-decoration-color 0.18s ease;
+}
+
+.doctor-page td a:hover {
+  color: var(--green-dark);
+  text-decoration-color: currentColor;
+}
+
+/* --------------------------------------------------------------------------
+   7. Buttons + badges
+   -------------------------------------------------------------------------- */
+.doctor-page .btn-primary {
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0f766e 0%, #0d9488 52%, #14b8a6 100%);
+  box-shadow: 0 12px 26px -14px rgba(13, 148, 136, 0.75);
+  letter-spacing: 0.01em;
+  transition:
+    transform 0.22s var(--ease),
+    box-shadow 0.22s var(--ease),
+    filter 0.2s ease;
+}
+
+.doctor-page .btn-primary:hover {
+  transform: translateY(-2px);
+  filter: saturate(1.08);
+  box-shadow: 0 18px 34px -16px rgba(13, 148, 136, 0.85);
+}
+
+.doctor-page .btn-primary:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.doctor-page .btn-secondary {
+  border-radius: 999px;
+  border-color: var(--doctor-border);
+  background: var(--white);
+  color: var(--green-dark);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s var(--ease);
+}
+
+.doctor-page .btn-secondary:hover {
+  background: var(--green-pale);
+  border-color: var(--doctor-border-strong);
+  transform: translateY(-1px);
+}
+
+.doctor-page .btn-sm,
+.doctor-page .btn-add,
+.doctor-page .btn-danger {
+  border-radius: 999px;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s var(--ease),
+    box-shadow 0.2s ease;
+}
+
+.doctor-page .btn-sm:hover,
+.doctor-page .btn-add:hover {
+  transform: translateY(-1px);
+}
+
+.doctor-page .btn-edit {
+  border-color: var(--doctor-border);
+  background: var(--green-pale);
+  color: var(--green-dark);
+}
+
+.doctor-page .btn-edit:hover {
+  background: var(--green-pale2);
+  border-color: var(--doctor-border-strong);
+}
+
+.doctor-page .btn-vitals {
+  border-color: var(--doctor-border-strong);
+  color: var(--green-dark);
+}
+
+.doctor-page .btn-vitals:hover {
+  background: var(--green-pale);
+  border-color: var(--green);
+}
+
+.doctor-page .badge {
+  border-radius: 999px;
+  letter-spacing: 0.01em;
+  box-shadow: inset 0 0 0 1px rgba(13, 148, 136, 0.06);
+}
+
+/* --------------------------------------------------------------------------
+   8. Pill fields (text, selects, textareas, custom dropdowns)
+   -------------------------------------------------------------------------- */
+.doctor-page input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"]),
+.doctor-page select,
+.doctor-page .form-group .token-input,
+.doctor-page .cd-btn,
+.doctor-page .cd-search-input {
+  border-radius: 999px;
+  border-color: var(--doctor-border);
+  background-color: var(--white);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.25s ease,
+    background-color 0.2s ease;
+}
+
+.doctor-page textarea {
+  border-radius: 20px;
+  border-color: var(--doctor-border);
+  background-color: var(--white);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.25s ease,
+    background-color 0.2s ease;
+}
+
+.doctor-page input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"]):focus,
+.doctor-page select:focus,
+.doctor-page textarea:focus,
+.doctor-page .cd-btn:focus-visible,
+.doctor-page .cd-search-input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 4px var(--doctor-ring);
+  outline: none;
+}
+
+.doctor-page select {
+  background-image: var(--doctor-field-arrow);
+  background-repeat: no-repeat;
+  background-position: right 1.15rem center;
+}
+
+.doctor-page .form-group select,
+.doctor-page .search-filter-bar select {
+  padding-right: 2.8rem;
+}
+
+.doctor-page .action-select {
+  border-radius: 999px;
+  border-color: var(--doctor-border);
+  background-image: var(--doctor-field-arrow);
+}
+
+.doctor-page input::placeholder,
+.doctor-page textarea::placeholder {
+  color: var(--gray-400);
+}
+
+.doctor-page input[type="checkbox"],
+.doctor-page input[type="radio"] {
+  accent-color: var(--green);
+}
+
+/* Custom dropdown replacement */
+.doctor-page .cust-dropdown .cd-btn {
+  border: 1.5px solid var(--doctor-border);
+  color: var(--gray-800);
+}
+
+.doctor-page .cust-dropdown .cd-btn:hover {
+  border-color: var(--doctor-border-strong);
+  background: var(--green-pale);
+}
+
+/* keep the walk-in status control aligned with the Result / Vitals pills */
+.doctor-page select.wq-status + .cust-dropdown .cd-btn {
+  border-radius: 999px;
+  border-color: var(--doctor-border-strong);
+  color: var(--green-dark);
+}
+
+.doctor-page .cd-menu {
+  border: 1.5px solid var(--doctor-border);
+  border-radius: 18px;
+  background: var(--doctor-glass-strong);
+  box-shadow:
+    0 26px 50px -30px rgba(9, 40, 36, 0.5),
+    0 2px 6px rgba(9, 40, 36, 0.06);
+}
+
+.doctor-page .cd-opt {
+  border-radius: 12px;
+  color: var(--gray-800);
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.doctor-page .cd-opt:hover,
+.doctor-page .cd-opt.active {
+  background: var(--green-pale);
+  color: var(--green-dark);
+}
+
+/* --------------------------------------------------------------------------
+   9. Modals, dropdown popovers and calendar surfaces
+   -------------------------------------------------------------------------- */
+.doctor-page .modal-overlay,
+.doctor-page .result-modal {
+  background: rgba(9, 40, 38, 0.48);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+html[data-theme="dark"] .doctor-page .modal-overlay,
+html[data-theme="dark"] .doctor-page .result-modal {
+  background: rgba(4, 10, 16, 0.72);
+}
+
+.doctor-page .modal-box,
+.doctor-page .result-modal-box {
+  border: 1.5px solid var(--doctor-border);
+  border-radius: 26px;
+  background: var(--doctor-glass-strong);
+  box-shadow:
+    0 34px 90px -34px rgba(9, 40, 36, 0.55),
+    0 8px 22px rgba(9, 40, 36, 0.12);
+}
+
+.doctor-page .modal-box h2,
+.doctor-page .result-modal-box h3 {
+  color: var(--green-deep);
+  letter-spacing: -0.015em;
+}
+
+.doctor-page .result-close,
+.doctor-page .modal-close-btn {
+  border-radius: 999px;
+  background: var(--green-pale);
+  color: var(--green-dark);
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s var(--ease);
+}
+
+.doctor-page .result-close:hover,
+.doctor-page .modal-close-btn:hover {
+  background: var(--green-pale2);
+  transform: rotate(90deg);
+}
+
+.doctor-page .consult-checklist {
+  border-color: var(--doctor-border);
+  border-radius: 18px;
+  background: var(--green-pale);
+}
+
+.doctor-page .admin-cal,
+.doctor-page .admin-dp-popup {
+  border-color: var(--doctor-border);
+  border-radius: 20px;
+  box-shadow:
+    0 26px 60px -30px rgba(9, 40, 36, 0.45),
+    0 6px 16px rgba(9, 40, 36, 0.08);
+}
+
+/* --------------------------------------------------------------------------
+   10. Login + change-password surfaces
+   -------------------------------------------------------------------------- */
+.doctor-page .admin-login-page {
+  background:
+    radial-gradient(900px 520px at 15% 8%, rgba(13, 148, 136, 0.16), transparent 58%),
+    radial-gradient(820px 480px at 92% 92%, rgba(37, 99, 235, 0.1), transparent 58%),
+    linear-gradient(135deg, #eef9f7, #e6f2f4);
+}
+
+html[data-theme="dark"] .doctor-page .admin-login-page {
+  background:
+    radial-gradient(900px 520px at 15% 8%, rgba(13, 148, 136, 0.18), transparent 58%),
+    radial-gradient(820px 480px at 92% 92%, rgba(37, 99, 235, 0.1), transparent 58%),
+    linear-gradient(135deg, #0b1718, #0d1420);
+}
+
+.doctor-page .login-card {
+  border: 1.5px solid var(--doctor-border);
+  border-radius: 28px;
+  background: var(--doctor-glass-strong);
+  box-shadow:
+    0 32px 80px -38px rgba(9, 40, 36, 0.55),
+    0 10px 24px rgba(13, 148, 136, 0.12);
+}
+
+.doctor-page .login-logo {
+  border-color: var(--doctor-border);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--green-pale2), var(--green-pale));
+  box-shadow: 0 0 0 6px rgba(13, 148, 136, 0.08);
+}
+
+.doctor-page .login-header h1 {
+  color: var(--green-deep);
+  letter-spacing: -0.02em;
+}
+
+.doctor-page .login-header p {
+  color: var(--gray-600);
+}
+
+/* --------------------------------------------------------------------------
+   11. Toasts / snackbars
+   -------------------------------------------------------------------------- */
+.doctor-page .toast {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  bottom: clamp(1.1rem, 3vw, 2rem);
+  padding: 1rem 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 18px;
+  background: linear-gradient(135deg, #0f766e, #0d9488);
+  color: #ffffff;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow:
+    0 22px 48px -22px rgba(9, 40, 36, 0.65),
+    0 4px 12px rgba(9, 40, 36, 0.18);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.doctor-page .toast.success {
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
+}
+
+.doctor-page .toast.error {
+  background: linear-gradient(135deg, #b91c1c, #ef4444);
+}
+
+.doctor-page .toast::before {
+  content: "i";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 0.78rem;
+  font-weight: 800;
+  font-style: normal;
+}
+
+.doctor-page .toast.success::before {
+  content: "\2713";
+}
+
+.doctor-page .toast.error::before {
+  content: "!";
+}
+
+.doctor-page .toast::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 7px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.42);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.doctor-page .toast.show::after {
+  animation: doctorToastTimer 3s linear forwards;
+}
+
+@keyframes doctorToastTimer {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   12. Schedule cards (doctor_schedule.php has inline base styles)
+   -------------------------------------------------------------------------- */
+.doctor-page .day-card {
+  border-color: var(--doctor-border);
+  border-radius: 20px;
+  background: var(--doctor-glass-strong);
+  transition:
+    transform 0.22s var(--ease),
+    border-color 0.22s ease,
+    box-shadow 0.22s var(--ease);
+}
+
+.doctor-page .day-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--doctor-border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.doctor-page .day-card.active-ok {
+  border-top-color: var(--green);
+}
+
+.doctor-page .day-card-head h3 {
+  color: var(--green-deep);
+}
+
+.doctor-page .switch input:checked + .slider {
+  background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
+  box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.12);
+}
+
+/* --------------------------------------------------------------------------
+   13. Responsive breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 1100px) {
+  .doctor-page .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .doctor-page .topbar {
+    top: 0.6rem;
+    padding: 0.6rem 0.8rem 0.6rem 1rem;
+    border-radius: 18px;
+  }
+
+  .doctor-page .admin-content {
+    padding: 1rem 1rem 2.2rem;
+  }
+
+  .doctor-page .admin-sidebar {
+    background: var(--doctor-glass-strong);
+  }
+
+  .doctor-page .stats-grid {
+    gap: 0.8rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .doctor-page .topbar {
+    top: 0.5rem;
+    border-radius: 16px;
+    margin-bottom: 1.15rem;
+  }
+
+  .doctor-page .topbar-title {
+    padding-left: 0.7rem;
+    font-size: 1.22rem;
+  }
+
+  .doctor-page .topbar-title::before {
+    width: 4px;
+  }
+
+  .doctor-page .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+  }
+
+  .doctor-page .stat-card {
+    border-radius: 16px;
+    padding: 1.1rem 1rem;
+  }
+
+  .doctor-page .stat-number {
+    font-size: 1.9rem;
+  }
+
+  .doctor-page .stat-label {
+    font-size: 0.92rem;
+  }
+
+  .doctor-page .content-card {
+    border-radius: 18px;
+    padding: 1.15rem 1rem;
+  }
+
+  .doctor-page .content-card h2 {
+    font-size: 1.24rem;
+  }
+
+  .doctor-page .table-scroll {
+    border-radius: 14px;
+  }
+
+  /* Keep columns readable and let the wrapper scroll instead of squeezing
+     every cell into a narrow stack. */
+  .doctor-page .table-scroll table {
+    min-width: 640px;
+  }
+
+  .doctor-page .btn-sm {
+    min-height: 44px;
+  }
+
+  .doctor-page .toast {
+    width: calc(100vw - 2rem);
+    padding: 0.9rem 1.1rem;
+    font-size: 0.98rem;
+  }
+}
+
+@media (max-width: 440px) {
+  .doctor-page .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .doctor-page .topbar-actions {
+    gap: 0.45rem;
+  }
+
+  .doctor-page .avatar--topbar {
+    width: 38px;
+    height: 38px;
+  }
+
+  .doctor-page .result-modal-box,
+  .doctor-page .modal-box {
+    border-radius: 20px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   14. Motion preferences
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .doctor-page *,
+  .doctor-page *::before,
+  .doctor-page *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

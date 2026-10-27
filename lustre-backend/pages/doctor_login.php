@@ -12,13 +12,14 @@ if (isset($_SESSION["doctor_id"])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#16a34a">
+    <meta name="theme-color" content="#0d9488">
     <link rel="icon" href="images/Lustre.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="admin.css?v=<?= filemtime(__DIR__ . '/../../admin.css') ?>">
     <link rel="stylesheet" href="doctor.css?v=<?= filemtime(__DIR__ . '/../../doctor.css') ?>">
+    <link rel="stylesheet" href="doctor_portal.css?v=<?= filemtime(__DIR__ . '/../../doctor_portal.css') ?>">
     <title>Doctor Login - LustreMDC</title>
 </head>
 <body class="doctor-page">
@@ -26,7 +27,7 @@ if (isset($_SESSION["doctor_id"])) {
         <div class="login-card">
             <div class="login-header">
                 <div class="login-logo">
-                    <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                    <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
                 </div>
                 <h1>Doctor Portal</h1>
                 <p>LustreMDC Clinics &amp; Diagnostics</p>
@@ -84,7 +85,7 @@ if (isset($_SESSION["doctor_id"])) {
             .login-card{animation:__meIn .5s cubic-bezier(.34,1.2,.64,1) both}
             button:not(:disabled):active{transform:scale(.965) !important}
             .form-group input{transition:border-color .2s,box-shadow .2s}
-            .form-group input:focus{box-shadow:0 0 0 4px rgba(22,163,74,.15)}
+            .form-group input:focus{box-shadow:0 0 0 4px rgba(13,148,136,.16)}
           `;
           document.head.appendChild(s);
           document.addEventListener('click',function(e){
