@@ -803,36 +803,12 @@ function checkFpPasswordStrength(pw){
     const base = hidden.value ? new Date(hidden.value + 'T00:00:00') : new Date();
     viewY = Math.max(minBirthYear(), Math.min(base.getFullYear(), maxBirthYear()));
     viewM = base.getMonth();
-    const wrap = document.getElementById('regDatepicker');
-    const rect = wrap.getBoundingClientRect();
     const pop = document.createElement('div'); pop.id='regDpPopup'; pop.className='reg-dp-popup';
     pop.innerHTML = popupHTML();
     document.body.appendChild(pop);
     // The year <select> is created on the fly, so enhance it with the same
     // custom dropdown component used by every other dropdown in the system.
     if (window.fdEnhance) window.fdEnhance();
-    const popH = pop.offsetHeight || 360;
-    const gap = 8;
-    const vh = window.innerHeight || document.documentElement.clientHeight;
-    const downRoom = vh - rect.bottom - gap;
-    const upRoom = rect.top - gap;
-    let topPos;
-    if (downRoom >= popH) {
-      topPos = rect.bottom + gap;
-      pop.style.bottom = 'auto';
-    } else if (upRoom >= popH) {
-      topPos = rect.top - popH - gap;
-      pop.style.bottom = 'auto';
-    } else {
-      topPos = Math.max(gap, rect.bottom + gap);
-      pop.style.bottom = 'auto';
-      pop.style.maxHeight = Math.min(popH, downRoom) + 'px';
-      pop.style.overflowY = 'auto';
-    }
-    pop.style.width = Math.min(320, Math.max(295, rect.width)) + 'px';
-    pop.style.left = Math.max(8, Math.min(rect.left, (window.innerWidth||document.documentElement.clientWidth) - 8 - pop.clientWidth)) + 'px';
-    pop.style.top = topPos + window.scrollY + 'px';
-    pop.style.zIndex = '2147483647';
     bindNav();
     syncNavButtons(pop);
     const xBtn = document.getElementById('regCalXBtn');
@@ -971,28 +947,54 @@ function checkFpPasswordStrength(pw){
     // stays visually balanced inside the sheet at every width.
     const sheet = wrap.closest('.register-sheet') || wrap.closest('.register-modal');
     const sheetRect = sheet ? sheet.getBoundingClientRect() : rect;
-    const popW = 320;
-    const popH = pop.offsetHeight || 360;
     const vw = window.innerWidth || document.documentElement.clientWidth;
     const vh = window.innerHeight || document.documentElement.clientHeight;
-    let left = sheetRect.left + (sheetRect.width - popW) / 2 + window.scrollX;
-    left = Math.max(8 + window.scrollX, Math.min(left, vw - popW - 8 + window.scrollX));
-    // Anchor vertically to the birthday field so the calendar follows the
-    // form's internal scroll, then keep it inside the viewport.
-    let top = rect.bottom + 6;
-    if (top + popH + 12 > vh) {
-      if (rect.top - popH - 6 >= 8) top = rect.top - popH - 6;
-      else top = Math.max(8, vh - popH - 12);
+    const margin = 8;
+    const gap = 6;
+
+    // The calendar's height depends on its width, so size it before measuring.
+    const popW = Math.min(320, Math.max(0, vw - margin * 2));
+    pop.style.width = popW + 'px';
+
+    // Measure the full height every time: the number of week rows changes with
+    // the month. Temporarily remove any clamp left over from a previous pass.
+    pop.style.maxHeight = 'none';
+    pop.style.overflow = 'visible';
+    const naturalH = pop.scrollHeight || pop.offsetHeight || 360;
+
+    const belowTop = rect.bottom + gap;
+    const roomBelow = vh - margin - belowTop;
+    const roomAbove = rect.top - gap - margin;
+
+    // Never slide the calendar up over the birthday field. If it does not fit
+    // on either side, keep it below the field when there is still a usable
+    // amount of room, otherwise use the roomier side. Either way it scrolls
+    // internally instead of covering the field.
+    let top, visibleH = naturalH;
+    const minUseful = Math.min(180, naturalH);
+    if (roomBelow >= naturalH) {
+      top = belowTop;
+    } else if (roomAbove >= naturalH) {
+      top = rect.top - gap - naturalH;
+    } else if (roomBelow >= minUseful || roomBelow >= roomAbove) {
+      top = belowTop;
+      visibleH = roomBelow;
+    } else {
+      top = margin;
+      visibleH = roomAbove;
     }
-    top += window.scrollY;
+    visibleH = Math.max(140, Math.min(visibleH, vh - margin * 2));
+
+    let left = sheetRect.left + (sheetRect.width - popW) / 2 + window.scrollX;
+    left = Math.max(margin + window.scrollX, Math.min(left, vw - popW - margin + window.scrollX));
     pop.style.position = 'absolute';
-    pop.style.top = top + 'px';
+    pop.style.top = (top + window.scrollY) + 'px';
     pop.style.left = left + 'px';
     pop.style.right = 'auto';
     pop.style.bottom = 'auto';
-    pop.style.width = popW + 'px';
-    pop.style.maxHeight = popH + 'px';
-    pop.style.overflow = 'visible';
+    pop.style.maxHeight = visibleH + 'px';
+    pop.style.overflow = visibleH < naturalH ? 'auto' : 'visible';
+    pop.style.overscrollBehavior = 'contain';
     pop.style.zIndex = '2147483647';
   }
 
