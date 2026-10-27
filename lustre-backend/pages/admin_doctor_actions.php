@@ -15,6 +15,11 @@ $conn->query("CREATE TABLE IF NOT EXISTS doctor_accounts (
 )");
 
 $conn->query("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS test_procedures TEXT NOT NULL DEFAULT ''");
+// Daily patient cap used by the walk-in doctor dropdown (0 = derive it from
+// the doctor's schedules). Kept here so adding/editing a doctor works before
+// get_available_doctors.php has ever run.
+require_once __DIR__ . '/../src/doctor_capacity.php';
+ensure_doctor_capacity_schema($conn);
 
 function norm_tests($raw)
 {
@@ -32,13 +37,15 @@ if ($action === 'add') {
     $schedule   = isset($_POST['schedule'])   ? trim($_POST['schedule'])   : '';
     $experience = isset($_POST['experience']) ? (int)$_POST['experience']  : 0;
     $tests      = norm_tests(isset($_POST['test_procedures']) ? $_POST['test_procedures'] : '');
+    $dailyLimit = isset($_POST['daily_limit']) ? (int)$_POST['daily_limit'] : 0;
+    if ($dailyLimit < 0) $dailyLimit = 0;
 
     if (empty($name) || empty($specialty) || empty($schedule)) {
         echo "All fields are required"; exit;
     }
 
-    $stmt = $conn->prepare("INSERT INTO doctors (name, specialty, schedule, experience, test_procedures) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssis", $name, $specialty, $schedule, $experience, $tests);
+    $stmt = $conn->prepare("INSERT INTO doctors (name, specialty, schedule, experience, test_procedures, daily_limit) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssisi", $name, $specialty, $schedule, $experience, $tests, $dailyLimit);
     echo $stmt->execute() ? "success" : "Failed: " . $stmt->error;
     $stmt->close();
 
@@ -49,13 +56,15 @@ if ($action === 'add') {
     $schedule   = isset($_POST['schedule'])   ? trim($_POST['schedule'])   : '';
     $experience = isset($_POST['experience']) ? (int)$_POST['experience']  : 0;
     $tests      = norm_tests(isset($_POST['test_procedures']) ? $_POST['test_procedures'] : '');
+    $dailyLimit = isset($_POST['daily_limit']) ? (int)$_POST['daily_limit'] : 0;
+    if ($dailyLimit < 0) $dailyLimit = 0;
 
     if (!$id || empty($name) || empty($specialty) || empty($schedule)) {
         echo "All fields are required"; exit;
     }
 
-    $stmt = $conn->prepare("UPDATE doctors SET name=?, specialty=?, schedule=?, experience=?, test_procedures=? WHERE id=?");
-    $stmt->bind_param("sssisi", $name, $specialty, $schedule, $experience, $tests, $id);
+    $stmt = $conn->prepare("UPDATE doctors SET name=?, specialty=?, schedule=?, experience=?, test_procedures=?, daily_limit=? WHERE id=?");
+    $stmt->bind_param("sssisii", $name, $specialty, $schedule, $experience, $tests, $dailyLimit, $id);
     echo $stmt->execute() ? "success" : "Failed: " . $stmt->error;
     $stmt->close();
 

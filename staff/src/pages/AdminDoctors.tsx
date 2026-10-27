@@ -18,7 +18,7 @@ interface DoctorAccount {
   created_at?: string;
 }
 
-const EMPTY_FORM = { name: '', specialty: '', schedule: '', experience: '', test_procedures: '' };
+const EMPTY_FORM = { name: '', specialty: '', schedule: '', experience: '', test_procedures: '', daily_limit: '' };
 const EMPTY_ACCOUNT = { doctor_id: '', username: '', password: '' };
 
 /** Chip-style input for a doctor's newline-separated test_procedures list. */
@@ -132,6 +132,7 @@ export default function AdminDoctors() {
       schedule: doc.schedule || '',
       experience: doc.experience != null ? String(doc.experience) : '',
       test_procedures: doc.test_procedures || '',
+      daily_limit: doc.daily_limit ? String(doc.daily_limit) : '',
     });
     setChips(
       String(doc.test_procedures || '')
@@ -157,6 +158,7 @@ export default function AdminDoctors() {
         schedule: form.schedule,
         experience: form.experience,
         test_procedures: chips.join('\n'),
+        daily_limit: form.daily_limit,
       });
       if (isSuccess(res)) {
         showToast(editing ? 'Doctor updated' : 'Doctor added', 'success');
@@ -396,6 +398,10 @@ export default function AdminDoctors() {
           </Field>
           <Field label="Years of experience">
             <input className="form-input" type="number" min={0} max={60} placeholder="e.g. 10" value={form.experience} onChange={(e) => setForm({ ...form, experience: e.target.value })} />
+          </Field>
+          <Field label="Daily patient limit" className="ap-field--full">
+            <input className="form-input" type="number" min={0} max={200} placeholder="e.g. 12" value={form.daily_limit} onChange={(e) => setForm({ ...form, daily_limit: e.target.value })} />
+            <small className="ap-sub">Leave blank or 0 to derive the limit from this doctor&rsquo;s schedules (one patient per 2-hour visit).</small>
           </Field>
         </div>
         <div className="form-actions">

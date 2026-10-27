@@ -210,7 +210,7 @@ export default function AdminLaboratory() {
           >
             <div className="form-grid">
               <Field label="Patient">
-                <Select className="form-input" value={req.patient_id} onChange={(e) => setReq({ ...req, patient_id: e.target.value })}>
+                <Select className="form-input" searchable value={req.patient_id} onChange={(e) => setReq({ ...req, patient_id: e.target.value })}>
                   <option value="">Select patient</option>
                   {patients.map((p) => <option key={p.id} value={p.id}>{p.name}{p.email ? ` — ${p.email}` : ''}</option>)}
                 </Select>

@@ -35,6 +35,7 @@ export interface DoctorRow {
   schedule?: string;
   experience?: number;
   test_procedures?: string;
+  daily_limit?: number;
   appointment_count?: number;
 }
 
