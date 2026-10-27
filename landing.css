@@ -1673,6 +1673,30 @@ footer .footer-copy {
   background: var(--green-pale);
   outline: none;
 }
+/* The year <select> is enhanced by admin_components.js into the same custom
+   dropdown used across the system. Keep that instance compact so it fits the
+   calendar header without losing the shared look. */
+.reg-cal-title .cust-dropdown { flex: 0 0 auto; width: auto; }
+.reg-cal-title .cust-dropdown .cd-btn {
+  min-height: 0;
+  padding: 0.3rem 0.55rem;
+  gap: 0.25rem;
+  border-width: 1.5px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--green-deep);
+}
+.reg-cal-title .cust-dropdown .cd-btn:hover,
+.reg-cal-title .cust-dropdown.open .cd-btn {
+  border-color: var(--green);
+  background: var(--green-pale);
+}
+.reg-cal-title .cust-dropdown .cd-arrow svg { width: 14px; height: 14px; }
+.cd-menu.reg-cal-year-menu { width: 140px; min-width: 120px; }
+.reg-cal-year-menu .cd-opt { padding: 0.4rem 0.7rem; font-size: 0.88rem; }
+.reg-cal-nav:disabled { opacity: 0.4; cursor: not-allowed; }
+.reg-cal-nav:disabled:hover { background: var(--white); color: var(--gray-600); border-color: var(--gray-100); }
 .reg-cal-nav {
   width: 38px;
   height: 38px;
