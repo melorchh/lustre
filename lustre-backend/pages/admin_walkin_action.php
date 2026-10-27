@@ -8,6 +8,7 @@ if (!isset($_SESSION["admin_id"])) {
 
 require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/unique_ids.php';
+require_once __DIR__ . '/../src/doctor_capacity.php';
 ensure_unique_ids($conn);
 
 $conn->query("ALTER TABLE walk_ins ADD COLUMN IF NOT EXISTS test_procedure TEXT NOT NULL DEFAULT ''");
@@ -65,6 +66,17 @@ if ($action === 'add_walkin') {
         exit;
     }
     $docCheck->close();
+
+    // The doctor must still have room today. Same rule the walk-in form uses
+    // to filter its dropdown, re-checked here so a stale page cannot overbook.
+    $capacity = doctor_capacity_map($conn, date('Y-m-d'));
+    $capacityInfo = isset($capacity[$doctor_id]) ? $capacity[$doctor_id] : null;
+    if ($capacityInfo && empty($capacityInfo['available'])) {
+        echo ($capacityInfo['reason'] === 'not_scheduled')
+            ? 'The selected doctor is not scheduled for today.'
+            : 'The selected doctor is fully booked for today. Please pick another doctor.';
+        exit;
+    }
 
     // Validate arrival time (default: now)
     if ($arrival_time === '') {

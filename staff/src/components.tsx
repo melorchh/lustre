@@ -38,6 +38,12 @@ type SelectPropsBase = Omit<
 export interface SelectProps extends SelectPropsBase {
   onChange?: (e: SelectChangeEvent) => void;
   children?: ReactNode;
+  /**
+   * Show a text field at the top of the list so long option lists (patients,
+   * doctors, ...) can be narrowed by typing. The selected value stays on the
+   * trigger while the list is filtered.
+   */
+  searchable?: boolean;
 }
 
 interface ParsedOption {
@@ -78,6 +84,13 @@ function parseOptions(children: ReactNode): ParsedOption[] {
   return out;
 }
 
+/** Case-insensitive "contains" filter used by searchable selects. */
+function filterOptions(options: ParsedOption[], raw: string): ParsedOption[] {
+  const needle = raw.trim().toLowerCase();
+  if (!needle) return options;
+  return options.filter((o) => o.text.toLowerCase().includes(needle));
+}
+
 const CARET = (
   <svg className="ap-select-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="m6 9 6 6 6-6" />
@@ -97,6 +110,7 @@ export function Select({
   disabled,
   id,
   name,
+  searchable = false,
   ...rest
 }: SelectProps) {
   const options = useMemo(() => parseOptions(children), [children]);
@@ -106,6 +120,7 @@ export function Select({
 
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
+  const [query, setQuery] = useState('');
   const [pos, setPos] = useState<
     { left: number; minWidth: number; maxHeight: number; top?: number; bottom?: number } | null
   >(null);
@@ -113,11 +128,18 @@ export function Select({
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const typeahead = useRef({ text: '', at: 0 });
   const listId = useId();
 
+  const list = useMemo(
+    () => (searchable ? filterOptions(options, query) : options),
+    [options, query, searchable],
+  );
+
   const close = useCallback((refocus: boolean) => {
     setOpen(false);
+    setQuery('');
     if (refocus) window.requestAnimationFrame(() => triggerRef.current?.focus());
   }, []);
 
@@ -130,7 +152,7 @@ export function Select({
     const gap = 6;
     const below = vh - r.bottom - gap - 10;
     const above = r.top - gap - 10;
-    const estimate = Math.min(308, options.length * 37 + 10);
+    const estimate = Math.min(308, (searchable ? 44 : 0) + list.length * 37 + 10);
     const up = estimate > below && above > below;
     const width = Math.max(180, Math.min(r.width, 460, vw - 16));
     const left = Math.max(8, Math.min(r.left, vw - width - 8));
@@ -140,18 +162,20 @@ export function Select({
       maxHeight: Math.max(120, Math.min(308, up ? above : below)),
       ...(up ? { bottom: vh - r.top + gap } : { top: r.bottom + gap }),
     });
-  }, [options.length]);
+  }, [list.length, searchable]);
 
   const openMenu = useCallback(() => {
     if (disabled || options.length === 0) return;
+    const selectedInList = list.findIndex((o) => o.value === current);
     const startIndex =
-      selectedIndex >= 0 && !options[selectedIndex].disabled
-        ? selectedIndex
-        : options.findIndex((o) => !o.disabled);
+      selectedInList >= 0 && !list[selectedInList].disabled
+        ? selectedInList
+        : list.findIndex((o) => !o.disabled);
     setActive(startIndex);
+    setQuery('');
     place();
     setOpen(true);
-  }, [disabled, options, place, selectedIndex]);
+  }, [disabled, options, list, current, place]);
 
   // Track the trigger while the list is open (page scroll, resizing, scrollable tables).
   useEffect(() => {
@@ -181,6 +205,12 @@ export function Select({
   useEffect(() => {
     if (open && disabled) setOpen(false);
   }, [disabled, open]);
+
+  // Searchable lists put the caret in the filter field as soon as they open.
+  useEffect(() => {
+    if (!open || !searchable) return;
+    searchRef.current?.focus();
+  }, [open, searchable]);
 
   // Keep the popup inside the viewport once its real width is known.
   useLayoutEffect(() => {
@@ -212,15 +242,53 @@ export function Select({
   };
 
   const moveActive = (dir: 1 | -1) => {
-    if (options.length === 0) return;
+    if (list.length === 0) return;
     setActive((prev) => {
       let idx = prev;
-      for (let n = 0; n < options.length; n += 1) {
-        idx = (idx + dir + options.length) % options.length;
-        if (!options[idx].disabled) break;
+      if (idx < 0 || idx >= list.length) idx = dir > 0 ? -1 : 0;
+      for (let n = 0; n < list.length; n += 1) {
+        idx = (idx + dir + list.length) % list.length;
+        if (!list[idx].disabled) break;
       }
       return idx;
     });
+  };
+
+  const onSearchChange = (next: string) => {
+    setQuery(next);
+    const nextList = filterOptions(options, next);
+    setActive(nextList.findIndex((o) => !o.disabled));
+  };
+
+  const onSearchKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      close(true);
+      return;
+    }
+    if (e.key === 'Tab') {
+      close(false);
+      return;
+    }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      moveActive(e.key === 'ArrowDown' ? 1 : -1);
+      return;
+    }
+    if (e.key === 'Home' || e.key === 'End') {
+      e.preventDefault();
+      const enabled = list.reduce<number[]>((acc, o, i) => {
+        if (!o.disabled) acc.push(i);
+        return acc;
+      }, []);
+      if (enabled.length > 0) setActive(e.key === 'Home' ? enabled[0] : enabled[enabled.length - 1]);
+      return;
+    }
+    if (e.key === 'Enter') {
+      // Keep Enter from submitting the form that owns this select.
+      e.preventDefault();
+      if (active >= 0 && list[active]) commit(list[active]);
+    }
   };
 
   const onKeyDown = (e: ReactKeyboardEvent<HTMLButtonElement>) => {
@@ -248,7 +316,7 @@ export function Select({
     }
     if (e.key === 'Home' || e.key === 'End') {
       e.preventDefault();
-      const enabled = options.reduce<number[]>((acc, o, i) => {
+      const enabled = list.reduce<number[]>((acc, o, i) => {
         if (!o.disabled) acc.push(i);
         return acc;
       }, []);
@@ -257,7 +325,7 @@ export function Select({
     }
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      if (active >= 0 && options[active]) commit(options[active]);
+      if (active >= 0 && list[active]) commit(list[active]);
       return;
     }
     if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && /\S/.test(e.key)) {
@@ -311,40 +379,58 @@ export function Select({
         ? createPortal(
             <div
               ref={menuRef}
-              id={listId}
               className="ap-select-menu"
-              role="listbox"
-              aria-label={rest['aria-label']}
               style={menuStyle}
             >
-              {options.map((o, i) => (
-                <div
-                  key={`${o.value}-${i}`}
-                  id={`${listId}-opt-${i}`}
-                  data-index={i}
-                  role="option"
-                  aria-selected={i === selectedIndex}
-                  aria-disabled={o.disabled || undefined}
-                  className={
-                    'ap-select-option' +
-                    (i === active ? ' is-active' : '') +
-                    (i === selectedIndex ? (o.value === '' ? ' is-selected-placeholder' : ' is-selected') : '') +
-                    (o.disabled ? ' is-disabled' : '')
-                  }
-                  onPointerEnter={() => {
-                    if (!o.disabled) setActive(i);
-                  }}
-                  // Keep mouse focus on the trigger without suppressing the
-                  // click: cancelling `pointerdown` makes Safari/WebKit drop
-                  // the following click, which made options unselectable on
-                  // iPhones and iPads.
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => commit(o)}
-                >
-                  <span className="ap-select-option-label">{o.label}</span>
-                  {i === selectedIndex ? CHECK : null}
+              {searchable && (
+                <div className="ap-select-search">
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    className="ap-select-search-input"
+                    placeholder="Search..."
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    value={query}
+                    aria-label="Search options"
+                    onChange={(e) => onSearchChange(e.target.value)}
+                    onKeyDown={onSearchKeyDown}
+                  />
                 </div>
-              ))}
+              )}
+              <div id={listId} role="listbox" aria-label={rest['aria-label']}>
+                {list.length === 0 ? (
+                  <div className="ap-select-empty" role="presentation">No matches</div>
+                ) : list.map((o, i) => (
+                  <div
+                    key={`${o.value}-${i}`}
+                    id={`${listId}-opt-${i}`}
+                    data-index={i}
+                    role="option"
+                    aria-selected={o.value === current}
+                    aria-disabled={o.disabled || undefined}
+                    className={
+                      'ap-select-option' +
+                      (i === active ? ' is-active' : '') +
+                      (o.value === current ? (o.value === '' ? ' is-selected-placeholder' : ' is-selected') : '') +
+                      (o.disabled ? ' is-disabled' : '')
+                    }
+                    onPointerEnter={() => {
+                      if (!o.disabled) setActive(i);
+                    }}
+                    // Keep mouse focus on the trigger without suppressing the
+                    // click: cancelling `pointerdown` makes Safari/WebKit drop
+                    // the following click, which made options unselectable on
+                    // iPhones and iPads.
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => commit(o)}
+                  >
+                    <span className="ap-select-option-label">{o.label}</span>
+                    {o.value === current ? CHECK : null}
+                  </div>
+                ))}
+              </div>
             </div>,
             portalTarget,
           )

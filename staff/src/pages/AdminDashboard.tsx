@@ -95,6 +95,9 @@ export default function AdminDashboard() {
 
   const [walkinOpen, setWalkinOpen] = useState(false);
   const [walkinForm, setWalkinForm] = useState({ ...EMPTY_WALKIN });
+  // Doctor ids with room left today (null = not fetched yet / unknown, in
+  // which case every doctor stays selectable).
+  const [availableDoctorIds, setAvailableDoctorIds] = useState<number[] | null>(null);
 
   const historyByAppt = useMemo(() => {
     const map: Record<number, HistoryEntry[]> = {};
@@ -137,6 +140,35 @@ export default function AdminDashboard() {
     return () => { alive = false; };
   }, [apptOpen, apptForm.doctor_id, apptForm.date]);
 
+  // Load the doctors who can still take a walk-in today. The endpoint applies
+  // the same capacity rule the server re-checks on submit; if it cannot be
+  // reached we keep the full list rather than blocking the counter.
+  useEffect(() => {
+    if (!walkinOpen) return;
+    let alive = true;
+    setAvailableDoctorIds(null);
+    fetch('get_available_doctors.php', {
+      headers: { 'X-Requested-With': 'LustreStaff' },
+      cache: 'no-store',
+    })
+      .then((r) => r.json())
+      .then((json: unknown) => {
+        if (!alive || !Array.isArray(json)) return;
+        const ids = json
+          .map((d) => Number((d as { id?: unknown }).id))
+          .filter((n) => Number.isFinite(n));
+        setAvailableDoctorIds(ids);
+        // Drop a doctor that filled up between opening and loading the list.
+        setWalkinForm((f) => (
+          f.doctor_id && !ids.includes(Number(f.doctor_id))
+            ? { ...f, doctor_id: '', test_procedure: '', other: '' }
+            : f
+        ));
+      })
+      .catch(() => { /* keep every doctor selectable */ });
+    return () => { alive = false; };
+  }, [walkinOpen]);
+
   async function refresh() {
     try {
       const json = await fetchData('api_admin_data.php', { view: 'dashboard' });
@@ -153,6 +185,7 @@ export default function AdminDashboard() {
   }
 
   function openWalkin() {
+    setAvailableDoctorIds(null);
     setWalkinForm({ ...EMPTY_WALKIN, arrival_time: nowHM() });
     setWalkinOpen(true);
   }
@@ -190,10 +223,12 @@ export default function AdminDashboard() {
     return uniq;
   }, [doctors, walkinForm.doctor_id]);
 
-  const walkinDoctors = useMemo(
-    () => doctors.filter((d) => !walkinForm.specialty || d.specialty === walkinForm.specialty),
-    [doctors, walkinForm.specialty],
-  );
+  const walkinDoctors = useMemo(() => {
+    const pool = availableDoctorIds
+      ? doctors.filter((d) => availableDoctorIds.includes(Number(d.id)))
+      : doctors;
+    return pool.filter((d) => !walkinForm.specialty || d.specialty === walkinForm.specialty);
+  }, [doctors, availableDoctorIds, walkinForm.specialty]);
 
   async function registerWalkin() {
     if (!walkinForm.name.trim()) { showToast('Patient name required', 'error'); return; }
@@ -502,7 +537,7 @@ export default function AdminDashboard() {
       <Modal open={apptOpen} onClose={() => setApptOpen(false)}>
         <ModalHead title="New appointment" hint="Book a slot for a registered patient." />
         <label className="form-label">Patient *</label>
-        <Select className="form-dropdown form-input" value={apptForm.patient_id} onChange={(e) => setApptForm({ ...apptForm, patient_id: e.target.value })}>
+        <Select className="form-dropdown form-input" searchable value={apptForm.patient_id} onChange={(e) => setApptForm({ ...apptForm, patient_id: e.target.value })}>
           <option value="">Select patient...</option>
           {patientsList.map((p) => (
             <option key={p.id} value={p.id}>{p.name}{p.age !== null && p.age !== undefined ? ` (${p.age} yrs)` : ''}</option>
@@ -582,6 +617,11 @@ export default function AdminDashboard() {
               <option value="">Select Doctor</option>
               {walkinDoctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name} ({doc.specialty})</option>)}
             </Select>
+            {availableDoctorIds !== null && walkinDoctors.length === 0 && (
+              <p className="form-hint">
+                No doctors have room left today{walkinForm.specialty ? ` for ${walkinForm.specialty}` : ''}. Free up a schedule or raise a daily limit to add more.
+              </p>
+            )}
           </div>
           <div className="form-group">
             <label>Test / Procedure</label>

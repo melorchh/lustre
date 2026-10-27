@@ -11,6 +11,7 @@ if (defined('LUSTRE_STAFF_DATA_LOADED')) {
 define('LUSTRE_STAFF_DATA_LOADED', true);
 
 require_once __DIR__ . '/api.php';
+require_once __DIR__ . '/doctor_capacity.php';
 
 function staff_count($conn, $sql)
 {
@@ -31,6 +32,10 @@ function admin_view_data($conn, $view, array $params = array())
     $get = function ($k, $d = '') use ($params) {
         return isset($params[$k]) && $params[$k] !== '' ? $params[$k] : $d;
     };
+
+    // doctors.daily_limit is read by the doctors view; make sure older
+    // databases have it before the SELECT runs.
+    ensure_doctor_capacity_schema($conn);
 
     switch ($view) {
 
@@ -124,7 +129,7 @@ function admin_view_data($conn, $view, array $params = array())
                 "SELECT appointment_id, old_date, old_time, new_date, new_time, rescheduled_at
                  FROM reschedule_history ORDER BY rescheduled_at DESC, id DESC")),
             'patientsList' => api_all($conn->query("SELECT id, name, age, contact, address FROM patients ORDER BY name")),
-            'doctors' => api_all($conn->query("SELECT id, name, specialty, schedule, test_procedures FROM doctors ORDER BY name")),
+            'doctors' => api_all($conn->query("SELECT id, name, specialty, schedule, test_procedures, daily_limit FROM doctors ORDER BY name")),
             'specialties' => array_values(array_filter(array_map(function ($r) { return $r['specialty']; },
                 api_all($conn->query("SELECT DISTINCT specialty FROM doctors ORDER BY specialty"))))),
         );
