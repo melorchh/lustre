@@ -94,7 +94,7 @@ export default function Shell({ active, title, children }: ShellProps) {
   return (
     <ToastCtx.Provider value={{ showToast }}>
       <div className="sidebar-overlay" id="sidebarOverlay" onClick={() => (window as unknown as { closeSidebar?: () => void }).closeSidebar?.()}></div>
-      <div className={`admin-layout ${role === 'doctor' ? 'doctor-page' : 'admin-portal'}`}>
+      <div className={`admin-layout ${role === 'doctor' ? 'doctor-page doctor-portal' : 'admin-portal'}`}>
         <aside className="admin-sidebar" id="adminSidebar">
           <div className="sidebar-brand">
             <span className="brand-icon"><img src="images/Lustre.png" alt="LustreMDC Logo" width="42" height="42" /></span>

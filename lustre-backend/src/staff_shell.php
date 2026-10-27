@@ -46,10 +46,12 @@ function render_staff_shell(array $staff, string $view, array $data, string $ent
   <meta name="theme-color" content="#0d9488">
   <script>try{if(localStorage.getItem('meTheme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}</script>
   <link rel="icon" href="images/Lustre.png" type="image/png">
-  <link rel="stylesheet" href="<?php echo htmlspecialchars($asset_css, ENT_QUOTES); ?>?v=<?php echo $v_css; ?>">
   <?php if ($role === 'doctor'): ?>
+  <link rel="stylesheet" href="<?php echo htmlspecialchars($shared_css, ENT_QUOTES); ?>?v=<?php echo $v_shared; ?>">
   <link rel="stylesheet" href="<?php echo htmlspecialchars($doctor_css, ENT_QUOTES); ?>?v=<?php echo $v_doctor; ?>">
+  <link rel="stylesheet" href="<?php echo htmlspecialchars($asset_css, ENT_QUOTES); ?>?v=<?php echo $v_css; ?>">
   <?php else: ?>
+  <link rel="stylesheet" href="<?php echo htmlspecialchars($asset_css, ENT_QUOTES); ?>?v=<?php echo $v_css; ?>">
   <link rel="stylesheet" href="<?php echo htmlspecialchars($shared_css, ENT_QUOTES); ?>?v=<?php echo $v_shared; ?>">
   <?php endif; ?>
   <link rel="preconnect" href="https://fonts.googleapis.com">

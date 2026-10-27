@@ -274,7 +274,9 @@ export function Select({
 
   const isPlaceholder = !selected || selected.value === '';
   const portalTarget =
-    typeof document === 'undefined' ? null : document.querySelector('.admin-portal') ?? document.body;
+    typeof document === 'undefined'
+      ? null
+      : document.querySelector('.admin-portal, .doctor-portal') ?? document.body;
 
   const menuStyle: CSSProperties = pos
     ? {

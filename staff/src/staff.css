@@ -969,12 +969,14 @@ button.resched-badge:hover {
 }
 
 /* ==========================================================================
-   ADMIN DESIGN SYSTEM (v2)
-   Scoped to .admin-portal so the doctor portal and the remaining PHP admin
-   pages (which also load admin.css) keep their existing look.
+   DESIGN SYSTEM (v2)
+   Shared by the admin portal and the React doctor portal through one scoped
+   selector list, so each portal keeps its own theme and neither can leak into
+   the other. The doctor palette (matching the patient app) is applied by the
+   .doctor-portal token block at the end of this file.
    ========================================================================== */
 
-.admin-portal {
+:is(.admin-portal, .doctor-portal) {
   --ap-surface: #ffffff;
   --ap-surface-2: #f7f9f7;
   --ap-surface-3: #eef2ee;
@@ -1000,7 +1002,7 @@ button.resched-badge:hover {
   --ap-radius-sm: 11px;
   --ap-shadow: 0 1px 2px rgba(16, 40, 24, 0.04), 0 10px 26px -20px rgba(16, 40, 24, 0.35);
 }
-[data-theme="dark"] .admin-portal {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) {
   --ap-surface: #161e2b;
   --ap-surface-2: #1a2432;
   --ap-surface-3: #223041;
@@ -1026,16 +1028,16 @@ button.resched-badge:hover {
 }
 
 /* --- topbar --- */
-.admin-portal .topbar {
+:is(.admin-portal, .doctor-portal) .topbar {
   margin-bottom: 1.15rem;
   align-items: center;
 }
-.admin-portal .topbar-heading {
+:is(.admin-portal, .doctor-portal) .topbar-heading {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
-.admin-portal .topbar-kicker {
+:is(.admin-portal, .doctor-portal) .topbar-kicker {
   font-size: 0.64rem;
   font-weight: 700;
   letter-spacing: 0.13em;
@@ -1043,21 +1045,21 @@ button.resched-badge:hover {
   color: var(--ap-faint);
   line-height: 1.3;
 }
-.admin-portal .topbar-title {
+:is(.admin-portal, .doctor-portal) .topbar-title {
   font-size: 1.35rem;
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.02em;
   color: var(--ap-text);
 }
-.admin-portal .topbar-hello strong {
+:is(.admin-portal, .doctor-portal) .topbar-hello strong {
   color: var(--ap-text);
 }
-.admin-portal .theme-toggle {
+:is(.admin-portal, .doctor-portal) .theme-toggle {
   background: var(--ap-surface);
   border-color: var(--ap-border);
 }
-.admin-portal .admin-content {
+:is(.admin-portal, .doctor-portal) .admin-content {
   padding-top: 1.4rem;
 }
 
@@ -1303,7 +1305,7 @@ button.resched-badge:hover {
 
 /* --- cards --- */
 .ap-card,
-.admin-portal .content-card {
+:is(.admin-portal, .doctor-portal) .content-card {
   background: var(--ap-surface);
   border: 1px solid var(--ap-border);
   border-radius: var(--ap-radius);
@@ -1311,7 +1313,7 @@ button.resched-badge:hover {
   padding: 1.1rem 1.2rem 1.2rem;
   margin-bottom: 0;
 }
-.admin-portal .content-card {
+:is(.admin-portal, .doctor-portal) .content-card {
   margin-bottom: 1.1rem;
 }
 .ap-card-head {
@@ -1341,7 +1343,7 @@ button.resched-badge:hover {
   gap: 0.5rem;
   flex-wrap: wrap;
 }
-.admin-portal .content-card h2 {
+:is(.admin-portal, .doctor-portal) .content-card h2 {
   margin-bottom: 0.9rem;
   font-size: 1.02rem;
   font-weight: 700;
@@ -1400,17 +1402,17 @@ button.resched-badge:hover {
   color: var(--ap-faint);
   pointer-events: none;
 }
-.admin-portal .ap-input-icon input.apt-search,
-.admin-portal .ap-input-icon input.form-input {
+:is(.admin-portal, .doctor-portal) .ap-input-icon input.apt-search,
+:is(.admin-portal, .doctor-portal) .ap-input-icon input.form-input {
   padding-left: 2rem;
 }
 
 /* --- controls --- */
-.admin-portal .form-input,
-.admin-portal .apt-toolbar input.apt-search,
-.admin-portal .apt-toolbar select.apt-select,
-.admin-portal .ap-field .apt-search,
-.admin-portal .ap-field .apt-select {
+:is(.admin-portal, .doctor-portal) .form-input,
+:is(.admin-portal, .doctor-portal) .apt-toolbar input.apt-search,
+:is(.admin-portal, .doctor-portal) .apt-toolbar select.apt-select,
+:is(.admin-portal, .doctor-portal) .ap-field .apt-search,
+:is(.admin-portal, .doctor-portal) .ap-field .apt-select {
   min-height: 40px;
   padding: 0.48rem 0.72rem;
   border: 1.5px solid var(--ap-border-strong);
@@ -1424,16 +1426,16 @@ button.resched-badge:hover {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 /* --- selects: native-backed but fully themed --- */
-.admin-portal select,
-.admin-portal select.form-input,
-.admin-portal select.form-dropdown,
-.admin-portal select.apt-select,
-.admin-portal .ap-field select.apt-select,
-.admin-portal .apt-toolbar select.apt-select,
-.admin-portal select.filter-select,
-.admin-portal select.action-select,
-.admin-portal .form-group select,
-.admin-portal .pdf-cal-head select {
+:is(.admin-portal, .doctor-portal) select,
+:is(.admin-portal, .doctor-portal) select.form-input,
+:is(.admin-portal, .doctor-portal) select.form-dropdown,
+:is(.admin-portal, .doctor-portal) select.apt-select,
+:is(.admin-portal, .doctor-portal) .ap-field select.apt-select,
+:is(.admin-portal, .doctor-portal) .apt-toolbar select.apt-select,
+:is(.admin-portal, .doctor-portal) select.filter-select,
+:is(.admin-portal, .doctor-portal) select.action-select,
+:is(.admin-portal, .doctor-portal) .form-group select,
+:is(.admin-portal, .doctor-portal) .pdf-cal-head select {
   appearance: none;
   -webkit-appearance: none;
   min-height: 40px;
@@ -1455,17 +1457,17 @@ button.resched-badge:hover {
   cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
-.admin-portal select:hover:not(:disabled) {
+:is(.admin-portal, .doctor-portal) select:hover:not(:disabled) {
   border-color: var(--ap-accent);
   background-color: var(--ap-surface-2);
 }
-.admin-portal select:focus,
-.admin-portal select:focus-visible {
+:is(.admin-portal, .doctor-portal) select:focus,
+:is(.admin-portal, .doctor-portal) select:focus-visible {
   outline: none;
   border-color: var(--ap-accent);
   box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.13);
 }
-.admin-portal select:disabled {
+:is(.admin-portal, .doctor-portal) select:disabled {
   border-color: var(--ap-border);
   background-color: var(--ap-surface-3);
   color: var(--ap-faint);
@@ -1473,12 +1475,12 @@ button.resched-badge:hover {
   opacity: 0.85;
   cursor: not-allowed;
 }
-.admin-portal select option {
+:is(.admin-portal, .doctor-portal) select option {
   background-color: var(--ap-surface);
   color: var(--ap-text);
   font-weight: 500;
 }
-.admin-portal select option:disabled {
+:is(.admin-portal, .doctor-portal) select option:disabled {
   color: var(--ap-faint);
 }
 /* --- custom dropdown (the closed control AND the opened list) --- */
@@ -1642,69 +1644,69 @@ button.resched-badge:hover {
     transition: none;
   }
 }
-.admin-portal .form-input::placeholder,
-.admin-portal .apt-search::placeholder {
+:is(.admin-portal, .doctor-portal) .form-input::placeholder,
+:is(.admin-portal, .doctor-portal) .apt-search::placeholder {
   color: var(--ap-faint);
 }
-.admin-portal .form-input:focus,
-.admin-portal .apt-toolbar input.apt-search:focus,
-.admin-portal .apt-toolbar select.apt-select:focus,
-.admin-portal .ap-field .apt-search:focus,
-.admin-portal .ap-field .apt-select:focus {
+:is(.admin-portal, .doctor-portal) .form-input:focus,
+:is(.admin-portal, .doctor-portal) .apt-toolbar input.apt-search:focus,
+:is(.admin-portal, .doctor-portal) .apt-toolbar select.apt-select:focus,
+:is(.admin-portal, .doctor-portal) .ap-field .apt-search:focus,
+:is(.admin-portal, .doctor-portal) .ap-field .apt-select:focus {
   outline: none;
   border-color: var(--ap-accent);
   box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.13);
 }
-[data-theme="dark"] .admin-portal .form-input,
-[data-theme="dark"] .admin-portal .apt-toolbar input.apt-search,
-[data-theme="dark"] .admin-portal .apt-toolbar select.apt-select,
-[data-theme="dark"] .admin-portal .ap-field .apt-search,
-[data-theme="dark"] .admin-portal .ap-field .apt-select {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .form-input,
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .apt-toolbar input.apt-search,
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .apt-toolbar select.apt-select,
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .ap-field .apt-search,
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .ap-field .apt-select {
   background-color: var(--ap-surface-2);
 }
-[data-theme="dark"] .admin-portal select,
-[data-theme="dark"] .admin-portal select.form-input,
-[data-theme="dark"] .admin-portal select.form-dropdown,
-[data-theme="dark"] .admin-portal select.apt-select,
-[data-theme="dark"] .admin-portal .ap-field select.apt-select,
-[data-theme="dark"] .admin-portal .apt-toolbar select.apt-select,
-[data-theme="dark"] .admin-portal select.filter-select,
-[data-theme="dark"] .admin-portal select.action-select,
-[data-theme="dark"] .admin-portal .form-group select,
-[data-theme="dark"] .admin-portal .pdf-cal-head select {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) select,
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) select.form-input,
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) select.form-dropdown,
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) select.apt-select,
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .ap-field select.apt-select,
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .apt-toolbar select.apt-select,
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) select.filter-select,
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) select.action-select,
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .form-group select,
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .pdf-cal-head select {
   background-color: var(--ap-surface-2);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2334d399' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   color-scheme: dark;
 }
-[data-theme="dark"] .admin-portal select:hover:not(:disabled) {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) select:hover:not(:disabled) {
   background-color: var(--ap-surface-3);
 }
-[data-theme="dark"] .admin-portal select:focus {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) select:focus {
   box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
 }
-[data-theme="dark"] .admin-portal select:disabled {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) select:disabled {
   border-color: var(--ap-border);
   background-color: var(--ap-surface-3);
   color: var(--ap-faint);
 }
-.admin-portal .form-label {
+:is(.admin-portal, .doctor-portal) .form-label {
   color: var(--ap-muted);
   font-size: 0.7rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-top: 0.8rem;
 }
-.admin-portal .form-grid {
+:is(.admin-portal, .doctor-portal) .form-grid {
   gap: 0.75rem;
 }
-.admin-portal .form-group label {
+:is(.admin-portal, .doctor-portal) .form-group label {
   font-size: 0.7rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ap-muted);
 }
-.admin-portal .form-group input,
-.admin-portal .form-group textarea {
+:is(.admin-portal, .doctor-portal) .form-group input,
+:is(.admin-portal, .doctor-portal) .form-group textarea {
   min-height: 42px;
   padding: 0.52rem 0.72rem;
   border: 1.5px solid var(--ap-border-strong);
@@ -1715,7 +1717,7 @@ button.resched-badge:hover {
   font-family: inherit;
   font-weight: 500;
 }
-.admin-portal .form-group select {
+:is(.admin-portal, .doctor-portal) .form-group select {
   min-height: 40px;
   padding: 0.48rem 2.2rem 0.48rem 0.72rem;
   border: 1.5px solid var(--ap-border-strong);
@@ -1726,57 +1728,57 @@ button.resched-badge:hover {
   font-family: inherit;
   font-weight: 600;
 }
-.admin-portal .form-group select:disabled {
+:is(.admin-portal, .doctor-portal) .form-group select:disabled {
   border-color: var(--ap-border);
   background-color: var(--ap-surface-3);
   color: var(--ap-faint);
 }
-.admin-portal .form-group textarea {
+:is(.admin-portal, .doctor-portal) .form-group textarea {
   min-height: 84px;
 }
-.admin-portal .form-group input:focus,
-.admin-portal .form-group select:focus,
-.admin-portal .form-group textarea:focus {
+:is(.admin-portal, .doctor-portal) .form-group input:focus,
+:is(.admin-portal, .doctor-portal) .form-group select:focus,
+:is(.admin-portal, .doctor-portal) .form-group textarea:focus {
   outline: none;
   border-color: var(--ap-accent);
   box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.13);
 }
-[data-theme="dark"] .admin-portal .form-group input,
-[data-theme="dark"] .admin-portal .form-group select,
-[data-theme="dark"] .admin-portal .form-group textarea {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .form-group input,
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .form-group select,
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .form-group textarea {
   background-color: var(--ap-surface-2);
 }
-[data-theme="dark"] .admin-portal .form-group select:disabled {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .form-group select:disabled {
   background-color: var(--ap-surface-3);
   color: var(--ap-faint);
 }
-.admin-portal .form-group {
+:is(.admin-portal, .doctor-portal) .form-group {
   margin-bottom: 0.85rem;
 }
-.admin-portal .form-grid > .ap-field {
+:is(.admin-portal, .doctor-portal) .form-grid > .ap-field {
   min-width: 0;
   margin-bottom: 0.85rem;
 }
-.admin-portal .test-type-checks {
+:is(.admin-portal, .doctor-portal) .test-type-checks {
   border-color: var(--ap-border);
   background: var(--ap-surface-2);
 }
-.admin-portal .test-type-check {
+:is(.admin-portal, .doctor-portal) .test-type-check {
   color: var(--ap-text);
 }
-.admin-portal .test-type-check:hover {
+:is(.admin-portal, .doctor-portal) .test-type-check:hover {
   background: var(--ap-accent-soft);
 }
-.admin-portal .test-type-check.is-checked {
+:is(.admin-portal, .doctor-portal) .test-type-check.is-checked {
   background: var(--ap-accent-soft);
   border-color: rgba(22, 163, 74, 0.45);
 }
-.admin-portal .form-hint {
+:is(.admin-portal, .doctor-portal) .form-hint {
   color: var(--ap-faint);
 }
 
 /* --- buttons --- */
-.admin-portal .btn-primary {
+:is(.admin-portal, .doctor-portal) .btn-primary {
   min-height: 42px;
   padding: 0.6rem 1.1rem;
   border-radius: 10px;
@@ -1785,11 +1787,11 @@ button.resched-badge:hover {
   background: linear-gradient(135deg, var(--ap-accent-strong), var(--ap-accent));
   box-shadow: 0 8px 18px -12px rgba(22, 163, 74, 0.75);
 }
-.admin-portal .btn-primary:hover {
+:is(.admin-portal, .doctor-portal) .btn-primary:hover {
   transform: translateY(-1px);
   box-shadow: 0 12px 22px -12px rgba(22, 163, 74, 0.8);
 }
-.admin-portal .btn-secondary {
+:is(.admin-portal, .doctor-portal) .btn-secondary {
   min-height: 42px;
   padding: 0.52rem 0.95rem;
   border-radius: 10px;
@@ -1799,26 +1801,26 @@ button.resched-badge:hover {
   font-size: 0.86rem;
   font-weight: 700;
 }
-.admin-portal .btn-secondary:hover {
+:is(.admin-portal, .doctor-portal) .btn-secondary:hover {
   border-color: var(--ap-accent);
   color: var(--ap-accent-strong);
   background: var(--ap-accent-soft);
 }
-.admin-portal .btn-xs,
-.admin-portal .btn-primary.btn-xs,
-.admin-portal .btn-secondary.btn-xs {
+:is(.admin-portal, .doctor-portal) .btn-xs,
+:is(.admin-portal, .doctor-portal) .btn-primary.btn-xs,
+:is(.admin-portal, .doctor-portal) .btn-secondary.btn-xs {
   min-height: 30px;
   padding: 0.3rem 0.6rem;
   font-size: 0.74rem;
   border-radius: 8px;
 }
-.admin-portal .btn-slip,
-.admin-portal .btn-add,
-.admin-portal .btn-walkin {
+:is(.admin-portal, .doctor-portal) .btn-slip,
+:is(.admin-portal, .doctor-portal) .btn-add,
+:is(.admin-portal, .doctor-portal) .btn-walkin {
   border-radius: 10px;
   font-size: 0.84rem;
 }
-.admin-portal .btn-slip {
+:is(.admin-portal, .doctor-portal) .btn-slip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1826,7 +1828,7 @@ button.resched-badge:hover {
   min-height: 36px;
   padding: 0.4rem 0.7rem;
 }
-.admin-portal .form-actions {
+:is(.admin-portal, .doctor-portal) .form-actions {
   gap: 0.55rem;
   margin-top: 1.15rem;
 }
@@ -1858,15 +1860,15 @@ button.resched-badge:hover {
 }
 
 /* --- tables --- */
-.admin-portal .table-scroll {
+:is(.admin-portal, .doctor-portal) .table-scroll {
   border: 1px solid var(--ap-border);
   border-radius: 12px;
   background: var(--ap-surface);
 }
-.admin-portal table {
+:is(.admin-portal, .doctor-portal) table {
   font-size: 0.86rem;
 }
-.admin-portal th {
+:is(.admin-portal, .doctor-portal) th {
   padding: 0.6rem 0.85rem;
   font-size: 0.66rem;
   font-weight: 700;
@@ -1875,30 +1877,30 @@ button.resched-badge:hover {
   background: var(--ap-surface-2);
   border-bottom: 1px solid var(--ap-border);
 }
-.admin-portal td {
+:is(.admin-portal, .doctor-portal) td {
   padding: 0.68rem 0.85rem;
   border-top: 1px solid var(--ap-border);
   color: var(--ap-text);
 }
-.admin-portal tbody tr {
+:is(.admin-portal, .doctor-portal) tbody tr {
   transition: background 0.12s ease;
 }
-.admin-portal tbody tr:hover {
+:is(.admin-portal, .doctor-portal) tbody tr:hover {
   background: var(--ap-surface-2);
 }
-.admin-portal tbody tr.is-open {
+:is(.admin-portal, .doctor-portal) tbody tr.is-open {
   background: var(--ap-surface-2);
 }
-.admin-portal table small {
+:is(.admin-portal, .doctor-portal) table small {
   display: block;
   margin-top: 0.1rem;
   font-size: 0.72rem;
   color: var(--ap-faint);
 }
-.admin-portal .ap-row {
+:is(.admin-portal, .doctor-portal) .ap-row {
   cursor: pointer;
 }
-.admin-portal .ap-id {
+:is(.admin-portal, .doctor-portal) .ap-id {
   color: var(--ap-faint);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -1962,7 +1964,7 @@ button.resched-badge:hover {
   justify-content: flex-end;
   min-width: 0;
 }
-.admin-portal .ap-row-actions .action-select {
+:is(.admin-portal, .doctor-portal) .ap-row-actions .action-select {
   min-height: 34px;
   padding: 0.3rem 1.9rem 0.3rem 0.6rem;
   border: 1.5px solid var(--ap-border-strong);
@@ -2094,20 +2096,20 @@ button.resched-badge:hover {
   font-size: 0.78rem;
   color: var(--ap-muted);
 }
-.admin-portal .empty-state-row {
+:is(.admin-portal, .doctor-portal) .empty-state-row {
   padding: 1rem !important;
   text-align: center;
   color: var(--ap-muted);
   font-size: 0.84rem;
 }
-.admin-portal td > .ap-empty {
+:is(.admin-portal, .doctor-portal) td > .ap-empty {
   border: 0;
   background: transparent;
   padding: 1.4rem 0.75rem;
 }
 
 /* --- badges, pills, chips --- */
-.admin-portal .badge {
+:is(.admin-portal, .doctor-portal) .badge {
   display: inline-flex;
   align-items: center;
   gap: 0.34rem;
@@ -2117,7 +2119,7 @@ button.resched-badge:hover {
   font-weight: 700;
   letter-spacing: 0.01em;
 }
-.admin-portal .badge::before {
+:is(.admin-portal, .doctor-portal) .badge::before {
   content: '';
   width: 5px;
   height: 5px;
@@ -2126,25 +2128,25 @@ button.resched-badge:hover {
   opacity: 0.75;
   flex: 0 0 auto;
 }
-.admin-portal .badge-confirmed {
+:is(.admin-portal, .doctor-portal) .badge-confirmed {
   background: #dbeafe;
   color: #1e40af;
 }
-.admin-portal .badge-in_service,
-.admin-portal .badge-in-service {
+:is(.admin-portal, .doctor-portal) .badge-in_service,
+:is(.admin-portal, .doctor-portal) .badge-in-service {
   background: #ede9fe;
   color: #5b21b6;
 }
-[data-theme="dark"] .admin-portal .badge-confirmed {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .badge-confirmed {
   background: #1c2c4a;
   color: #9cc0f5;
 }
-[data-theme="dark"] .admin-portal .badge-in_service,
-[data-theme="dark"] .admin-portal .badge-in-service {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .badge-in_service,
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .badge-in-service {
   background: #2a2145;
   color: #cbb6ff;
 }
-.admin-portal .pill {
+:is(.admin-portal, .doctor-portal) .pill {
   display: inline-block;
   padding: 0.2rem 0.5rem;
   border-radius: 7px;
@@ -2155,10 +2157,10 @@ button.resched-badge:hover {
   font-weight: 700;
   letter-spacing: 0.02em;
 }
-.admin-portal .resched-badge {
+:is(.admin-portal, .doctor-portal) .resched-badge {
   font-size: 0.68rem;
 }
-.admin-portal .ap-row-actions--status {
+:is(.admin-portal, .doctor-portal) .ap-row-actions--status {
   min-width: 148px;
   gap: 0.3rem;
 }
@@ -2239,19 +2241,19 @@ button.resched-badge:hover {
 .ap-field--date .apt-search {
   min-width: 168px;
 }
-.admin-portal .ap-context {
+:is(.admin-portal, .doctor-portal) .ap-context {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
   gap: 0.55rem;
   margin-bottom: 0.9rem;
 }
-.admin-portal .ap-context-item {
+:is(.admin-portal, .doctor-portal) .ap-context-item {
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--ap-border);
   border-radius: 10px;
   background: var(--ap-surface-2);
 }
-.admin-portal .ap-context-item > span {
+:is(.admin-portal, .doctor-portal) .ap-context-item > span {
   display: block;
   font-size: 0.64rem;
   font-weight: 700;
@@ -2259,14 +2261,14 @@ button.resched-badge:hover {
   text-transform: uppercase;
   color: var(--ap-muted);
 }
-.admin-portal .ap-context-item > strong {
+:is(.admin-portal, .doctor-portal) .ap-context-item > strong {
   display: block;
   margin-top: 0.15rem;
   font-size: 0.92rem;
   font-weight: 700;
   color: var(--ap-text);
 }
-.admin-portal .ap-detail-grid {
+:is(.admin-portal, .doctor-portal) .ap-detail-grid {
   margin-bottom: 0.9rem;
 }
 .ap-field--full {
@@ -2299,27 +2301,27 @@ button.resched-badge:hover {
 .ap-inline-form-submit .btn-primary {
   width: 100%;
 }
-.admin-portal .tp-input-box .form-input {
+:is(.admin-portal, .doctor-portal) .tp-input-box .form-input {
   margin-bottom: 0;
 }
-.admin-portal .proc-chip {
+:is(.admin-portal, .doctor-portal) .proc-chip {
   background: var(--ap-accent-soft);
   color: var(--ap-accent-strong);
   border-color: rgba(22, 163, 74, 0.3);
 }
-.admin-portal .proc-chip-x {
+:is(.admin-portal, .doctor-portal) .proc-chip-x {
   background: rgba(22, 163, 74, 0.16);
   color: var(--ap-accent-strong);
 }
-.admin-portal .proc-chip-x:hover {
+:is(.admin-portal, .doctor-portal) .proc-chip-x:hover {
   background: var(--ap-rose);
   color: #fff;
 }
 
 /* legacy small action buttons, brought in line with the admin system */
-.admin-portal .btn-edit,
-.admin-portal .btn-delete,
-.admin-portal .btn-view {
+:is(.admin-portal, .doctor-portal) .btn-edit,
+:is(.admin-portal, .doctor-portal) .btn-delete,
+:is(.admin-portal, .doctor-portal) .btn-view {
   min-height: 30px;
   padding: 0.3rem 0.6rem;
   border-radius: 8px;
@@ -2327,39 +2329,39 @@ button.resched-badge:hover {
   font-size: 0.74rem;
   font-weight: 700;
 }
-.admin-portal .btn-edit {
+:is(.admin-portal, .doctor-portal) .btn-edit {
   background: var(--ap-accent-soft);
   color: var(--ap-accent-strong);
   border-color: rgba(22, 163, 74, 0.32);
 }
-.admin-portal .btn-edit:hover {
+:is(.admin-portal, .doctor-portal) .btn-edit:hover {
   background: rgba(22, 163, 74, 0.16);
 }
-.admin-portal .btn-delete {
+:is(.admin-portal, .doctor-portal) .btn-delete {
   background: var(--ap-rose-soft);
   color: var(--ap-rose);
   border-color: rgba(190, 18, 60, 0.28);
 }
-.admin-portal .btn-delete:hover {
+:is(.admin-portal, .doctor-portal) .btn-delete:hover {
   background: rgba(190, 18, 60, 0.14);
 }
-.admin-portal .btn-view {
+:is(.admin-portal, .doctor-portal) .btn-view {
   background: var(--ap-blue-soft);
   color: var(--ap-blue);
   border-color: rgba(29, 78, 216, 0.26);
 }
-.admin-portal .btn-view:hover {
+:is(.admin-portal, .doctor-portal) .btn-view:hover {
   background: var(--ap-blue);
   border-color: var(--ap-blue);
   color: #fff;
 }
-[data-theme="dark"] .admin-portal .btn-edit {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .btn-edit {
   border-color: rgba(52, 211, 153, 0.32);
 }
-[data-theme="dark"] .admin-portal .btn-delete {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .btn-delete {
   border-color: rgba(247, 163, 181, 0.3);
 }
-[data-theme="dark"] .admin-portal .btn-view:hover {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .btn-view:hover {
   color: #0b1220;
 }
 
@@ -2386,14 +2388,14 @@ button.resched-badge:hover {
   font-size: 0.76rem;
   color: var(--ap-muted);
 }
-.admin-portal .client-detail > td {
+:is(.admin-portal, .doctor-portal) .client-detail > td {
   background: var(--ap-surface-2);
   padding: 1rem 1.1rem !important;
 }
-.admin-portal .client-detail-grid > div > span {
+:is(.admin-portal, .doctor-portal) .client-detail-grid > div > span {
   color: var(--ap-muted);
 }
-.admin-portal .client-detail-grid > div > strong {
+:is(.admin-portal, .doctor-portal) .client-detail-grid > div > strong {
   color: var(--ap-text);
 }
 .ap-subsection-title {
@@ -2405,7 +2407,7 @@ button.resched-badge:hover {
 }
 
 /* --- modal --- */
-.admin-portal .modal-box {
+:is(.admin-portal, .doctor-portal) .modal-box {
   border-radius: 18px;
   border: 1px solid var(--ap-border);
   padding: 1.35rem 1.45rem 1.45rem;
@@ -2452,7 +2454,7 @@ button.resched-badge:hover {
 }
 
 /* --- patient profile (admin variant only) --- */
-.admin-portal .profile-header {
+:is(.admin-portal, .doctor-portal) .profile-header {
   border: 1px solid var(--ap-border);
   border-radius: var(--ap-radius);
   box-shadow: var(--ap-shadow);
@@ -2463,7 +2465,7 @@ button.resched-badge:hover {
     radial-gradient(420px 160px at 100% 0%, rgba(22, 163, 74, 0.08), transparent 65%),
     var(--ap-surface);
 }
-.admin-portal .profile-avatar {
+:is(.admin-portal, .doctor-portal) .profile-avatar {
   width: 64px;
   height: 64px;
   font-size: 1.5rem;
@@ -2471,45 +2473,45 @@ button.resched-badge:hover {
   background: linear-gradient(135deg, var(--ap-accent-strong), var(--ap-accent));
   box-shadow: 0 10px 20px -14px rgba(22, 163, 74, 0.9);
 }
-.admin-portal .profile-info h1 {
+:is(.admin-portal, .doctor-portal) .profile-info h1 {
   font-size: 1.28rem;
   color: var(--ap-text);
   letter-spacing: -0.02em;
 }
-.admin-portal .profile-code {
+:is(.admin-portal, .doctor-portal) .profile-code {
   font-size: 0.78rem;
   color: var(--ap-muted);
 }
-.admin-portal .profile-stats {
+:is(.admin-portal, .doctor-portal) .profile-stats {
   gap: 1.15rem;
 }
-.admin-portal .pstat {
+:is(.admin-portal, .doctor-portal) .pstat {
   min-width: 54px;
   padding: 0.4rem 0.55rem;
   border-radius: 10px;
   background: var(--ap-surface-2);
   border: 1px solid var(--ap-border);
 }
-.admin-portal .pstat-num {
+:is(.admin-portal, .doctor-portal) .pstat-num {
   font-size: 1.2rem;
   color: var(--ap-accent-strong);
   line-height: 1.1;
 }
-.admin-portal .pstat-label {
+:is(.admin-portal, .doctor-portal) .pstat-label {
   font-size: 0.66rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ap-muted);
   margin-top: 0.15rem;
 }
-.admin-portal .profile-grid {
+:is(.admin-portal, .doctor-portal) .profile-grid {
   gap: 1.1rem;
   margin-bottom: 0;
 }
-.admin-portal .profile-header + .profile-grid {
+:is(.admin-portal, .doctor-portal) .profile-header + .profile-grid {
   margin-bottom: 1.1rem;
 }
-.admin-portal .profile-tabs {
+:is(.admin-portal, .doctor-portal) .profile-tabs {
   display: inline-flex;
   gap: 3px;
   padding: 3px;
@@ -2518,7 +2520,7 @@ button.resched-badge:hover {
   border: 1px solid var(--ap-border);
   border-radius: 11px;
 }
-.admin-portal .ptab {
+:is(.admin-portal, .doctor-portal) .ptab {
   padding: 0.45rem 0.85rem;
   border-radius: 8px;
   border: 0;
@@ -2526,22 +2528,22 @@ button.resched-badge:hover {
   font-weight: 700;
   color: var(--ap-muted);
 }
-.admin-portal .ptab:hover {
+:is(.admin-portal, .doctor-portal) .ptab:hover {
   color: var(--ap-text);
 }
-.admin-portal .ptab.active {
+:is(.admin-portal, .doctor-portal) .ptab.active {
   background: var(--ap-surface);
   color: var(--ap-accent-strong);
   box-shadow: 0 1px 2px rgba(16, 40, 24, 0.12);
   border-bottom-color: transparent;
 }
-.admin-portal .ap-kv {
+:is(.admin-portal, .doctor-portal) .ap-kv {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 0.85rem;
 }
-.admin-portal .ap-kv th {
+:is(.admin-portal, .doctor-portal) .ap-kv th {
   width: 44%;
   padding: 0.42rem 0;
   background: transparent;
@@ -2553,7 +2555,7 @@ button.resched-badge:hover {
   color: var(--ap-muted);
   vertical-align: top;
 }
-.admin-portal .ap-kv td {
+:is(.admin-portal, .doctor-portal) .ap-kv td {
   padding: 0.42rem 0;
   border: 0;
   font-weight: 600;
@@ -2561,14 +2563,14 @@ button.resched-badge:hover {
   text-align: right;
   word-break: break-word;
 }
-.admin-portal .ap-kv tr + tr th,
-.admin-portal .ap-kv tr + tr td {
+:is(.admin-portal, .doctor-portal) .ap-kv tr + tr th,
+:is(.admin-portal, .doctor-portal) .ap-kv tr + tr td {
   border-top: 1px solid var(--ap-border);
 }
 
 /* --- responsive --- */
 @media (max-width: 900px) {
-  .admin-portal .admin-content {
+  :is(.admin-portal, .doctor-portal) .admin-content {
     padding: 1.05rem 0.95rem 2rem;
   }
   .ap-hero {
@@ -2588,7 +2590,7 @@ button.resched-badge:hover {
   }
 }
 @media (max-width: 560px) {
-  .admin-portal .topbar-title {
+  :is(.admin-portal, .doctor-portal) .topbar-title {
     font-size: 1.12rem;
   }
   .ap-stat-grid {
@@ -2608,15 +2610,15 @@ button.resched-badge:hover {
   .ap-quick-grid {
     grid-template-columns: 1fr;
   }
-  .admin-portal .profile-stats {
+  :is(.admin-portal, .doctor-portal) .profile-stats {
     width: 100%;
     justify-content: space-between;
   }
-  .admin-portal .profile-tabs {
+  :is(.admin-portal, .doctor-portal) .profile-tabs {
     display: flex;
     width: 100%;
   }
-  .admin-portal .ptab {
+  :is(.admin-portal, .doctor-portal) .ptab {
     flex: 1 1 auto;
   }
 }
@@ -2626,10 +2628,10 @@ button.resched-badge:hover {
 .ap-field--select {
   flex: 0 1 170px;
 }
-.admin-portal .report-presets {
+:is(.admin-portal, .doctor-portal) .report-presets {
   gap: 0.35rem;
 }
-.admin-portal .report-presets button {
+:is(.admin-portal, .doctor-portal) .report-presets button {
   min-height: 36px;
   padding: 0.4rem 0.8rem;
   border-radius: 999px;
@@ -2639,91 +2641,91 @@ button.resched-badge:hover {
   font-size: 0.76rem;
   font-weight: 700;
 }
-.admin-portal .report-presets button:hover {
+:is(.admin-portal, .doctor-portal) .report-presets button:hover {
   background: var(--ap-surface-3);
   color: var(--ap-text);
 }
-.admin-portal .report-presets button.on {
+:is(.admin-portal, .doctor-portal) .report-presets button.on {
   background: var(--ap-accent);
   border-color: var(--ap-accent);
   color: #fff;
 }
-[data-theme="dark"] .admin-portal .report-presets button.on {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .report-presets button.on {
   color: #062012;
 }
-.admin-portal .report-meta {
+:is(.admin-portal, .doctor-portal) .report-meta {
   gap: 0.3rem 1.3rem;
   margin: 1rem 0 0.2rem;
   color: var(--ap-muted);
   font-size: 0.8rem;
 }
-.admin-portal .report-meta strong {
+:is(.admin-portal, .doctor-portal) .report-meta strong {
   color: var(--ap-text);
   font-weight: 700;
 }
-.admin-portal .report-section {
+:is(.admin-portal, .doctor-portal) .report-section {
   margin: 1.35rem 0 0.7rem;
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.09em;
   color: var(--ap-accent-strong);
 }
-[data-theme="dark"] .admin-portal .report-section {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .report-section {
   color: var(--ap-accent);
 }
-.admin-portal .chart-switch {
+:is(.admin-portal, .doctor-portal) .chart-switch {
   margin: 0 0 0.75rem;
 }
-.admin-portal .chart-switch-label {
+:is(.admin-portal, .doctor-portal) .chart-switch-label {
   color: var(--ap-muted);
 }
-.admin-portal .chart-chip {
+:is(.admin-portal, .doctor-portal) .chart-chip {
   background: var(--ap-surface-2);
   border-color: var(--ap-border);
   color: var(--ap-muted);
   font-size: 0.76rem;
   font-weight: 700;
 }
-.admin-portal .chart-chip:hover {
+:is(.admin-portal, .doctor-portal) .chart-chip:hover {
   background: var(--ap-surface-3);
   color: var(--ap-text);
 }
-.admin-portal .chart-chip.active {
+:is(.admin-portal, .doctor-portal) .chart-chip.active {
   background: var(--ap-accent);
   border-color: var(--ap-accent);
   color: #fff;
 }
-[data-theme="dark"] .admin-portal .chart-chip.active {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .chart-chip.active {
   color: #062012;
 }
-.admin-portal .report-chart {
+:is(.admin-portal, .doctor-portal) .report-chart {
   height: auto;
   max-height: 340px;
   margin-bottom: 0.35rem;
 }
-.admin-portal .chart-empty {
+:is(.admin-portal, .doctor-portal) .chart-empty {
   border-color: var(--ap-border-strong);
   background: var(--ap-surface-2);
   color: var(--ap-muted);
 }
-.admin-portal .report-note {
+:is(.admin-portal, .doctor-portal) .report-note {
   margin-top: 1.1rem;
   padding-top: 0.9rem;
   border-color: var(--ap-border);
   color: var(--ap-faint);
   font-size: 0.76rem;
 }
-.admin-portal .report-sheet .ap-stat-grid {
+:is(.admin-portal, .doctor-portal) .report-sheet .ap-stat-grid {
   margin-bottom: 0.5rem;
 }
-.admin-portal .report-sheet tfoot td {
+:is(.admin-portal, .doctor-portal) .report-sheet tfoot td {
   background: var(--ap-surface-2);
   color: var(--ap-text);
   font-weight: 700;
 }
 
 /* --- archives --- */
-.admin-portal .tab-nav {
+:is(.admin-portal, .doctor-portal) .tab-nav {
   gap: 0.35rem;
   padding: 0.35rem;
   margin-bottom: 0;
@@ -2732,136 +2734,327 @@ button.resched-badge:hover {
   border-radius: 14px;
   box-shadow: var(--ap-shadow);
 }
-.admin-portal .tab-btn {
+:is(.admin-portal, .doctor-portal) .tab-btn {
   min-height: 42px;
   border-radius: 10px;
   color: var(--ap-muted);
 }
-.admin-portal .tab-btn.active {
+:is(.admin-portal, .doctor-portal) .tab-btn.active {
   background: var(--ap-accent);
   color: #fff;
   box-shadow: 0 8px 18px -12px rgba(22, 163, 74, 0.95);
 }
-[data-theme="dark"] .admin-portal .tab-btn.active {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .tab-btn.active {
   color: #062012;
 }
-.admin-portal .tab-btn:not(.active):hover {
+:is(.admin-portal, .doctor-portal) .tab-btn:not(.active):hover {
   background: var(--ap-surface-2);
   color: var(--ap-text);
 }
-.admin-portal .tab-count {
+:is(.admin-portal, .doctor-portal) .tab-count {
   background: rgba(255, 255, 255, 0.22);
 }
-.admin-portal .tab-btn:not(.active) .tab-count {
+:is(.admin-portal, .doctor-portal) .tab-btn:not(.active) .tab-count {
   background: var(--ap-surface-3);
   color: var(--ap-muted);
 }
-.admin-portal .ap-card > .pdf-panel-body {
+:is(.admin-portal, .doctor-portal) .ap-card > .pdf-panel-body {
   padding: 0.2rem 0 0;
 }
-.admin-portal .pdf-type-switch {
+:is(.admin-portal, .doctor-portal) .pdf-type-switch {
   background: var(--ap-surface-2);
   border-color: var(--ap-border);
 }
-.admin-portal .pdf-type-btn {
+:is(.admin-portal, .doctor-portal) .pdf-type-btn {
   color: var(--ap-muted);
 }
-.admin-portal .pdf-type-btn:hover {
+:is(.admin-portal, .doctor-portal) .pdf-type-btn:hover {
   background: var(--ap-surface-3);
   color: var(--ap-text);
 }
-.admin-portal .pdf-type-btn.active {
+:is(.admin-portal, .doctor-portal) .pdf-type-btn.active {
   background: var(--ap-accent);
   color: #fff;
 }
-[data-theme="dark"] .admin-portal .pdf-type-btn.active {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .pdf-type-btn.active {
   color: #062012;
 }
-.admin-portal .pdf-cal-arrow {
+:is(.admin-portal, .doctor-portal) .pdf-cal-arrow {
   background: var(--ap-surface);
   border-color: var(--ap-border-strong);
   color: var(--ap-accent-strong);
 }
-.admin-portal .pdf-cal-arrow:disabled {
+:is(.admin-portal, .doctor-portal) .pdf-cal-arrow:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.admin-portal .pdf-cal-week span {
+:is(.admin-portal, .doctor-portal) .pdf-cal-week span {
   color: var(--ap-faint);
 }
-.admin-portal .pdf-cal-cell {
+:is(.admin-portal, .doctor-portal) .pdf-cal-cell {
   color: var(--ap-text);
 }
-.admin-portal .pdf-cal-cell:hover {
+:is(.admin-portal, .doctor-portal) .pdf-cal-cell:hover {
   background: var(--ap-accent-soft);
 }
-.admin-portal .pdf-cal-cell.today {
+:is(.admin-portal, .doctor-portal) .pdf-cal-cell.today {
   color: var(--ap-accent-strong);
   box-shadow: inset 0 0 0 1.5px rgba(22, 163, 74, 0.45);
 }
-.admin-portal .pdf-cal-cell.has::after {
+:is(.admin-portal, .doctor-portal) .pdf-cal-cell.has::after {
   background: var(--ap-accent);
 }
-.admin-portal .pdf-cal-cell.sel {
+:is(.admin-portal, .doctor-portal) .pdf-cal-cell.sel {
   background: var(--ap-accent);
   color: #fff;
 }
-.admin-portal .pdf-cal-legend {
+:is(.admin-portal, .doctor-portal) .pdf-cal-legend {
   color: var(--ap-faint);
 }
-.admin-portal .pdf-legend-dot {
+:is(.admin-portal, .doctor-portal) .pdf-legend-dot {
   background: var(--ap-accent);
 }
-.admin-portal .pdf-day-item {
+:is(.admin-portal, .doctor-portal) .pdf-day-item {
   background: var(--ap-surface);
   border-color: var(--ap-border);
 }
-.admin-portal .pdf-day-item:hover {
+:is(.admin-portal, .doctor-portal) .pdf-day-item:hover {
   border-color: rgba(22, 163, 74, 0.45);
   background: var(--ap-accent-soft);
 }
-.admin-portal .pdf-day-item.sel {
+:is(.admin-portal, .doctor-portal) .pdf-day-item.sel {
   border-color: var(--ap-accent);
   background: var(--ap-accent-soft);
 }
-.admin-portal .pdf-day-name {
+:is(.admin-portal, .doctor-portal) .pdf-day-name {
   color: var(--ap-text);
 }
-.admin-portal .pdf-day-count {
+:is(.admin-portal, .doctor-portal) .pdf-day-count {
   background: var(--ap-accent-soft);
   color: var(--ap-accent-strong);
 }
-.admin-portal .pdf-list-empty {
+:is(.admin-portal, .doctor-portal) .pdf-list-empty {
   border-color: var(--ap-border-strong);
   color: var(--ap-faint);
 }
-.admin-portal .pdf-selected {
+:is(.admin-portal, .doctor-portal) .pdf-selected {
   border-color: var(--ap-border);
   background: var(--ap-surface-2);
 }
-.admin-portal .pdf-selected-label {
+:is(.admin-portal, .doctor-portal) .pdf-selected-label {
   color: var(--ap-accent-strong);
 }
-.admin-portal .pdf-selected-day {
+:is(.admin-portal, .doctor-portal) .pdf-selected-day {
   color: var(--ap-text);
 }
-.admin-portal .pdf-selected-meta {
+:is(.admin-portal, .doctor-portal) .pdf-selected-meta {
   color: var(--ap-faint);
 }
-.admin-portal .pdf-dl-btn {
+:is(.admin-portal, .doctor-portal) .pdf-dl-btn {
   border-radius: 10px;
   background: linear-gradient(135deg, var(--ap-accent), var(--ap-accent-strong));
 }
-[data-theme="dark"] .admin-portal .pdf-dl-btn {
+[data-theme="dark"] :is(.admin-portal, .doctor-portal) .pdf-dl-btn {
   color: #062012;
 }
-.admin-portal .slip-body {
+:is(.admin-portal, .doctor-portal) .slip-body {
   border-color: var(--ap-border);
   background: var(--ap-surface-2);
 }
-.admin-portal .slip-head {
+:is(.admin-portal, .doctor-portal) .slip-head {
   border-color: var(--ap-border);
 }
-.admin-portal .slip-row {
+:is(.admin-portal, .doctor-portal) .slip-row {
   border-color: var(--ap-border);
+}
+
+/* ==========================================================================
+   DOCTOR PORTAL THEME
+   The React doctor portal keeps the shared v2 components above but uses the
+   patient app's teal/blue palette. Everything is scoped to .doctor-portal, so
+   the admin portal is completely untouched.
+   ========================================================================== */
+
+/* --- patient palette for the legacy admin.css/doctor.css variables --- */
+.doctor-portal {
+  --green: #0d9488;
+  --green-dark: #0f766e;
+  --green-deep: #115e59;
+  --green-mid: #14b8a6;
+  --green-light: #2dd4bf;
+  --green-pale: #f0fdfa;
+  --green-pale2: #ccfbf1;
+  --blue: #2563eb;
+  --blue-dark: #1d4ed8;
+  --blue-deep: #1e3a8a;
+  --blue-mid: #3b82f6;
+  --blue-light: #60a5fa;
+  --blue-pale: #eff6ff;
+  --blue-pale2: #dbeafe;
+  --white: #ffffff;
+  --off-white: #f4f8f7;
+  --gray-100: #e3eae8;
+  --gray-200: #cfdcd8;
+  --gray-400: #94a5a0;
+  --gray-600: #526760;
+  --gray-800: #22322e;
+  --shadow-sm: 0 1px 4px rgba(13, 148, 136, 0.09);
+  --shadow-md: 0 5px 22px rgba(13, 148, 136, 0.12);
+  --shadow-lg: 0 14px 44px rgba(13, 148, 136, 0.18);
+  background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(13, 148, 136, 0.07), transparent 60%),
+    radial-gradient(900px 420px at -10% 30%, rgba(20, 184, 166, 0.06), transparent 55%),
+    var(--off-white);
+}
+
+/* --- design-system tokens (patient palette) --- */
+.doctor-portal {
+  --ap-surface: #ffffff;
+  --ap-surface-2: #f4f8f7;
+  --ap-surface-3: #e7efed;
+  --ap-border: #e0eae7;
+  --ap-border-strong: #cfdcd8;
+  --ap-text: #22322e;
+  --ap-muted: #526760;
+  --ap-faint: #94a5a0;
+  --ap-accent: #0d9488;
+  --ap-accent-strong: #0f766e;
+  --ap-accent-soft: #e6f6f2;
+  --ap-blue: #2563eb;
+  --ap-blue-soft: #eff6ff;
+  --ap-violet: #7c3aed;
+  --ap-violet-soft: #f5f3ff;
+  --ap-teal: #0f766e;
+  --ap-teal-soft: #e3f7f3;
+  --ap-shadow: 0 1px 2px rgba(13, 148, 136, 0.05), 0 10px 26px -20px rgba(13, 148, 136, 0.35);
+}
+
+[data-theme="dark"] .doctor-portal {
+  --green-pale: #13251a;
+  --green-pale2: #1c3a27;
+  --green-deep: #37a56d;
+  --blue-pale: #17263f;
+  --blue-pale2: #1d3357;
+  --white: #161e2b;
+  --off-white: #0d1420;
+  --gray-100: #243047;
+  --gray-200: #31405a;
+  --gray-400: #8b9bb3;
+  --gray-600: #a9b7cc;
+  --gray-800: #e6ecf4;
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 5px 22px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 14px 44px rgba(0, 0, 0, 0.55);
+  background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(13, 148, 136, 0.08), transparent 60%),
+    radial-gradient(900px 420px at -10% 30%, rgba(20, 184, 166, 0.05), transparent 55%),
+    var(--off-white);
+  --ap-surface: #161e2b;
+  --ap-surface-2: #1a2434;
+  --ap-surface-3: #243047;
+  --ap-border: #243047;
+  --ap-border-strong: #31405a;
+  --ap-text: #e6ecf4;
+  --ap-muted: #a9b7cc;
+  --ap-faint: #8b9bb3;
+  --ap-accent: #2dd4bf;
+  --ap-accent-strong: #14b8a6;
+  --ap-accent-soft: #10312d;
+  --ap-blue: #93b4ff;
+  --ap-blue-soft: #17233a;
+  --ap-violet: #c4a8ff;
+  --ap-violet-soft: #241a3a;
+  --ap-teal: #5eead4;
+  --ap-teal-soft: #10312d;
+  --ap-shadow: 0 1px 3px rgba(0, 0, 0, 0.45), 0 12px 30px -22px rgba(0, 0, 0, 0.9);
+}
+
+/* --- doctor-specific details on top of the shared components --- */
+.doctor-portal .ap-select-menu {
+  box-shadow:
+    0 26px 50px -30px rgba(9, 40, 36, 0.5),
+    0 2px 6px rgba(9, 40, 36, 0.06);
+}
+[data-theme="dark"] .doctor-portal .ap-select-menu {
+  box-shadow:
+    0 26px 52px -26px rgba(0, 0, 0, 0.85),
+    0 2px 8px rgba(0, 0, 0, 0.45);
+}
+.doctor-portal .apt-toolbar .ap-select {
+  flex: 0 1 200px;
+}
+.doctor-portal .subform-row .ap-select {
+  flex: 0 1 170px;
+  min-width: 150px;
+}
+.doctor-portal .list-row {
+  border-bottom-color: var(--ap-border);
+}
+.doctor-portal .list-row-body strong {
+  color: var(--ap-text);
+}
+.doctor-portal .list-row-body span {
+  color: var(--ap-muted);
+}
+.doctor-portal .empty-note {
+  color: var(--ap-faint);
+}
+.doctor-portal .subform {
+  border-top-color: var(--ap-border);
+}
+.doctor-portal .subform h3 {
+  color: var(--ap-text);
+}
+.doctor-portal .modal-box h2 {
+  margin: 0 0 0.9rem;
+  padding-right: 1.6rem;
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ap-text);
+}
+[data-theme="dark"] .doctor-portal .list-row {
+  border-bottom-color: var(--ap-border);
+}
+[data-theme="dark"] .doctor-portal .list-row-body strong {
+  color: var(--ap-text);
+}
+
+/* completed/active statuses follow the patient teal instead of admin green */
+.doctor-portal .badge-active,
+.doctor-portal .badge-completed,
+.doctor-portal .badge-paid {
+  background: var(--ap-accent-soft);
+  color: var(--ap-accent-strong);
+}
+[data-theme="dark"] .doctor-portal .badge-active,
+[data-theme="dark"] .doctor-portal .badge-completed,
+[data-theme="dark"] .doctor-portal .badge-paid {
+  background: var(--ap-accent-soft);
+  color: var(--ap-accent);
+}
+
+/* teal focus rings + shadows (the shared v2 rules hard-code admin green) */
+.doctor-portal select:focus,
+.doctor-portal select:focus-visible,
+.doctor-portal .form-input:focus,
+.doctor-portal .apt-toolbar input.apt-search:focus,
+.doctor-portal .ap-select-trigger:focus-visible,
+.doctor-portal .ap-select-trigger[aria-expanded="true"] {
+  border-color: var(--ap-accent);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.16);
+}
+[data-theme="dark"] .doctor-portal select:focus,
+[data-theme="dark"] .doctor-portal select:focus-visible,
+[data-theme="dark"] .doctor-portal .form-input:focus,
+[data-theme="dark"] .doctor-portal .apt-toolbar input.apt-search:focus,
+[data-theme="dark"] .doctor-portal .ap-select-trigger:focus-visible,
+[data-theme="dark"] .doctor-portal .ap-select-trigger[aria-expanded="true"] {
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.22);
+}
+.doctor-portal .btn-primary {
+  box-shadow: 0 8px 18px -12px rgba(13, 148, 136, 0.75);
+}
+.doctor-portal .btn-primary:hover {
+  box-shadow: 0 12px 22px -12px rgba(13, 148, 136, 0.8);
 }

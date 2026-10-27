@@ -3,7 +3,7 @@ import Shell from '../Shell';
 import { getInitial, postAction, isSuccess, fmtTime } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
-import { Modal } from '../components';
+import { Modal, Select } from '../components';
 import type { ScheduleRow, TimeBlockRow } from '../types';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -108,9 +108,9 @@ export default function DoctorSchedule() {
         <div className="subform">
           <h3>Add a Schedule Block</h3>
           <div className="subform-row">
-            <select className="form-dropdown" value={schedForm.day_of_week} onChange={(e) => setSchedForm({ ...schedForm, day_of_week: e.target.value })}>
+            <Select className="form-dropdown" value={schedForm.day_of_week} onChange={(e) => setSchedForm({ ...schedForm, day_of_week: e.target.value })}>
               {DAYS.map((day) => <option key={day} value={day}>{day}</option>)}
-            </select>
+            </Select>
             <input className="form-input" type="time" value={schedForm.start_time} onChange={(e) => setSchedForm({ ...schedForm, start_time: e.target.value })} />
             <input className="form-input" type="time" value={schedForm.end_time} onChange={(e) => setSchedForm({ ...schedForm, end_time: e.target.value })} />
             <button className="btn-primary" onClick={addSchedule}>Add</button>
@@ -142,16 +142,16 @@ export default function DoctorSchedule() {
       <Modal open={blockOpen} onClose={() => setBlockOpen(false)}>
         <h2>Add Time Block</h2>
         <label className="form-label">Type</label>
-        <select className="form-dropdown form-input" value={blockForm.block_type} onChange={(e) => setBlockForm({ ...blockForm, block_type: e.target.value })}>
+        <Select className="form-dropdown form-input" value={blockForm.block_type} onChange={(e) => setBlockForm({ ...blockForm, block_type: e.target.value })}>
           <option value="date">Specific Date</option>
           <option value="weekly">Weekly (recurring day)</option>
-        </select>
+        </Select>
         {blockForm.block_type === 'weekly' ? (
           <>
             <label className="form-label">Day of Week</label>
-            <select className="form-dropdown form-input" value={blockForm.day_of_week} onChange={(e) => setBlockForm({ ...blockForm, day_of_week: e.target.value })}>
+            <Select className="form-dropdown form-input" value={blockForm.day_of_week} onChange={(e) => setBlockForm({ ...blockForm, day_of_week: e.target.value })}>
               {DAYS.map((day) => <option key={day} value={day}>{day}</option>)}
-            </select>
+            </Select>
           </>
         ) : (
           <>
