@@ -90,7 +90,7 @@ function fill_color($s) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#16a34a">
+    <meta name="theme-color" content="#0d9488">
     <link rel="icon" href="images/Lustre.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -98,6 +98,7 @@ function fill_color($s) {
     <script>try{if(localStorage.getItem('meTheme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}</script>
 <link rel="stylesheet" href="admin.css?v=<?= filemtime(__DIR__ . '/../../admin.css') ?>">
     <link rel="stylesheet" href="doctor.css?v=<?= filemtime(__DIR__ . '/../../doctor.css') ?>">
+    <link rel="stylesheet" href="doctor_portal.css?v=<?= filemtime(__DIR__ . '/../../doctor_portal.css') ?>">
     <title>Dashboard - Doctor Portal</title>
 </head>
 <body class="doctor-page">
@@ -183,7 +184,7 @@ function fill_color($s) {
                         <?php if (count($walkin_queue) > 0): ?>
                             <?php foreach ($walkin_queue as $w): ?>
                             <tr>
-                                <td><span class="badge" style="background:#16a34a;color:#fff;font-size:1rem;font-weight:800">#<?php echo $w['queue']; ?></span></td>
+                                <td><span class="badge" style="background:#0d9488;color:#fff;font-size:1rem;font-weight:800">#<?php echo $w['queue']; ?></span></td>
                                 <td><strong><?php if (!empty($w['patient_id'])): ?><a href="client_profile.php?id=<?php echo (int)$w['patient_id']; ?>" style="color:inherit;text-decoration:underline;text-underline-offset:2px"><?php echo htmlspecialchars($w['name']); ?></a><?php else: ?><?php echo htmlspecialchars($w['name']); ?><?php endif; ?></strong><br><small style="color:#64748b"><?php echo htmlspecialchars($w['contact']); ?></small></td>
                                 <td><?php echo htmlspecialchars($w['procedure'] ?: '—'); ?></td>
                                 <td><?php echo htmlspecialchars($w['arrival']); ?></td>
@@ -520,7 +521,7 @@ function fill_color($s) {
             const resultBtn = ' <button type="button" class="btn-sm btn-edit wq-result-btn" style="margin-left:4px" data-id="'+w.id+'" title="'+(canResult?'Enter consultation result':'Available when the patient is In service')+'" onclick="openWalkinResultModal('+w.id+',\'edit\')"'+(canResult?'':' disabled')+'><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Result</button>';
             const vitalsBtn = ' <button type="button" class="btn-sm btn-vitals" style="margin-left:4px" title="View patient vitals" data-apt="'+(w.appointment_id==null?'':parseInt(w.appointment_id,10))+'" data-pid="'+parseInt(w.patient_id,10)+'" data-name="'+wqEsc(w.name)+'" data-label="Walk-in &middot; '+wqEsc(w.arrival)+'" onclick="openAptVitalsView(this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals</button>';
             return '<tr>' +
-                '<td><span class="badge" style="background:#16a34a;color:#fff;font-size:1rem;font-weight:800">#'+w.queue+'</span></td>' +
+                '<td><span class="badge" style="background:#0d9488;color:#fff;font-size:1rem;font-weight:800">#'+w.queue+'</span></td>' +
                 '<td><strong>'+(w.patient_id?'<a href="client_profile.php?id='+parseInt(w.patient_id,10)+'" style="color:inherit;text-decoration:underline;text-underline-offset:2px">':'')+wqEsc(w.name)+(w.patient_id?'</a>':'')+'</strong><br><small style="color:#64748b">'+wqEsc(w.contact)+'</small></td>' +
                 '<td>'+wqEsc(w.procedure||'—')+'</td>' +
                 '<td>'+wqEsc(w.arrival)+'</td>' +

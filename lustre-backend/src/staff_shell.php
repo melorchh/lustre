@@ -35,6 +35,8 @@ function render_staff_shell(array $staff, string $view, array $data, string $ent
     $v_shared = is_file(__DIR__ . '/../../' . $shared_css) ? filemtime(__DIR__ . '/../../' . $shared_css) : 0;
     $doctor_css = 'doctor.css';
     $v_doctor = is_file(__DIR__ . '/../../' . $doctor_css) ? filemtime(__DIR__ . '/../../' . $doctor_css) : 0;
+    $doctor_portal_css = 'doctor_portal.css';
+    $v_doctor_portal = is_file(__DIR__ . '/../../' . $doctor_portal_css) ? filemtime(__DIR__ . '/../../' . $doctor_portal_css) : 0;
 
     $role = isset($staff['role']) ? $staff['role'] : 'admin';
     ?>
@@ -50,6 +52,7 @@ function render_staff_shell(array $staff, string $view, array $data, string $ent
   <link rel="stylesheet" href="<?php echo htmlspecialchars($shared_css, ENT_QUOTES); ?>?v=<?php echo $v_shared; ?>">
   <link rel="stylesheet" href="<?php echo htmlspecialchars($doctor_css, ENT_QUOTES); ?>?v=<?php echo $v_doctor; ?>">
   <link rel="stylesheet" href="<?php echo htmlspecialchars($asset_css, ENT_QUOTES); ?>?v=<?php echo $v_css; ?>">
+  <link rel="stylesheet" href="<?php echo htmlspecialchars($doctor_portal_css, ENT_QUOTES); ?>?v=<?php echo $v_doctor_portal; ?>">
   <?php else: ?>
   <link rel="stylesheet" href="<?php echo htmlspecialchars($asset_css, ENT_QUOTES); ?>?v=<?php echo $v_css; ?>">
   <link rel="stylesheet" href="<?php echo htmlspecialchars($shared_css, ENT_QUOTES); ?>?v=<?php echo $v_shared; ?>">

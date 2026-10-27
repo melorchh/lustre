@@ -27,7 +27,7 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#16a34a">
+    <meta name="theme-color" content="#0d9488">
     <link rel="icon" href="images/Lustre.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,6 +35,7 @@ $conn->close();
     <script>try{if(localStorage.getItem('meTheme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}</script>
     <link rel="stylesheet" href="admin.css?v=<?= filemtime(__DIR__ . '/../../admin.css') ?>">
     <link rel="stylesheet" href="doctor.css?v=<?= filemtime(__DIR__ . '/../../doctor.css') ?>">
+    <link rel="stylesheet" href="doctor_portal.css?v=<?= filemtime(__DIR__ . '/../../doctor_portal.css') ?>">
     <title>Patients - Doctor Portal</title>
 </head>
 <body class="doctor-page">
@@ -253,7 +254,7 @@ $conn->close();
         .cd-item label{display:block;font-size:.66rem;text-transform:uppercase;letter-spacing:.07em;color:#64748b;font-weight:700;margin-bottom:.12rem}
         .cd-item span{font-weight:600;font-size:.9rem;color:#0f172a;word-break:break-word}
         [data-theme="dark"] .cd-item span{color:#e2e8f0}
-        .cd-profile-link{display:inline-block;margin-top:.9rem;font-size:.85rem;font-weight:700;color:#16a34a;text-decoration:none}
+        .cd-profile-link{display:inline-block;margin-top:.9rem;font-size:.85rem;font-weight:700;color:#0d9488;text-decoration:none}
         .cd-profile-link:hover{text-decoration:underline}
         .cd-appts{margin-top:1rem}
         .cd-appts-title{font-size:.66rem;text-transform:uppercase;letter-spacing:.07em;color:#64748b;font-weight:700;margin-bottom:.4rem}
