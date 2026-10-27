@@ -942,58 +942,35 @@ function checkFpPasswordStrength(pw){
     const pop = document.getElementById('regDpPopup');
     const wrap = document.getElementById('regDatepicker');
     if (!pop || !wrap) return;
-    const rect = wrap.getBoundingClientRect();
-    // Center the calendar on the registration form, not on the input, so it
-    // stays visually balanced inside the sheet at every width.
+    // Keep the calendar static in the middle of the registration form. It is
+    // intentionally not anchored to the birthday field, so scrolling the form
+    // does not drag the calendar around.
     const sheet = wrap.closest('.register-sheet') || wrap.closest('.register-modal');
-    const sheetRect = sheet ? sheet.getBoundingClientRect() : rect;
+    const sheetRect = sheet ? sheet.getBoundingClientRect() : wrap.getBoundingClientRect();
     const vw = window.innerWidth || document.documentElement.clientWidth;
     const vh = window.innerHeight || document.documentElement.clientHeight;
     const margin = 8;
-    const gap = 6;
 
     // The calendar's height depends on its width, so size it before measuring.
     const popW = Math.min(320, Math.max(0, vw - margin * 2));
     pop.style.width = popW + 'px';
-
-    // Measure the full height every time: the number of week rows changes with
-    // the month. Temporarily remove any clamp left over from a previous pass.
     pop.style.maxHeight = 'none';
     pop.style.overflow = 'visible';
-    const naturalH = pop.scrollHeight || pop.offsetHeight || 360;
+    const popH = pop.scrollHeight || pop.offsetHeight || 360;
+    const visibleH = Math.min(popH, vh - margin * 2);
 
-    const belowTop = rect.bottom + gap;
-    const roomBelow = vh - margin - belowTop;
-    const roomAbove = rect.top - gap - margin;
+    let left = sheetRect.left + (sheetRect.width - popW) / 2;
+    left = Math.max(margin, Math.min(left, vw - popW - margin));
+    let top = sheetRect.top + (sheetRect.height - visibleH) / 2;
+    top = Math.max(margin, Math.min(top, vh - visibleH - margin));
 
-    // Never slide the calendar up over the birthday field. If it does not fit
-    // on either side, keep it below the field when there is still a usable
-    // amount of room, otherwise use the roomier side. Either way it scrolls
-    // internally instead of covering the field.
-    let top, visibleH = naturalH;
-    const minUseful = Math.min(180, naturalH);
-    if (roomBelow >= naturalH) {
-      top = belowTop;
-    } else if (roomAbove >= naturalH) {
-      top = rect.top - gap - naturalH;
-    } else if (roomBelow >= minUseful || roomBelow >= roomAbove) {
-      top = belowTop;
-      visibleH = roomBelow;
-    } else {
-      top = margin;
-      visibleH = roomAbove;
-    }
-    visibleH = Math.max(140, Math.min(visibleH, vh - margin * 2));
-
-    let left = sheetRect.left + (sheetRect.width - popW) / 2 + window.scrollX;
-    left = Math.max(margin + window.scrollX, Math.min(left, vw - popW - margin + window.scrollX));
-    pop.style.position = 'absolute';
-    pop.style.top = (top + window.scrollY) + 'px';
+    pop.style.position = 'fixed';
+    pop.style.top = top + 'px';
     pop.style.left = left + 'px';
     pop.style.right = 'auto';
     pop.style.bottom = 'auto';
     pop.style.maxHeight = visibleH + 'px';
-    pop.style.overflow = visibleH < naturalH ? 'auto' : 'visible';
+    pop.style.overflow = visibleH < popH ? 'auto' : 'visible';
     pop.style.overscrollBehavior = 'contain';
     pop.style.zIndex = '2147483647';
   }
@@ -1084,9 +1061,6 @@ function checkFpPasswordStrength(pw){
     if (open && popEl && !inYearMenu && !popEl.contains(e.target) && !field.contains(e.target)) close();
   });
   document.addEventListener('keydown', function(e){ if (e.key==='Escape') close(); });
-  const scrollHost = field.closest('.register-sheet') || field.closest('.register-modal');
-  if (scrollHost) scrollHost.addEventListener('scroll', function(){ if (open) repositionPopup(); }, { passive: true });
-  window.addEventListener('scroll', function(){ if (open) repositionPopup(); }, { passive: true });
   window.addEventListener('resize', function(){ if (open) repositionPopup(); });
 })();
 
