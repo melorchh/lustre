@@ -373,20 +373,22 @@ input {
 }
 
 .sidebar-overlay {
-  display: none;
+  display: block;
   position: fixed;
   inset: 0;
   background: rgba(13, 35, 46, 0.45);
   z-index: 899;
   backdrop-filter: blur(4px);
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.26s var(--ease), visibility 0s linear 0.26s;
 }
 .sidebar-overlay.active {
-  display: block;
   opacity: 1;
+  visibility: visible;
   pointer-events: all;
+  transition: opacity 0.26s var(--ease), visibility 0s;
 }
 @media (min-width: 769px) {
   .sidebar-overlay {
@@ -545,6 +547,18 @@ input {
   max-height: min(420px, calc(100vh - 140px));
   overflow-y: auto;
   overscroll-behavior: contain;
+  transform-origin: top center;
+  animation: popOver 0.18s var(--ease) both;
+}
+@keyframes popOver {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 .search-group + .search-group {
   margin-top: 0.25rem;
@@ -704,6 +718,8 @@ input {
   border-radius: 14px;
   box-shadow: 0 14px 34px rgba(13, 148, 136, 0.22);
   z-index: 900;
+  transform-origin: top right;
+  animation: popOver 0.18s var(--ease) both;
 }
 
 .client-menu-logout {
@@ -768,13 +784,13 @@ input {
   padding: 2rem;
   width: 100%;
   padding-bottom: 7.5rem;
-  animation: pageIn 0.45s var(--ease) both;
+  animation: pageIn 0.32s var(--ease) both;
 }
 
 @keyframes pageIn {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -2040,17 +2056,15 @@ input {
 
 /* ── PAGE TRANSITIONS (Shell) ────────────────────── */
 body.page-leaving {
-  animation: pageOut 0.22s ease forwards;
+  animation: pageOut 0.18s ease forwards;
   pointer-events: none;
 }
 @keyframes pageOut {
   from {
     opacity: 1;
-    transform: translateY(0);
   }
   to {
     opacity: 0;
-    transform: translateY(-7px);
   }
 }
 
@@ -5598,4 +5612,131 @@ html[data-theme="dark"] .metric-badge--red {
 }
 .label-row .picker-label {
   margin-bottom: 0;
+}
+
+/* ── PATIENT INTERACTION POLISH ───────────────────────────── */
+
+/* Include transform in the transition set so press feedback feels immediate. */
+.nav-item {
+  transition: background 0.2s ease, color 0.2s ease, transform 0.16s var(--ease);
+}
+.rail-user,
+.rail-logout {
+  transition: background 0.2s ease, transform 0.16s var(--ease);
+}
+.bottom-nav a {
+  transition: color 0.2s ease, background 0.2s ease, transform 0.16s var(--ease);
+}
+.client-menu-btn,
+.client-menu-logout,
+.search-result {
+  transition: background 0.18s ease, box-shadow 0.2s ease, transform 0.16s var(--ease);
+}
+
+/* Tap / click feedback. */
+.nav-item:active,
+.rail-user:active,
+.rail-logout:active,
+.bottom-nav a:active,
+.client-menu-btn:active,
+.client-menu-logout:active,
+.search-result:active {
+  transform: scale(0.97);
+  transition-duration: 0.08s;
+}
+
+.db-stat:active,
+.db-quick:active,
+.category-card:active,
+.test-chip:active,
+.tab-btn:active {
+  transform: scale(0.985);
+  transition-duration: 0.08s;
+}
+
+.btn-primary:active,
+.proceed-btn:active,
+.lab-download-btn:active,
+.btn-proof-appt:active,
+.btn-result-appt:active,
+.btn-resched-appt:active,
+.btn-cancel-appt:active,
+.btn-keep:active,
+.btn-cancel-confirm:active,
+.clear-btn:active,
+.db-alert-action:active,
+.theme-toggle:active,
+.tour-btn:active,
+.tour-replay:active {
+  transform: scale(0.97);
+  transition-duration: 0.08s;
+}
+
+/* Stagger dashboard cards so the page settles in instead of popping at once. */
+.db-stats .db-stat:nth-child(2) {
+  animation-delay: 45ms;
+}
+.db-stats .db-stat:nth-child(3) {
+  animation-delay: 90ms;
+}
+.db-stats .db-stat:nth-child(4) {
+  animation-delay: 135ms;
+}
+.db-quick-panel > .db-quick {
+  animation: cardIn 0.36s var(--ease) both;
+}
+.db-quick-panel > .db-quick:nth-of-type(2) {
+  animation-delay: 50ms;
+}
+.db-quick-panel > .db-quick:nth-of-type(3) {
+  animation-delay: 100ms;
+}
+.db-quick-panel > .db-quick:nth-of-type(4) {
+  animation-delay: 150ms;
+}
+
+/* Smooth content swap when changing record tabs. */
+.tab-nav ~ .appt-list,
+.tab-nav ~ .lab-list,
+.tab-nav ~ .health-list,
+.tab-nav ~ .empty-state {
+  animation: tabIn 0.26s var(--ease) both;
+}
+@keyframes tabIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Keep hover lift effects desktop-only so touch taps stay stable. */
+@media (hover: none) {
+  .doctor-card:hover,
+  .db-stat:hover,
+  .db-quick:hover,
+  .category-card:hover,
+  .lab-download-btn:hover,
+  .btn-primary:hover,
+  .proceed-btn:hover,
+  .db-alert-action:hover,
+  .theme-toggle:hover,
+  .tour-btn:hover,
+  .tour-replay:hover,
+  .btn-cancel-confirm:hover {
+    transform: none;
+  }
+  .db-quick:hover .db-quick-arrow {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .db-stats .db-stat,
+  .db-quick-panel > .db-quick {
+    animation-delay: 0s !important;
+  }
 }
