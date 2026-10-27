@@ -731,6 +731,11 @@ function checkFpPasswordStrength(pw){
   let viewY, viewM;
   let lastGood = '';   // last valid YYYY-MM-DD committed
 
+  // Birth dates must be at least one year in the past: the current year and
+  // any future year are never offered or reachable.
+  function maxBirthYear(){ return new Date().getFullYear() - 1; }
+  function minBirthYear(){ return new Date().getFullYear() - 100; }
+
   function formatLong(d){
     if (!d) return '';
     return d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
@@ -783,17 +788,29 @@ function checkFpPasswordStrength(pw){
     }
   }
 
-  function close(){ open = false; trigger.classList.remove('open'); trigger.setAttribute('aria-expanded','false'); const p = document.getElementById('regDpPopup'); if (p) p.remove(); }
+  function close(){
+    open = false;
+    trigger.classList.remove('open');
+    trigger.setAttribute('aria-expanded','false');
+    const p = document.getElementById('regDpPopup');
+    const yearSel = p ? p.querySelector('.reg-cal-year') : null;
+    if (yearSel && window.__fdDestroy) window.__fdDestroy(yearSel);
+    if (p) p.remove();
+  }
 
   function openPopup(){
     open = true; trigger.classList.add('open'); trigger.setAttribute('aria-expanded','true');
     const base = hidden.value ? new Date(hidden.value + 'T00:00:00') : new Date();
-    viewY = base.getFullYear(); viewM = base.getMonth();
+    viewY = Math.max(minBirthYear(), Math.min(base.getFullYear(), maxBirthYear()));
+    viewM = base.getMonth();
     const wrap = document.getElementById('regDatepicker');
     const rect = wrap.getBoundingClientRect();
     const pop = document.createElement('div'); pop.id='regDpPopup'; pop.className='reg-dp-popup';
     pop.innerHTML = popupHTML();
     document.body.appendChild(pop);
+    // The year <select> is created on the fly, so enhance it with the same
+    // custom dropdown component used by every other dropdown in the system.
+    if (window.fdEnhance) window.fdEnhance();
     const popH = pop.offsetHeight || 360;
     const gap = 8;
     const vh = window.innerHeight || document.documentElement.clientHeight;
@@ -817,6 +834,7 @@ function checkFpPasswordStrength(pw){
     pop.style.top = topPos + window.scrollY + 'px';
     pop.style.zIndex = '2147483647';
     bindNav();
+    syncNavButtons(pop);
     const xBtn = document.getElementById('regCalXBtn');
     if (xBtn) xBtn.addEventListener('click', function(ev){ ev.stopPropagation(); close(); });
     repositionPopup();
@@ -845,24 +863,27 @@ function checkFpPasswordStrength(pw){
     return cells;
   }
 
-  // Year dropdown options: this decade back 100 years for birth dates,
-  // widened automatically if the arrows navigated outside that range.
+  // Year dropdown options: only years strictly before the current year are
+  // offered, so the current and future years can never be selected.
   function yearOptionsHTML(){
-    const nowY = new Date().getFullYear();
-    const max = nowY - 1;
-    const min = Math.min(nowY - 100, viewY);
+    const max = maxBirthYear();
+    const min = minBirthYear();
     let opts = '';
-    const start = Math.max(max, viewY);
-    const end = Math.min(min, max);
-    for (let y = start; y >= end; y--){
+    for (let y = max; y >= min; y--){
       opts += '<option value="'+y+'"'+(y===viewY?' selected':'')+'>'+y+'</option>';
     }
-    if (opts === '') {
-      for (let y = max; y >= nowY - 100; y--){
-        opts += '<option value="'+y+'"'+(y===viewY?' selected':'')+'>'+y+'</option>';
-      }
-    }
     return opts;
+  }
+
+  // Disable the arrows once the calendar reaches the oldest/newest year that
+  // the birth-date dropdown allows.
+  function syncNavButtons(pop){
+    const prev = pop.querySelector('.reg-cal-nav[data-nav="-1"]');
+    const next = pop.querySelector('.reg-cal-nav[data-nav="1"]');
+    const atMin = viewY <= minBirthYear() && viewM === 0;
+    const atMax = viewY >= maxBirthYear() && viewM === 11;
+    if (prev) prev.disabled = atMin;
+    if (next) next.disabled = atMax;
   }
 
   function popupHTML(){
@@ -872,7 +893,7 @@ function checkFpPasswordStrength(pw){
           '<button type="button" class="reg-cal-nav" data-nav="-1" aria-label="Previous month"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>' +
           '<div class="reg-cal-title">' +
             '<span class="reg-cal-month">'+CAL_MONTHS[viewM]+'</span>' +
-            '<select class="reg-cal-year" aria-label="Year">'+yearOptionsHTML()+'</select>' +
+            '<select class="form-dropdown reg-cal-year" data-menu-class="reg-cal-year-menu" data-menu-z="2147483647" aria-label="Year">'+yearOptionsHTML()+'</select>' +
           '</div>' +
           '<button type="button" class="reg-cal-nav" data-nav="1" aria-label="Next month"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>' +
         '</div>' +
@@ -895,9 +916,14 @@ function checkFpPasswordStrength(pw){
     const monthEl = pop.querySelector('.reg-cal-month');
     if (monthEl) monthEl.textContent = CAL_MONTHS[viewM];
     const yearEl = pop.querySelector('.reg-cal-year');
-    if (yearEl){ yearEl.innerHTML = yearOptionsHTML(); yearEl.value = String(viewY); }
+    if (yearEl){
+      yearEl.innerHTML = yearOptionsHTML();
+      yearEl.value = String(viewY);
+      if (window.__fdResync) window.__fdResync(yearEl);
+    }
     const daysEl = pop.querySelector('.reg-cal-days');
     if (daysEl) daysEl.innerHTML = dayCellsHTML();
+    syncNavButtons(pop);
     bindDayButtons(pop);
   }
 
@@ -917,9 +943,12 @@ function checkFpPasswordStrength(pw){
       n.addEventListener('click', function(ev){
         ev.stopPropagation();
         const dir = parseInt(n.getAttribute('data-nav'),10);
-        let m = viewM + dir;
-        if (m<0){ m=11; viewY--; } else if (m>11){ m=0; viewY++; }
-        viewM = m;
+        let y = viewY, m = viewM + dir;
+        if (m < 0){ m = 11; y--; } else if (m > 11){ m = 0; y++; }
+        // Never navigate into the current/future year (or before the oldest
+        // year offered by the dropdown).
+        if (y > maxBirthYear() || y < minBirthYear()) return;
+        viewY = y; viewM = m;
         refreshPopup();
         repositionPopup();
       });
@@ -1043,7 +1072,8 @@ function checkFpPasswordStrength(pw){
 
   document.addEventListener('click', function(e){
     const popEl = document.getElementById('regDpPopup');
-    if (open && popEl && !popEl.contains(e.target) && !field.contains(e.target)) close();
+    const inYearMenu = e.target && e.target.closest && e.target.closest('.reg-cal-year-menu');
+    if (open && popEl && !inYearMenu && !popEl.contains(e.target) && !field.contains(e.target)) close();
   });
   document.addEventListener('keydown', function(e){ if (e.key==='Escape') close(); });
   window.addEventListener('scroll', function(){ if (open) repositionPopup(); }, { passive: true });
