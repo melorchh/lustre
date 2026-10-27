@@ -967,18 +967,24 @@ function checkFpPasswordStrength(pw){
     const wrap = document.getElementById('regDatepicker');
     if (!pop || !wrap) return;
     const rect = wrap.getBoundingClientRect();
+    // Center the calendar on the registration form, not on the input, so it
+    // stays visually balanced inside the sheet at every width.
+    const sheet = wrap.closest('.register-sheet') || wrap.closest('.register-modal');
+    const sheetRect = sheet ? sheet.getBoundingClientRect() : rect;
     const popW = 320;
-    const popH = 360;
+    const popH = pop.offsetHeight || 360;
     const vw = window.innerWidth || document.documentElement.clientWidth;
     const vh = window.innerHeight || document.documentElement.clientHeight;
-    let left = rect.left + window.scrollX + (rect.width / 2) - (popW / 2);
-    left = Math.max(8, Math.min(left, vw - popW - 8 + window.scrollX));
-    let top = rect.bottom + 6 + window.scrollY;
-    if (rect.bottom + popH + 12 > vh && rect.top - popH - 12 >= 0) {
-      top = rect.top - popH - 6 + window.scrollY;
-    } else if (rect.bottom + popH + 12 > vh) {
-      top = Math.max(8 + window.scrollY, vh + window.scrollY - popH - 12);
+    let left = sheetRect.left + (sheetRect.width - popW) / 2 + window.scrollX;
+    left = Math.max(8 + window.scrollX, Math.min(left, vw - popW - 8 + window.scrollX));
+    // Anchor vertically to the birthday field so the calendar follows the
+    // form's internal scroll, then keep it inside the viewport.
+    let top = rect.bottom + 6;
+    if (top + popH + 12 > vh) {
+      if (rect.top - popH - 6 >= 8) top = rect.top - popH - 6;
+      else top = Math.max(8, vh - popH - 12);
     }
+    top += window.scrollY;
     pop.style.position = 'absolute';
     pop.style.top = top + 'px';
     pop.style.left = left + 'px';
@@ -1076,6 +1082,8 @@ function checkFpPasswordStrength(pw){
     if (open && popEl && !inYearMenu && !popEl.contains(e.target) && !field.contains(e.target)) close();
   });
   document.addEventListener('keydown', function(e){ if (e.key==='Escape') close(); });
+  const scrollHost = field.closest('.register-sheet') || field.closest('.register-modal');
+  if (scrollHost) scrollHost.addEventListener('scroll', function(){ if (open) repositionPopup(); }, { passive: true });
   window.addEventListener('scroll', function(){ if (open) repositionPopup(); }, { passive: true });
   window.addEventListener('resize', function(){ if (open) repositionPopup(); });
 })();
