@@ -332,7 +332,11 @@ export function Select({
                   onPointerEnter={() => {
                     if (!o.disabled) setActive(i);
                   }}
-                  onPointerDown={(e) => e.preventDefault()}
+                  // Keep mouse focus on the trigger without suppressing the
+                  // click: cancelling `pointerdown` makes Safari/WebKit drop
+                  // the following click, which made options unselectable on
+                  // iPhones and iPads.
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => commit(o)}
                 >
                   <span className="ap-select-option-label">{o.label}</span>

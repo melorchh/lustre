@@ -1508,6 +1508,7 @@ button.resched-badge:hover {
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
+  touch-action: manipulation;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 .ap-select-trigger:hover:not(:disabled) {
@@ -1583,6 +1584,10 @@ button.resched-badge:hover {
   font-weight: 500;
   color: var(--ap-text);
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 .ap-select-option-label {
   min-width: 0;
