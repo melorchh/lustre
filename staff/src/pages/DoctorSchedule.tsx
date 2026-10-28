@@ -156,7 +156,7 @@ export default function DoctorSchedule() {
         ) : (
           <>
             <label className="form-label">Date</label>
-            <input className="form-input" type="date" value={blockForm.block_date} onChange={(e) => setBlockForm({ ...blockForm, block_date: e.target.value })} />
+            <input className="form-input" type="date" style={{ width: '100%' }} value={blockForm.block_date} onChange={(e) => setBlockForm({ ...blockForm, block_date: e.target.value })} />
           </>
         )}
         <label className="form-label">Start</label>

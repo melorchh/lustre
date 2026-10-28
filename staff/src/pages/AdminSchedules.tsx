@@ -160,13 +160,19 @@ export default function AdminSchedules() {
               <button
                 type="button"
                 className="btn-primary"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   const el = document.getElementById('add-availability-section');
                   if (el) {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    el.focus?.({ preventScroll: true });
+                    const top = el.getBoundingClientRect().top + window.pageYOffset - 80;
+                    window.scrollTo({ top, behavior: 'smooth' });
+                    el.tabIndex = -1;
+                    el.focus({ preventScroll: true });
                   }
                 }}
               >
