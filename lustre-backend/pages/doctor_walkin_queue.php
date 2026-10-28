@@ -49,8 +49,8 @@ function walkins_mirror_result_to_appointment($conn, $doctor_id, $wid, $result) 
     if (!$w || !($wr = $w->fetch_assoc())) return;
     $service = ($wr['test_procedure'] !== null && $wr['test_procedure'] !== '') ? $wr['test_procedure'] : 'Walk-in consultation';
     $ins = $conn->prepare(
-        "INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, service_requested, status, payment_status, reminder_sent, result, result_date)
-         VALUES (?, ?, ?, ?, ?, 'completed', 'pending', 1, ?, NOW())"
+        "INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, appointment_duration, service_requested, status, payment_status, reminder_sent, result, result_date)
+         VALUES (?, ?, ?, ?, 60, ?, 'completed', 'pending', 1, ?, NOW())"
     );
     $ins->bind_param(
         "iissss",
