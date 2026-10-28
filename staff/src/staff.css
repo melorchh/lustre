@@ -1551,6 +1551,51 @@ button.resched-badge:hover {
 .ap-select-trigger[aria-expanded="true"] .ap-select-caret {
   transform: rotate(180deg);
 }
+.ap-time-picker {
+  display: grid;
+  grid-template-columns: 19px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.9fr);
+  align-items: center;
+  gap: 0.12rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 2px 5px 2px 10px;
+  border: 1.5px solid var(--ap-border-strong);
+  border-radius: 10px;
+  background: var(--ap-surface);
+  color: var(--ap-text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.ap-time-picker:focus-within {
+  border-color: var(--ap-accent);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.13);
+}
+.ap-time-picker-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--ap-accent);
+}
+.ap-time-picker .ap-select-trigger {
+  min-height: 36px;
+  padding: 0.3rem 0.36rem;
+  border-color: transparent;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 0.84rem;
+}
+.ap-time-picker .ap-select-trigger:hover:not(:disabled),
+.ap-time-picker .ap-select-trigger[aria-expanded="true"] {
+  border-color: transparent;
+  background: var(--ap-surface-2);
+  box-shadow: none;
+}
+.ap-time-picker .ap-select-caret {
+  width: 13px;
+  height: 13px;
+}
+[data-theme="dark"] .ap-time-picker {
+  background: var(--ap-surface-2);
+}
 .ap-select-menu {
   position: fixed;
   z-index: 2600;
