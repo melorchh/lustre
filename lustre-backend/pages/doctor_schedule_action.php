@@ -93,6 +93,7 @@ if ($action === 'add') {
     $stmt->bind_param("ii", $is_active, $schedule_id);
     echo $stmt->execute() ? "success" : "Failed: " . $stmt->error;
     $stmt->close();
+    sync_doctor_schedule_text($conn, $doctor_id);
 
 } elseif ($action === 'delete') {
     $schedule_id = isset($_POST['schedule_id']) ? (int)$_POST['schedule_id'] : 0;
