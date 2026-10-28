@@ -15,7 +15,6 @@ interface BreakdownRow {
   completed: number;
   cancelled: number;
   paid: number;
-  revenue: number;
 }
 
 interface DoctorOption {
@@ -68,7 +67,6 @@ const CHART_FIELDS = [
   { key: 'patients', label: 'Patients', color: '#0ea5e9' },
   { key: 'appts', label: 'Appointments', color: '#8b5cf6' },
   { key: 'paid', label: 'Paid', color: '#f59e0b' },
-  { key: 'revenue', label: 'Revenue', color: '#16a34a' },
 ] as const;
 
 type ChartField = (typeof CHART_FIELDS)[number]['key'];
@@ -79,16 +77,6 @@ function niceMax(v: number): number {
   const norm = v / mag;
   const nice = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
   return nice * mag;
-}
-
-function fmtMoney(v: number): string {
-  return `\u20b1${Number(v).toLocaleString('en-US')}`;
-}
-
-function fmtMoneyShort(v: number): string {
-  if (v >= 1000000) return `\u20b1${(v / 1000000).toFixed(1)}M`;
-  if (v >= 1000) return `\u20b1${(v / 1000).toFixed(0)}k`;
-  return `\u20b1${v}`;
 }
 
 /** Inline SVG line chart (keeps the old Chart.js look without the CDN). */
@@ -106,7 +94,6 @@ function ReportChart({ rows, field }: { rows: BreakdownRow[]; field: ChartField 
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
   const meta = CHART_FIELDS.find((f) => f.key === field) || CHART_FIELDS[0];
-  const isMoney = field === 'revenue';
   const values = rows.map((r) => Number(r[field] || 0));
   const top = niceMax(Math.max(1, ...values));
   const xAt = (i: number) => (rows.length === 1 ? padL + plotW / 2 : padL + (i * plotW) / (rows.length - 1));
@@ -124,7 +111,7 @@ function ReportChart({ rows, field }: { rows: BreakdownRow[]; field: ChartField 
           <g key={i}>
             <line x1={padL} y1={y} x2={W - padR} y2={y} stroke="var(--gray-100, #e2e8f0)" strokeWidth={1} />
             <text x={padL - 9} y={y + 3.5} textAnchor="end" fontSize={10} fill="var(--gray-600, #64748b)">
-              {isMoney ? fmtMoneyShort(v) : Math.round(v)}
+              {Math.round(v)}
             </text>
           </g>
         );
@@ -147,7 +134,7 @@ function ReportChart({ rows, field }: { rows: BreakdownRow[]; field: ChartField 
       {rows.map((r, i) => (
         <g key={`${r.bucket}-${i}`}>
           <circle cx={xAt(i)} cy={yAt(values[i])} r={4} fill={meta.color} stroke="#fff" strokeWidth={1.5}>
-            <title>{`${r.label}: ${isMoney ? fmtMoney(values[i]) : values[i]}`}</title>
+            <title>{`${r.label}: ${values[i]}`}</title>
           </circle>
           {i % tickStep === 0 || i === rows.length - 1 ? (
             <text x={xAt(i)} y={H - 16} textAnchor="middle" fontSize={10} fill="var(--gray-600, #64748b)">
@@ -183,8 +170,7 @@ export default function AdminReports() {
     patients: summary.patients || 0,
     completed: summary.completed || 0,
     cancelled: summary.cancelled || 0,
-    paid: Math.round((summary.revenue || 0) / 500),
-    revenue: summary.revenue || 0,
+    paid: summary.paid || 0,
   };
   const groupLabel = GROUP_LABELS[filters.group] || 'Daily';
 
@@ -237,14 +223,25 @@ export default function AdminReports() {
     setFilters((prev) => ({ ...prev, [key]: value }));
   }
 
+  async function generateReport() {
+    await apply();
+    window.setTimeout(printReport, 150);
+  }
+
   function printReport() {
     const sheet = document.getElementById('report-sheet');
     if (!sheet) return;
-    const w = window.open('', '_blank', 'width=1000,height=760');
+    const frame = document.createElement('iframe');
+    frame.setAttribute('aria-hidden', 'true');
+    frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+    document.body.appendChild(frame);
+    const w = frame.contentWindow;
     if (!w) {
-      showToast('Popup blocked \u2014 allow popups to print', 'error');
+      frame.remove();
+      showToast('Unable to prepare the report for printing', 'error');
       return;
     }
+    w.document.open();
     const css = `
       *{box-sizing:border-box}
       body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;padding:24px;margin:0;background:#fff}
@@ -274,6 +271,7 @@ export default function AdminReports() {
       `<body>${sheet.innerHTML}<script>window.onload=function(){window.print();};<\/script></body></html>`,
     );
     w.document.close();
+    window.setTimeout(() => frame.remove(), 60000);
     showToast('Report ready to print', 'success');
   }
 
@@ -284,9 +282,8 @@ export default function AdminReports() {
       completed: acc.completed + Number(r.completed || 0),
       cancelled: acc.cancelled + Number(r.cancelled || 0),
       paid: acc.paid + Number(r.paid || 0),
-      revenue: acc.revenue + Number(r.paid || 0) * 500,
     }),
-    { appts: 0, patients: 0, completed: 0, cancelled: 0, paid: 0, revenue: 0 },
+    { appts: 0, patients: 0, completed: 0, cancelled: 0, paid: 0 },
   );
 
   return (
@@ -295,7 +292,11 @@ export default function AdminReports() {
         <Card
           title="Report filters"
           subtitle={`Showing ${periodLabel.toLowerCase()} · grouped ${groupLabel.toLowerCase()}`}
-          actions={<button type="button" className="btn-primary" onClick={() => apply()}>Generate report</button>}
+          actions={
+            <button type="button" className="btn-primary" onClick={generateReport}>
+              <IconPrint size={16} /> Generate report
+            </button>
+          }
         >
           <FilterBar>
             <Field label="Quick range">
@@ -370,11 +371,6 @@ export default function AdminReports() {
           className="report-sheet"
           title="Patient & appointment report"
           subtitle={`${periodLabel} · ${groupLabel} breakdown · generated ${generated}`}
-          actions={
-            <button type="button" className="btn-secondary" onClick={printReport}>
-              <IconPrint size={16} /> Print / PDF
-            </button>
-          }
         >
           <StatGrid>
             <StatCard icon={<IconAppointments />} label="Appointments" value={metrics.appointments ?? 0} hint="Booked in range" />
@@ -382,7 +378,6 @@ export default function AdminReports() {
             <StatCard icon={<IconCheck />} label="Completed" value={metrics.completed ?? 0} hint="Finished visits" tone="slate" />
             <StatCard icon={<IconAppointments />} label="Cancelled" value={metrics.cancelled ?? 0} hint="Did not push through" tone="rose" />
             <StatCard icon={<IconVitals />} label="Paid visits" value={metrics.paid ?? 0} hint="Settled at the counter" tone="amber" />
-            <StatCard icon={<IconReports />} label="Est. revenue" value={fmtMoney(metrics.revenue ?? 0)} hint="Paid visits × ₱500" tone="violet" />
           </StatGrid>
 
           <div className="report-meta">
@@ -418,13 +413,12 @@ export default function AdminReports() {
                   <th>Completed</th>
                   <th>Cancelled</th>
                   <th>Paid</th>
-                  <th>Est. revenue</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={7}>
+                    <td colSpan={6}>
                       <EmptyState
                         icon={<IconReports size={20} />}
                         title="No records match these filters"
@@ -440,7 +434,6 @@ export default function AdminReports() {
                     <td>{r.completed}</td>
                     <td>{r.cancelled}</td>
                     <td>{r.paid}</td>
-                    <td><span className="ap-strong">{fmtMoney(Number(r.paid || 0) * 500)}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -453,16 +446,12 @@ export default function AdminReports() {
                     <td>{totals.completed}</td>
                     <td>{totals.cancelled}</td>
                     <td>{totals.paid}</td>
-                    <td>{fmtMoney(totals.revenue)}</td>
                   </tr>
                 </tfoot>
               )}
             </table>
           </div>
 
-          <div className="report-note">
-            * Estimated revenue = paid visits &times; {'\u20b1'}500. No billing amount is stored in the appointment record.
-          </div>
         </Card>
       </Stack>
     </Shell>
