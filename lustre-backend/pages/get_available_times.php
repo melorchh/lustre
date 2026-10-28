@@ -17,11 +17,11 @@ if (empty($doctor_id) || empty($date)) {
     exit;
 }
 
-// Validate date format and check if it's not in the past
+// Only allow appointments to be scheduled at least one day ahead.
 $selected_date = strtotime($date);
 $today = strtotime(date('Y-m-d'));
 
-if ($selected_date < $today) {
+if ($selected_date === false || date('Y-m-d', $selected_date) !== $date || $selected_date <= $today) {
     echo json_encode([]);
     $conn->close();
     exit;
@@ -92,9 +92,6 @@ $stmt->close();
 
 // Generate available slots from all schedules
 $available = [];
-$current_time = time();
-$is_today = (date('Y-m-d') == $date);
-
 foreach ($schedules as $schedule) {
     $start = strtotime($schedule['start_time']);
     $end = strtotime($schedule['end_time']);
@@ -103,14 +100,6 @@ foreach ($schedules as $schedule) {
     for ($t = $start; $t < $end; $t += $interval) {
         $time = date("H:i", $t);
         
-        // If it's today, skip past time slots
-        if ($is_today) {
-            $slot_timestamp = strtotime(date('Y-m-d') . ' ' . $time);
-            if ($slot_timestamp <= $current_time) {
-                continue;
-            }
-        }
-
         // The full 2-hour visit must fit before the shift ends
         if ($t + (2 * 60 * 60) > $end) {
             continue;

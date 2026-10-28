@@ -20,7 +20,7 @@ export default function DoctorSchedule() {
   async function addSchedule() {
     showLoading();
     try {
-      const res = await postAction('doctor_schedule_action.php', { action: 'add', ...schedForm });
+      const res = await postAction('doctor_schedule_action.php', { ...schedForm }, { action: 'add' });
       if (isSuccess(res)) { showToast('Schedule added', 'success'); refresh(); }
       else showToast(res.replace(/^error:\s*/i, ''), 'error');
     } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error'); }
@@ -30,7 +30,7 @@ export default function DoctorSchedule() {
   async function toggleSchedule(s: ScheduleRow) {
     showLoading();
     try {
-      const res = await postAction('doctor_schedule_action.php', { action: 'toggle_active', schedule_id: s.id, is_active: s.is_active ? 0 : 1 });
+      const res = await postAction('doctor_schedule_action.php', { schedule_id: s.id, is_active: s.is_active ? 0 : 1 }, { action: 'toggle_active' });
       if (isSuccess(res)) { setSchedules((p) => p.map((x) => (x.id === s.id ? { ...x, is_active: s.is_active ? 0 : 1 } : x))); showToast('Updated', 'success'); }
       else showToast(res.replace(/^error:\s*/i, ''), 'error');
     } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error'); }
@@ -41,7 +41,7 @@ export default function DoctorSchedule() {
     if (!confirm('Delete this schedule?')) return;
     showLoading();
     try {
-      const res = await postAction('doctor_schedule_action.php', { action: 'delete', schedule_id: id });
+      const res = await postAction('doctor_schedule_action.php', { schedule_id: id }, { action: 'delete' });
       if (isSuccess(res)) { setSchedules((p) => p.filter((x) => x.id !== id)); showToast('Deleted', 'success'); }
       else showToast(res.replace(/^error:\s*/i, ''), 'error');
     } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error'); }
@@ -51,7 +51,7 @@ export default function DoctorSchedule() {
   async function addBlock() {
     showLoading();
     try {
-      const res = await postAction('doctor_schedule_action.php', { action: 'add_block', ...blockForm });
+      const res = await postAction('doctor_schedule_action.php', { ...blockForm }, { action: 'add_block' });
       if (isSuccess(res)) { showToast('Time block added', 'success'); setBlockOpen(false); setBlockForm({ block_type: 'date', block_date: '', day_of_week: 'Monday', start_time: '09:00', end_time: '17:00', reason: '' }); refresh(); }
       else showToast(res.replace(/^error:\s*/i, ''), 'error');
     } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error'); }
@@ -62,7 +62,7 @@ export default function DoctorSchedule() {
     if (!confirm('Remove this time block?')) return;
     showLoading();
     try {
-      const res = await postAction('doctor_schedule_action.php', { action: 'delete_block', block_id: id });
+      const res = await postAction('doctor_schedule_action.php', { block_id: id }, { action: 'delete_block' });
       if (isSuccess(res)) { setBlocks((p) => p.filter((x) => x.id !== id)); showToast('Removed', 'success'); }
       else showToast(res.replace(/^error:\s*/i, ''), 'error');
     } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error'); }
