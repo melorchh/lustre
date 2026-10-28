@@ -4,11 +4,17 @@ import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime } from '
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
 import { Select } from '../components';
+import DatePicker from '../DatePicker';
 import { Card, EmptyState, Field, FilterBar, Stack, StatCard, StatGrid } from '../ui';
 import { IconCheck, IconClock, IconSearch, IconWalkins } from '../icons';
 import type { WalkinRow } from '../types';
 
 const STATUSES = ['waiting', 'in_service', 'served', 'cancelled'];
+
+function todayISO(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
 
 function statusLabel(s: string): string {
   if (s === 'in_service') return 'In Service';
@@ -29,7 +35,7 @@ export default function AdminWalkins() {
     stats?: Record<string, number>;
   };
   const { showToast } = useToast();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
   const [date, setDate] = useState<string>(d.date || today);
   const [walkins, setWalkins] = useState<WalkinRow[]>(d.walkins || []);
   const [stats, setStats] = useState<Record<string, number>>(d.stats || {});
@@ -116,13 +122,7 @@ export default function AdminWalkins() {
           subtitle={`${filtered.length} entr${filtered.length === 1 ? 'y' : 'ies'} for ${fmtDate(date)} · one queue per doctor`}
           actions={
             <Field label="Queue date" className="ap-field--date">
-              <input
-                type="date"
-                className="form-input"
-                max={today}
-                value={date}
-                onChange={(e) => loadDate(e.target.value || today)}
-              />
+              <DatePicker value={date} max={today} onChange={(next) => loadDate(next || today)} />
             </Field>
           }
         >

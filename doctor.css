@@ -379,9 +379,19 @@ html {
   font-size: 0.78rem;
 }
 .doctor-page .admin-cal .cal-day {
-  min-height: 46px;
+  min-width: 0;
+  min-height: 0;
+  aspect-ratio: 1;
   font-size: 1.05rem;
   font-weight: 600;
+}
+.doctor-page .admin-cal .cal-weekdays,
+.doctor-page .admin-cal .cal-days {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.doctor-page .admin-cal .cal-month {
+  min-width: 0;
+  text-align: center;
 }
 .doctor-page .admin-cal .cal-clear {
   font-size: 1rem;
