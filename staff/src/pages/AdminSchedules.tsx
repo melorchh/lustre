@@ -160,19 +160,22 @@ export default function AdminSchedules() {
               <button
                 type="button"
                 className="btn-primary"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  if (!doctorId) {
+                    showToast('Select a doctor first', 'error');
+                    return;
+                  }
                   const el = document.getElementById('add-availability-section');
                   if (el) {
-                    const top = el.getBoundingClientRect().top + window.pageYOffset - 80;
+                    const top = el.getBoundingClientRect().top + window.pageYOffset - 100;
                     window.scrollTo({ top, behavior: 'smooth' });
+                    window.setTimeout(() => {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 50);
                     el.tabIndex = -1;
-                    el.focus({ preventScroll: true });
+                    try { el.focus({ preventScroll: true }); } catch {}
                   }
                 }}
               >
