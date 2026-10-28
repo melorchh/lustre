@@ -2455,6 +2455,7 @@ body::-webkit-scrollbar {
 .admin-cal .cal-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  gap: 0.3rem;
   margin-bottom: 0.45rem;
 }
 .admin-cal .cal-weekdays span {
@@ -2465,6 +2466,9 @@ body::-webkit-scrollbar {
   letter-spacing: 0.05em;
   color: var(--gray-400);
   padding: 0.25rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .admin-cal .cal-days {
   display: grid;
