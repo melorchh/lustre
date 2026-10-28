@@ -4,6 +4,7 @@ import { getInitial, fetchData, fmtDate } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
 import { Select } from '../components';
+import DatePicker from '../DatePicker';
 import { Card, EmptyState, Field, FilterBar, Stack, StatCard, StatGrid } from '../ui';
 import { IconAppointments, IconCheck, IconPatients, IconPrint, IconReports, IconVitals } from '../icons';
 
@@ -314,21 +315,21 @@ export default function AdminReports() {
               </div>
             </Field>
             <Field label="From" className="ap-field--date">
-              <input
-                type="date"
-                className="form-input"
+              <DatePicker
                 value={filters.from}
-                onChange={(e) => setField('from', e.target.value)}
-                onInput={() => filters.period && setField('period', '')}
+                onChange={(v) => {
+                  setField('from', v);
+                  if (filters.period) setField('period', '');
+                }}
               />
             </Field>
             <Field label="To" className="ap-field--date">
-              <input
-                type="date"
-                className="form-input"
+              <DatePicker
                 value={filters.to}
-                onChange={(e) => setField('to', e.target.value)}
-                onInput={() => filters.period && setField('period', '')}
+                onChange={(v) => {
+                  setField('to', v);
+                  if (filters.period) setField('period', '');
+                }}
               />
             </Field>
             <Field label="Group by" className="ap-field--select">
