@@ -10,6 +10,8 @@ import type { DoctorRow, ScheduleRow, TimeBlockRow } from '../types';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+type PendingSchedule = { day_of_week: string; start_time: string; end_time: string };
+
 export default function AdminSchedules() {
   const d = getInitial().data as {
     doctors?: DoctorRow[];
@@ -22,6 +24,8 @@ export default function AdminSchedules() {
   const [blocks, setBlocks] = useState<TimeBlockRow[]>(d.blocks || []);
   const [doctorId, setDoctorId] = useState<string>('');
   const [schedForm, setSchedForm] = useState({ start_day: 'Monday', end_day: 'Monday', start_time: '09:00', end_time: '17:00' });
+  const [dayForm, setDayForm] = useState({ day_of_week: 'Monday', start_time: '09:00', end_time: '17:00' });
+  const [scheduleItems, setScheduleItems] = useState<PendingSchedule[]>([]);
   const [blockOpen, setBlockOpen] = useState(false);
   const [blockForm, setBlockForm] = useState({ doctor_id: '', block_type: 'date', block_date: '', end_date: '', day_of_week: 'Monday', start_time: '09:00', end_time: '17:00', reason: '' });
 
@@ -32,13 +36,56 @@ export default function AdminSchedules() {
   const coveredDoctors = new Set(schedules.map((s) => s.doctor_id)).size;
   const upcomingBlocks = blocks.filter((b) => !b.block_date || b.block_date >= new Date().toISOString().slice(0, 10)).length;
 
+  function addScheduleItem() {
+    if (!dayForm.start_time || !dayForm.end_time) {
+      showToast('Start time and end time are required', 'error');
+      return;
+    }
+    if (dayForm.end_time <= dayForm.start_time) {
+      showToast('End time must be after start time', 'error');
+      return;
+    }
+    setScheduleItems((prev) => {
+      const exists = prev.some(
+        (item) => item.day_of_week === dayForm.day_of_week && item.start_time === dayForm.start_time && item.end_time === dayForm.end_time,
+      );
+      if (exists) {
+        showToast('Schedule already added', 'error');
+        return prev;
+      }
+      return [...prev, { ...dayForm }];
+    });
+  }
+
+  function removeScheduleItem(index: number) {
+    setScheduleItems((prev) => prev.filter((_, i) => i !== index));
+  }
+
   async function addSchedule() {
     if (!doctorId) { showToast('Select a doctor first', 'error'); return; }
+    if (scheduleItems.length === 0 && !(schedForm.start_day && schedForm.end_day && schedForm.start_time && schedForm.end_time)) {
+      showToast('Add at least one schedule item', 'error');
+      return;
+    }
     showLoading();
     try {
-      const res = await postAction('admin_schedule_action.php', { action: 'add', doctor_id: doctorId, ...schedForm });
-      if (isSuccess(res)) { showToast('Schedule added', 'success'); refresh(); }
-      else showToast(res.replace(/^error:\s*/i, ''), 'error');
+      if (scheduleItems.length > 0) {
+        for (const item of scheduleItems) {
+          const res = await postAction('admin_schedule_action.php', { action: 'add', doctor_id: doctorId, start_day: item.day_of_week, end_day: item.day_of_week, start_time: item.start_time, end_time: item.end_time });
+          if (!isSuccess(res)) {
+            showToast(res.replace(/^error:\s*/i, ''), 'error');
+            hideLoading();
+            return;
+          }
+        }
+        setScheduleItems([]);
+        showToast('Schedule added', 'success');
+        refresh();
+      } else {
+        const res = await postAction('admin_schedule_action.php', { action: 'add', doctor_id: doctorId, ...schedForm });
+        if (isSuccess(res)) { showToast('Schedule added', 'success'); refresh(); }
+        else showToast(res.replace(/^error:\s*/i, ''), 'error');
+      }
     } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error'); }
     finally { hideLoading(); }
   }
@@ -152,9 +199,56 @@ export default function AdminSchedules() {
           {doctorId && (
             <FormSection
               title={`Add schedule for Dr. ${doctorName(Number(doctorId))}`}
-              hint="Pick a day range and the clinic hours"
+              hint="Pick a day and time, add to list, then save"
             >
               <div className="ap-inline-form">
+                <Field label="Day">
+                  <Select className="form-input" value={dayForm.day_of_week} onChange={(e) => setDayForm({ ...dayForm, day_of_week: e.target.value })}>
+                    {DAYS.map((day) => <option key={day} value={day}>{day}</option>)}
+                  </Select>
+                </Field>
+                <Field label="Start time">
+                  <input className="form-input" type="time" value={dayForm.start_time} onChange={(e) => setDayForm({ ...dayForm, start_time: e.target.value })} />
+                </Field>
+                <Field label="End time">
+                  <input className="form-input" type="time" value={dayForm.end_time} onChange={(e) => setDayForm({ ...dayForm, end_time: e.target.value })} />
+                </Field>
+                <div className="ap-inline-form-submit">
+                  <button type="button" className="btn-secondary" onClick={addScheduleItem}>Add</button>
+                </div>
+              </div>
+              {scheduleItems.length > 0 && (
+                <div style={{ marginTop: 12 }}>
+                  <div className="table-scroll" style={{ maxWidth: 640 }}>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Day</th>
+                          <th>Start Time</th>
+                          <th>End Time</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {scheduleItems.map((item, idx) => (
+                          <tr key={`${item.day_of_week}-${item.start_time}-${item.end_time}-${idx}`}>
+                            <td>{item.day_of_week}</td>
+                            <td>{fmtTime(item.start_time)}</td>
+                            <td>{fmtTime(item.end_time)}</td>
+                            <td>
+                              <button type="button" className="btn-delete btn-xs" onClick={() => removeScheduleItem(idx)}>Remove</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{ marginTop: 10 }}>
+                    <button type="button" className="btn-primary" onClick={addSchedule}>Add schedule</button>
+                  </div>
+                </div>
+              )}
+              <div className="ap-inline-form" style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--ap-border)' }}>
                 <Field label="From">
                   <Select className="form-input" value={schedForm.start_day} onChange={(e) => setSchedForm({ ...schedForm, start_day: e.target.value })}>
                     {DAYS.map((day) => <option key={day} value={day}>{day}</option>)}
@@ -172,7 +266,7 @@ export default function AdminSchedules() {
                   <input className="form-input" type="time" value={schedForm.end_time} onChange={(e) => setSchedForm({ ...schedForm, end_time: e.target.value })} />
                 </Field>
                 <div className="ap-inline-form-submit">
-                  <button type="button" className="btn-primary" onClick={addSchedule}>Add schedule</button>
+                  <button type="button" className="btn-primary" onClick={addSchedule}>Add range</button>
                 </div>
               </div>
             </FormSection>
