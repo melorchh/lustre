@@ -118,7 +118,7 @@ export default function AdminWalkins() {
             <Field label="Queue date" className="ap-field--date">
               <input
                 type="date"
-                className="apt-search"
+                className="form-input"
                 max={today}
                 value={date}
                 onChange={(e) => loadDate(e.target.value || today)}
