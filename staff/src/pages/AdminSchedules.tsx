@@ -160,6 +160,7 @@ export default function AdminSchedules() {
               <button
                 type="button"
                 className="btn-primary"
+                style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10 }}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -168,15 +169,20 @@ export default function AdminSchedules() {
                     return;
                   }
                   const el = document.getElementById('add-availability-section');
-                  if (el) {
-                    const top = el.getBoundingClientRect().top + window.pageYOffset - 100;
-                    window.scrollTo({ top, behavior: 'smooth' });
-                    window.setTimeout(() => {
-                      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 50);
-                    el.tabIndex = -1;
-                    try { el.focus({ preventScroll: true }); } catch {}
+                  if (!el) {
+                    showToast('Availability form not found', 'error');
+                    return;
                   }
+                  try {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  } catch {}
+                  const top = el.getBoundingClientRect().top + window.scrollY - 90;
+                  window.scrollTo({ top, behavior: 'smooth' });
+                  window.setTimeout(() => {
+                    try { el.scrollIntoView({ behavior: 'auto', block: 'center' }); } catch {}
+                  }, 150);
+                  el.tabIndex = -1;
+                  try { el.focus({ preventScroll: true }); } catch {}
                 }}
               >
                 Add available time
