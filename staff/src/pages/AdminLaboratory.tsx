@@ -4,6 +4,7 @@ import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime } from '
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
 import { Modal, Select } from '../components';
+import DatePicker from '../DatePicker';
 import { Card, EmptyState, Field, FilterBar, ModalHead, Stack, StatCard, StatGrid } from '../ui';
 import { IconCheck, IconClock, IconLab, IconSearch } from '../icons';
 import type { LabTestRow } from '../types';
@@ -252,8 +253,8 @@ export default function AdminLaboratory() {
                   <option value="stat">STAT (immediate)</option>
                 </Select>
               </Field>
-              <Field label="Scheduled date">
-                <input type="date" className="form-input" min={today} value={req.scheduled_date} onChange={(e) => setReq({ ...req, scheduled_date: e.target.value })} />
+              <Field label="Scheduled date" className="ap-field--date">
+                <DatePicker min={today} value={req.scheduled_date} onChange={(scheduled_date) => setReq({ ...req, scheduled_date })} />
               </Field>
             </div>
 

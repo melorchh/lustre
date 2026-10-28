@@ -361,24 +361,30 @@ html {
 }
 
 /* ---------- Date picker (admin_datepicker.js) ---------- */
-.doctor-page .admin-cal {
+.doctor-page .admin-cal,
+.doctor-date-picker-popup .admin-cal {
   padding: 1.2rem;
 }
-.doctor-page .admin-cal .cal-month {
+.doctor-page .admin-cal .cal-month,
+.doctor-date-picker-popup .admin-cal .cal-month {
   font-size: 1.2rem;
 }
-.doctor-page .admin-cal .cal-nav {
+.doctor-page .admin-cal .cal-nav,
+.doctor-date-picker-popup .admin-cal .cal-nav {
   width: 46px;
   height: 46px;
 }
-.doctor-page .admin-cal .cal-nav svg {
+.doctor-page .admin-cal .cal-nav svg,
+.doctor-date-picker-popup .admin-cal .cal-nav svg {
   width: 20px;
   height: 20px;
 }
-.doctor-page .admin-cal .cal-weekdays span {
+.doctor-page .admin-cal .cal-weekdays span,
+.doctor-date-picker-popup .admin-cal .cal-weekdays span {
   font-size: 0.78rem;
 }
-.doctor-page .admin-cal .cal-day {
+.doctor-page .admin-cal .cal-day,
+.doctor-date-picker-popup .admin-cal .cal-day {
   min-width: 0;
   min-height: 0;
   aspect-ratio: 1;
@@ -386,15 +392,51 @@ html {
   font-weight: 600;
 }
 .doctor-page .admin-cal .cal-weekdays,
-.doctor-page .admin-cal .cal-days {
+.doctor-page .admin-cal .cal-days,
+.doctor-date-picker-popup .admin-cal .cal-weekdays,
+.doctor-date-picker-popup .admin-cal .cal-days {
   grid-template-columns: repeat(7, minmax(0, 1fr));
 }
-.doctor-page .admin-cal .cal-month {
+.doctor-page .admin-cal .cal-month,
+.doctor-date-picker-popup .admin-cal .cal-month {
   min-width: 0;
   text-align: center;
 }
-.doctor-page .admin-cal .cal-clear {
+.doctor-page .admin-cal .cal-clear,
+.doctor-date-picker-popup .admin-cal .cal-clear {
   font-size: 1rem;
+}
+.doctor-date-picker-popup {
+  box-sizing: border-box;
+  width: min(var(--dp-w, 310px), calc(100vw - 1rem));
+  min-width: 0;
+  max-width: calc(100vw - 1rem);
+  max-height: calc(100vh - 1rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.doctor-date-picker-popup .admin-cal {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+.doctor-date-picker-popup .cal-weekdays,
+.doctor-date-picker-popup .cal-days {
+  width: 100%;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.doctor-date-picker-popup .cal-days {
+  gap: clamp(0.15rem, 1vw, 0.3rem);
+}
+.doctor-date-picker-popup .cal-day {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  aspect-ratio: 1 / 1;
+}
+.doctor-date-picker-popup .cal-day-num {
+  font-size: clamp(0.78rem, 4vw, 1.05rem);
 }
 
 /* ---------- Availability day cards (doctor_schedule) ---------- */

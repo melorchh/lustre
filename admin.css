@@ -2413,6 +2413,8 @@ body::-webkit-scrollbar {
   padding: 1rem;
   box-shadow: 0 14px 44px rgba(13, 148, 136, 0.18);
   animation: sheetUp 0.3s var(--spring) both;
+  width: 100%;
+  box-sizing: border-box;
 }
 .admin-cal .cal-head {
   display: flex;
@@ -2460,12 +2462,12 @@ body::-webkit-scrollbar {
 .admin-cal .cal-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.3rem;
+  gap: 0.25rem;
   margin-bottom: 0.45rem;
 }
 .admin-cal .cal-weekdays span {
   text-align: center;
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -2474,19 +2476,19 @@ body::-webkit-scrollbar {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 100%;
+  aspect-ratio: 1 / 1;
   box-sizing: border-box;
+  line-height: 1;
 }
 .admin-cal .cal-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.3rem;
+  gap: 0.25rem;
 }
 .admin-cal .cal-day {
   position: relative;
   aspect-ratio: 1 / 1;
-  border-radius: 12px;
+  border-radius: 10px;
 }
 .admin-cal .cal-day-num {
   position: absolute;
@@ -2495,7 +2497,7 @@ body::-webkit-scrollbar {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
 }
 .admin-cal .cal-day--blank {
   pointer-events: none;
@@ -2525,7 +2527,7 @@ body::-webkit-scrollbar {
   margin: 0;
   padding: 0;
   border: 0;
-  border-radius: 12px;
+  border-radius: 10px;
 }
 .admin-cal .cal-btn .cal-day-num {
   line-height: 1;

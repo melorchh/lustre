@@ -163,7 +163,7 @@ function me_time($t){ return (new DateTime($t))->format('g:i A'); }
                         </div>
                         <div class="form-group" id="blockDateGroup">
                             <label>Date</label>
-                            <input type="date" name="block_date" id="blockDate" data-datepicker min="<?php echo date('Y-m-d'); ?>">
+                            <input type="date" name="block_date" id="blockDate" data-datepicker data-doctor-datepicker min="<?php echo date('Y-m-d'); ?>">
                         </div>
                         <div class="form-group" id="blockDayGroup" style="display:none;">
                             <label>Day of Week</label>

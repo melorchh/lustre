@@ -483,14 +483,19 @@ export default function AdminHistory() {
           </div>
 
           <div className="pdf-list-col">
-            <div className="pdf-list-search">
-              <input
-                type="search"
-                placeholder="Search archive days&hellip;"
-                aria-label="Search archive days"
-                value={pdfSearch}
-                onChange={(e) => setPdfSearch(e.target.value)}
-              />
+            <div className="ap-field pdf-list-search">
+              <span>Search archive days</span>
+              <div className="ap-input-icon">
+                <IconSearch size={16} />
+                <input
+                  type="search"
+                  className="apt-search"
+                  placeholder="Search archive days&hellip;"
+                  aria-label="Search archive days"
+                  value={pdfSearch}
+                  onChange={(e) => setPdfSearch(e.target.value)}
+                />
+              </div>
             </div>
             <div className="pdf-day-list">
               {pdfDays.length === 0 ? (
