@@ -2,17 +2,17 @@
 // ============================================================================
 // Doctor daily capacity / availability.
 //
-// A doctor is "full" for a date when they can take no more patients that day.
-// Which rule decides that depends on the data the clinic keeps:
+// A doctor is available for a date only when they have an active shift that
+// day. Without an active doctor_schedules row they are not offered for
+// walk-ins. When they are scheduled, the rule that decides whether they are
+// full depends on the data the clinic keeps:
 //
 //   * doctors.daily_limit > 0  ->  explicit daily patient cap. The doctor is
 //     full once today's non-cancelled appointments + walk-ins reach it.
-//   * no cap, but the doctor has doctor_schedules rows  ->  slot based. The
-//     doctor is full when every 1-hour visit window in today's shifts is
-//     already booked or blocked (the same 1-hour block get_available_times.php
-//     books, so the counter and the patient booking flow agree).
-//   * no schedule rows at all (legacy doctor)  ->  no known limit, so the
-//     doctor stays selectable. Availability is never guessed.
+//   * no cap  ->  slot based. The doctor is full when every 1-hour visit
+//     window in today's shifts is already booked or blocked (the same 1-hour
+//     block get_available_times.php books, so the counter and the patient
+//     booking flow agree).
 //
 // Registering a walk-in also creates a confirmed appointment for the same
 // patient, so patients are counted once (UNION of both sources) instead of
@@ -244,7 +244,14 @@ if (!function_exists('doctor_capacity_map')) {
             $available = true;
             $reason    = '';
 
-            if ($limit > 0) {
+            if (empty($shifts[$id])) {
+                // No active shift applies to this date. This also covers
+                // doctors with no schedule rows at all.
+                $mode      = 'off_duty';
+                $remaining = 0;
+                $available = false;
+                $reason    = 'not_scheduled';
+            } elseif ($limit > 0) {
                 $mode      = 'daily_limit';
                 $capacity  = $limit;
                 $remaining = max(0, $limit - $count);
@@ -252,7 +259,7 @@ if (!function_exists('doctor_capacity_map')) {
                 if (!$available) {
                     $reason = 'full';
                 }
-            } elseif (!empty($shifts[$id])) {
+            } else {
                 $mode      = 'schedule';
                 $remaining = doctor_free_windows(
                     $shifts[$id],
@@ -263,12 +270,6 @@ if (!function_exists('doctor_capacity_map')) {
                 if (!$available) {
                     $reason = 'full';
                 }
-            } elseif (!empty($has_schedule[$id])) {
-                // Schedules exist, none of them is active for this day.
-                $mode      = 'off_duty';
-                $remaining = 0;
-                $available = false;
-                $reason    = 'not_scheduled';
             }
 
             $out[$id] = array(
