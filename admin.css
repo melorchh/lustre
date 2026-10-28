@@ -2487,6 +2487,7 @@ body::-webkit-scrollbar {
 }
 .admin-cal .cal-day {
   position: relative;
+  aspect-ratio: 1 / 1;
   border-radius: 10px;
 }
 .admin-cal .cal-day-num {
