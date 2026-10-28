@@ -2469,6 +2469,8 @@ body::-webkit-scrollbar {
   display: flex;
   align-items: center;
   justify-content: center;
+  aspect-ratio: 1 / 1;
+  min-height: 0;
 }
 .admin-cal .cal-days {
   display: grid;
