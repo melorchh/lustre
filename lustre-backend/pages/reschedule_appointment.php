@@ -14,7 +14,7 @@ $appointment_id = isset($_POST["appointment_id"]) ? intval($_POST["appointment_i
 $doctor_id = isset($_POST["doctor_id"]) ? intval($_POST["doctor_id"]) : 0;
 $date = isset($_POST["date"]) ? trim($_POST["date"]) : '';
 $time = isset($_POST["time"]) ? trim($_POST["time"]) : '';
-$appointment_duration = 120; // 2 hours in minutes - FIXED DURATION
+$appointment_duration = 60; // 1 hour in minutes - FIXED DURATION
 
 if (empty($appointment_id) || empty($date) || empty($time)) {
     echo "error: Please fill all fields";
@@ -72,9 +72,9 @@ if (!preg_match('/^([01][0-9]|2[0-3]):[0-5][0-9]$/', $time)) {
 
 $time_with_seconds = $time . ":00";
 
-// Calculate end time based on 2-hour duration
+// Calculate end time based on the 1-hour appointment duration
 $start_timestamp = strtotime($date . ' ' . $time);
-$end_timestamp = $start_timestamp + (120 * 60);
+$end_timestamp = $start_timestamp + ($appointment_duration * 60);
 $end_time = date('H:i:s', $end_timestamp);
 
 // Check if the new slot is already booked (excluding this same appointment id)
@@ -85,14 +85,14 @@ $stmt = $conn->prepare("
     AND status IN ('pending', 'confirmed')
     AND id <> ?
     AND appointment_time < ?
-    AND appointment_time + INTERVAL '2 hours' > ?
+    AND appointment_time + INTERVAL '1 hour' > ?
 ");
 $stmt->bind_param("iisss", $doctor_id, $date, $appointment_id, $end_time, $time_with_seconds);
 $stmt->execute();
 $stmt->store_result();
 if ($stmt->num_rows > 0) {
     $stmt->close();
-    echo "error: This time slot or overlapping 2-hour period is already booked";
+    echo "error: This time slot or overlapping 1-hour period is already booked";
     $conn->close();
     exit;
 }
@@ -105,10 +105,11 @@ $stmt = $conn->prepare("
     SELECT id FROM doctor_schedules 
     WHERE doctor_id = ? 
     AND day_of_week = ? 
-    AND ? BETWEEN start_time AND end_time 
+    AND ? >= start_time
+    AND ? <= end_time
     AND is_active = 1
 ");
-$stmt->bind_param("iss", $doctor_id, $day_of_week, $time_with_seconds);
+$stmt->bind_param("isss", $doctor_id, $day_of_week, $time_with_seconds, $end_time);
 $stmt->execute();
 $stmt->store_result();
 if ($stmt->num_rows === 0) {
@@ -126,10 +127,10 @@ $stmt = $conn->prepare("
       AND ((block_type = 'date' AND block_date = ?)
         OR (block_type = 'week' AND ? BETWEEN block_date AND end_date)
         OR (block_type = 'weekly' AND day_of_week = ?))
-      AND ? >= start_time
-      AND ? <  end_time
+      AND ? < end_time
+      AND ? > start_time
 ");
-$stmt->bind_param("isssss", $doctor_id, $date, $date, $day_of_week, $time_with_seconds, $time_with_seconds);
+$stmt->bind_param("isssss", $doctor_id, $date, $date, $day_of_week, $end_time, $time_with_seconds);
 $stmt->execute();
 $stmt->store_result();
 if ($stmt->num_rows > 0) {
@@ -141,8 +142,8 @@ if ($stmt->num_rows > 0) {
 $stmt->close();
 
 // Update the appointment with the new date/time, reset status to pending, and mark it as rescheduled
-$stmt = $conn->prepare("UPDATE appointments SET doctor_id=?, appointment_date=?, appointment_time=?, status='pending', reschedule_count = reschedule_count + 1, last_rescheduled_at = NOW() WHERE id=? AND patient_id=?");
-$stmt->bind_param("issii", $doctor_id, $date, $time_with_seconds, $appointment_id, $patient_id);
+$stmt = $conn->prepare("UPDATE appointments SET doctor_id=?, appointment_date=?, appointment_time=?, appointment_duration=?, status='pending', reschedule_count = reschedule_count + 1, last_rescheduled_at = NOW() WHERE id=? AND patient_id=?");
+$stmt->bind_param("issiii", $doctor_id, $date, $time_with_seconds, $appointment_duration, $appointment_id, $patient_id);
 
 if ($stmt->execute() && $stmt->affected_rows >= 0) {
     // Log the reschedule into history so admins can see old -> new details

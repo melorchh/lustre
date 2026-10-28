@@ -8,8 +8,8 @@
 //   * doctors.daily_limit > 0  ->  explicit daily patient cap. The doctor is
 //     full once today's active appointments + today's walk-ins reach it.
 //   * no cap, but the doctor has doctor_schedules rows  ->  slot based. The
-//     doctor is full when every 2-hour visit window in today's shifts is
-//     already booked or blocked (the same 2-hour block get_available_times.php
+//     doctor is full when every 1-hour visit window in today's shifts is
+//     already booked or blocked (the same 1-hour block get_available_times.php
 //     books, so the counter and the patient booking flow agree).
 //   * no schedule rows at all (legacy doctor)  ->  no known limit, so the
 //     doctor stays selectable. Availability is never guessed.
@@ -65,17 +65,17 @@ if (!function_exists('doctor_shift_on')) {
 
 if (!function_exists('doctor_free_windows')) {
     /**
-     * How many more 2-hour visits fit in a set of shifts.
+     * How many more 1-hour visits fit in a set of shifts.
      *
-     * Mirrors get_available_times.php: a visit occupies a 2-hour block, must
+     * Mirrors get_available_times.php: a visit occupies a 1-hour block, must
      * end before the shift does, and may not overlap an existing booking or a
      * blocked range. Candidates start on the 30-minute grid; once a window is
-     * counted the following 2 hours are skipped.
+     * counted the following hour is skipped.
      */
     function doctor_free_windows($shifts, $booked, $blocked)
     {
         $blocks = array_merge($booked, $blocked);
-        $window = 2 * 60 * 60;
+        $window = 60 * 60;
         $step = 30 * 60;
         $free = 0;
 
@@ -186,7 +186,7 @@ if (!function_exists('doctor_capacity_map')) {
                 if ($rows) {
                     while ($row = $rows->fetch_assoc()) {
                         $start = doctor_clock_seconds($row['appointment_time']);
-                        $booked[(int)$row['doctor_id']][] = array('start' => $start, 'end' => $start + (2 * 60 * 60));
+                        $booked[(int)$row['doctor_id']][] = array('start' => $start, 'end' => $start + (60 * 60));
                     }
                     $rows->close();
                 }

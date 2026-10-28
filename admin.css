@@ -2413,7 +2413,6 @@ body::-webkit-scrollbar {
   padding: 1rem;
   box-shadow: 0 14px 44px rgba(13, 148, 136, 0.18);
   animation: sheetUp 0.3s var(--spring) both;
-
 }
 .admin-cal .cal-head {
   display: flex;

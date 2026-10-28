@@ -58,7 +58,7 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
-// Get booked appointments for this doctor on this date with 2-hour duration blocks
+// Get booked appointments for this doctor on this date with 1-hour duration blocks
 $stmt = $conn->prepare("SELECT appointment_time FROM appointments WHERE doctor_id=? AND appointment_date=? AND status IN ('pending', 'confirmed')");
 $stmt->bind_param("is", $doctor_id, $date);
 $stmt->execute();
@@ -69,7 +69,7 @@ while ($row = $result->fetch_assoc()) {
     // Convert to seconds since midnight for easier comparison
     $parts = explode(':', $appointment_time);
     $start_seconds = ($parts[0] * 3600) + ($parts[1] * 60) + $parts[2];
-    $end_seconds = $start_seconds + (2 * 60 * 60); // Add 2 hours
+    $end_seconds = $start_seconds + (60 * 60); // Add 1 hour
     $booked_blocks[] = ['start' => $start_seconds, 'end' => $end_seconds];
 }
 $stmt->close();
@@ -100,20 +100,20 @@ foreach ($schedules as $schedule) {
     for ($t = $start; $t < $end; $t += $interval) {
         $time = date("H:i", $t);
         
-        // The full 2-hour visit must fit before the shift ends
-        if ($t + (2 * 60 * 60) > $end) {
+        // The full 1-hour visit must fit before the shift ends
+        if ($t + (60 * 60) > $end) {
             continue;
         }
 
-        // Check if this slot is not booked (considering 2-hour duration)
+        // Check if this slot is not booked (considering 1-hour duration)
         $is_booked = false;
         
         // Convert slot time to seconds since midnight
         $slot_parts = explode(':', $time);
         $slot_start_seconds = ($slot_parts[0] * 3600) + ($slot_parts[1] * 60);
-        $slot_end_seconds = $slot_start_seconds + (2 * 60 * 60); // full 2-hour visit window
+        $slot_end_seconds = $slot_start_seconds + (60 * 60); // full 1-hour visit window
         
-        // Check against all booked 2-hour blocks
+        // Check against all booked 1-hour blocks
         foreach ($booked_blocks as $block) {
             // Check if there's any overlap with booked block
             if ($slot_start_seconds < $block['end'] && $slot_end_seconds > $block['start']) {

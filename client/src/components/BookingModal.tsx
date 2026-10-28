@@ -422,7 +422,7 @@ placeholder={"Type the specific test / procedure you need"}
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 7v5l3 3" />
               </svg>
-              {"Appointment duration: 2 hours"}
+              {"Appointment duration: 1 hour"}
             </div>
 
             <button className="btn-confirm" disabled={!canConfirm} onClick={submit} data-anim={canConfirm ? 'pulse' : undefined}>

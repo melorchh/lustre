@@ -10,7 +10,7 @@ $schedules = $conn->query("SELECT * FROM doctor_schedules WHERE doctor_id = $doc
 $time_blocks = $conn->query("SELECT * FROM doctor_time_blocks WHERE doctor_id = $doctor_id ORDER BY created_at DESC");
 
 $sched_by_day = [];
-while ($s = $schedules->fetch_assoc()) { $sched_by_day[$s['day_of_week']] = $s; }
+while ($s = $schedules->fetch_assoc()) { $sched_by_day[$s['day_of_week']][] = $s; }
 
 $time_options = '';
 for ($h = 6; $h <= 22; $h++) {
@@ -44,6 +44,10 @@ function me_time($t){ return (new DateTime($t))->format('g:i A'); }
         .day-card.inactive { opacity:.72; }
         .day-card-head { display:flex; align-items:center; justify-content:space-between; }
         .day-card-head h3 { margin:0; font-size:1rem; font-family:'Roboto',sans-serif; }
+        .day-slot { background:var(--white); border:1.5px solid var(--gray-100); border-radius:10px; padding:.7rem .75rem; display:flex; flex-direction:column; gap:.6rem; }
+        .day-slot.inactive { opacity:.65; }
+        .day-slot-head { display:flex; align-items:center; justify-content:space-between; gap:.5rem; }
+        .day-add { align-self:flex-start; }
         .switch { position:relative; width:42px; height:24px; flex-shrink:0; }
         .switch input { opacity:0; width:0; height:0; }
         .switch .slider { position:absolute; inset:0; background:#cbd5e1; border-radius:24px; cursor:pointer; transition:.2s; }
@@ -95,33 +99,45 @@ function me_time($t){ return (new DateTime($t))->format('g:i A'); }
             <div class="content-card">
                 <h2>My Weekly Availability</h2>
                 <p style="color:#64748b;margin-bottom:1.25rem;font-size:0.93rem;">
-                    Set which days you are available and toggle each day on or off. Patients can only book on days that are switched on.
+                    Set the days and times you are available. You can add more than one block per day and toggle each block on or off. Patients can only book on active blocks.
                 </p>
                 <div class="day-grid">
                 <?php foreach (['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] as $day):
-                    $sched = $sched_by_day[$day] ?? null;
-                    $has = $sched !== null;
-                    $active = $has && (int)$sched['is_active'] === 1;
+                    $day_schedules = $sched_by_day[$day] ?? [];
+                    $has = count($day_schedules) > 0;
+                    $active = false;
+                    foreach ($day_schedules as $row) {
+                        if ((int)$row['is_active'] === 1) { $active = true; break; }
+                    }
                 ?>
                     <div class="day-card <?php echo $has ? ($active ? 'active-ok' : 'inactive') : ''; ?>">
                         <div class="day-card-head">
                             <h3><?php echo $day; ?></h3>
                             <?php if ($has): ?>
-                            <label class="switch" title="Toggle availability">
-                                <input type="checkbox" <?php echo $active ? 'checked' : ''; ?> onchange="toggleDay(<?php echo (int)$sched['id']; ?>, this.checked)">
-                                <span class="slider"></span>
-                            </label>
+                            <span class="badge-notset"><?php echo count($day_schedules); ?> block<?php echo count($day_schedules) === 1 ? '' : 's'; ?></span>
                             <?php endif; ?>
                         </div>
                         <?php if ($has): ?>
-                            <div class="day-time">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                <span><?php echo me_time($sched['start_time']); ?> &ndash; <?php echo me_time($sched['end_time']); ?></span>
+                            <?php foreach ($day_schedules as $sched): ?>
+                            <?php $sched_active = (int)$sched['is_active'] === 1; ?>
+                            <div class="day-slot <?php echo $sched_active ? '' : 'inactive'; ?>">
+                                <div class="day-slot-head">
+                                    <div class="day-time">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                        <span><?php echo me_time($sched['start_time']); ?> &ndash; <?php echo me_time($sched['end_time']); ?></span>
+                                    </div>
+                                    <label class="switch" title="Toggle availability">
+                                        <input type="checkbox" <?php echo $sched_active ? 'checked' : ''; ?> onchange="toggleDay(<?php echo (int)$sched['id']; ?>, this.checked)">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div style="display:flex;gap:.5rem">
+                                    <button class="btn-sm btn-edit" onclick="openEditModal(<?php echo (int)$sched['id']; ?>, '<?php echo $day; ?>', '<?php echo $sched['start_time']; ?>', '<?php echo $sched['end_time']; ?>')">Edit</button>
+                                    <button class="btn-sm btn-delete" onclick="deleteSchedule(<?php echo (int)$sched['id']; ?>)">Remove</button>
+                                </div>
                             </div>
-                            <div style="display:flex;gap:.5rem">
-                                <button class="btn-sm btn-edit" onclick="openEditModal(<?php echo (int)$sched['id']; ?>, '<?php echo $day; ?>', '<?php echo $sched['start_time']; ?>', '<?php echo $sched['end_time']; ?>')">Edit</button>
-                                <button class="btn-sm btn-delete" onclick="deleteSchedule(<?php echo (int)$sched['id']; ?>)">Remove</button>
-                            </div>
+                            <?php endforeach; ?>
+                            <button class="btn-sm btn-edit day-add" onclick="openAddModal('<?php echo $day; ?>')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add another time</button>
                         <?php else: ?>
                             <span class="badge-notset">Not set &mdash; unavailable</span>
                             <button class="btn-sm btn-edit" onclick="openAddModal('<?php echo $day; ?>')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Set Availability</button>
@@ -353,7 +369,7 @@ function me_time($t){ return (new DateTime($t))->format('g:i A'); }
         document.getElementById('addForm').addEventListener('submit', function(e){
             e.preventDefault(); showLoading();
             fetch('doctor_schedule_action.php?action=add',{method:'POST',body:new FormData(this)})
-            .then(r=>r.text()).then(res=>{hideLoading();if(res.trim()==='success'){showToast('Availability added!','success');closeModal('addModal');document.body.classList.add('__leaving');setTimeout(()=>location.reload(),215);}else{showToast(res,'error');}})
+            .then(r=>r.text()).then(res=>{hideLoading();if(res.trim()==='success'){showToast('Availability saved!','success');closeModal('addModal');document.body.classList.add('__leaving');setTimeout(()=>location.reload(),215);}else{showToast(res,'error');}})
             .catch(()=>{hideLoading();showToast('Error','error');});
         });
 

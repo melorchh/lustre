@@ -5,6 +5,100 @@ function fmt_hm12($t) {
     return date('i', $ts) === '00' ? date('gA', $ts) : date('g:iA', $ts);
 }
 
+function schedule_time_sql($value) {
+    $ts = strtotime((string)$value);
+    return $ts === false ? '' : date('H:i:s', $ts);
+}
+
+function schedule_time_seconds($value) {
+    $parts = explode(':', (string)$value);
+    if (count($parts) < 2) {
+        return 0;
+    }
+    return ((int)$parts[0] * 3600) + ((int)$parts[1] * 60) + (isset($parts[2]) ? (int)$parts[2] : 0);
+}
+
+/**
+ * Returns an error message when a new schedule block overlaps another block
+ * for the same doctor and day. A block with the same start time is treated as
+ * an update, so it is not a conflict.
+ */
+function schedule_block_conflict($conn, $doctor_id, $day_of_week, $start_time, $end_time) {
+    $start = schedule_time_sql($start_time);
+    $end   = schedule_time_sql($end_time);
+    $start_sec = schedule_time_seconds($start);
+    $end_sec   = schedule_time_seconds($end);
+
+    if ($start === '' || $end === '' || $end_sec <= $start_sec) {
+        return 'End time must be after start time';
+    }
+
+    $stmt = $conn->prepare(
+        "SELECT start_time, end_time FROM doctor_schedules
+         WHERE doctor_id = ? AND day_of_week = ? AND start_time <> ?"
+    );
+    $stmt->bind_param("iss", $doctor_id, $day_of_week, $start);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    while ($row = $res->fetch_assoc()) {
+        $existing_start = schedule_time_seconds($row['start_time']);
+        $existing_end   = schedule_time_seconds($row['end_time']);
+        if ($start_sec < $existing_end && $end_sec > $existing_start) {
+            $stmt->close();
+            return 'This time overlaps an existing ' . $day_of_week . ' schedule';
+        }
+    }
+    $stmt->close();
+
+    return '';
+}
+
+/**
+ * Creates a schedule block, or updates the end time/reactivates the row when
+ * the same doctor already has a block on that day with the same start time.
+ *
+ * @return array{ok:bool, action:string, error:string}
+ */
+function save_doctor_schedule_block($conn, $doctor_id, $day_of_week, $start_time, $end_time) {
+    $start = schedule_time_sql($start_time);
+    $end   = schedule_time_sql($end_time);
+
+    if ($start === '' || $end === '' || schedule_time_seconds($end) <= schedule_time_seconds($start)) {
+        return array('ok' => false, 'action' => '', 'error' => 'End time must be after start time');
+    }
+
+    $find = $conn->prepare(
+        "SELECT id FROM doctor_schedules
+         WHERE doctor_id = ? AND day_of_week = ? AND start_time = ?
+         ORDER BY is_active DESC, id ASC LIMIT 1"
+    );
+    $find->bind_param("iss", $doctor_id, $day_of_week, $start);
+    $find->execute();
+    $existing = $find->get_result()->fetch_assoc();
+    $find->close();
+
+    if ($existing) {
+        $stmt = $conn->prepare("UPDATE doctor_schedules SET end_time = ?, is_active = 1 WHERE id = ?");
+        $schedule_id = (int)$existing['id'];
+        $stmt->bind_param("si", $end, $schedule_id);
+        $ok = $stmt->execute();
+        $error = $ok ? '' : ($stmt->error ?: 'Failed to update schedule');
+        $stmt->close();
+        return array('ok' => (bool)$ok, 'action' => 'updated', 'error' => $error);
+    }
+
+    $stmt = $conn->prepare(
+        "INSERT INTO doctor_schedules (doctor_id, day_of_week, start_time, end_time, is_active)
+         VALUES (?, ?, ?, ?, 1)"
+    );
+    $stmt->bind_param("isss", $doctor_id, $day_of_week, $start, $end);
+    $ok = $stmt->execute();
+    $error = $ok ? '' : ($stmt->error ?: 'Failed to add schedule');
+    $stmt->close();
+
+    return array('ok' => (bool)$ok, 'action' => 'added', 'error' => $error);
+}
+
 function sync_doctor_schedule_text($conn, $doctor_id) {
     $doctor_id = (int)$doctor_id;
     $week = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
