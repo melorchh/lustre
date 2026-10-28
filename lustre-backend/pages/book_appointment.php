@@ -51,11 +51,16 @@ if ($stmt->num_rows === 0) {
 }
 $stmt->close();
 
-// Validate date is not in the past
+// Require appointments to be booked at least one day in advance.
 $selected_date = strtotime($date);
 $today = strtotime(date('Y-m-d'));
-if ($selected_date < $today) {
-    echo "error: Cannot book appointments in the past";
+if ($selected_date === false || date('Y-m-d', $selected_date) !== $date) {
+    echo "error: Invalid appointment date";
+    $conn->close();
+    exit;
+}
+if ($selected_date <= $today) {
+    echo "error: Appointments must be booked at least one day in advance";
     $conn->close();
     exit;
 }

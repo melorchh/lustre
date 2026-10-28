@@ -22,7 +22,7 @@ $available_dates = [];
 $today = strtotime(date('Y-m-d'));
 $interval = 24 * 60 * 60;
 
-for ($i = 0; $i < $days; $i++) {
+for ($i = 1; $i <= $days; $i++) {
     $date = date('Y-m-d', $today + $i * $interval);
     $day_of_week = date('l', strtotime($date));
 
@@ -80,8 +80,6 @@ for ($i = 0; $i < $days; $i++) {
     }
     $stmt3->close();
 
-    $is_today = ($date === date('Y-m-d'));
-    $now = time();
     $has_slot = false;
 
     // Check if any slot is available across all schedules for this day
@@ -92,11 +90,6 @@ for ($i = 0; $i < $days; $i++) {
 
         for ($t = $start; $t < $end; $t += $slot_interval) {
             $time_str = date('H:i', $t);
-            if ($is_today) {
-                $slot_ts = strtotime($date . ' ' . $time_str);
-                if ($slot_ts <= $now) continue;
-            }
-            
             // Convert slot time to seconds since midnight
             $slot_parts = explode(':', $time_str);
             $slot_start_seconds = ($slot_parts[0] * 3600) + ($slot_parts[1] * 60);
