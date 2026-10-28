@@ -160,10 +160,13 @@ export default function AdminSchedules() {
               <button
                 type="button"
                 className="btn-primary"
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   const el = document.getElementById('add-availability-section');
                   if (el) {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    el.focus?.({ preventScroll: true });
                   }
                 }}
               >

@@ -1,0 +1,20 @@
+/* Make native date/time inputs fit the admin/doctor DS */
+:is(.admin-portal, .doctor-portal) input[type="date"].form-input,
+:is(.admin-portal, .doctor-portal) input[type="time"].form-input {
+  font-family: inherit;
+  cursor: text;
+}
+:is(.admin-portal, .doctor-portal) input[type="date"].form-input::-webkit-calendar-picker-indicator,
+:is(.admin-portal, .doctor-portal) input[type="time"].form-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: saturate(0.8);
+}
+:is(.admin-portal, .doctor-portal) input[type="date"].form-input::-webkit-datetime-edit,
+:is(.admin-portal, .doctor-portal) input[type="time"].form-input::-webkit-datetime-edit {
+  padding: 0;
+}
+:is(.admin-portal, .doctor-portal) .form-input[type="date"],
+:is(.admin-portal, .doctor-portal) .form-input[type="time"],
+:is(.admin-portal, .doctor-portal) .apt-search[type="date"] {
+  line-height: 1.35;
+}
