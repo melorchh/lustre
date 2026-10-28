@@ -57,7 +57,7 @@ if ($wl_doc) {
     while ($wd = $wl_doc->fetch_assoc()) {
         $wd_id = (int)$wd['id'];
         $wd_capacity = isset($walkin_capacity[$wd_id]) ? $walkin_capacity[$wd_id] : null;
-        if ($wd_capacity && empty($wd_capacity['available'])) {
+        if (!$wd_capacity || empty($wd_capacity['available'])) {
             continue;
         }
         $walkin_doc_options .= '<option value="' . $wd_id . '">Dr. ' . htmlspecialchars($wd['name']) . ' (' . htmlspecialchars($wd['specialty']) . ')</option>';
@@ -65,7 +65,7 @@ if ($wl_doc) {
     }
 }
 if (count($walkin_docs_json) === 0) {
-    $walkin_doc_options = '<option value="" disabled>No doctors have room left today</option>';
+    $walkin_doc_options = '<option value="" disabled>No doctors are available today</option>';
 }
 $conn->close();
 

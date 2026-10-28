@@ -619,7 +619,7 @@ export default function AdminDashboard() {
             </Select>
             {availableDoctorIds !== null && walkinDoctors.length === 0 && (
               <p className="form-hint">
-                No doctors have room left today{walkinForm.specialty ? ` for ${walkinForm.specialty}` : ''}. Free up a schedule or raise a daily limit to add more.
+                No doctors are available today{walkinForm.specialty ? ` for ${walkinForm.specialty}` : ''}. Add an active schedule for today or free up a doctor's capacity.
               </p>
             )}
           </div>
