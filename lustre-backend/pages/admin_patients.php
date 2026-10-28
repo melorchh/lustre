@@ -3,6 +3,7 @@ require __DIR__ . '/../src/session.php';
 if (!isset($_SESSION["admin_id"])) { header("Location: admin_login.php"); exit; }
 require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/unique_ids.php';
+require_once __DIR__ . '/../src/doctor_capacity.php';
 ensure_unique_ids($conn);
 $admin_name = $_SESSION["admin_name"];
 
@@ -50,12 +51,21 @@ if (!$__seeded || (int)$__seeded->num_rows === 0) {
 }
 unset($__seeded, $__defaults, $__other, $__rows, $__upd, $__row, $__orig, $__lines, $__changed, $__val, $__id);
 
+$walkin_capacity = doctor_capacity_map($conn, date('Y-m-d'));
 $wl_doc = $conn->query("SELECT id, name, specialty, test_procedures FROM doctors ORDER BY name");
 if ($wl_doc) {
     while ($wd = $wl_doc->fetch_assoc()) {
-        $walkin_doc_options .= '<option value="' . (int)$wd['id'] . '">Dr. ' . htmlspecialchars($wd['name']) . ' (' . htmlspecialchars($wd['specialty']) . ')</option>';
-        $walkin_docs_json[] = ['id' => (int)$wd['id'], 'name' => $wd['name'], 'specialty' => $wd['specialty'], 'tests' => (string)($wd['test_procedures'] ?? '')];
+        $wd_id = (int)$wd['id'];
+        $wd_capacity = isset($walkin_capacity[$wd_id]) ? $walkin_capacity[$wd_id] : null;
+        if ($wd_capacity && empty($wd_capacity['available'])) {
+            continue;
+        }
+        $walkin_doc_options .= '<option value="' . $wd_id . '">Dr. ' . htmlspecialchars($wd['name']) . ' (' . htmlspecialchars($wd['specialty']) . ')</option>';
+        $walkin_docs_json[] = ['id' => $wd_id, 'name' => $wd['name'], 'specialty' => $wd['specialty'], 'tests' => (string)($wd['test_procedures'] ?? '')];
     }
+}
+if (count($walkin_docs_json) === 0) {
+    $walkin_doc_options = '<option value="" disabled>No doctors have room left today</option>';
 }
 $conn->close();
 

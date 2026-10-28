@@ -6,7 +6,7 @@
 // Which rule decides that depends on the data the clinic keeps:
 //
 //   * doctors.daily_limit > 0  ->  explicit daily patient cap. The doctor is
-//     full once today's active appointments + today's walk-ins reach it.
+//     full once today's non-cancelled appointments + walk-ins reach it.
 //   * no cap, but the doctor has doctor_schedules rows  ->  slot based. The
 //     doctor is full when every 1-hour visit window in today's shifts is
 //     already booked or blocked (the same 1-hour block get_available_times.php
@@ -151,11 +151,13 @@ if (!function_exists('doctor_capacity_map')) {
             }
         }
 
-        // Patients already assigned that day: active appointments plus
-        // walk-ins that were not cancelled, counted once per patient.
+        // Patients already assigned that day: appointments that were not
+        // cancelled (including completed visits) plus walk-ins, counted once
+        // per patient. Completed visits still used a slot and count toward
+        // the doctor's daily limit.
         $stmt = $conn->prepare(
             "SELECT doctor_id, patient_id FROM appointments
-              WHERE appointment_date = ? AND status IN ('pending','confirmed')
+              WHERE appointment_date = ? AND status IN ('pending','confirmed','completed')
              UNION
              SELECT doctor_id, patient_id FROM walk_ins
               WHERE arrival_date = ? AND status <> 'cancelled'"
@@ -177,7 +179,7 @@ if (!function_exists('doctor_capacity_map')) {
 
         $stmt = $conn->prepare(
             "SELECT doctor_id, appointment_time FROM appointments
-              WHERE appointment_date = ? AND status IN ('pending','confirmed')"
+              WHERE appointment_date = ? AND status IN ('pending','confirmed','completed')"
         );
         if ($stmt) {
             $stmt->bind_param("s", $date);
