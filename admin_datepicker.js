@@ -47,6 +47,9 @@
 
     var popup = document.createElement('div');
     popup.className = 'admin-dp-popup';
+    if (input.hasAttribute('data-doctor-datepicker')) {
+      popup.classList.add('doctor-date-picker-popup');
+    }
     popup.setAttribute('role', 'dialog');
 
     wrap.appendChild(trigger);
