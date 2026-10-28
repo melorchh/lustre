@@ -22,7 +22,7 @@ $available_dates = [];
 $today = strtotime(date('Y-m-d'));
 $interval = 24 * 60 * 60;
 
-for ($i = 0; $i < $days; $i++) {
+for ($i = 1; $i <= $days; $i++) {
     $date = date('Y-m-d', $today + $i * $interval);
     $day_of_week = date('l', strtotime($date));
 
@@ -51,7 +51,7 @@ for ($i = 0; $i < $days; $i++) {
     }
     $stmt->close();
 
-    // Fetch booked times for that date with 2-hour blocks
+    // Fetch booked times for that date with 1-hour blocks
     $stmt2 = $conn->prepare("SELECT appointment_time FROM appointments WHERE doctor_id=? AND appointment_date=? AND status IN ('pending','confirmed')");
     $stmt2->bind_param("is", $doctor_id, $date);
     $stmt2->execute();
@@ -62,7 +62,7 @@ for ($i = 0; $i < $days; $i++) {
         // Convert to seconds since midnight for easier comparison
         $parts = explode(':', $appointment_time);
         $start_seconds = ($parts[0] * 3600) + ($parts[1] * 60) + $parts[2];
-        $end_seconds = $start_seconds + (2 * 60 * 60); // Add 2 hours
+        $end_seconds = $start_seconds + (60 * 60); // Add 1 hour
         $booked_blocks[] = ['start' => $start_seconds, 'end' => $end_seconds];
     }
     $stmt2->close();
@@ -80,8 +80,6 @@ for ($i = 0; $i < $days; $i++) {
     }
     $stmt3->close();
 
-    $is_today = ($date === date('Y-m-d'));
-    $now = time();
     $has_slot = false;
 
     // Check if any slot is available across all schedules for this day
@@ -92,17 +90,15 @@ for ($i = 0; $i < $days; $i++) {
 
         for ($t = $start; $t < $end; $t += $slot_interval) {
             $time_str = date('H:i', $t);
-            if ($is_today) {
-                $slot_ts = strtotime($date . ' ' . $time_str);
-                if ($slot_ts <= $now) continue;
-            }
-            
             // Convert slot time to seconds since midnight
             $slot_parts = explode(':', $time_str);
             $slot_start_seconds = ($slot_parts[0] * 3600) + ($slot_parts[1] * 60);
-            $slot_end_seconds = $slot_start_seconds + (30 * 60); // 30-minute slot
+            if ($t + (60 * 60) > $end) {
+                continue;
+            }
+            $slot_end_seconds = $slot_start_seconds + (60 * 60); // full 1-hour visit window
             
-            // Check if slot overlaps with any booked 2-hour block
+            // Check if slot overlaps with any booked 1-hour block
             $is_booked = false;
             foreach ($booked_blocks as $block) {
                 if ($slot_start_seconds < $block['end'] && $slot_end_seconds > $block['start']) {

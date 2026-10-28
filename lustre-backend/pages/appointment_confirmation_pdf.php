@@ -173,7 +173,7 @@ pdftxt($stream, $M, $Y, 'To ensure all patients are seen promptly, a 30-minute g
 $Y += 13;
 pdftxt($stream, $M, $Y, 'Failure to arrive within this window will result in the cancellation of your appointment.', 'B', 8.5, $gray_mid);
 $Y += 15;
-pdftxt($stream, $M, $Y, 'Appointments are scheduled as 2-hour visits. Please arrive on time.', 'R', 8.5, $gray_light);
+pdftxt($stream, $M, $Y, 'Appointments are scheduled as 1-hour visits. Please arrive on time.', 'R', 8.5, $gray_light);
 $Y += 13;
 pdftxt($stream, $M, $Y, 'Present this confirmation card at the clinic front desk upon arrival.', 'R', 8.5, $gray_light);
 $Y += 20;

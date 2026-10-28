@@ -12,7 +12,7 @@ $patient_id = isset($_POST["patient_id"]) ? intval($_POST["patient_id"]) : 0;
 $doctor_id  = isset($_POST["doctor_id"])  ? intval($_POST["doctor_id"])  : 0;
 $date       = isset($_POST["date"])  ? trim($_POST["date"]) : '';
 $time       = isset($_POST["time"])  ? trim($_POST["time"]) : '';
-$appointment_duration = 120; // 2 hours - FIXED DURATION (matches booking)
+$appointment_duration = 60; // 1 hour - FIXED DURATION (matches booking)
 
 // Optional vitals captured with the booking
 $vt_weight = isset($_POST["weight_kg"])      ? trim($_POST["weight_kg"])      : '';
@@ -102,7 +102,7 @@ $stmt = $conn->prepare("
     WHERE doctor_id=? AND appointment_date=?
       AND status IN ('pending','confirmed')
       AND appointment_time < ?
-      AND appointment_time + INTERVAL '2 hours' > ?
+      AND appointment_time + INTERVAL '1 hour' > ?
 ");
 $duration_sql = NULL;
 $stmt->bind_param("isss", $doctor_id, $date, $end_time, $time_with_seconds);
@@ -110,7 +110,7 @@ $stmt->execute();
 $stmt->store_result();
 if ($stmt->num_rows > 0) {
     $stmt->close();
-    echo "error: This time slot / overlapping period is already booked for this doctor";
+    echo "error: This time slot / overlapping 1-hour period is already booked for this doctor";
     $conn->close(); exit;
 }
 $stmt->close();
@@ -119,9 +119,9 @@ $stmt->close();
 $day_of_week = date('l', strtotime($date));
 $stmt = $conn->prepare("
     SELECT id FROM doctor_schedules
-    WHERE doctor_id=? AND day_of_week=? AND ? BETWEEN start_time AND end_time AND is_active=1
+    WHERE doctor_id=? AND day_of_week=? AND ? >= start_time AND ? <= end_time AND is_active=1
 ");
-$stmt->bind_param("iss", $doctor_id, $day_of_week, $time_with_seconds);
+$stmt->bind_param("isss", $doctor_id, $day_of_week, $time_with_seconds, $end_time);
 $stmt->execute();
 $stmt->store_result();
 if ($stmt->num_rows === 0) {
@@ -135,9 +135,9 @@ $stmt->close();
 $stmt = $conn->prepare("
     SELECT id FROM doctor_time_blocks
     WHERE doctor_id=? AND ((block_type='date' AND block_date=?) OR (block_type='week' AND ? BETWEEN block_date AND end_date) OR (block_type='weekly' AND day_of_week=?))
-      AND ? >= start_time AND ? < end_time
+      AND ? < end_time AND ? > start_time
 ");
-$stmt->bind_param("isssss", $doctor_id, $date, $date, $day_of_week, $time_with_seconds, $time_with_seconds);
+$stmt->bind_param("isssss", $doctor_id, $date, $date, $day_of_week, $end_time, $time_with_seconds);
 $stmt->execute();
 $stmt->store_result();
 if ($stmt->num_rows > 0) {

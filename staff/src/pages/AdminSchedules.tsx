@@ -25,6 +25,7 @@ export default function AdminSchedules() {
   const [schedForm, setSchedForm] = useState({ start_day: 'Monday', end_day: 'Monday', start_time: '09:00', end_time: '17:00' });
   const [availOpen, setAvailOpen] = useState(false);
   const [availDoctorId, setAvailDoctorId] = useState<string>('');
+  const [pendingDelete, setPendingDelete] = useState<ScheduleRow | null>(null);
   const [blockOpen, setBlockOpen] = useState(false);
   const [blockForm, setBlockForm] = useState({ doctor_id: '', block_type: 'date', block_date: '', end_date: '', day_of_week: 'Monday', start_time: '09:00', end_time: '17:00', reason: '' });
 
@@ -59,7 +60,7 @@ export default function AdminSchedules() {
     try {
       const res = await postAction('admin_schedule_action.php', { doctor_id: availDoctorId, ...schedForm }, { action: 'add' });
       if (isSuccess(res)) {
-        showToast('Schedule added', 'success');
+        showToast('Availability saved', 'success');
         setAvailOpen(false);
         refresh();
       } else showToast(res.replace(/^error:\s*/i, ''), 'error');
@@ -77,12 +78,16 @@ export default function AdminSchedules() {
     finally { hideLoading(); }
   }
 
-  async function deleteSchedule(id: number) {
-    if (!confirm('Delete this schedule?')) return;
+  async function deleteSchedule() {
+    if (!pendingDelete) return;
     showLoading();
     try {
-      const res = await postAction('admin_schedule_action.php', { schedule_id: id }, { action: 'delete' });
-      if (isSuccess(res)) { setSchedules((p) => p.filter((x) => x.id !== id)); showToast('Deleted', 'success'); }
+      const res = await postAction('admin_schedule_action.php', { schedule_id: pendingDelete.id }, { action: 'delete' });
+      if (isSuccess(res)) {
+        setSchedules((p) => p.filter((x) => x.id !== pendingDelete.id));
+        setPendingDelete(null);
+        showToast('Deleted', 'success');
+      }
       else showToast(res.replace(/^error:\s*/i, ''), 'error');
     } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error'); }
     finally { hideLoading(); }
@@ -170,7 +175,7 @@ export default function AdminSchedules() {
                   <td>
                     <div className="ap-row-actions ap-row-actions--inline">
                       <button type="button" className="btn-edit btn-xs" onClick={() => toggleSchedule(s)}>{s.is_active ? 'Disable' : 'Enable'}</button>
-                      <button type="button" className="btn-delete btn-xs" onClick={() => deleteSchedule(s.id)}>Delete</button>
+                      <button type="button" className="btn-delete btn-xs" onClick={() => setPendingDelete(s)}>Delete</button>
                     </div>
                   </td>
                 </tr>
@@ -220,7 +225,7 @@ export default function AdminSchedules() {
       <Modal open={availOpen} onClose={() => setAvailOpen(false)}>
         <ModalHead
           title="Add available time"
-          hint="Set the doctor's weekly availability. Choose a day range and time."
+          hint="Choose a day range and time. Reusing an existing start time updates that block."
         />
         <div className="form-grid">
           <Field label="Doctor" className="ap-field--full">
@@ -302,6 +307,26 @@ export default function AdminSchedules() {
         <div className="form-actions">
           <button type="button" className="btn-secondary" onClick={() => setBlockOpen(false)}>Cancel</button>
           <button type="button" className="btn-primary" onClick={addBlock}>Add block</button>
+        </div>
+      </Modal>
+
+      <Modal open={!!pendingDelete} onClose={() => setPendingDelete(null)} className="ap-confirm-modal">
+        <span className="ap-confirm-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3 6h18" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          </svg>
+        </span>
+        <ModalHead
+          title="Delete schedule?"
+          hint={pendingDelete
+            ? `Remove Dr. ${doctorName(pendingDelete.doctor_id)}'s ${pendingDelete.day_of_week} availability (${fmtTime(pendingDelete.start_time)}–${fmtTime(pendingDelete.end_time)})?`
+            : undefined}
+        />
+        <div className="form-actions ap-confirm-actions">
+          <button type="button" className="btn-secondary" onClick={() => setPendingDelete(null)}>Cancel</button>
+          <button type="button" className="btn-danger" onClick={deleteSchedule}>Yes, delete</button>
         </div>
       </Modal>
     </Shell>

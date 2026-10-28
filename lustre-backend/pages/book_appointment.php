@@ -16,7 +16,7 @@ $doctor_id = isset($_POST["doctor_id"]) ? intval($_POST["doctor_id"]) : 0;
 $date = isset($_POST["date"]) ? trim($_POST["date"]) : '';
 $time = isset($_POST["time"]) ? trim($_POST["time"]) : '';
 $service = isset($_POST["service"]) ? trim($_POST["service"]) : '';
-$appointment_duration = 120; // 2 hours in minutes - FIXED DURATION
+$appointment_duration = 60; // 1 hour in minutes - FIXED DURATION
 
 // Validate that patient exists
 $stmt = $conn->prepare("SELECT id FROM patients WHERE id = ?");
@@ -51,11 +51,16 @@ if ($stmt->num_rows === 0) {
 }
 $stmt->close();
 
-// Validate date is not in the past
+// Require appointments to be booked at least one day in advance.
 $selected_date = strtotime($date);
 $today = strtotime(date('Y-m-d'));
-if ($selected_date < $today) {
-    echo "error: Cannot book appointments in the past";
+if ($selected_date === false || date('Y-m-d', $selected_date) !== $date) {
+    echo "error: Invalid appointment date";
+    $conn->close();
+    exit;
+}
+if ($selected_date <= $today) {
+    echo "error: Appointments must be booked at least one day in advance";
     $conn->close();
     exit;
 }
@@ -69,27 +74,26 @@ if (!preg_match('/^([01][0-9]|2[0-3]):[0-5][0-9]$/', $time)) {
 
 $time_with_seconds = $time . ":00";
 
-// Calculate end time based on 2-hour duration
+// Calculate end time based on the 1-hour appointment duration
 $start_timestamp = strtotime($date . ' ' . $time);
-$end_timestamp = $start_timestamp + (120 * 60); // 2 hours = 120 minutes
+$end_timestamp = $start_timestamp + ($appointment_duration * 60);
 $end_time = date('H:i:s', $end_timestamp);
 
-// Check if any slot is already booked within the 2-hour duration
-// This checks if new appointment overlaps with any existing appointment's 2-hour block
+// Check whether this appointment overlaps an existing 1-hour appointment.
 $stmt = $conn->prepare("
     SELECT id FROM appointments 
     WHERE doctor_id=? 
     AND appointment_date=? 
     AND status IN ('pending', 'confirmed')
     AND appointment_time < ?
-    AND appointment_time + INTERVAL '2 hours' > ?
+    AND appointment_time + INTERVAL '1 hour' > ?
 ");
 $stmt->bind_param("isss", $doctor_id, $date, $end_time, $time_with_seconds);
 $stmt->execute();
 $stmt->store_result();
 if ($stmt->num_rows > 0) {
     $stmt->close();
-    echo "error: This time slot or overlapping 2-hour period is already booked";
+    echo "error: This time slot or overlapping 1-hour period is already booked";
     $conn->close();
     exit;
 }
@@ -115,10 +119,11 @@ $stmt = $conn->prepare("
     SELECT id FROM doctor_schedules 
     WHERE doctor_id = ? 
     AND day_of_week = ? 
-    AND ? BETWEEN start_time AND end_time 
+    AND ? >= start_time
+    AND ? <= end_time
     AND is_active = 1
 ");
-$stmt->bind_param("iss", $doctor_id, $day_of_week, $time_with_seconds);
+$stmt->bind_param("isss", $doctor_id, $day_of_week, $time_with_seconds, $end_time);
 $stmt->execute();
 $stmt->store_result();
 
@@ -137,10 +142,10 @@ $stmt = $conn->prepare("
       AND ((block_type = 'date' AND block_date = ?)
         OR (block_type = 'week' AND ? BETWEEN block_date AND end_date)
         OR (block_type = 'weekly' AND day_of_week = ?))
-      AND ? >= start_time
-      AND ? <  end_time
+      AND ? < end_time
+      AND ? > start_time
 ");
-$stmt->bind_param("isssss", $doctor_id, $date, $date, $day_of_week, $time_with_seconds, $time_with_seconds);
+$stmt->bind_param("isssss", $doctor_id, $date, $date, $day_of_week, $end_time, $time_with_seconds);
 $stmt->execute();
 $stmt->store_result();
 if ($stmt->num_rows > 0) {
@@ -151,9 +156,9 @@ if ($stmt->num_rows > 0) {
 }
 $stmt->close();
 
-// Save appointment (2-hour duration is hardcoded)
-$stmt = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, service_requested, status, payment_status) VALUES (?, ?, ?, ?, ?, 'pending', 'pending')");
-$stmt->bind_param("iisss", $patient_id, $doctor_id, $date, $time_with_seconds, $service);
+// Save appointment with its fixed 1-hour duration.
+$stmt = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, appointment_duration, service_requested, status, payment_status) VALUES (?, ?, ?, ?, ?, ?, 'pending', 'pending')");
+$stmt->bind_param("iissis", $patient_id, $doctor_id, $date, $time_with_seconds, $appointment_duration, $service);
 
 if ($stmt->execute()) {
     $new_id = $stmt->insert_id;
