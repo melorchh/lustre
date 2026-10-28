@@ -2279,6 +2279,40 @@ button.resched-badge:hover {
 .ap-field--date .apt-search {
   min-width: 168px;
 }
+.ap-field--date .admin-datepicker {
+  width: 100%;
+  min-width: 176px;
+}
+.ap-field--date .admin-dp-trigger {
+  min-height: 40px;
+  padding: 0.48rem 0.72rem;
+  border: 1.5px solid var(--ap-border-strong);
+  border-radius: 10px;
+  background: var(--ap-surface);
+  color: var(--ap-text);
+  font-size: 0.86rem;
+  gap: 0.5rem;
+}
+.ap-field--date .admin-dp-trigger:hover {
+  background: var(--ap-surface-3);
+}
+.ap-field--date .admin-dp-trigger.open,
+.ap-field--date .admin-dp-trigger:focus-visible {
+  border-color: var(--ap-accent);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.13);
+}
+.ap-field--date .admin-dp-cal {
+  color: var(--ap-accent);
+}
+.ap-field--date .admin-dp-chev {
+  color: var(--ap-muted);
+}
+.ap-field--date .admin-dp-trigger.placeholder .admin-dp-text {
+  color: var(--ap-faint);
+}
+[data-theme="dark"] .ap-field--date .admin-dp-trigger {
+  background: var(--ap-surface-2);
+}
 :is(.admin-portal, .doctor-portal) .ap-context {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
