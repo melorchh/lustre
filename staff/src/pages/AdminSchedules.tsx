@@ -154,7 +154,23 @@ export default function AdminSchedules() {
         <Card
           title="Weekly schedules"
           subtitle={`${visibleSchedules.length} availability row${visibleSchedules.length === 1 ? '' : 's'}`}
-          actions={<button type="button" className="btn-primary" onClick={() => setBlockOpen(true)}>Add time block</button>}
+          actions={
+            <div className="ap-row-actions ap-row-actions--inline">
+              <button type="button" className="btn-secondary" onClick={() => setBlockOpen(true)}>Add time block</button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => {
+                  const el = document.getElementById('add-availability-section');
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  }
+                }}
+              >
+                Add available time
+              </button>
+            </div>
+          }
         >
           <FilterBar>
             <Field label="Doctor">
@@ -198,6 +214,7 @@ export default function AdminSchedules() {
 
           {doctorId && (
             <FormSection
+              id="add-availability-section"
               title={`Add schedule for Dr. ${doctorName(Number(doctorId))}`}
               hint="Pick a day and time, add to list, then save"
             >
