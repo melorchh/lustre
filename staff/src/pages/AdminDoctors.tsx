@@ -18,6 +18,10 @@ interface DoctorAccount {
   created_at?: string;
 }
 
+type PendingDelete =
+  | { kind: 'doctor'; doctor: DoctorRow }
+  | { kind: 'account'; account: DoctorAccount };
+
 const EMPTY_FORM = { name: '', specialty: '', schedule: '', experience: '', test_procedures: '', daily_limit: '' };
 const EMPTY_ACCOUNT = { doctor_id: '', username: '', password: '' };
 
@@ -92,6 +96,7 @@ export default function AdminDoctors() {
   const [acctCreate, setAcctCreate] = useState({ ...EMPTY_ACCOUNT });
   const [resetFor, setResetFor] = useState<DoctorAccount | null>(null);
   const [resetPassword, setResetPassword] = useState('');
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
   const stats = d.stats || {};
 
   const accountsByDoctor = useMemo(() => {
@@ -173,12 +178,12 @@ export default function AdminDoctors() {
   }
 
   async function removeDoctor(doc: DoctorRow) {
-    if (!confirm(`Delete Dr. ${doc.name}? This cannot be undone.`)) return;
     showLoading();
     try {
       const res = await postAction('admin_doctor_actions.php', { action: 'delete', doctor_id: doc.id });
       if (isSuccess(res)) {
         setDoctors((p) => p.filter((x) => x.id !== doc.id));
+        setPendingDelete(null);
         showToast('Doctor removed', 'success');
       } else showToast(res.replace(/^error:\s*/i, ''), 'error');
     } catch (e) {
@@ -238,12 +243,12 @@ export default function AdminDoctors() {
   }
 
   async function removeAccount(acct: DoctorAccount) {
-    if (!confirm(`Delete the login account for Dr. ${acct.doctor_name || acct.doctor_id}? The doctor profile is kept.`)) return;
     showLoading();
     try {
       const res = await postAction('admin_doctor_actions.php', { action: 'delete_account', account_id: acct.id });
       if (isSuccess(res)) {
         setAccounts((p) => p.filter((x) => x.id !== acct.id));
+        setPendingDelete(null);
         showToast('Account deleted', 'success');
       } else showToast(res.replace(/^error:\s*/i, ''), 'error');
     } catch (e) {
@@ -252,6 +257,18 @@ export default function AdminDoctors() {
       hideLoading();
     }
   }
+
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    if (pendingDelete.kind === 'doctor') await removeDoctor(pendingDelete.doctor);
+    else await removeAccount(pendingDelete.account);
+  }
+
+  const deleteHint = pendingDelete
+    ? pendingDelete.kind === 'doctor'
+      ? `Dr. ${pendingDelete.doctor.name} will be removed from the directory. This action cannot be undone.`
+      : `This removes the portal login for Dr. ${pendingDelete.account.doctor_name || pendingDelete.account.doctor_id}. The doctor profile is kept.`
+    : undefined;
 
   return (
     <Shell active="doctors" title="Doctors">
@@ -309,7 +326,7 @@ export default function AdminDoctors() {
                     <td>
                       <div className="ap-row-actions ap-row-actions--inline">
                         <button type="button" className="btn-edit btn-xs" onClick={() => openEdit(doc)}>Edit</button>
-                        <button type="button" className="btn-delete btn-xs" onClick={() => removeDoctor(doc)}>Delete</button>
+                        <button type="button" className="btn-delete btn-xs" onClick={() => setPendingDelete({ kind: 'doctor', doctor: doc })}>Delete</button>
                       </div>
                     </td>
                   </tr>
@@ -367,7 +384,7 @@ export default function AdminDoctors() {
                   <td>
                     <div className="ap-row-actions ap-row-actions--inline">
                       <button type="button" className="btn-edit btn-xs" onClick={() => { setResetFor(ac); setResetPassword(''); }}>Reset password</button>
-                      <button type="button" className="btn-delete btn-xs" onClick={() => removeAccount(ac)}>Delete</button>
+                      <button type="button" className="btn-delete btn-xs" onClick={() => setPendingDelete({ kind: 'account', account: ac })}>Delete</button>
                     </div>
                   </td>
                 </tr>
@@ -421,6 +438,24 @@ export default function AdminDoctors() {
         <div className="form-actions">
           <button type="button" className="btn-secondary" onClick={() => setResetFor(null)}>Cancel</button>
           <button type="button" className="btn-primary" onClick={saveReset}>Save new password</button>
+        </div>
+      </Modal>
+
+      <Modal open={!!pendingDelete} onClose={() => setPendingDelete(null)} className="ap-confirm-modal">
+        <span className="ap-confirm-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3 6h18" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          </svg>
+        </span>
+        <ModalHead
+          title={pendingDelete?.kind === 'account' ? 'Delete login account?' : 'Delete doctor?'}
+          hint={deleteHint}
+        />
+        <div className="form-actions ap-confirm-actions">
+          <button type="button" className="btn-secondary" onClick={() => setPendingDelete(null)}>Cancel</button>
+          <button type="button" className="btn-danger" onClick={confirmDelete}>Yes, delete</button>
         </div>
       </Modal>
     </Shell>
