@@ -714,7 +714,8 @@ html[data-theme="dark"] .doctor-page .result-modal {
 }
 
 .doctor-page .admin-cal,
-.doctor-page .admin-dp-popup {
+.doctor-date-picker-popup,
+.doctor-date-picker-popup .admin-cal {
   border-color: var(--doctor-border);
   border-radius: 20px;
   box-shadow:
