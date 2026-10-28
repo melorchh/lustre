@@ -418,7 +418,7 @@ export default function AdminDoctors() {
           </Field>
           <Field label="Daily patient limit" className="ap-field--full">
             <input className="form-input" type="number" min={0} max={200} placeholder="e.g. 12" value={form.daily_limit} onChange={(e) => setForm({ ...form, daily_limit: e.target.value })} />
-            <small className="ap-sub">Leave blank or 0 to derive the limit from this doctor&rsquo;s schedules (one patient per 2-hour visit).</small>
+            <small className="ap-sub">Leave blank or 0 to derive the limit from this doctor&rsquo;s schedules (one patient per 1-hour visit).</small>
           </Field>
         </div>
         <div className="form-actions">

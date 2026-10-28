@@ -39,10 +39,18 @@ function find_vaccine_slot($conn, $date, $pref_doctor, $pref_time) {
     }
     if (!$docs) return null;
 
-    $check = $conn->prepare("SELECT id FROM appointments WHERE doctor_id=? AND appointment_date=? AND appointment_time=? AND status IN ('pending','confirmed') LIMIT 1");
+    $check = $conn->prepare("
+        SELECT id FROM appointments
+        WHERE doctor_id=? AND appointment_date=?
+          AND appointment_time < ?
+          AND appointment_time + INTERVAL '1 hour' > ?
+          AND status IN ('pending','confirmed')
+        LIMIT 1
+    ");
     foreach ($docs as $did) {
         foreach ($slots as $slot) {
-            $check->bind_param("iss", $did, $date, $slot);
+            $slot_end = date('H:i:s', strtotime($date . ' ' . $slot) + 60 * 60);
+            $check->bind_param("isss", $did, $date, $slot_end, $slot);
             $check->execute();
             $taken = $check->get_result()->fetch_assoc() !== null;
             if (!$taken) { $check->close(); return [$did, $slot]; }
@@ -243,10 +251,11 @@ switch ($action) {
             $slot = find_vaccine_slot($conn, $du, $pref_doctor, $pref_time);
             if ($slot) {
                 try {
-                    $ins = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, service_requested, status, notes)
-                                           VALUES (?, ?, ?, ?, ?, 'pending', ?)");
+                    $duration = 60;
+                    $ins = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, appointment_duration, service_requested, status, notes)
+                                           VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)");
                     $note = 'Auto-scheduled from vaccination record (' . date('M j, Y') . ').';
-                    $ins->bind_param("iissss", $patient_id, $slot[0], $du, $slot[1], $svc, $note);
+                    $ins->bind_param("iississ", $patient_id, $slot[0], $du, $slot[1], $duration, $svc, $note);
                     $ins->execute();
                     $ins->close();
                     $autoScheduled = [

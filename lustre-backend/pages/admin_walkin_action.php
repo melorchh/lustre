@@ -195,8 +195,9 @@ if ($action === 'add_walkin') {
 
         // Book the consultation so it appears in the client's appointments
         $service = ($test_procedure !== '') ? $test_procedure : 'Walk-in Consultation';
-        $ap = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, service_requested, status, payment_status, reminder_sent) VALUES (?, ?, ?, ?, ?, 'confirmed', 'pending', 1)");
-        $ap->bind_param("iisss", $newId, $doctor_id, $arrival_date, $arrival_hm, $service);
+        $appointment_duration = 60;
+        $ap = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, appointment_duration, service_requested, status, payment_status, reminder_sent) VALUES (?, ?, ?, ?, ?, ?, 'confirmed', 'pending', 1)");
+        $ap->bind_param("iissis", $newId, $doctor_id, $arrival_date, $arrival_hm, $appointment_duration, $service);
         $ap->execute();
         $appointment_id = (int)$ap->insert_id;
         $ap->close();
