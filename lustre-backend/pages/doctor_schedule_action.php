@@ -46,17 +46,13 @@ if ($action === 'add') {
         echo "End time must be after start time"; $conn->close(); exit;
     }
 
-    $check = $conn->prepare("SELECT id FROM doctor_schedules WHERE doctor_id = ? AND day_of_week = ?");
-    $check->bind_param("is", $doctor_id, $day_of_week);
-    $check->execute();
-    $check->store_result();
-    if ($check->num_rows > 0) { $check->close(); echo "You already have a schedule for " . $day_of_week; $conn->close(); exit; }
-    $check->close();
+    $conflict = schedule_block_conflict($conn, $doctor_id, $day_of_week, $start_time, $end_time);
+    if ($conflict !== '') {
+        echo $conflict; $conn->close(); exit;
+    }
 
-    $stmt = $conn->prepare("INSERT INTO doctor_schedules (doctor_id, day_of_week, start_time, end_time, is_active) VALUES (?, ?, ?, ?, 1)");
-    $stmt->bind_param("isss", $doctor_id, $day_of_week, $start_time, $end_time);
-    echo $stmt->execute() ? "success" : "Failed: " . $stmt->error;
-    $stmt->close();
+    $saved = save_doctor_schedule_block($conn, $doctor_id, $day_of_week, $start_time, $end_time);
+    echo $saved['ok'] ? "success" : "Failed: " . $saved['error'];
     sync_doctor_schedule_text($conn, $doctor_id);
 
 } elseif ($action === 'edit') {

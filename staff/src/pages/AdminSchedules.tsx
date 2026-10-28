@@ -59,7 +59,7 @@ export default function AdminSchedules() {
     try {
       const res = await postAction('admin_schedule_action.php', { doctor_id: availDoctorId, ...schedForm }, { action: 'add' });
       if (isSuccess(res)) {
-        showToast('Schedule added', 'success');
+        showToast('Availability saved', 'success');
         setAvailOpen(false);
         refresh();
       } else showToast(res.replace(/^error:\s*/i, ''), 'error');
@@ -224,7 +224,7 @@ export default function AdminSchedules() {
       <Modal open={availOpen} onClose={() => setAvailOpen(false)}>
         <ModalHead
           title="Add available time"
-          hint="Set the doctor's weekly availability. Choose a day range and time."
+          hint="Choose a day range and time. Reusing an existing start time updates that block."
         />
         <div className="form-grid">
           <Field label="Doctor" className="ap-field--full">

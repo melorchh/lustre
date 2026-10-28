@@ -45,32 +45,24 @@ if ($action === 'add') {
     }
     $days = array_slice($valid_days, $si, $ei - $si + 1);
 
+    // Validate the whole range before writing anything so a conflict on one
+    // day cannot leave the range half-applied.
     foreach ($days as $day_of_week) {
-        // Check if schedule already exists for this doctor, day, and time
-        $stmt = $conn->prepare("SELECT id FROM doctor_schedules WHERE doctor_id = ? AND day_of_week = ? AND start_time = ? AND is_active = 1");
-        $stmt->bind_param("iss", $doctor_id, $day_of_week, $start_time);
-        $stmt->execute();
-        $stmt->store_result();
-
-        if ($stmt->num_rows > 0) {
-            $stmt->close();
-            echo "error: Some selected days already have a schedule at this time";
+        $conflict = schedule_block_conflict($conn, $doctor_id, $day_of_week, $start_time, $end_time);
+        if ($conflict !== '') {
+            echo "error: " . $conflict;
             $conn->close();
             exit;
         }
-        $stmt->close();
+    }
 
-        // Add schedule for this day
-        $stmt = $conn->prepare("INSERT INTO doctor_schedules (doctor_id, day_of_week, start_time, end_time, is_active) VALUES (?, ?, ?, ?, 1)");
-        $stmt->bind_param("isss", $doctor_id, $day_of_week, $start_time, $end_time);
-
-        if (!$stmt->execute()) {
-            $stmt->close();
+    foreach ($days as $day_of_week) {
+        $saved = save_doctor_schedule_block($conn, $doctor_id, $day_of_week, $start_time, $end_time);
+        if (!$saved['ok']) {
+            echo "error: " . $saved['error'];
             $conn->close();
-            echo "error: Failed to add schedule";
             exit;
         }
-        $stmt->close();
     }
 
     echo "success";
