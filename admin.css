@@ -2324,7 +2324,7 @@ body::-webkit-scrollbar {
 }
 
 /* ═══════════════════════════════════════════════════
-   DESIGNED DATE PICKER  (matches client calendar)
+   DESIGNED DATE PICKER  (matches registration form calendar)
    ═══════════════════════════════════════════════════ */
 @keyframes __dpIn {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }
@@ -2405,13 +2405,14 @@ body::-webkit-scrollbar {
   animation: __dpIn 0.22s var(--ease) both;
 }
 
-/* shared calendar look */
+/* shared calendar look - match registration form calendar */
 .admin-cal {
   background: linear-gradient(180deg, #f4f9f4, var(--white));
   border: 1.5px solid var(--gray-100);
   border-radius: 20px;
   padding: 1rem;
   box-shadow: 0 14px 44px rgba(13, 148, 136, 0.18);
+  animation: sheetUp 0.3s var(--spring) both;
 }
 .admin-cal .cal-head {
   display: flex;
@@ -2437,7 +2438,7 @@ body::-webkit-scrollbar {
   color: var(--gray-600);
   background: var(--white);
   border: 1.5px solid var(--gray-100);
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
   cursor: pointer;
   flex-shrink: 0;
   font-family: inherit;
@@ -2572,6 +2573,86 @@ body::-webkit-scrollbar {
 .admin-cal .cal-clear:hover {
   color: var(--green-dark);
 }
+/* Dark mode styles for admin calendar to match registration form */
+html[data-theme=dark] .admin-cal {
+  background: linear-gradient(180deg, #1a2434, #161e2b);
+  border-color: #243047;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.55);
+}
+html[data-theme=dark] .admin-cal .cal-month {
+  color: #e6ecf4;
+}
+html[data-theme=dark] .admin-cal .cal-nav {
+  background: #161e2b;
+  border-color: #243047;
+  color: #a9b7cc;
+}
+html[data-theme=dark] .admin-cal .cal-nav:hover:not(:disabled) {
+  background: #10312d;
+  color: #2dd4bf;
+  border-color: #14b8a6;
+}
+html[data-theme=dark] .admin-cal .cal-weekdays span {
+  color: #8b9bb3;
+}
+html[data-theme=dark] .admin-cal .cal-btn {
+  background: #161e2b;
+  color: #e6ecf4;
+  box-shadow: inset 0 0 0 1.5px #243047;
+}
+html[data-theme=dark] .admin-cal .cal-btn:hover {
+  background: #10312d;
+  color: #2dd4bf;
+  box-shadow: inset 0 0 0 1.5px #2dd4bf;
+}
+html[data-theme=dark] .admin-cal .cal-btn.active {
+  background: linear-gradient(135deg, #14b8a6, #2dd4bf);
+  color: #062012;
+  box-shadow: 0 4px 12px rgba(45, 212, 191, 0.4);
+}
+html[data-theme=dark] .admin-cal .cal-today {
+  box-shadow: inset 0 0 0 1.5px #2dd4bf;
+}
+html[data-theme=dark] .admin-cal .cal-today:not(.active) {
+  color: #2dd4bf;
+}
+html[data-theme=dark] .admin-cal .cal-day--disabled {
+  color: #31405a;
+}
+html[data-theme=dark] .admin-cal .cal-legend {
+  border-top-color: #243047;
+  color: #a9b7cc;
+}
+html[data-theme=dark] .admin-cal .cal-clear {
+  color: #a9b7cc;
+}
+html[data-theme=dark] .admin-cal .cal-clear:hover {
+  color: #2dd4bf;
+}
+html[data-theme=dark] .admin-dp-trigger {
+  background: #161e2b;
+  border-color: #243047;
+  color: #e6ecf4;
+}
+html[data-theme=dark] .admin-dp-trigger:hover {
+  border-color: #14b8a6;
+  background: #10312d;
+}
+html[data-theme=dark] .admin-dp-trigger.open,
+html[data-theme=dark] .admin-dp-trigger:focus-visible {
+  border-color: #2dd4bf;
+  box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.12);
+}
+html[data-theme=dark] .admin-dp-cal {
+  color: #2dd4bf;
+}
+html[data-theme=dark] .admin-dp-chev {
+  color: #a9b7cc;
+}
+html[data-theme=dark] .admin-dp-trigger.placeholder .admin-dp-text {
+  color: #8b9bb3;
+}
+
 @media (max-width: 480px) {
   .admin-dp-popup {
     left: 0;
