@@ -120,7 +120,7 @@ export default function AdminDoctors() {
   function openAdd() {
     setEditing(null);
     setForm({ ...EMPTY_FORM });
-    setChips([]);
+    setChips(['General Consultation', 'Follow Up Consultation', 'Diagnostic Procedure', '(Other) - specify below']);
     setFormOpen(true);
   }
 
