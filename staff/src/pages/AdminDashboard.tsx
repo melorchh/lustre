@@ -83,9 +83,9 @@ export default function AdminDashboard() {
   const [walkinSlots, setWalkinSlots] = useState<string[]>([]);
   const [walkinSlotLoading, setWalkinSlotLoading] = useState(false);
   const [walkinSlotError, setWalkinSlotError] = useState('');
-  // Doctor ids with room left today (null = not fetched yet / unknown, in
-  // which case every doctor stays selectable).
-  const [availableDoctorIds, setAvailableDoctorIds] = useState<number[] | null>(null);
+  const [availableDoctorIds, setAvailableDoctorIds] = useState<number[]>([]);
+  const [availableDoctorsLoading, setAvailableDoctorsLoading] = useState(false);
+  const [availableDoctorsError, setAvailableDoctorsError] = useState('');
 
   const historyByAppt = useMemo(() => {
     const map: Record<number, HistoryEntry[]> = {};
@@ -181,32 +181,50 @@ export default function AdminDashboard() {
     return () => { alive = false; };
   }, [walkinOpen, walkinForm.doctor_id]);
 
-  // Load the doctors who can still take a walk-in today. The endpoint applies
-  // the same capacity rule the server re-checks on submit; if it cannot be
-  // reached we keep the full list rather than blocking the counter.
+  // Load only doctors the server verifies can take a walk-in today.
   useEffect(() => {
     if (!walkinOpen) return;
     let alive = true;
-    setAvailableDoctorIds(null);
+    setAvailableDoctorIds([]);
+    setAvailableDoctorsLoading(true);
+    setAvailableDoctorsError('');
     fetch('get_available_doctors.php', {
       headers: { 'X-Requested-With': 'LustreStaff' },
       cache: 'no-store',
     })
-      .then((r) => r.json())
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Could not verify doctor availability.');
+        return response.json() as Promise<unknown>;
+      })
       .then((json: unknown) => {
-        if (!alive || !Array.isArray(json)) return;
-        const ids = json
-          .map((d) => Number((d as { id?: unknown }).id))
-          .filter((n) => Number.isFinite(n));
+        if (!Array.isArray(json)) throw new Error('The server returned an invalid doctor availability list.');
+        const ids = json.map((doctor) => {
+          if (!doctor || typeof doctor !== 'object' || !('id' in doctor)) {
+            throw new Error('The server returned an invalid doctor availability list.');
+          }
+          const id = Number(doctor.id);
+          if (!Number.isInteger(id) || id <= 0) {
+            throw new Error('The server returned an invalid doctor availability list.');
+          }
+          return id;
+        });
+        if (!alive) return;
         setAvailableDoctorIds(ids);
         // Drop a doctor that filled up between opening and loading the list.
         setWalkinForm((f) => (
           f.doctor_id && !ids.includes(Number(f.doctor_id))
-            ? { ...f, doctor_id: '', test_procedure: '', other: '' }
+            ? { ...f, doctor_id: '', appointment_time: '', test_procedure: '', other: '' }
             : f
         ));
       })
-      .catch(() => { /* keep every doctor selectable */ });
+      .catch((error: unknown) => {
+        if (!alive) return;
+        setAvailableDoctorIds([]);
+        setAvailableDoctorsError(error instanceof Error ? error.message : 'Could not verify doctor availability.');
+      })
+      .finally(() => {
+        if (alive) setAvailableDoctorsLoading(false);
+      });
     return () => { alive = false; };
   }, [walkinOpen]);
 
@@ -226,7 +244,9 @@ export default function AdminDashboard() {
   }
 
   function openWalkin() {
-    setAvailableDoctorIds(null);
+    setAvailableDoctorIds([]);
+    setAvailableDoctorsLoading(true);
+    setAvailableDoctorsError('');
     setWalkinSlots([]);
     setWalkinSlotError('');
     setWalkinForm({ ...EMPTY_WALKIN, arrival_time: currentTime() });
@@ -267,9 +287,7 @@ export default function AdminDashboard() {
   }, [doctors, walkinForm.doctor_id]);
 
   const walkinDoctors = useMemo(() => {
-    const pool = availableDoctorIds
-      ? doctors.filter((d) => availableDoctorIds.includes(Number(d.id)))
-      : doctors;
+    const pool = doctors.filter((d) => availableDoctorIds.includes(Number(d.id)));
     return pool.filter((d) => !walkinForm.specialty || d.specialty === walkinForm.specialty);
   }, [doctors, availableDoctorIds, walkinForm.specialty]);
 
@@ -277,6 +295,10 @@ export default function AdminDashboard() {
     if (!walkinForm.name.trim()) { showToast('Patient name required', 'error'); return; }
     if (!walkinForm.contact.trim()) { showToast('Contact number required', 'error'); return; }
     if (!walkinForm.doctor_id) { showToast('Please select a doctor', 'error'); return; }
+    if (availableDoctorsLoading || !availableDoctorIds.includes(Number(walkinForm.doctor_id))) {
+      showToast('Please select a doctor with verified availability today', 'error');
+      return;
+    }
     if (!walkinForm.appointment_time) { showToast('Please select an available appointment time', 'error'); return; }
     if (!walkinForm.arrival_time) { showToast('Please enter the walk-in arrival time', 'error'); return; }
     if (!walkinForm.test_procedure) { showToast('Please select a test / procedure', 'error'); return; }
@@ -650,7 +672,7 @@ export default function AdminDashboard() {
 
       <Modal open={walkinOpen} onClose={() => setWalkinOpen(false)}>
         <ModalHead title="Register walk-in client" hint="Add a counter patient to today's queue. Arrival is recorded separately from the scheduled appointment." />
-        <div className="form-grid">
+        <div className="form-grid walkin-schedule-grid">
           <div className="form-group">
             <label>Specialty</label>
             <Select className="form-dropdown form-input" value={walkinForm.specialty} onChange={(e) => setWalkinForm({ ...walkinForm, specialty: e.target.value, doctor_id: '', test_procedure: '', other: '' })}>
@@ -660,17 +682,13 @@ export default function AdminDashboard() {
           </div>
           <div className="form-group">
             <label>Doctor *</label>
-            <Select className="form-dropdown form-input" value={walkinForm.doctor_id} onChange={(e) => setWalkinForm({ ...walkinForm, doctor_id: e.target.value, appointment_time: '', test_procedure: '', other: '' })}>
-              <option value="">Select Doctor</option>
+            <Select className="form-dropdown form-input" value={walkinForm.doctor_id} disabled={availableDoctorsLoading || Boolean(availableDoctorsError)} onChange={(e) => setWalkinForm({ ...walkinForm, doctor_id: e.target.value, appointment_time: '', test_procedure: '', other: '' })}>
+              <option value="">{availableDoctorsLoading ? 'Checking availability…' : availableDoctorsError ? 'Availability could not be checked' : 'Select Doctor'}</option>
               {walkinDoctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name} ({doc.specialty})</option>)}
             </Select>
-            {availableDoctorIds !== null && walkinDoctors.length === 0 && (
-              <p className="form-hint">
-                No doctors are available today{walkinForm.specialty ? ` for ${walkinForm.specialty}` : ''}. Add an active schedule for today or free up a doctor's capacity.
-              </p>
-            )}
+            {availableDoctorsError && <p className="form-hint">{availableDoctorsError} Close and reopen the form to try again.</p>}
           </div>
-          <div className="form-group">
+          <div className="form-group walkin-procedure-field">
             <label>Test / Procedure</label>
             <Select className="form-dropdown form-input" value={walkinForm.test_procedure} disabled={!walkinForm.doctor_id} onChange={(e) => setWalkinForm({ ...walkinForm, test_procedure: e.target.value, other: e.target.value === OTHER_PROC ? walkinForm.other : '' })}>
               <option value="" disabled>{walkinForm.doctor_id ? 'Select Test / Procedure' : 'Select a doctor first'}</option>
@@ -699,11 +717,6 @@ export default function AdminDashboard() {
               </option>
               {walkinSlots.map((time) => <option key={time} value={time}>{fmtTime(time)}</option>)}
             </Select>
-            {walkinSlotError && <p className="form-hint">{walkinSlotError}</p>}
-            {!walkinSlotLoading && walkinForm.doctor_id && !walkinSlotError && walkinSlots.length === 0 && (
-              <p className="form-hint">No conflict-free one-hour appointment time remains in this doctor’s shift today. Walk-in times are checked against existing appointments and time off; choose another doctor with an available time.</p>
-            )}
-            {walkinForm.doctor_id && walkinSlots.length > 0 && <p className="form-hint">Same-day appointment slots are offered in one-hour intervals. Choose the appointment time separately from the client’s arrival time.</p>}
           </div>
           <div className="form-group">
             <label>Arrival Time *</label>
@@ -713,9 +726,21 @@ export default function AdminDashboard() {
               value={walkinForm.arrival_time}
               onChange={(e) => setWalkinForm({ ...walkinForm, arrival_time: e.target.value })}
             />
-            <p className="form-hint">Defaults to the current time. This is separate from the selected appointment time.</p>
           </div>
         </div>
+        {(!availableDoctorsLoading && !availableDoctorsError && walkinDoctors.length === 0) || walkinSlotError || (walkinForm.doctor_id && !walkinSlotLoading && walkinSlots.length === 0) || (walkinForm.doctor_id && walkinSlots.length > 0) ? (
+          <div className="walkin-schedule-notice" aria-live="polite">
+            {!availableDoctorsLoading && !availableDoctorsError && walkinDoctors.length === 0 ? (
+              <p className="form-hint">No doctors are available today{walkinForm.specialty ? ` for ${walkinForm.specialty}` : ''}. Add an active schedule for today or free up a doctor's capacity.</p>
+            ) : walkinSlotError ? (
+              <p className="form-hint">{walkinSlotError}</p>
+            ) : !walkinSlotLoading && walkinForm.doctor_id && walkinSlots.length === 0 ? (
+              <p className="form-hint">No conflict-free one-hour appointment time remains in this doctor’s shift today. Walk-in times are checked against existing appointments and time off; choose another doctor with an available time.</p>
+            ) : walkinForm.doctor_id && walkinSlots.length > 0 ? (
+              <p className="form-hint">Choose an available same-day appointment time (one-hour intervals). Arrival time defaults to now and can be adjusted separately.</p>
+            ) : null}
+          </div>
+        ) : null}
         <div className="form-grid">
           <div className="form-group">
             <label>Full Name *</label>

@@ -10,7 +10,7 @@ require_once __DIR__ . '/appointment_time_rules.php';
 // full depends on the data the clinic keeps:
 //
 //   * doctors.daily_limit > 0  ->  explicit daily patient cap. The doctor is
-//     full once today's non-cancelled appointments + walk-ins reach it.
+//     full at that cap or when no conflict-free one-hour walk-in slot remains.
 //   * no cap  ->  slot based. The doctor is full when every 1-hour visit
 //     window in today's shifts is already booked or blocked (the same 1-hour
 //     block get_available_times.php books, so the counter and the patient
@@ -65,19 +65,35 @@ if (!function_exists('doctor_shift_on')) {
     }
 }
 
-if (!function_exists('doctor_has_lunch_free_shift_window')) {
-    function doctor_has_lunch_free_shift_window($shifts)
+if (!function_exists('doctor_walkin_time_slots_from_blocks')) {
+    function doctor_walkin_time_slots_from_blocks($shifts, $busy, $now)
     {
         $window = 60 * 60;
-        $step = 30 * 60;
+        $available = array();
         foreach ($shifts as $shift) {
-            for ($start = $shift['start']; $start + $window <= $shift['end']; $start += $step) {
-                if (!appointment_interval_overlaps_lunch_break($start, $start + $window)) {
-                    return true;
+            $start = $shift['start'];
+            if ($start < $now) {
+                $elapsed = $now - $start;
+                $start += (int)ceil($elapsed / $window) * $window;
+            }
+            while ($start + $window <= $shift['end']) {
+                $end = $start + $window;
+                $is_available = !appointment_interval_overlaps_lunch_break($start, $end);
+                foreach ($busy as $block) {
+                    if ($start < $block['end'] && $end > $block['start']) {
+                        $is_available = false;
+                        break;
+                    }
                 }
+                if ($is_available) {
+                    $available[sprintf('%02d:%02d', (int)floor($start / 3600), (int)floor(($start % 3600) / 60))] = true;
+                }
+                $start += $window;
             }
         }
-        return false;
+        $times = array_keys($available);
+        sort($times, SORT_STRING);
+        return $times;
     }
 }
 
@@ -186,33 +202,7 @@ if (!function_exists('doctor_available_walkin_times')) {
         $stmt->close();
 
         $now = doctor_clock_seconds(date('H:i'));
-        $window = 60 * 60;
-        $busy = array_merge($booked, $blocked);
-        $available = array();
-        foreach ($shifts as $shift) {
-            $start = $shift['start'];
-            if ($start < $now) {
-                $elapsed = $now - $start;
-                $start += (int)ceil($elapsed / $window) * $window;
-            }
-            while ($start + $window <= $shift['end']) {
-                $end = $start + $window;
-                $is_available = !appointment_interval_overlaps_lunch_break($start, $end);
-                foreach ($busy as $block) {
-                    if ($start < $block['end'] && $end > $block['start']) {
-                        $is_available = false;
-                        break;
-                    }
-                }
-                if ($is_available) {
-                    $available[sprintf('%02d:%02d', (int)floor($start / 3600), (int)floor(($start % 3600) / 60))] = true;
-                }
-                $start += $window;
-            }
-        }
-        $times = array_keys($available);
-        sort($times, SORT_STRING);
-        return $times;
+        return doctor_walkin_time_slots_from_blocks($shifts, array_merge($booked, $blocked), $now);
     }
 }
 
@@ -408,6 +398,15 @@ if (!function_exists('doctor_capacity_map')) {
             $id      = (int)$id;
             $limit   = isset($limits[$id]) ? $limits[$id] : 0;
             $count   = isset($assigned[$id]) ? $assigned[$id] : 0;
+            $walkin_times = doctor_walkin_time_slots_from_blocks(
+                isset($shifts[$id]) ? $shifts[$id] : array(),
+                array_merge(
+                    isset($booked[$id]) ? $booked[$id] : array(),
+                    isset($blocked[$id]) ? $blocked[$id] : array()
+                ),
+                doctor_clock_seconds(date('H:i'))
+            );
+            $has_walkin_time = count($walkin_times) > 0;
             $mode    = 'unknown';
             $capacity = null;
             $remaining = null;
@@ -425,7 +424,7 @@ if (!function_exists('doctor_capacity_map')) {
                 $mode      = 'daily_limit';
                 $capacity  = $limit;
                 $remaining = max(0, $limit - $count);
-                $available = $count < $limit && doctor_has_lunch_free_shift_window($shifts[$id]);
+                $available = $count < $limit && $has_walkin_time;
                 if (!$available) {
                     $reason = 'full';
                 }
@@ -436,7 +435,7 @@ if (!function_exists('doctor_capacity_map')) {
                     isset($booked[$id]) ? $booked[$id] : array(),
                     isset($blocked[$id]) ? $blocked[$id] : array()
                 );
-                $available = $remaining > 0;
+                $available = $remaining > 0 && $has_walkin_time;
                 if (!$available) {
                     $reason = 'full';
                 }
