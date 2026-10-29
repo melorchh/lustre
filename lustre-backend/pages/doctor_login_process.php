@@ -111,7 +111,7 @@ if ($action === 'request_otp') {
             'email'      => $email,
             'otp_attempts' => 0
         );
-        echo "otp_sent";
+        echo "otp_sent:" . $doctor_name;
     } catch (Exception $e) {
         error_log("Doctor OTP SMTP failed: " . $e->getMessage());
         echo "Failed to send the verification email. Please try again.";

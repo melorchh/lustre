@@ -172,7 +172,7 @@ if (isset($_SESSION["doctor_id"])) {
             .then(res => res.text())
             .then(result => {
                 hideLoading();
-                if (result.trim() === 'otp_sent') {
+                if (result.trim().startsWith('otp_sent:')) {
                     document.getElementById('loginStep1').style.display = 'none';
                     document.getElementById('otpStep').style.display = 'block';
                     document.getElementById('doctorOtp').value = '';
@@ -239,7 +239,7 @@ if (isset($_SESSION["doctor_id"])) {
             .then(res => res.text())
             .then(result => {
                 hideLoading();
-                if (result.trim() === 'otp_sent') {
+                if (result.trim().startsWith('otp_sent:')) {
                     showError('A new OTP has been sent.');
                     document.getElementById('errorMessage').style.background = '#f0fdf4';
                     document.getElementById('errorMessage').style.color = '#16a34a';
