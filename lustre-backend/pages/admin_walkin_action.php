@@ -34,7 +34,7 @@ if ($action === 'add_walkin') {
     $age     = trim($_POST['age'] ?? '');
     $gender  = isset($_POST['gender']) ? strtolower(trim($_POST['gender'])) : '';
     $doctor_id = isset($_POST['doctor_id']) ? intval($_POST['doctor_id']) : 0;
-    $arrival_time = trim($_POST['arrival_time'] ?? '');
+    $appointment_time = trim($_POST['appointment_time'] ?? $_POST['arrival_time'] ?? '');
     $test_procedure = trim($_POST['test_procedure'] ?? '');
     $blood_pressure = trim($_POST['blood_pressure'] ?? '');
     $heart_rate     = trim($_POST['heart_rate'] ?? '');
@@ -81,21 +81,22 @@ if ($action === 'add_walkin') {
         exit;
     }
 
-    // Validate arrival time (default: now)
-    if ($arrival_time === '') {
-        echo 'Please select an available arrival time.';
+    // Validate the selected appointment slot. Arrival time is recorded as the
+    // actual registration time below and is not the booked appointment time.
+    if ($appointment_time === '') {
+        echo 'Please select an available appointment time.';
         exit;
-    } elseif (!preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $arrival_time)) {
-        echo 'Invalid arrival time.';
+    } elseif (!preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $appointment_time)) {
+        echo 'Invalid appointment time.';
         exit;
     }
-    if (appointment_time_overlaps_lunch_break($arrival_time, 60)) {
+    if (appointment_time_overlaps_lunch_break($appointment_time, 60)) {
         echo 'Appointments are unavailable from 12:00 PM to 1:00 PM.';
         exit;
     }
 
     $arrival_date = date('Y-m-d');
-    $slot_available = doctor_slot_is_available($conn, $doctor_id, $arrival_date, $arrival_time);
+    $slot_available = doctor_slot_is_available($conn, $doctor_id, $arrival_date, $appointment_time);
     if ($slot_available === null) {
         http_response_code(500);
         echo 'Could not verify the selected doctor\'s availability. Please try again.';
@@ -206,7 +207,8 @@ if ($action === 'add_walkin') {
         $newId = $stmt->insert_id;
 
         // Record the walk-in entry (queue) for the selected doctor
-        $arrival_hm   = date('H:i:s', strtotime($arrival_time));
+        $arrival_hm   = date('H:i:s');
+        $appointment_hm = date('H:i:s', strtotime($appointment_time));
         $wi = $conn->prepare("INSERT INTO walk_ins (patient_id, doctor_id, arrival_date, arrival_time, test_procedure, status) VALUES (?, ?, ?, ?, ?, 'waiting')");
         $wi->bind_param("iisss", $newId, $doctor_id, $arrival_date, $arrival_hm, $test_procedure);
         $wi->execute();
@@ -216,7 +218,7 @@ if ($action === 'add_walkin') {
         $service = ($test_procedure !== '') ? $test_procedure : 'Walk-in Consultation';
         $appointment_duration = 60;
         $ap = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, appointment_duration, service_requested, status, payment_status, reminder_sent) VALUES (?, ?, ?, ?, ?, ?, 'confirmed', 'pending', 1)");
-        $ap->bind_param("iissis", $newId, $doctor_id, $arrival_date, $arrival_hm, $appointment_duration, $service);
+        $ap->bind_param("iissis", $newId, $doctor_id, $arrival_date, $appointment_hm, $appointment_duration, $service);
         $ap->execute();
         $appointment_id = (int)$ap->insert_id;
         $ap->close();
