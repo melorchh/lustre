@@ -1,1 +1,1 @@
-import{n as o,j as m}from"./Shell-BzeunWy9.js";import{C as r}from"./ChangePassword-C14iY7nh.js";import"./loading-C67XWD-d.js";import"./ui-CYaCzD03.js";o(()=>m.jsx(r,{portal:"admin"}));
+import{n as o,j as m}from"./Shell-DR8XWIc9.js";import{C as r}from"./ChangePassword-DUpUmRv8.js";import"./loading-C67XWD-d.js";import"./ui-D3O5O_dd.js";o(()=>m.jsx(r,{portal:"admin"}));
