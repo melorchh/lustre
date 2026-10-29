@@ -77,6 +77,7 @@ export default function AdminDashboard() {
   const [apptForm, setApptForm] = useState({ ...EMPTY_APPT });
   const [slots, setSlots] = useState<string[]>([]);
   const [slotLoading, setSlotLoading] = useState(false);
+  const [slotError, setSlotError] = useState('');
 
   const [walkinOpen, setWalkinOpen] = useState(false);
   const [walkinForm, setWalkinForm] = useState({ ...EMPTY_WALKIN });
@@ -111,17 +112,35 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!apptOpen || !apptForm.doctor_id || !apptForm.date) {
       setSlots([]);
+      setSlotError('');
       return;
     }
     let alive = true;
     setSlotLoading(true);
+    setSlots([]);
+    setSlotError('');
     fetch(`get_available_times.php?doctor_id=${encodeURIComponent(apptForm.doctor_id)}&date=${encodeURIComponent(apptForm.date)}`, {
       headers: { 'X-Requested-With': 'LustreStaff' },
       cache: 'no-store',
     })
-      .then((r) => r.json())
-      .then((json: string[]) => { if (alive) setSlots(Array.isArray(json) ? json : []); })
-      .catch(() => { if (alive) setSlots([]); })
+      .then(async (response) => {
+        const payload: unknown = await response.json();
+        if (!response.ok) {
+          const error = payload && typeof payload === 'object' && 'error' in payload
+            ? String(payload.error)
+            : 'Could not load appointment times.';
+          throw new Error(error);
+        }
+        if (!Array.isArray(payload) || payload.some((time) => typeof time !== 'string')) {
+          throw new Error('The server returned invalid appointment times.');
+        }
+        if (alive) setSlots(payload);
+      })
+      .catch((error: unknown) => {
+        if (!alive) return;
+        setSlots([]);
+        setSlotError(error instanceof Error ? error.message : 'Could not load appointment times.');
+      })
       .finally(() => { if (alive) setSlotLoading(false); });
     return () => { alive = false; };
   }, [apptOpen, apptForm.doctor_id, apptForm.date]);
@@ -240,6 +259,7 @@ export default function AdminDashboard() {
   function openAppt() {
     setApptForm({ ...EMPTY_APPT });
     setSlots([]);
+    setSlotError('');
     setApptOpen(true);
   }
 
@@ -632,6 +652,7 @@ export default function AdminDashboard() {
               <option value="">{slotLoading ? 'Loading...' : (!apptForm.doctor_id || !apptForm.date) ? 'Select doctor & date first' : slots.length === 0 ? 'No slots available' : 'Select time...'}</option>
               {slots.map((s) => <option key={s} value={s}>{fmtTime(s)}</option>)}
             </Select>
+            {slotError && <p className="form-hint">{slotError}</p>}
           </div>
         </div>
         <p className="form-hint">Pick a doctor to see available dates &amp; times. Duration is 1 hour / visit.</p>

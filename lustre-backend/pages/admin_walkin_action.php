@@ -200,6 +200,42 @@ if ($action === 'add_walkin') {
     $heightVal = ($height !== '') ? (float)$height : null;
     $ageVal    = ($age !== '')    ? (int)$age    : null;
 
+    $pdo = $conn->getPdo();
+    if (!$pdo->beginTransaction()) {
+        http_response_code(500);
+        echo 'Could not start walk-in registration. Please try again.';
+        $conn->close();
+        exit;
+    }
+    $daily_limit = doctor_daily_limit_status($conn, $doctor_id, $arrival_date, true);
+    if ($daily_limit === null) {
+        $pdo->rollBack();
+        http_response_code(500);
+        echo 'Could not verify the selected doctor\'s daily patient limit. Please try again.';
+        $conn->close();
+        exit;
+    }
+    if (!$daily_limit['available']) {
+        $pdo->rollBack();
+        echo 'The selected doctor has reached the daily patient limit. Please pick another doctor.';
+        $conn->close();
+        exit;
+    }
+    $slot_available = doctor_slot_is_available($conn, $doctor_id, $arrival_date, $appointment_time);
+    if ($slot_available === null) {
+        $pdo->rollBack();
+        http_response_code(500);
+        echo 'Could not verify the selected doctor\'s availability. Please try again.';
+        $conn->close();
+        exit;
+    }
+    if (!$slot_available) {
+        $pdo->rollBack();
+        echo 'The selected time is no longer available for this doctor. Choose another time.';
+        $conn->close();
+        exit;
+    }
+
     $stmt = $conn->prepare("INSERT INTO patients (name, email, contact, address, password, is_walk_in, weight_kg, height_cm, patient_type, age, gender) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)");
     $stmt->bind_param(
         "ssssssdsis",
@@ -223,7 +259,15 @@ if ($action === 'add_walkin') {
         $appointment_hm = date('H:i:s', strtotime($appointment_time));
         $wi = $conn->prepare("INSERT INTO walk_ins (patient_id, doctor_id, arrival_date, arrival_time, test_procedure, status) VALUES (?, ?, ?, ?, ?, 'waiting')");
         $wi->bind_param("iisss", $newId, $doctor_id, $arrival_date, $arrival_hm, $test_procedure);
-        $wi->execute();
+        if (!$wi->execute()) {
+            $wi->close();
+            $stmt->close();
+            $pdo->rollBack();
+            http_response_code(500);
+            echo 'Failed to register walk-in patient.';
+            $conn->close();
+            exit;
+        }
         $wi->close();
 
         // Book the consultation so it appears in the client's appointments
@@ -231,7 +275,15 @@ if ($action === 'add_walkin') {
         $appointment_duration = 60;
         $ap = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, appointment_duration, service_requested, status, payment_status, reminder_sent) VALUES (?, ?, ?, ?, ?, ?, 'confirmed', 'pending', 1)");
         $ap->bind_param("iissis", $newId, $doctor_id, $arrival_date, $appointment_hm, $appointment_duration, $service);
-        $ap->execute();
+        if (!$ap->execute()) {
+            $ap->close();
+            $stmt->close();
+            $pdo->rollBack();
+            http_response_code(500);
+            echo 'Failed to register walk-in patient.';
+            $conn->close();
+            exit;
+        }
         $appointment_id = (int)$ap->insert_id;
         $ap->close();
 
@@ -241,8 +293,20 @@ if ($action === 'add_walkin') {
         $vt->execute();
         $vt->close();
 
+        if (!$pdo->commit()) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            $stmt->close();
+            http_response_code(500);
+            echo 'Failed to save walk-in registration.';
+            $conn->close();
+            exit;
+        }
+
         echo "success:" . $newId;
     } else {
+        $pdo->rollBack();
         echo "Failed to register walk-in patient.";
     }
 

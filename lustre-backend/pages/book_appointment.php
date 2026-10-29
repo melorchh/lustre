@@ -10,7 +10,9 @@ require_once __DIR__ . '/../src/appointment_time_rules.php';
 require_once __DIR__ . '/../src/unique_ids.php';
 ensure_unique_ids($conn);
 require_once __DIR__ . '/../src/time_blocks_schema.php';
+require_once __DIR__ . '/../src/doctor_capacity.php';
 ensure_time_blocks_schema($conn);
+ensure_doctor_capacity_schema($conn);
 
 $patient_id = $_SESSION["patient_id"];
 $doctor_id = isset($_POST["doctor_id"]) ? intval($_POST["doctor_id"]) : 0;
@@ -163,11 +165,43 @@ if ($stmt->num_rows > 0) {
 $stmt->close();
 
 // Save appointment with its fixed 1-hour duration.
+$pdo = $conn->getPdo();
+if (!$pdo->beginTransaction()) {
+    http_response_code(500);
+    echo "error: Could not start appointment booking. Please try again.";
+    $conn->close();
+    exit;
+}
+$daily_limit = doctor_daily_limit_status($conn, $doctor_id, $date, true);
+if ($daily_limit === null) {
+    $pdo->rollBack();
+    http_response_code(500);
+    echo "error: Could not verify the doctor's daily patient limit. Please try again.";
+    $conn->close();
+    exit;
+}
+if (!$daily_limit['available']) {
+    $pdo->rollBack();
+    echo "error: This doctor has reached the daily patient limit for the selected date. Please choose another date.";
+    $conn->close();
+    exit;
+}
+
 $stmt = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, appointment_duration, service_requested, status, payment_status) VALUES (?, ?, ?, ?, ?, ?, 'pending', 'pending')");
 $stmt->bind_param("iissis", $patient_id, $doctor_id, $date, $time_with_seconds, $appointment_duration, $service);
 
 if ($stmt->execute()) {
     $new_id = $stmt->insert_id;
+    if (!$pdo->commit()) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        http_response_code(500);
+        echo "error: Failed to save the appointment. Please try again.";
+        $stmt->close();
+        $conn->close();
+        exit;
+    }
 
     // Send the patient a booking request confirmation email (non-fatal on failure)
     require_once __DIR__ . '/appointment_mailer.php';
@@ -176,6 +210,7 @@ if ($stmt->execute()) {
     header('Content-Type: application/json');
     echo json_encode(['success' => true, 'appointment_id' => $new_id]);
 } else {
+    $pdo->rollBack();
     echo "error: Failed to book appointment. Please try again.";
 }
 
