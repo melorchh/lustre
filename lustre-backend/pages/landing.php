@@ -96,7 +96,7 @@ if (isset($_SESSION["patient_id"])) {
     </div>
   </div>
 
-  <div class="scroll-hint"><span>Explore Services</span><div class="chevron"></div></div>
+  <a class="scroll-hint" href="#services"><span>Explore Services</span><span class="chevron" aria-hidden="true"></span></a>
 </section>
 
 <!-- == TRUST STRIP == -->
