@@ -47,13 +47,14 @@ export default function DatePicker({ value, onChange, min, max, placeholder = 'S
       const r = root.getBoundingClientRect();
       const vh = window.innerHeight || document.documentElement.clientHeight;
       const vw = window.innerWidth || document.documentElement.clientWidth;
-      const calW = Math.max(295, Math.min(330, r.width));
+      const maxCalW = Math.min(330, vw - 16);
+      const calW = Math.min(maxCalW, Math.max(Math.min(295, maxCalW), r.width));
       const need = popup?.firstElementChild?.getBoundingClientRect().height || 380;
       const downRoom = vh - r.bottom;
       const up = downRoom < need + 16 && r.top > need + 16;
       let top = up ? r.top - need - 10 : r.bottom + 10;
       top = Math.max(8, Math.min(top, vh - need - 8));
-      let left = r.left;
+      let left = vw <= 480 ? (vw - calW) / 2 : r.left;
       if (left + calW > vw - 8) left = vw - 8 - calW;
       if (left < 8) left = 8;
       setPos({ top, left, width: calW, up });
