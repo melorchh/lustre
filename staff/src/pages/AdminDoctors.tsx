@@ -15,6 +15,7 @@ interface DoctorAccount {
   doctor_name?: string;
   specialty?: string;
   username: string;
+  email?: string;
   created_at?: string;
 }
 
@@ -23,7 +24,7 @@ type PendingDelete =
   | { kind: 'account'; account: DoctorAccount };
 
 const EMPTY_FORM = { name: '', specialty: '', schedule: '', experience: '', test_procedures: '', daily_limit: '' };
-const EMPTY_ACCOUNT = { doctor_id: '', username: '', password: '' };
+const EMPTY_ACCOUNT = { doctor_id: '', username: '', password: '', email: '' };
 
 /** Chip-style input for a doctor's newline-separated test_procedures list. */
 function ChipInput({ chips, onChange }: { chips: string[]; onChange: (next: string[]) => void }) {
@@ -195,6 +196,7 @@ export default function AdminDoctors() {
 
   async function createAccount() {
     if (!acctCreate.doctor_id) { showToast('Please select a doctor', 'error'); return; }
+    if (!acctCreate.email.trim()) { showToast('Email is required for login verification', 'error'); return; }
     if (!/^[a-zA-Z0-9_]{3,30}$/.test(acctCreate.username.trim())) {
       showToast('Username must be 3-30 characters (letters, numbers, underscore only)', 'error');
       return;
@@ -207,6 +209,7 @@ export default function AdminDoctors() {
         doctor_id: acctCreate.doctor_id,
         username: acctCreate.username,
         password: acctCreate.password,
+        email: acctCreate.email.trim(),
       });
       if (isSuccess(res)) {
         showToast('Doctor account created', 'success');
@@ -222,13 +225,15 @@ export default function AdminDoctors() {
 
   async function saveReset() {
     if (!resetFor) return;
-    if (resetPassword.length < 8) { showToast('Password must be at least 8 characters', 'error'); return; }
+    if (resetPassword && resetPassword.length < 8) { showToast('Password must be at least 8 characters', 'error'); return; }
+    if (!resetPassword && !resetFor.email?.trim()) { showToast('Enter an email or a new password', 'error'); return; }
     showLoading();
     try {
       const res = await postAction('admin_doctor_actions.php', {
         action: 'reset_account',
         account_id: resetFor.id,
         password: resetPassword,
+        email: resetFor.email || '',
       });
       if (isSuccess(res)) {
         showToast('Password reset', 'success');
@@ -353,6 +358,9 @@ export default function AdminDoctors() {
               <Field label="Username">
                 <input type="text" className="form-input" maxLength={30} placeholder="e.g. dr_dela_cruz" value={acctCreate.username} onChange={(e) => setAcctCreate({ ...acctCreate, username: e.target.value })} />
               </Field>
+              <Field label="Email for login verification">
+                <input type="email" className="form-input" required placeholder="doctor@example.com" value={acctCreate.email} onChange={(e) => setAcctCreate({ ...acctCreate, email: e.target.value })} />
+              </Field>
               <Field label="Password">
                 <input type="password" className="form-input" placeholder="At least 8 characters" value={acctCreate.password} onChange={(e) => setAcctCreate({ ...acctCreate, password: e.target.value })} />
               </Field>
@@ -363,11 +371,11 @@ export default function AdminDoctors() {
           </FormSection>
 
           <div className="table-scroll ap-mt"><table>
-            <thead><tr><th>Doctor</th><th>Specialty</th><th>Username</th><th>Created</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Doctor</th><th>Specialty</th><th>Username</th><th>Email</th><th>Created</th><th>Actions</th></tr></thead>
             <tbody>
               {accounts.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <EmptyState
                       icon={<IconDoctors size={20} />}
                       title="No doctor accounts yet"
@@ -380,10 +388,11 @@ export default function AdminDoctors() {
                   <td><span className="ap-strong">Dr. {ac.doctor_name}</span></td>
                   <td>{ac.specialty || '—'}</td>
                   <td><code className="pill">{ac.username}</code></td>
+                  <td>{ac.email || '—'}</td>
                   <td>{fmtDate(ac.created_at)}</td>
                   <td>
                     <div className="ap-row-actions ap-row-actions--inline">
-                      <button type="button" className="btn-edit btn-xs" onClick={() => { setResetFor(ac); setResetPassword(''); }}>Reset password</button>
+                      <button type="button" className="btn-edit btn-xs" onClick={() => { setResetFor(ac); setResetPassword(''); }}>Edit account</button>
                       <button type="button" className="btn-delete btn-xs" onClick={() => setPendingDelete({ kind: 'account', account: ac })}>Delete</button>
                     </div>
                   </td>
@@ -429,15 +438,18 @@ export default function AdminDoctors() {
 
       <Modal open={!!resetFor} onClose={() => setResetFor(null)}>
         <ModalHead
-          title="Reset password"
-          hint={resetFor ? `Set a new password for Dr. ${resetFor.doctor_name} (${resetFor.username}).` : undefined}
+          title="Edit doctor account"
+          hint={resetFor ? `Update the login email or set a new password for Dr. ${resetFor.doctor_name} (${resetFor.username}).` : undefined}
         />
+        <Field label="Email for login verification">
+          <input type="email" className="form-input" placeholder="doctor@example.com" value={resetFor?.email || ''} onChange={(e) => setResetFor((account) => account ? { ...account, email: e.target.value } : account)} />
+        </Field>
         <Field label="New password">
-          <input type="password" className="form-input" placeholder="At least 8 characters" value={resetPassword} onChange={(e) => setResetPassword(e.target.value)} />
+          <input type="password" className="form-input" placeholder="Leave blank to keep current password" value={resetPassword} onChange={(e) => setResetPassword(e.target.value)} />
         </Field>
         <div className="form-actions">
           <button type="button" className="btn-secondary" onClick={() => setResetFor(null)}>Cancel</button>
-          <button type="button" className="btn-primary" onClick={saveReset}>Save new password</button>
+          <button type="button" className="btn-primary" onClick={saveReset}>Save account</button>
         </div>
       </Modal>
 
