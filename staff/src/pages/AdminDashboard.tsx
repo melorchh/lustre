@@ -49,35 +49,6 @@ function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-const ARRIVAL_START_MIN = 8 * 60;
-const LUNCH_START_MIN = 12 * 60;
-const LUNCH_END_MIN = 13 * 60;
-const APPOINTMENT_DURATION_MIN = 60;
-
-function overlapsLunchBreak(startMinute: number): boolean {
-  return startMinute < LUNCH_END_MIN && startMinute + APPOINTMENT_DURATION_MIN > LUNCH_START_MIN;
-}
-
-function arrivalOptions(): { value: string; label: string }[] {
-  const out: { value: string; label: string }[] = [];
-  for (let m = ARRIVAL_START_MIN; m < 24 * 60; m += 5) {
-    if (overlapsLunchBreak(m)) continue;
-    const h = Math.floor(m / 60);
-    const mm = m % 60;
-    const value = `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-    out.push({ value, label: fmtTime(value) });
-  }
-  return out;
-}
-
-function nowHM(): string {
-  const d = new Date();
-  let m = Math.max(ARRIVAL_START_MIN, d.getHours() * 60 + d.getMinutes());
-  m -= m % 5;
-  if (overlapsLunchBreak(m)) m = LUNCH_END_MIN;
-  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-}
-
 export default function AdminDashboard() {
   const data = getInitial();
   const adminName = String(data.staff?.name || '');
@@ -104,6 +75,9 @@ export default function AdminDashboard() {
 
   const [walkinOpen, setWalkinOpen] = useState(false);
   const [walkinForm, setWalkinForm] = useState({ ...EMPTY_WALKIN });
+  const [walkinSlots, setWalkinSlots] = useState<string[]>([]);
+  const [walkinSlotLoading, setWalkinSlotLoading] = useState(false);
+  const [walkinSlotError, setWalkinSlotError] = useState('');
   // Doctor ids with room left today (null = not fetched yet / unknown, in
   // which case every doctor stays selectable).
   const [availableDoctorIds, setAvailableDoctorIds] = useState<number[] | null>(null);
@@ -128,8 +102,6 @@ export default function AdminDashboard() {
     return groups;
   }, [todayWalkins]);
 
-  const arrival = useMemo(arrivalOptions, []);
-
   // Load available appointment times when the doctor/date pair changes.
   useEffect(() => {
     if (!apptOpen || !apptForm.doctor_id || !apptForm.date) {
@@ -148,6 +120,66 @@ export default function AdminDashboard() {
       .finally(() => { if (alive) setSlotLoading(false); });
     return () => { alive = false; };
   }, [apptOpen, apptForm.doctor_id, apptForm.date]);
+
+  useEffect(() => {
+    const doctorId = walkinForm.doctor_id;
+    if (!walkinOpen || !doctorId) {
+      setWalkinSlots([]);
+      setWalkinSlotLoading(false);
+      setWalkinSlotError('');
+      return;
+    }
+
+    let alive = true;
+    setWalkinSlots([]);
+    setWalkinSlotLoading(true);
+    setWalkinSlotError('');
+    fetch(`get_available_walkin_times.php?doctor_id=${encodeURIComponent(doctorId)}`, {
+      headers: { 'X-Requested-With': 'LustreStaff' },
+      cache: 'no-store',
+    })
+      .then(async (response) => {
+        if (response.status === 401) {
+          window.location.href = getInitial().staff?.loginUrl || 'admin_login.php';
+          throw new Error('Unauthorized');
+        }
+        const payload: unknown = await response.json();
+        if (!response.ok) {
+          const error = payload && typeof payload === 'object' && 'error' in payload
+            ? String(payload.error)
+            : 'Could not load available walk-in times.';
+          throw new Error(error);
+        }
+        if (!Array.isArray(payload)) {
+          throw new Error('The server returned invalid walk-in times.');
+        }
+        const times: string[] = [];
+        for (const time of payload) {
+          if (typeof time !== 'string') throw new Error('The server returned invalid walk-in times.');
+          times.push(time);
+        }
+        return times;
+      })
+      .then((times) => {
+        if (!alive) return;
+        setWalkinSlots(times);
+        setWalkinForm((form) => (
+          form.doctor_id === doctorId
+            ? { ...form, arrival_time: times[0] || '' }
+            : form
+        ));
+      })
+      .catch((error: unknown) => {
+        if (!alive) return;
+        setWalkinSlots([]);
+        setWalkinSlotError(error instanceof Error ? error.message : 'Could not load available walk-in times.');
+      })
+      .finally(() => {
+        if (alive) setWalkinSlotLoading(false);
+      });
+
+    return () => { alive = false; };
+  }, [walkinOpen, walkinForm.doctor_id]);
 
   // Load the doctors who can still take a walk-in today. The endpoint applies
   // the same capacity rule the server re-checks on submit; if it cannot be
@@ -195,7 +227,9 @@ export default function AdminDashboard() {
 
   function openWalkin() {
     setAvailableDoctorIds(null);
-    setWalkinForm({ ...EMPTY_WALKIN, arrival_time: nowHM() });
+    setWalkinSlots([]);
+    setWalkinSlotError('');
+    setWalkinForm({ ...EMPTY_WALKIN });
     setWalkinOpen(true);
   }
 
@@ -243,6 +277,7 @@ export default function AdminDashboard() {
     if (!walkinForm.name.trim()) { showToast('Patient name required', 'error'); return; }
     if (!walkinForm.contact.trim()) { showToast('Contact number required', 'error'); return; }
     if (!walkinForm.doctor_id) { showToast('Please select a doctor', 'error'); return; }
+    if (!walkinForm.arrival_time) { showToast('Please select an available arrival time', 'error'); return; }
     if (!walkinForm.test_procedure) { showToast('Please select a test / procedure', 'error'); return; }
     if (!walkinForm.blood_pressure.trim()) { showToast('Blood pressure required', 'error'); return; }
     if (!walkinForm.heart_rate.trim()) { showToast('Heart rate required', 'error'); return; }
@@ -622,7 +657,7 @@ export default function AdminDashboard() {
           </div>
           <div className="form-group">
             <label>Doctor *</label>
-            <Select className="form-dropdown form-input" value={walkinForm.doctor_id} onChange={(e) => setWalkinForm({ ...walkinForm, doctor_id: e.target.value, test_procedure: '', other: '' })}>
+            <Select className="form-dropdown form-input" value={walkinForm.doctor_id} onChange={(e) => setWalkinForm({ ...walkinForm, doctor_id: e.target.value, arrival_time: '', test_procedure: '', other: '' })}>
               <option value="">Select Doctor</option>
               {walkinDoctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name} ({doc.specialty})</option>)}
             </Select>
@@ -644,9 +679,27 @@ export default function AdminDashboard() {
           </div>
           <div className="form-group">
             <label>Arrival Time</label>
-            <Select className="form-dropdown form-input" value={walkinForm.arrival_time} onChange={(e) => setWalkinForm({ ...walkinForm, arrival_time: e.target.value })}>
-              {arrival.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            <Select
+              className="form-dropdown form-input"
+              value={walkinForm.arrival_time}
+              disabled={!walkinForm.doctor_id || walkinSlotLoading || walkinSlots.length === 0}
+              onChange={(e) => setWalkinForm({ ...walkinForm, arrival_time: e.target.value })}
+            >
+              <option value="">
+                {!walkinForm.doctor_id
+                  ? 'Select a doctor first'
+                  : walkinSlotLoading
+                    ? 'Loading available times…'
+                    : walkinSlots.length > 0
+                      ? 'Select arrival time'
+                      : 'No available times today'}
+              </option>
+              {walkinSlots.map((time) => <option key={time} value={time}>{fmtTime(time)}</option>)}
             </Select>
+            {walkinSlotError && <p className="form-hint">{walkinSlotError}</p>}
+            {!walkinSlotLoading && walkinForm.doctor_id && !walkinSlotError && walkinSlots.length === 0 && (
+              <p className="form-hint">No one-hour appointment times remain within this doctor’s shift today.</p>
+            )}
           </div>
         </div>
         <div className="form-grid">

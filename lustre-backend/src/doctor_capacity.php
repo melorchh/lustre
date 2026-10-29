@@ -81,6 +81,153 @@ if (!function_exists('doctor_has_lunch_free_shift_window')) {
     }
 }
 
+if (!function_exists('doctor_available_walkin_times')) {
+    /**
+     * Available five-minute walk-in start times for today, or null on query
+     * failure. Each time reserves a full hour inside an active shift.
+     */
+    function doctor_available_walkin_times($conn, $doctor_id, $date)
+    {
+        $day_of_week = date('l', strtotime($date));
+        $stmt = $conn->prepare(
+            "SELECT schedule_date, day_of_week, start_time, end_time, is_active
+             FROM doctor_schedules WHERE doctor_id = ?"
+        );
+        if (!$stmt) {
+            return null;
+        }
+        $stmt->bind_param("i", $doctor_id);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return null;
+        }
+        $rows = $stmt->get_result();
+        if (!$rows) {
+            $stmt->close();
+            return null;
+        }
+        $shifts = array();
+        while ($row = $rows->fetch_assoc()) {
+            if ((int)$row['is_active'] !== 1 || !doctor_shift_on($row, $date, $day_of_week)) {
+                continue;
+            }
+            $start = doctor_clock_seconds($row['start_time']);
+            $end = doctor_clock_seconds($row['end_time']);
+            if ($end > $start) {
+                $shifts[] = array('start' => $start, 'end' => $end);
+            }
+        }
+        $rows->close();
+        $stmt->close();
+
+        $stmt = $conn->prepare(
+            "SELECT appointment_time FROM appointments
+             WHERE doctor_id = ? AND appointment_date = ?
+               AND status IN ('pending', 'confirmed', 'completed')"
+        );
+        if (!$stmt) {
+            return null;
+        }
+        $stmt->bind_param("is", $doctor_id, $date);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return null;
+        }
+        $rows = $stmt->get_result();
+        if (!$rows) {
+            $stmt->close();
+            return null;
+        }
+        $booked = array();
+        while ($row = $rows->fetch_assoc()) {
+            $start = doctor_clock_seconds($row['appointment_time']);
+            $booked[] = array('start' => $start, 'end' => $start + (60 * 60));
+        }
+        $rows->close();
+        $stmt->close();
+
+        $stmt = $conn->prepare(
+            "SELECT block_type, block_date, end_date, day_of_week, start_time, end_time
+             FROM doctor_time_blocks WHERE doctor_id = ?"
+        );
+        if (!$stmt) {
+            return null;
+        }
+        $stmt->bind_param("i", $doctor_id);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return null;
+        }
+        $rows = $stmt->get_result();
+        if (!$rows) {
+            $stmt->close();
+            return null;
+        }
+        $blocked = array();
+        while ($row = $rows->fetch_assoc()) {
+            $type = (string)$row['block_type'];
+            $block_date = isset($row['block_date']) ? substr((string)$row['block_date'], 0, 10) : '';
+            $end_date = isset($row['end_date']) && $row['end_date']
+                ? substr((string)$row['end_date'], 0, 10)
+                : $block_date;
+            $applies = (
+                ($type === 'date' && $block_date === $date)
+                || ($type === 'week' && $block_date !== '' && $block_date <= $date && $date <= $end_date)
+                || ($type === 'weekly' && (string)$row['day_of_week'] === $day_of_week)
+            );
+            if ($applies) {
+                $blocked[] = array(
+                    'start' => doctor_clock_seconds($row['start_time']),
+                    'end' => doctor_clock_seconds($row['end_time']),
+                );
+            }
+        }
+        $rows->close();
+        $stmt->close();
+
+        $now = doctor_clock_seconds(date('H:i'));
+        $interval = 5 * 60;
+        $window = 60 * 60;
+        $busy = array_merge($booked, $blocked);
+        $available = array();
+        foreach ($shifts as $shift) {
+            $start = max($shift['start'], $now);
+            $start = (int)(ceil($start / $interval) * $interval);
+            while ($start + $window <= $shift['end']) {
+                $end = $start + $window;
+                $is_available = !appointment_interval_overlaps_lunch_break($start, $end);
+                foreach ($busy as $block) {
+                    if ($start < $block['end'] && $end > $block['start']) {
+                        $is_available = false;
+                        break;
+                    }
+                }
+                if ($is_available) {
+                    $available[sprintf('%02d:%02d', (int)floor($start / 3600), (int)floor(($start % 3600) / 60))] = true;
+                }
+                $start += $interval;
+            }
+        }
+        $times = array_keys($available);
+        sort($times, SORT_STRING);
+        return $times;
+    }
+}
+
+if (!function_exists('doctor_slot_is_available')) {
+    function doctor_slot_is_available($conn, $doctor_id, $date, $time)
+    {
+        if (!preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', (string)$time)) {
+            return false;
+        }
+        $available = doctor_available_walkin_times($conn, $doctor_id, $date);
+        if ($available === null) {
+            return null;
+        }
+        return in_array($time, $available, true);
+    }
+}
+
 if (!function_exists('doctor_free_windows')) {
     /**
      * How many more 1-hour visits fit in a set of shifts.
