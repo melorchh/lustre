@@ -200,7 +200,7 @@ function admin_view_data($conn, $view, array $params = array())
             $conn->query("INSERT INTO app_settings (skey, sval) VALUES ('default_test_procedures_v2', '1') ON CONFLICT (skey) DO NOTHING");
         }
         $accounts = api_all($conn->query(
-            "SELECT da.id AS id, da.id AS account_id, da.username, da.created_at, d.id AS doctor_id, d.name AS doctor_name, d.specialty
+            "SELECT da.id AS id, da.id AS account_id, da.username, da.email, da.created_at, d.id AS doctor_id, d.name AS doctor_name, d.specialty
              FROM doctor_accounts da JOIN doctors d ON da.doctor_id=d.id ORDER BY d.name"));
         return array(
             'doctors' => api_all($conn->query(

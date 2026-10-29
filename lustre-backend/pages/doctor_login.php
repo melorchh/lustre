@@ -35,22 +35,39 @@ if (isset($_SESSION["doctor_id"])) {
 
             <div id="errorMessage" class="error-message"></div>
 
-            <form id="doctorLoginForm">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required autocomplete="username">
-                </div>
-
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <div class="password-wrap">
-                        <input type="password" id="password" name="password" required autocomplete="current-password">
-                        <button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            <form id="doctorLoginForm" novalidate>
+                <div id="loginStep1">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required autocomplete="username">
                     </div>
-                </div>
 
-                <button type="submit" class="btn-primary btn-full">Login to Dashboard</button>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="password-wrap">
+                            <input type="password" id="password" name="password" required autocomplete="current-password">
+                            <button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Show password" tabindex="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                        </div>
+                    </div>
+
+                    <label style="display:flex;align-items:flex-start;gap:0.5rem;margin:0.25rem 0 1rem;font-size:0.9rem;color:#475569;line-height:1.4;">
+                        <input type="checkbox" id="tncCheck" style="margin-top:0.25rem;">
+                        <span>I agree to the Terms &amp; Conditions</span>
+                    </label>
+
+                    <button type="submit" class="btn-primary btn-full">Send OTP</button>
+                </div>
             </form>
+
+            <div id="otpStep" style="display:none;">
+                <p style="color:#475569;font-size:0.93rem;margin-bottom:1rem;">An OTP has been sent to the email associated with this account. Please enter the 6-digit code to continue.</p>
+                <div class="form-group">
+                    <label for="doctorOtp">OTP Code</label>
+                    <input type="text" id="doctorOtp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="Enter 6-digit code" required>
+                </div>
+                <button type="button" id="verifyOtpBtn" class="btn-primary btn-full">Verify &amp; Login</button>
+                <button type="button" id="resendOtpBtn" class="btn-secondary btn-full" style="margin-top:0.6rem;">Resend OTP</button>
+            </div>
 
             <div class="back-link">
                 <a href="index.php">&larr; Back to Patient Portal</a>
@@ -119,12 +136,71 @@ if (isset($_SESSION["doctor_id"])) {
             btn.innerHTML = show ? eyeOff : eye;
         }
 
+        let pendingDoctorLogin = { username: '', password: '' };
+
         document.getElementById('doctorLoginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             hideError();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const tnc = document.getElementById('tncCheck').checked;
+
+            if (!username || !password) {
+                showError('Username and password are required');
+                return;
+            }
+            if (!tnc) {
+                showError('Please agree to the Terms & Conditions');
+                return;
+            }
+
+            pendingDoctorLogin.username = username;
+            pendingDoctorLogin.password = password;
+
             showLoading();
 
-            const formData = new FormData(this);
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+            formData.append('action', 'request_otp');
+
+            fetch('doctor_login_process.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.text())
+            .then(result => {
+                hideLoading();
+                if (result.trim() === 'otp_sent') {
+                    document.getElementById('loginStep1').style.display = 'none';
+                    document.getElementById('otpStep').style.display = 'block';
+                    document.getElementById('doctorOtp').value = '';
+                    document.getElementById('doctorOtp').focus();
+                } else {
+                    showError(result);
+                }
+            })
+            .catch(err => {
+                hideLoading();
+                showError('Error: ' + err.message);
+            });
+        });
+
+        document.getElementById('verifyOtpBtn').addEventListener('click', function() {
+            hideError();
+            const otp = document.getElementById('doctorOtp').value.trim();
+            if (!/^\d{6}$/.test(otp)) {
+                showError('Please enter the 6-digit OTP code');
+                return;
+            }
+            showLoading();
+
+            const formData = new FormData();
+            formData.append('username', pendingDoctorLogin.username);
+            formData.append('password', pendingDoctorLogin.password);
+            formData.append('action', 'verify_otp');
+            formData.append('otp', otp);
 
             fetch('doctor_login_process.php', {
                 method: 'POST',
@@ -137,6 +213,38 @@ if (isset($_SESSION["doctor_id"])) {
                     try{localStorage.setItem('lustreAdminFlash',JSON.stringify({m:'Welcome back!',t:'success'}));}catch(e){}
                     document.body.classList.add('__leaving');
                     setTimeout(() => { window.location.href = 'doctor_dashboard.php'; }, 400);
+                } else {
+                    showError(result);
+                }
+            })
+            .catch(err => {
+                hideLoading();
+                showError('Error: ' + err.message);
+            });
+        });
+
+        document.getElementById('resendOtpBtn').addEventListener('click', function() {
+            hideError();
+            showLoading();
+
+            const formData = new FormData();
+            formData.append('username', pendingDoctorLogin.username);
+            formData.append('password', pendingDoctorLogin.password);
+            formData.append('action', 'request_otp');
+
+            fetch('doctor_login_process.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.text())
+            .then(result => {
+                hideLoading();
+                if (result.trim() === 'otp_sent') {
+                    showError('A new OTP has been sent.');
+                    document.getElementById('errorMessage').style.background = '#f0fdf4';
+                    document.getElementById('errorMessage').style.color = '#16a34a';
+                    document.getElementById('errorMessage').style.borderColor = '#86efac';
+                    document.getElementById('errorMessage').classList.add('show');
                 } else {
                     showError(result);
                 }
