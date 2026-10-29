@@ -4,6 +4,7 @@ import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime, fmtDate
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
 import { Modal, Select } from '../components';
+import DatePicker from '../DatePicker';
 import { Card, EmptyState, Field, FilterBar, ModalHead, Stack, StatCard, StatGrid } from '../ui';
 import {
   IconAppointments, IconCheck, IconClock, IconPatients, IconPrint, IconSearch, IconVitals,
@@ -403,7 +404,10 @@ export default function AdminAppointments() {
           <div className="form-grid">
             <div className="form-group">
               <label>Visit Date *</label>
-              <input type="date" className="form-input" required value={vitalsForm.visit_date} onChange={(e) => setVitalsForm({ ...vitalsForm, visit_date: e.target.value })} />
+              <DatePicker value={vitalsForm.visit_date} onChange={(visit_date) => {
+                setVitalsTouched(true);
+                setVitalsForm({ ...vitalsForm, visit_date });
+              }} />
             </div>
             <div className="form-group">
               <label>Weight (kg)</label>

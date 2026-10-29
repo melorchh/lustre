@@ -4,6 +4,7 @@ import { getInitial, postAction, isSuccess, fmtTime } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
 import { Modal, Select } from '../components';
+import DatePicker from '../DatePicker';
 import TimePicker from '../TimePicker';
 import { Card, EmptyState, Field, FilterBar, ModalHead, Stack, StatCard, StatGrid } from '../ui';
 import { IconCheck, IconSchedules, IconWalkins } from '../icons';
@@ -285,11 +286,11 @@ export default function AdminSchedules() {
           ) : (
             <>
               <Field label={blockForm.block_type === 'week' ? 'Start date' : 'Date'}>
-                <input className="form-input" type="date" value={blockForm.block_date} onChange={(e) => setBlockForm({ ...blockForm, block_date: e.target.value })} />
+                <DatePicker value={blockForm.block_date} onChange={(block_date) => setBlockForm({ ...blockForm, block_date })} />
               </Field>
               {blockForm.block_type === 'week' && (
                 <Field label="End date">
-                  <input className="form-input" type="date" value={blockForm.end_date} onChange={(e) => setBlockForm({ ...blockForm, end_date: e.target.value })} />
+                  <DatePicker value={blockForm.end_date} onChange={(end_date) => setBlockForm({ ...blockForm, end_date })} />
                 </Field>
               )}
             </>
