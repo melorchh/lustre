@@ -35,7 +35,7 @@ $recent_tests = $conn->query("
 ");
 
 $upcoming_appts = $conn->query("
-    SELECT a.id, a.appointment_date, a.appointment_time, a.status, a.patient_id, a.unique_code, p.name AS patient_name, a.service_requested
+    SELECT a.id, a.appointment_date, a.appointment_time, a.status, a.patient_id, a.unique_code, a.result, p.name AS patient_name, a.service_requested
     FROM appointments a JOIN patients p ON a.patient_id = p.id
     WHERE a.doctor_id = $doctor_id AND a.appointment_date >= CURRENT_DATE AND a.status IN ('pending','confirmed')
     ORDER BY a.appointment_date ASC, a.appointment_time ASC LIMIT 6
@@ -233,7 +233,13 @@ function fill_color($s) {
                                 <td><?php echo date('g:i A', strtotime($ap['appointment_time'])); ?></td>
                                 <td><strong><a href="client_profile.php?id=<?php echo (int)$ap['patient_id']; ?>" style="color:inherit;text-decoration:underline;text-underline-offset:2px"><?php echo htmlspecialchars($ap['patient_name']); ?></a></strong></td>
                                 <td><?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation'); ?></td>
-                                <td style="white-space:nowrap"><span class="badge" style="<?php echo $bc; ?>"><?php echo ucfirst($ap['status']); ?></span>
+                                <td style="white-space:nowrap">
+                                    <span class="badge" style="<?php echo $bc; ?>"><?php echo ucfirst($ap['status']); ?></span>
+                                    <select class="action-select apt-status" style="margin-left:6px" data-id="<?php echo (int)$ap['id']; ?>" data-prev="<?php echo htmlspecialchars($ap['status'], ENT_QUOTES); ?>" data-patient="<?php echo htmlspecialchars($ap['patient_name'], ENT_QUOTES); ?>" data-service="<?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation', ENT_QUOTES); ?>" data-result="<?php echo htmlspecialchars($ap['result'] ?? '', ENT_QUOTES); ?>" onchange="updateDashboardAppointmentStatus(this)" aria-label="Appointment status">
+                                        <?php foreach (['pending','confirmed','completed','cancelled'] as $opt): ?>
+                                        <option value="<?php echo $opt; ?>" <?php echo $ap['status']===$opt?'selected':''; ?>><?php echo ucfirst($opt); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
                                     <button type="button" class="btn-sm btn-vitals" style="margin-left:6px" title="View patient vitals" data-apt="<?php echo (int)$ap['id']; ?>" data-pid="<?php echo (int)$ap['patient_id']; ?>" data-name="<?php echo htmlspecialchars($ap['patient_name'], ENT_QUOTES); ?>" data-code="<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>" data-label="<?php echo htmlspecialchars(date('M j, Y', strtotime($ap['appointment_date'])), ENT_QUOTES); ?> &middot; <?php echo htmlspecialchars(date('g:i A', strtotime($ap['appointment_time'])), ENT_QUOTES); ?>" onclick="openAptVitalsView(this)">
                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals
                                     </button>
@@ -268,7 +274,7 @@ function fill_color($s) {
                                 <td><?php echo date('M j, Y', strtotime($pr['appointment_date'])); ?></td>
                                 <td><?php echo date('g:i A', strtotime($pr['appointment_time'])); ?></td>
                                 <td style="white-space:nowrap">
-                                    <button class="btn-sm btn-edit" onclick="openDashResultModal(<?php echo (int)$pr['id']; ?>, '<?php echo addslashes(htmlspecialchars($pr['patient_name'])); ?>', '<?php echo addslashes(htmlspecialchars($pr['service_requested'] ?: 'General consultation')); ?>')">
+                                    <button class="btn-sm btn-edit" data-apt="<?php echo (int)$pr['id']; ?>" data-patient="<?php echo htmlspecialchars($pr['patient_name'], ENT_QUOTES); ?>" data-service="<?php echo htmlspecialchars($pr['service_requested'] ?: 'General consultation', ENT_QUOTES); ?>" onclick="openDashResultFromEl(this)">
                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Write Result
                                     </button>
                                     <button type="button" class="btn-sm btn-vitals" style="margin-left:6px" title="View patient vitals" data-apt="<?php echo (int)$pr['id']; ?>" data-pid="<?php echo (int)$pr['patient_id']; ?>" data-name="<?php echo htmlspecialchars($pr['patient_name'], ENT_QUOTES); ?>" data-code="<?php echo htmlspecialchars($pr['unique_code'] ?? '', ENT_QUOTES); ?>" data-label="<?php echo htmlspecialchars(date('M j, Y', strtotime($pr['appointment_date'])), ENT_QUOTES); ?> &middot; <?php echo htmlspecialchars(date('g:i A', strtotime($pr['appointment_time'])), ENT_QUOTES); ?>" onclick="openAptVitalsView(this)">
@@ -319,19 +325,31 @@ function fill_color($s) {
     <div id="loadingScreen" class="loading-screen"><div class="spinner"></div><p>Processing...</p></div>
     <div id="toast" class="toast"></div>
 
-    <!-- Write Result Modal -->
+    <!-- Appointment Result Modal -->
     <div class="result-modal" id="dashResultModal">
         <div class="result-modal-box">
             <button class="result-close" onclick="closeDashResultModal()">&#10005;</button>
-            <h3>Write Appointment Result</h3>
+            <h3>Appointment Consultation Result</h3>
             <div class="info-row" id="dashModalInfoRow"></div>
             <div class="form-group">
-                <label>Appointment Result / Findings</label>
-                <textarea id="dashResult" rows="8" placeholder="Enter the appointment result, diagnosis, findings, and notes here..."></textarea>
+                <label>Consultation Checklist</label>
+                <div class="consult-checklist" id="dashChecklist">
+                    <label class="consult-check"><input type="checkbox" value="The patient is good"> The patient is good</label>
+                    <label class="consult-check"><input type="checkbox" value="No complaints reported"> No complaints reported</label>
+                    <label class="consult-check"><input type="checkbox" value="Vitals are stable"> Vitals are stable</label>
+                    <label class="consult-check"><input type="checkbox" value="No signs of infection"> No signs of infection</label>
+                    <label class="consult-check"><input type="checkbox" value="Medication prescribed"> Medication prescribed</label>
+                    <label class="consult-check"><input type="checkbox" value="Follow-up advised"> Follow-up advised</label>
+                </div>
             </div>
+            <div class="form-group">
+                <label>Notes / Result / Findings</label>
+                <textarea id="dashResult" rows="6" placeholder="Enter the diagnosis, findings, and notes for this consultation..."></textarea>
+            </div>
+            <p class="consult-hint">The checklist and notes are saved together with the appointment.</p>
             <div style="display:flex;gap:.75rem;flex-wrap:wrap">
                 <button class="btn-primary" onclick="saveDashResult()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Save Result</button>
-                <button class="btn-secondary" onclick="closeDashResultModal()">Cancel</button>
+                <button class="btn-secondary" onclick="closeDashResultModal()">Close</button>
             </div>
         </div>
     </div>
@@ -399,14 +417,63 @@ function fill_color($s) {
         function showLoading(){document.getElementById('loadingScreen').classList.add('active');}
         function hideLoading(){document.getElementById('loadingScreen').classList.remove('active');}
 
+        const WQ_NOTES_PREFIX = 'Notes / Findings:\n';
+        const WQ_CHECK_MARK = '\n\n' + WQ_NOTES_PREFIX;
+        function parseConsultationResult(text){
+            text = String(text == null ? '' : text);
+            const checks = [];
+            let notes = text;
+            if (text.indexOf('Checklist:\n') === 0) {
+                const split = text.indexOf(WQ_CHECK_MARK);
+                const head = split >= 0 ? text.slice(0, split) : text;
+                head.split('\n').forEach(function(line){
+                    const match = line.match(/^-\s+(.+)$/);
+                    if (match && match[1].trim()) checks.push(match[1].trim());
+                });
+                notes = split >= 0 ? text.slice(split + WQ_CHECK_MARK.length) : '';
+            } else if (text.indexOf(WQ_NOTES_PREFIX) === 0) {
+                notes = text.slice(WQ_NOTES_PREFIX.length);
+            }
+            return { checks: checks, notes: notes };
+        }
+        function composeConsultationResult(checks, notes){
+            const parts = [];
+            if (checks && checks.length) parts.push('Checklist:\n' + checks.map(function(check){ return '- ' + check; }).join('\n'));
+            if (notes && notes.trim()) parts.push(WQ_NOTES_PREFIX + notes.trim());
+            return parts.join('\n\n');
+        }
+        function collectConsultationResult(checklistId, textareaId){
+            const checks = Array.prototype.slice.call(document.querySelectorAll('#' + checklistId + ' input:checked')).map(function(input){ return input.value; });
+            const notes = (document.getElementById(textareaId) || {}).value || '';
+            return composeConsultationResult(checks, notes);
+        }
+        function fillConsultationResultForm(checklistId, textareaId, text){
+            const parsed = parseConsultationResult(text);
+            document.querySelectorAll('#' + checklistId + ' input[type="checkbox"]').forEach(function(input){
+                input.checked = parsed.checks.indexOf(input.value) !== -1;
+            });
+            const textarea = document.getElementById(textareaId);
+            if (textarea) textarea.value = parsed.notes;
+        }
+        function dashEsc(value){
+            return String(value == null ? '' : value).replace(/[&<>"']/g, function(char){
+                return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char];
+            });
+        }
+
         let dashApptId = null;
-        function openDashResultModal(id, patientName, service){
+        let dashReloadOnClose = false;
+        function openDashResultFromEl(el){
+            openDashResultModal(el.dataset.apt, el.dataset.patient || '', el.dataset.service || 'General consultation', '', false);
+        }
+        function openDashResultModal(id, patientName, service, result, reloadOnClose){
             dashApptId = id;
+            dashReloadOnClose = !!reloadOnClose;
             document.getElementById('dashModalInfoRow').innerHTML =
-                '<div class="info-item"><label>Patient</label><span>'+patientName+'</span></div>' +
-                '<div class="info-item"><label>Service</label><span>'+service+'</span></div>' +
-                '<div class="info-item"><label>Appt ID</label><span>#'+id+'</span></div>';
-            document.getElementById('dashResult').value = '';
+                '<div class="info-item"><label>Patient</label><span>'+dashEsc(patientName)+'</span></div>' +
+                '<div class="info-item"><label>Service</label><span>'+dashEsc(service)+'</span></div>' +
+                '<div class="info-item"><label>Appt ID</label><span>#'+dashEsc(id)+'</span></div>';
+            fillConsultationResultForm('dashChecklist', 'dashResult', result || '');
             document.getElementById('dashResultModal').classList.add('active');
             document.body.style.overflow = 'hidden';
         }
@@ -414,11 +481,15 @@ function fill_color($s) {
             document.getElementById('dashResultModal').classList.remove('active');
             document.body.style.overflow = '';
             dashApptId = null;
+            if (dashReloadOnClose) {
+                dashReloadOnClose = false;
+                setTimeout(function(){ location.reload(); }, 215);
+            }
         }
         function saveDashResult(){
             if(!dashApptId) return;
-            const result = document.getElementById('dashResult').value.trim();
-            if(!result){ showToast('Please enter the appointment result','error'); return; }
+            const result = collectConsultationResult('dashChecklist', 'dashResult');
+            if(!result){ showToast('Select a checklist item or enter notes','error'); return; }
             showLoading();
             const fd = new FormData();
             fd.append('appointment_id', dashApptId);
@@ -428,6 +499,7 @@ function fill_color($s) {
                 hideLoading();
                 if(res.trim()==='success'){
                     showToast('Result saved successfully!','success');
+                    dashReloadOnClose = false;
                     closeDashResultModal();
                     document.body.classList.add('__leaving');
                     setTimeout(()=>location.reload(),215);
@@ -438,6 +510,65 @@ function fill_color($s) {
         document.getElementById('dashResultModal').addEventListener('click', function(e){
             if(e.target === this) closeDashResultModal();
         });
+
+        function updateDashboardAppointmentStatus(sel){
+            const status = sel.value;
+            const previous = sel.getAttribute('data-prev') || 'pending';
+            const appointmentId = sel.getAttribute('data-id');
+            const fd = new FormData();
+            fd.append('appointment_id', appointmentId);
+            sel.disabled = true;
+            showLoading();
+            if (status === 'completed') {
+                fetch('doctor_result_action.php?action=complete', {method:'POST', body:fd})
+                .then(r=>r.text())
+                .then(res=>{
+                    hideLoading();
+                    sel.disabled = false;
+                    if(res.trim() !== 'success'){
+                        sel.value = previous;
+                        showToast(res,'error');
+                        return;
+                    }
+                    sel.setAttribute('data-prev', status);
+                    const badge = sel.parentNode.querySelector('.badge');
+                    if (badge) {
+                        badge.textContent = 'Completed';
+                        badge.style.cssText = 'background:#e2e8f0;color:#334155';
+                    }
+                    showToast('Appointment completed. Add the consultation result.','success');
+                    openDashResultModal(appointmentId, sel.dataset.patient || '', sel.dataset.service || 'General consultation', sel.dataset.result || '', true);
+                })
+                .catch(()=>{
+                    hideLoading();
+                    sel.disabled = false;
+                    sel.value = previous;
+                    showToast('Network error','error');
+                });
+                return;
+            }
+            fd.append('status', status);
+            fetch('doctor_appointment_action.php', {method:'POST', body:fd})
+            .then(r=>r.text())
+            .then(res=>{
+                hideLoading();
+                sel.disabled = false;
+                if(res.trim()==='success'){
+                    sel.setAttribute('data-prev', status);
+                    document.body.classList.add('__leaving');
+                    setTimeout(()=>location.reload(),215);
+                }else{
+                    sel.value = previous;
+                    showToast(res,'error');
+                }
+            })
+            .catch(()=>{
+                hideLoading();
+                sel.disabled = false;
+                sel.value = previous;
+                showToast('Network error','error');
+            });
+        }
 
         /* -- Walk-in queue (live) -- */
         const WQ_STATUSES = ['waiting','in_service','served','cancelled'];
@@ -456,44 +587,11 @@ function fill_color($s) {
             });
         })();
 
-        const WQ_NOTES_PREFIX = 'Notes / Findings:\n';
-        const WQ_CHECK_MARK = '\n\n' + WQ_NOTES_PREFIX;
-        function wqParseResult(text){
-            text = String(text == null ? '' : text);
-            const checks = [];
-            let notes = text;
-            const hasChecklist = text.indexOf('Checklist:\n') === 0;
-            if (hasChecklist) {
-                const split = text.indexOf(WQ_CHECK_MARK);
-                const head = split >= 0 ? text.slice(0, split) : text;
-                head.split('\n').forEach(function(line){
-                    const m = line.match(/^-\s+(.+)$/);
-                    if (m && m[1].trim()) checks.push(m[1].trim());
-                });
-                notes = split >= 0 ? text.slice(split + WQ_CHECK_MARK.length) : '';
-            } else if (text.indexOf(WQ_NOTES_PREFIX) === 0) {
-                notes = text.slice(WQ_NOTES_PREFIX.length);
-            }
-            return { checks: checks, notes: notes };
-        }
-        function wqComposeResult(checks, notes){
-            const parts = [];
-            if (checks && checks.length) parts.push('Checklist:\n' + checks.map(function(c){ return '- ' + c; }).join('\n'));
-            if (notes && notes.trim()) parts.push(WQ_NOTES_PREFIX + notes.trim());
-            return parts.join('\n\n');
-        }
         function wqCollectResult(){
-            const checks = Array.prototype.slice.call(document.querySelectorAll('#wqChecklist input:checked')).map(function(cb){ return cb.value; });
-            const notes = (document.getElementById('wqResultText') || {}).value || '';
-            return wqComposeResult(checks, notes);
+            return collectConsultationResult('wqChecklist', 'wqResultText');
         }
         function wqFillResultForm(text){
-            const parsed = wqParseResult(text);
-            document.querySelectorAll('#wqChecklist input[type="checkbox"]').forEach(function(cb){
-                cb.checked = parsed.checks.indexOf(cb.value) !== -1;
-            });
-            const ta = document.getElementById('wqResultText');
-            if (ta) ta.value = parsed.notes;
+            fillConsultationResultForm('wqChecklist', 'wqResultText', text);
         }
         function wqStoreDraft(){
             if (!wqModalId) return;
