@@ -220,6 +220,22 @@ if (isset($_SESSION["patient_id"])) {
       </div>
       <div class="modal-switch"><a href="#" id="doctorOtpCancel">Use a different account</a></div>
     </div>
+    <div id="adminOtpPanel" style="display:none;">
+      <div class="modal-title">Verify your admin sign-in</div>
+      <div class="modal-sub">A 6-digit code is required to continue to the admin portal.</div>
+      <div id="adminOtpEmailStep" style="display:none;">
+        <div class="field"><label for="adminOtpEmailInput">Admin email address</label><input type="email" id="adminOtpEmailInput" placeholder="admin@example.com" autocomplete="email"></div>
+        <button type="button" class="submit-btn" id="adminOtpSend"><span>Send verification code</span> &rarr;</button>
+      </div>
+      <div id="adminOtpVerifyStep" style="display:none;">
+        <div class="otp-hint" id="adminOtpHint"></div>
+        <div class="field"><label for="adminOtpInput">Verification code</label><input type="text" id="adminOtpInput" placeholder="Enter 6-digit code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"></div>
+        <button type="button" class="submit-btn" id="adminOtpVerify"><span>Verify and sign in</span> &rarr;</button>
+        <div class="otp-resend"><a href="#" id="adminOtpResend">Resend code</a><span class="otp-timer" id="adminOtpTimer"></span></div>
+      </div>
+      <div class="form-error" id="adminOtpError"></div>
+      <div class="modal-switch"><a href="#" id="adminOtpCancel">Use a different account</a></div>
+    </div>
     <a href="#" class="forgot-link" onclick="openForgotPassword()">Forgot password?</a>
     <div class="modal-switch"><span>Don't have an account?</span> <a href="#" onclick="switchModal('loginModal','registerModal')">Register here</a></div>
   </div>
@@ -531,7 +547,7 @@ dots.forEach((d,i)=>d.addEventListener('click',()=>{stopSlideshow();goSlide(i);s
 
 /* -- Modals -- */
 function openModal(id){document.getElementById(id).classList.add('active');document.body.style.overflow='hidden'}
-function closeModal(id){document.getElementById(id).classList.remove('active');document.body.style.overflow='';if(id==='loginModal'&&doctorOtpUsername)cancelDoctorOtp()}
+function closeModal(id){document.getElementById(id).classList.remove('active');document.body.style.overflow='';if(id==='loginModal'){if(doctorOtpUsername)cancelDoctorOtp();if(adminOtpUsername)cancelAdminOtp();}}
 function switchModal(a,b){closeModal(a);setTimeout(()=>openModal(b),200)}
 document.querySelectorAll('.modal-overlay, .register-modal').forEach(o=>o.addEventListener('click',e=>{if(e.target===o){closeModal(o.id);if(o.id==='registerModal')resetRegisterOtp();if(o.id==='forgotPasswordModal')resetForgotPassword();}}));
 
@@ -550,7 +566,7 @@ function syncTermsGate(cbId, btnId){
 syncTermsGate('loginTerms', 'loginSubmitBtn');
 syncTermsGate('regTerms', 'regSubmitBtn');
 
-/* -- Login: patients and admins sign in directly; doctors verify by OTP. -- */
+/* -- Login: patients sign in directly; staff verify by email OTP. -- */
 let doctorOtpUsername = '';
 let doctorOtpTimer = null;
 
@@ -625,6 +641,7 @@ document.getElementById('loginForm').addEventListener('submit',function(e){
   fetch('login.php',{method:'POST',body:new FormData(this)}).then(r=>r.text()).then(res=>{hideLoading();
     res=res.trim();
     if(res==='otp_required'){doctorOtpUsername=ident;requestDoctorOtp(false);}
+    else if(res==='admin_otp_required'){adminOtpUsername=ident;requestAdminOtp();}
     else if(res==='success:new'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php?tour=1',900);}
     else if(res==='success'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php',900);}
     else if(res==='success:doctor'){showToast('Welcome back, Doctor!','success');setTimeout(()=>location.href='doctor_dashboard.php',900);}
@@ -639,6 +656,104 @@ document.getElementById('doctorOtpInput').addEventListener('input',function(){th
 document.getElementById('doctorOtpInput').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();verifyDoctorOtp();}});
 document.getElementById('doctorOtpResend').addEventListener('click',function(e){e.preventDefault();if(!doctorOtpTimer)requestDoctorOtp(true);});
 document.getElementById('doctorOtpCancel').addEventListener('click',function(e){e.preventDefault();cancelDoctorOtp();});
+
+let adminOtpUsername = '';
+let adminOtpTimer = null;
+let adminOtpEmail = '';
+
+function clearAdminOtpTimer(){
+  if(adminOtpTimer){clearInterval(adminOtpTimer);adminOtpTimer=null;}
+}
+
+function cancelAdminOtp(){
+  const fd=new FormData();fd.append('username',adminOtpUsername);fd.append('password',document.getElementById('loginPassword').value);fd.append('action','cancel_otp');
+  fetch('admin_login_process.php',{method:'POST',body:fd}).catch(()=>{});
+  clearAdminOtpTimer();adminOtpUsername='';adminOtpEmail='';
+  document.getElementById('adminOtpPanel').style.display='none';
+  document.getElementById('adminOtpEmailStep').style.display='none';
+  document.getElementById('adminOtpVerifyStep').style.display='none';
+  document.getElementById('loginForm').style.display='';
+  document.getElementById('adminOtpInput').value='';
+  document.getElementById('adminOtpEmailInput').value='';
+  document.getElementById('adminOtpError').classList.remove('show');
+  document.getElementById('loginPassword').value='';
+}
+
+function startAdminOtpTimer(){
+  clearAdminOtpTimer();let remaining=60;
+  const link=document.getElementById('adminOtpResend'),timer=document.getElementById('adminOtpTimer');
+  link.style.pointerEvents='none';link.style.opacity='.55';timer.textContent='Resend in 1:00';
+  adminOtpTimer=setInterval(()=>{
+    remaining--;
+    if(remaining<=0){clearAdminOtpTimer();link.style.pointerEvents='';link.style.opacity='';timer.textContent='';return;}
+    timer.textContent=`Resend in 0:${String(remaining).padStart(2,'0')}`;
+  },1000);
+}
+
+async function requestAdminOtp(){
+  const otpPanelAlreadyOpen=document.getElementById('adminOtpPanel').style.display!=='none';
+  const fd=new FormData();fd.append('username',adminOtpUsername);fd.append('password',document.getElementById('loginPassword').value);fd.append('action','request_otp');
+  if(adminOtpEmail)fd.append('email',adminOtpEmail);
+  showLoading();
+  try{
+    const response=await fetch('admin_login_process.php',{method:'POST',body:fd});
+    const text=(await response.text()).trim();hideLoading();
+    document.getElementById('loginForm').style.display='none';
+    document.getElementById('adminOtpPanel').style.display='';
+    document.getElementById('adminOtpError').classList.remove('show');
+    if(text==='email_required'){
+      document.getElementById('adminOtpEmailStep').style.display='';
+      document.getElementById('adminOtpVerifyStep').style.display='none';
+      document.getElementById('adminOtpEmailInput').focus();
+      return;
+    }
+    if(text==='otp_sent'){
+      document.getElementById('adminOtpEmailStep').style.display='none';
+      document.getElementById('adminOtpVerifyStep').style.display='';
+      document.getElementById('adminOtpHint').textContent='A verification code has been sent to your admin account email.';
+      startAdminOtpTimer();document.getElementById('adminOtpInput').focus();
+      return;
+    }
+    if(!otpPanelAlreadyOpen){
+      document.getElementById('adminOtpPanel').style.display='none';
+      document.getElementById('loginForm').style.display='';
+      const loginError=document.getElementById('loginError');
+      loginError.textContent=text||'Unable to send the verification code.';
+      loginError.classList.add('show');
+      return;
+    }
+    document.getElementById('adminOtpError').textContent=text||'Unable to send the verification code.';
+    document.getElementById('adminOtpError').classList.add('show');
+  }catch(_){hideLoading();showToast('Network error','error');}
+}
+
+async function verifyAdminOtp(){
+  const otp=document.getElementById('adminOtpInput').value.trim(),error=document.getElementById('adminOtpError');
+  error.classList.remove('show');
+  if(!/^\d{6}$/.test(otp)){error.textContent='Enter the 6-digit verification code.';error.classList.add('show');return;}
+  const fd=new FormData();fd.append('username',adminOtpUsername);fd.append('password',document.getElementById('loginPassword').value);fd.append('action','verify_otp');fd.append('otp',otp);
+  showLoading();
+  try{
+    const response=await fetch('admin_login_process.php',{method:'POST',body:fd});
+    const text=(await response.text()).trim();hideLoading();
+    if(text==='success'||text==='change_password'){
+      showToast(text==='change_password'?'Please set a new password to continue.':'Welcome back!','success');
+      setTimeout(()=>location.href=text==='change_password'?'admin_change_password.php':'admin_dashboard.php',900);
+    }else{error.textContent=text;error.classList.add('show');}
+  }catch(_){hideLoading();showToast('Network error','error');}
+}
+
+document.getElementById('adminOtpSend').addEventListener('click',function(){
+  const input=document.getElementById('adminOtpEmailInput');
+  if(!input.value.trim()||!input.validity.valid){const error=document.getElementById('adminOtpError');error.textContent='Enter a valid admin email address.';error.classList.add('show');return;}
+  adminOtpEmail=input.value.trim();requestAdminOtp();
+});
+document.getElementById('adminOtpVerify').addEventListener('click',verifyAdminOtp);
+document.getElementById('adminOtpInput').addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,6);});
+document.getElementById('adminOtpInput').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();verifyAdminOtp();}});
+document.getElementById('adminOtpEmailInput').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();document.getElementById('adminOtpSend').click();}});
+document.getElementById('adminOtpResend').addEventListener('click',function(e){e.preventDefault();if(!adminOtpTimer)requestAdminOtp();});
+document.getElementById('adminOtpCancel').addEventListener('click',function(e){e.preventDefault();cancelAdminOtp();});
 
 /* -- Deep link: landing.php?signin=1 opens the Sign In sheet -- */
 if(new URLSearchParams(location.search).has('signin')){setTimeout(()=>openModal('loginModal'),350);}

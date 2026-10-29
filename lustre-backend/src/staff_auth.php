@@ -17,19 +17,38 @@ function ensure_doctor_accounts_table($conn)
     $conn->query("ALTER TABLE doctor_accounts ADD COLUMN IF NOT EXISTS email VARCHAR(255)");
 }
 
+function ensure_admin_email_column($conn)
+{
+    static $ensured = false;
+    if ($ensured) {
+        return true;
+    }
+    if (!$conn->query("ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS email VARCHAR(255)")) {
+        return false;
+    }
+    $ensured = true;
+    return true;
+}
+
 /**
  * Verify an admin account.
  *
- * @return array{ok: bool, found: bool, must_change: int, msg: string}
+ * @param bool $create_session Set false to verify credentials without signing in.
+ * @return array{ok: bool, found: bool, must_change: int, msg: string, email?: string|null, id?: int}
  *   found=false means no such admin username (caller may try another role).
- *   On ok=true the admin session variables are already set.
+ *   Admin session variables are set on success only when $create_session is true.
  */
-function verify_admin_login($conn, $username, $password)
+function verify_admin_login($conn, $username, $password, $create_session = true)
 {
     $res = array('ok' => false, 'found' => false, 'must_change' => 0, 'msg' => 'Invalid username or password');
 
+    if (!ensure_admin_email_column($conn)) {
+        $res['msg'] = 'Unable to load admin account settings. Please try again.';
+        return $res;
+    }
+
     // Fetch the account by username only (never compare raw password in SQL)
-    $stmt = $conn->prepare("SELECT id, password, full_name, must_change_password, failed_attempts, locked_until FROM admin_users WHERE username = ?");
+    $stmt = $conn->prepare("SELECT id, password, full_name, must_change_password, failed_attempts, locked_until, email FROM admin_users WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $stmt->store_result();
@@ -41,7 +60,7 @@ function verify_admin_login($conn, $username, $password)
 
     $res['found'] = true;
 
-    $stmt->bind_result($id, $stored, $full_name, $must_change, $failed_attempts, $locked_until);
+    $stmt->bind_result($id, $stored, $full_name, $must_change, $failed_attempts, $locked_until, $email);
     $stmt->fetch();
     $stmt->close();
 
@@ -93,10 +112,16 @@ function verify_admin_login($conn, $username, $password)
         $must_change = 1;
     }
 
-    $_SESSION['admin_id']          = $id;
-    $_SESSION['admin_name']        = $full_name;
-    $_SESSION['admin_username']    = $username;
-    $_SESSION['admin_must_change'] = $must_change ? 1 : 0;
+    $res['id'] = (int)$id;
+    $res['name'] = $full_name;
+    $res['email'] = $email;
+    if ($create_session) {
+        $_SESSION['admin_id']          = $id;
+        $_SESSION['admin_name']        = $full_name;
+        $_SESSION['admin_username']    = $username;
+        $_SESSION['admin_email']       = (string)($email ?? '');
+        $_SESSION['admin_must_change'] = $must_change ? 1 : 0;
+    }
 
     $res['ok']          = true;
     $res['must_change'] = $must_change ? 1 : 0;

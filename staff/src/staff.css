@@ -2558,11 +2558,33 @@ button.resched-badge:hover {
   color: var(--ap-text);
 }
 
+.sidebar-user-name--button {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.sidebar-user-name--button:hover,
+.sidebar-user-name--button:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.sidebar-user-name--button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
 /* --- modal --- */
 :is(.admin-portal, .doctor-portal) .modal-box {
   border-radius: 18px;
   border: 1px solid var(--ap-border);
   padding: 1.35rem 1.45rem 1.45rem;
+}
+.ap-account-modal {
+  width: min(440px, 94vw);
 }
 .ap-modal-head {
   margin: 0 0 0.9rem;

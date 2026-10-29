@@ -49,13 +49,9 @@ if ($stmt->num_rows > 0) {
 }
 
 /* 2) Admin account (lookup by username — whatever was typed in the field) */
-$admin = verify_admin_login($conn, $email, $password);
+$admin = verify_admin_login($conn, $email, $password, false);
 if ($admin['found']) {
-    if ($admin['ok']) {
-        unset($_SESSION['patient_id'], $_SESSION['just_registered']);
-        unset($_SESSION['doctor_account_id'], $_SESSION['doctor_id'], $_SESSION['doctor_name'], $_SESSION['doctor_username']);
-    }
-    echo $admin['ok'] ? ($admin['must_change'] ? "success:admin:change" : "success:admin") : $admin['msg'];
+    echo $admin['ok'] ? 'admin_otp_required' : $admin['msg'];
     $conn->close();
     exit;
 }
