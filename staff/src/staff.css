@@ -2795,12 +2795,18 @@ button.resched-badge:hover {
     min-width: 0;
   }
   :is(.admin-portal, .doctor-portal) .form-group input,
-  :is(.admin-portal, .doctor-portal) .form-group select {
+  :is(.admin-portal, .doctor-portal) .form-group select,
+  :is(.admin-portal, .doctor-portal) .form-group .ap-select-trigger {
     box-sizing: border-box;
     width: 100%;
     min-width: 0;
     max-width: 100%;
     height: 44px;
+    min-height: 44px;
+  }
+  :is(.admin-portal, .doctor-portal) .form-group .ap-select {
+    width: 100%;
+    min-width: 0;
   }
 }
 
