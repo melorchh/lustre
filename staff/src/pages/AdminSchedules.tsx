@@ -4,6 +4,7 @@ import { getInitial, postAction, isSuccess, fmtTime } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
 import { Modal, Select } from '../components';
+import TimePicker from '../TimePicker';
 import { Card, EmptyState, Field, FilterBar, ModalHead, Stack, StatCard, StatGrid } from '../ui';
 import { IconCheck, IconSchedules, IconWalkins } from '../icons';
 import type { DoctorRow, ScheduleRow, TimeBlockRow } from '../types';
@@ -59,7 +60,7 @@ export default function AdminSchedules() {
     try {
       const res = await postAction('admin_schedule_action.php', { doctor_id: availDoctorId, ...schedForm }, { action: 'add' });
       if (isSuccess(res)) {
-        showToast('Schedule added', 'success');
+        showToast('Availability saved', 'success');
         setAvailOpen(false);
         refresh();
       } else showToast(res.replace(/^error:\s*/i, ''), 'error');
@@ -224,7 +225,7 @@ export default function AdminSchedules() {
       <Modal open={availOpen} onClose={() => setAvailOpen(false)}>
         <ModalHead
           title="Add available time"
-          hint="Set the doctor's weekly availability. Choose a day range and time."
+          hint="Choose a day range and time. Reusing an existing start time updates that block."
         />
         <div className="form-grid">
           <Field label="Doctor" className="ap-field--full">
@@ -244,10 +245,10 @@ export default function AdminSchedules() {
             </Select>
           </Field>
           <Field label="Start time">
-            <input className="form-input" type="time" value={schedForm.start_time} onChange={(e) => setSchedForm({ ...schedForm, start_time: e.target.value })} />
+            <TimePicker value={schedForm.start_time} onChange={(start_time) => setSchedForm({ ...schedForm, start_time })} />
           </Field>
           <Field label="End time">
-            <input className="form-input" type="time" value={schedForm.end_time} onChange={(e) => setSchedForm({ ...schedForm, end_time: e.target.value })} />
+            <TimePicker value={schedForm.end_time} onChange={(end_time) => setSchedForm({ ...schedForm, end_time })} />
           </Field>
         </div>
         <div className="form-actions">
@@ -294,10 +295,10 @@ export default function AdminSchedules() {
             </>
           )}
           <Field label="Start time">
-            <input className="form-input" type="time" value={blockForm.start_time} onChange={(e) => setBlockForm({ ...blockForm, start_time: e.target.value })} />
+            <TimePicker value={blockForm.start_time} onChange={(start_time) => setBlockForm({ ...blockForm, start_time })} />
           </Field>
           <Field label="End time">
-            <input className="form-input" type="time" value={blockForm.end_time} onChange={(e) => setBlockForm({ ...blockForm, end_time: e.target.value })} />
+            <TimePicker value={blockForm.end_time} onChange={(end_time) => setBlockForm({ ...blockForm, end_time })} />
           </Field>
           <Field label="Reason" className="ap-field--full">
             <input className="form-input" placeholder="e.g. Conference, holiday, personal leave" value={blockForm.reason} onChange={(e) => setBlockForm({ ...blockForm, reason: e.target.value })} />

@@ -3,14 +3,14 @@
 //
 // Used by the admin walk-in form so the doctor dropdown only lists doctors
 // with room left. See lustre-backend/src/doctor_capacity.php for the rules:
-// an explicit doctors.daily_limit cap wins, otherwise the doctor's active
+// the doctor must have an active schedule on that day. An explicit
+// doctors.daily_limit cap wins after that, otherwise the doctor's active
 // schedule minus bookings / blocked ranges decides.
 //
 //   GET get_available_doctors.php[?date=YYYY-MM-DD]
 //   -> [ { id, name, specialty, daily_limit, mode, remaining }, ... ]
 //
-// The list shrinks rather than grows: when availability cannot be measured
-// (no schedules on file) the doctor is still returned.
+// Doctors without an active shift that day are omitted.
 
 header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');

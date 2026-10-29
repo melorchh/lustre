@@ -4,6 +4,7 @@ import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime } from '
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
 import { Modal, Select } from '../components';
+import DatePicker from '../DatePicker';
 import { Card, EmptyState, Field, FilterBar, FormSection, ModalHead, Stack, StatCard, StatGrid } from '../ui';
 import { IconClock, IconSearch, IconVitals } from '../icons';
 import type { VaccinationRow } from '../types';
@@ -307,11 +308,11 @@ export default function AdminVitals() {
             </Field>
           )}
           <div className="form-grid ap-mt">
-            <Field label="Administered date *">
-              <input type="date" className="form-input" max={today} value={form.administered_date} onChange={(e) => setForm({ ...form, administered_date: e.target.value })} />
+            <Field label="Administered date *" className="ap-field--date">
+              <DatePicker max={today} value={form.administered_date} onChange={(administered_date) => setForm({ ...form, administered_date })} />
             </Field>
-            <Field label="Next due date">
-              <input type="date" className="form-input" min={today} value={form.next_due_date} onChange={(e) => setForm({ ...form, next_due_date: e.target.value })} />
+            <Field label="Next due date" className="ap-field--date">
+              <DatePicker min={today} value={form.next_due_date} onChange={(next_due_date) => setForm({ ...form, next_due_date })} />
             </Field>
           </div>
           <FormSection title="Next-dose booking" hint="Optional — books a pending appointment">

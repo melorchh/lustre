@@ -2,17 +2,17 @@
 // ============================================================================
 // Doctor daily capacity / availability.
 //
-// A doctor is "full" for a date when they can take no more patients that day.
-// Which rule decides that depends on the data the clinic keeps:
+// A doctor is available for a date only when they have an active shift that
+// day. Without an active doctor_schedules row they are not offered for
+// walk-ins. When they are scheduled, the rule that decides whether they are
+// full depends on the data the clinic keeps:
 //
 //   * doctors.daily_limit > 0  ->  explicit daily patient cap. The doctor is
-//     full once today's active appointments + today's walk-ins reach it.
-//   * no cap, but the doctor has doctor_schedules rows  ->  slot based. The
-//     doctor is full when every 2-hour visit window in today's shifts is
-//     already booked or blocked (the same 2-hour block get_available_times.php
-//     books, so the counter and the patient booking flow agree).
-//   * no schedule rows at all (legacy doctor)  ->  no known limit, so the
-//     doctor stays selectable. Availability is never guessed.
+//     full once today's non-cancelled appointments + walk-ins reach it.
+//   * no cap  ->  slot based. The doctor is full when every 1-hour visit
+//     window in today's shifts is already booked or blocked (the same 1-hour
+//     block get_available_times.php books, so the counter and the patient
+//     booking flow agree).
 //
 // Registering a walk-in also creates a confirmed appointment for the same
 // patient, so patients are counted once (UNION of both sources) instead of
@@ -65,17 +65,17 @@ if (!function_exists('doctor_shift_on')) {
 
 if (!function_exists('doctor_free_windows')) {
     /**
-     * How many more 2-hour visits fit in a set of shifts.
+     * How many more 1-hour visits fit in a set of shifts.
      *
-     * Mirrors get_available_times.php: a visit occupies a 2-hour block, must
+     * Mirrors get_available_times.php: a visit occupies a 1-hour block, must
      * end before the shift does, and may not overlap an existing booking or a
      * blocked range. Candidates start on the 30-minute grid; once a window is
-     * counted the following 2 hours are skipped.
+     * counted the following hour is skipped.
      */
     function doctor_free_windows($shifts, $booked, $blocked)
     {
         $blocks = array_merge($booked, $blocked);
-        $window = 2 * 60 * 60;
+        $window = 60 * 60;
         $step = 30 * 60;
         $free = 0;
 
@@ -151,11 +151,13 @@ if (!function_exists('doctor_capacity_map')) {
             }
         }
 
-        // Patients already assigned that day: active appointments plus
-        // walk-ins that were not cancelled, counted once per patient.
+        // Patients already assigned that day: appointments that were not
+        // cancelled (including completed visits) plus walk-ins, counted once
+        // per patient. Completed visits still used a slot and count toward
+        // the doctor's daily limit.
         $stmt = $conn->prepare(
             "SELECT doctor_id, patient_id FROM appointments
-              WHERE appointment_date = ? AND status IN ('pending','confirmed')
+              WHERE appointment_date = ? AND status IN ('pending','confirmed','completed')
              UNION
              SELECT doctor_id, patient_id FROM walk_ins
               WHERE arrival_date = ? AND status <> 'cancelled'"
@@ -177,7 +179,7 @@ if (!function_exists('doctor_capacity_map')) {
 
         $stmt = $conn->prepare(
             "SELECT doctor_id, appointment_time FROM appointments
-              WHERE appointment_date = ? AND status IN ('pending','confirmed')"
+              WHERE appointment_date = ? AND status IN ('pending','confirmed','completed')"
         );
         if ($stmt) {
             $stmt->bind_param("s", $date);
@@ -186,7 +188,7 @@ if (!function_exists('doctor_capacity_map')) {
                 if ($rows) {
                     while ($row = $rows->fetch_assoc()) {
                         $start = doctor_clock_seconds($row['appointment_time']);
-                        $booked[(int)$row['doctor_id']][] = array('start' => $start, 'end' => $start + (2 * 60 * 60));
+                        $booked[(int)$row['doctor_id']][] = array('start' => $start, 'end' => $start + (60 * 60));
                     }
                     $rows->close();
                 }
@@ -242,7 +244,14 @@ if (!function_exists('doctor_capacity_map')) {
             $available = true;
             $reason    = '';
 
-            if ($limit > 0) {
+            if (empty($shifts[$id])) {
+                // No active shift applies to this date. This also covers
+                // doctors with no schedule rows at all.
+                $mode      = 'off_duty';
+                $remaining = 0;
+                $available = false;
+                $reason    = 'not_scheduled';
+            } elseif ($limit > 0) {
                 $mode      = 'daily_limit';
                 $capacity  = $limit;
                 $remaining = max(0, $limit - $count);
@@ -250,7 +259,7 @@ if (!function_exists('doctor_capacity_map')) {
                 if (!$available) {
                     $reason = 'full';
                 }
-            } elseif (!empty($shifts[$id])) {
+            } else {
                 $mode      = 'schedule';
                 $remaining = doctor_free_windows(
                     $shifts[$id],
@@ -261,12 +270,6 @@ if (!function_exists('doctor_capacity_map')) {
                 if (!$available) {
                     $reason = 'full';
                 }
-            } elseif (!empty($has_schedule[$id])) {
-                // Schedules exist, none of them is active for this day.
-                $mode      = 'off_duty';
-                $remaining = 0;
-                $available = false;
-                $reason    = 'not_scheduled';
             }
 
             $out[$id] = array(
