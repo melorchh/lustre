@@ -100,8 +100,13 @@ foreach ($schedules as $schedule) {
     for ($t = $start; $t < $end; $t += $interval) {
         $time = date("H:i", $t);
         
+<<<<<<< HEAD
+        // The full 2-hour visit must fit before the shift ends
+        if ($t + (2 * 60 * 60) > $end) {
+=======
         // The full 1-hour visit must fit before the shift ends
         if ($t + (60 * 60) > $end) {
+>>>>>>> origin/main
             continue;
         }
 
