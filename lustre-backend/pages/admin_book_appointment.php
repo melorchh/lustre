@@ -174,6 +174,18 @@ if (!$daily_limit['available']) {
     echo "error: This doctor has reached the daily patient limit for the selected date";
     $conn->close(); exit;
 }
+$slot_available = doctor_appointment_slot_is_available($conn, $doctor_id, $date, $time);
+if ($slot_available === null) {
+    $pdo->rollBack();
+    http_response_code(500);
+    echo "error: Could not verify the selected appointment time. Please try again.";
+    $conn->close(); exit;
+}
+if (!$slot_available) {
+    $pdo->rollBack();
+    echo "error: This time slot / overlapping 1-hour period is already booked for this doctor";
+    $conn->close(); exit;
+}
 
 // Insert
 $stmt = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, appointment_duration, status, payment_status) VALUES (?, ?, ?, ?, ?, 'pending','pending')");

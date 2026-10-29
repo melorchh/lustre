@@ -7,9 +7,12 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/time_blocks_schema.php';
 require_once __DIR__ . '/../src/appointment_time_rules.php';
+require_once __DIR__ . '/../src/doctor_capacity.php';
 ensure_time_blocks_schema($conn);
+ensure_doctor_capacity_schema($conn);
 
 $doctor_id = isset($_GET['doctor_id']) ? intval($_GET['doctor_id']) : 0;
+$exclude_appointment_id = isset($_GET['exclude_appointment_id']) ? (int)$_GET['exclude_appointment_id'] : 0;
 $days = isset($_GET['days']) ? intval($_GET['days']) : 14;
 if ($days < 1) $days = 14;
 
@@ -26,6 +29,17 @@ $interval = 24 * 60 * 60;
 for ($i = 1; $i <= $days; $i++) {
     $date = date('Y-m-d', $today + $i * $interval);
     $day_of_week = date('l', strtotime($date));
+
+    $daily_limit = doctor_daily_limit_status($conn, $doctor_id, $date, false, $exclude_appointment_id);
+    if ($daily_limit === null) {
+        http_response_code(500);
+        echo json_encode(['error' => "Could not verify the doctor's daily appointment limit."]);
+        $conn->close();
+        exit;
+    }
+    if (!$daily_limit['available']) {
+        continue;
+    }
 
     // Get ALL schedules for that day
     $stmt = $conn->prepare("

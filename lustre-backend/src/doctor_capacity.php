@@ -126,6 +126,49 @@ if (!function_exists('doctor_daily_limit_status')) {
     }
 }
 
+if (!function_exists('doctor_appointment_slot_is_available')) {
+    /**
+     * Rechecks a one-hour appointment slot while the caller holds the doctor
+     * row lock, preventing concurrent bookings from taking the same window.
+     */
+    function doctor_appointment_slot_is_available($conn, $doctor_id, $date, $time, $exclude_appointment_id = 0)
+    {
+        $start = doctor_clock_seconds($time);
+        $end = sprintf(
+            '%02d:%02d:%02d',
+            (int)floor(($start + 3600) / 3600),
+            (int)floor((($start + 3600) % 3600) / 60),
+            0
+        );
+        $start_time = sprintf('%02d:%02d:00', (int)floor($start / 3600), (int)floor(($start % 3600) / 60));
+        $exclude_sql = ((int)$exclude_appointment_id > 0) ? " AND id <> ?" : "";
+        $stmt = $conn->prepare(
+            "SELECT id FROM appointments
+             WHERE doctor_id = ? AND appointment_date = ?
+               AND status IN ('pending', 'confirmed')
+               AND appointment_time < ?
+               AND appointment_time + INTERVAL '1 hour' > ?" . $exclude_sql . "
+             LIMIT 1"
+        );
+        if (!$stmt) {
+            return null;
+        }
+        if ((int)$exclude_appointment_id > 0) {
+            $stmt->bind_param("isssi", $doctor_id, $date, $end, $start_time, $exclude_appointment_id);
+        } else {
+            $stmt->bind_param("isss", $doctor_id, $date, $end, $start_time);
+        }
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return null;
+        }
+        $stmt->store_result();
+        $available = $stmt->num_rows === 0;
+        $stmt->close();
+        return $available;
+    }
+}
+
 if (!function_exists('doctor_clock_seconds')) {
     /** "HH:MM" or "HH:MM:SS" -> seconds since midnight (0 if unparseable). */
     function doctor_clock_seconds($value)
