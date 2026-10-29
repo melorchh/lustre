@@ -25,6 +25,7 @@ type PendingDelete =
 
 const EMPTY_FORM = { name: '', specialty: '', schedule: '', experience: '', test_procedures: '', daily_limit: '' };
 const EMPTY_ACCOUNT = { doctor_id: '', username: '', password: '', email: '' };
+const CUSTOM_SPECIALTY = '__custom_specialty__';
 
 /** Chip-style input for a doctor's newline-separated test_procedures list. */
 function ChipInput({ chips, onChange }: { chips: string[]; onChange: (next: string[]) => void }) {
@@ -93,6 +94,7 @@ export default function AdminDoctors() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<DoctorRow | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
+  const [customSpecialty, setCustomSpecialty] = useState(false);
   const [chips, setChips] = useState<string[]>([]);
   const [acctCreate, setAcctCreate] = useState({ ...EMPTY_ACCOUNT });
   const [resetFor, setResetFor] = useState<DoctorAccount | null>(null);
@@ -126,12 +128,14 @@ export default function AdminDoctors() {
   function openAdd() {
     setEditing(null);
     setForm({ ...EMPTY_FORM });
+    setCustomSpecialty(false);
     setChips(['General Consultation', 'Follow Up Consultation', 'Diagnostic Procedure']);
     setFormOpen(true);
   }
 
   function openEdit(doc: DoctorRow) {
     setEditing(doc);
+    setCustomSpecialty(!specialties.includes(doc.specialty));
     setForm({
       name: doc.name,
       specialty: doc.specialty,
@@ -413,8 +417,33 @@ export default function AdminDoctors() {
             <input className="form-input" placeholder="e.g. Juan dela Cruz" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </Field>
           <Field label="Specialty">
-            <input className="form-input" list="specialtyList" placeholder="e.g. Obstetrics & Gynecology" value={form.specialty} onChange={(e) => setForm({ ...form, specialty: e.target.value })} />
-            <datalist id="specialtyList">{specialties.map((s) => <option key={s} value={s} />)}</datalist>
+            <Select
+              searchable
+              value={customSpecialty ? CUSTOM_SPECIALTY : form.specialty}
+              onChange={(e) => {
+                if (e.target.value === CUSTOM_SPECIALTY) {
+                  setCustomSpecialty(true);
+                  setForm((current) => ({ ...current, specialty: '' }));
+                } else {
+                  setCustomSpecialty(false);
+                  setForm((current) => ({ ...current, specialty: e.target.value }));
+                }
+              }}
+            >
+              <option value="">Select a specialty</option>
+              {specialties.map((specialty) => (
+                <option key={specialty} value={specialty}>{specialty}</option>
+              ))}
+              <option value={CUSTOM_SPECIALTY}>Add a new specialty...</option>
+            </Select>
+            {customSpecialty && (
+              <input
+                className="form-input"
+                placeholder="Enter a new specialty"
+                value={form.specialty}
+                onChange={(e) => setForm((current) => ({ ...current, specialty: e.target.value }))}
+              />
+            )}
           </Field>
           <Field label="Tests / procedures" className="ap-field--full">
             <ChipInput chips={chips} onChange={setChips} />
