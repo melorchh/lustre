@@ -1,6 +1,7 @@
-import { useEffect, useMemo, type ReactNode } from 'react';
-import { getInitial, initials, firstName } from './api';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { fetchData, getInitial, initials, firstName } from './api';
 import { ToastCtx, useTheme, useToastState } from './hooks';
+import { Modal } from './components';
 import {
   IconDashboard, IconAppointments, IconPatients, IconWalkins, IconDoctors,
   IconSchedules, IconLab, IconVitals, IconReports, IconArchive, IconLogout,
@@ -57,6 +58,99 @@ export default function Shell({ active, title, children }: ShellProps) {
 
   const { toast, showToast } = useToastState();
   const { isDark, toggleTheme } = useTheme();
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [accountLoading, setAccountLoading] = useState(false);
+  const [accountEmail, setAccountEmail] = useState('');
+  const [savedAccountEmail, setSavedAccountEmail] = useState('');
+  const [accountOtp, setAccountOtp] = useState('');
+  const [accountOtpPending, setAccountOtpPending] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  async function openAccountSettings() {
+    setAccountOpen(true);
+    setAccountLoading(true);
+    try {
+      const profile = await fetchData<{ email?: string }>('api_admin_profile.php');
+      setAccountEmail(profile.email || '');
+      setSavedAccountEmail(profile.email || '');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unable to load admin account', 'error');
+    } finally {
+      setAccountLoading(false);
+    }
+  }
+
+  async function saveAccountSettings(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!currentPassword) { showToast('Enter your current password', 'error'); return; }
+    if ((newPassword || confirmPassword) && newPassword !== confirmPassword) {
+      showToast('New passwords do not match', 'error');
+      return;
+    }
+    setAccountLoading(true);
+    try {
+      const emailChanged = accountEmail.trim().toLowerCase() !== savedAccountEmail.trim().toLowerCase();
+      const action = accountOtpPending ? 'verify_email_change' : emailChanged ? 'request_email_change' : 'save';
+      const formData = new FormData();
+      formData.append('action', action);
+      formData.append('current_password', currentPassword);
+      formData.append('email', accountEmail.trim());
+      formData.append('new_password', newPassword);
+      formData.append('confirm_password', confirmPassword);
+      if (accountOtpPending) formData.append('otp', accountOtp);
+      const response = await fetch('api_admin_profile.php', { method: 'POST', body: formData });
+      const result = await response.json() as { ok?: boolean; otp_required?: boolean; email?: string; error?: string };
+      if (response.status === 401) {
+        window.location.href = String(staff.loginUrl || 'admin_login.php');
+        return;
+      }
+      if (!result.ok) throw new Error(result.error || 'Unable to update admin account');
+      if (result.otp_required) {
+        setAccountOtpPending(true);
+        showToast('A verification code was sent to the new email address', 'success');
+        setAccountLoading(false);
+        return;
+      }
+      if (result.email) setSavedAccountEmail(result.email);
+      showToast('Admin account updated', 'success');
+      closeAccountSettings();
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unable to update admin account', 'error');
+    } finally {
+      setAccountLoading(false);
+    }
+  }
+
+  function closeAccountSettings() {
+    setAccountOpen(false);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setAccountOtp('');
+    setAccountOtpPending(false);
+  }
+
+  async function resendAccountEmailCode() {
+    setAccountLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('action', 'request_email_change');
+      formData.append('current_password', currentPassword);
+      formData.append('email', accountEmail.trim());
+      formData.append('new_password', newPassword);
+      formData.append('confirm_password', confirmPassword);
+      const response = await fetch('api_admin_profile.php', { method: 'POST', body: formData });
+      const result = await response.json() as { ok?: boolean; error?: string };
+      if (!result.ok) throw new Error(result.error || 'Unable to resend the verification code');
+      showToast('A new verification code was sent', 'success');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unable to resend the verification code', 'error');
+    } finally {
+      setAccountLoading(false);
+    }
+  }
 
   // The PHP pages used onclick=closeSidebar()/toggleSidebar() globals.
   useEffect(() => {
@@ -104,7 +198,11 @@ export default function Shell({ active, title, children }: ShellProps) {
             <div className="avatar avatar--sm">{avatar}</div>
             <div className="sidebar-user-body">
               <div className="sidebar-user-label">{prompt}</div>
-              <div className="sidebar-user-name">{displayName}</div>
+              {role === 'admin' ? (
+                <button type="button" className="sidebar-user-name sidebar-user-name--button" onClick={openAccountSettings} title="Edit admin email and password">
+                  {(staff.username as string) || displayName}
+                </button>
+              ) : <div className="sidebar-user-name">{displayName}</div>}
             </div>
           </div>
           <nav className="sidebar-nav">
@@ -161,6 +259,39 @@ export default function Shell({ active, title, children }: ShellProps) {
 
       <div id="loadingScreen" className="loading-screen"><div className="spinner"></div><p>Processing...</p></div>
       <div id="toast" className={`toast${toast.show ? ' show' : ''}${toast.type ? ' ' + toast.type : ''}`} role="status">{toast.msg}</div>
+      {role === 'admin' && (
+        <Modal open={accountOpen} onClose={closeAccountSettings} className="ap-account-modal">
+          <h2 className="modal-title">Admin account</h2>
+          <p className="modal-sub">Update your login email or password.</p>
+          <form onSubmit={saveAccountSettings}>
+            <div className="form-group">
+              <label htmlFor="adminAccountEmail">Email for login verification</label>
+              <input id="adminAccountEmail" className="form-input" type="email" autoComplete="email" required value={accountEmail} onChange={(event) => setAccountEmail(event.target.value)} disabled={accountLoading || accountOtpPending} />
+            </div>
+            {accountOtpPending && <div className="form-group">
+              <label htmlFor="adminAccountOtp">Code sent to {accountEmail}</label>
+              <input id="adminAccountOtp" className="form-input" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={accountOtp} onChange={(event) => setAccountOtp(event.target.value.replace(/\D/g, '').slice(0, 6))} disabled={accountLoading} />
+              <button type="button" className="btn-secondary btn-xs" onClick={resendAccountEmailCode} disabled={accountLoading}>Resend code</button>
+            </div>}
+            <div className="form-group">
+              <label htmlFor="adminCurrentPassword">Current password</label>
+              <input id="adminCurrentPassword" className="form-input" type="password" autoComplete="current-password" required value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} disabled={accountLoading} />
+            </div>
+            <div className="form-group">
+              <label htmlFor="adminNewPassword">New password <span className="ap-sub">(leave blank to keep current)</span></label>
+              <input id="adminNewPassword" className="form-input" type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} disabled={accountLoading} />
+            </div>
+            <div className="form-group">
+              <label htmlFor="adminConfirmPassword">Confirm new password</label>
+              <input id="adminConfirmPassword" className="form-input" type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} disabled={accountLoading} />
+            </div>
+            <div className="form-actions">
+              <button type="button" className="btn-secondary" onClick={closeAccountSettings} disabled={accountLoading}>Cancel</button>
+              <button type="submit" className="btn-primary" disabled={accountLoading}>{accountLoading ? 'Saving...' : accountOtpPending ? 'Verify and save' : 'Save account'}</button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </ToastCtx.Provider>
   );
 }

@@ -51,6 +51,25 @@ if (isset($_SESSION["admin_id"])) {
                 <button type="submit" class="btn-primary btn-full">Login to Dashboard</button>
             </form>
 
+            <div id="adminOtpPanel" style="display:none;">
+                <div class="form-group" id="adminOtpEmailStep" style="display:none;">
+                    <label for="adminOtpEmail">Admin email address</label>
+                    <input type="email" id="adminOtpEmail" placeholder="admin@example.com" autocomplete="email">
+                    <button type="button" class="btn-primary btn-full" id="sendAdminOtpBtn" style="margin-top:.75rem;">Send verification code</button>
+                </div>
+                <div id="adminOtpVerifyStep" style="display:none;">
+                    <p class="login-hint">Enter the 6-digit code sent to your admin account email.</p>
+                    <div class="form-group">
+                        <label for="adminOtpCode">Verification code</label>
+                        <input type="text" id="adminOtpCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="Enter 6-digit code">
+                    </div>
+                    <button type="button" class="btn-primary btn-full" id="verifyAdminOtpBtn">Verify and sign in</button>
+                    <button type="button" class="btn-secondary btn-full" id="resendAdminOtpBtn" style="margin-top:.6rem;">Resend code</button>
+                </div>
+                <div id="adminOtpError" class="error-message"></div>
+                <div class="back-link"><a href="#" id="cancelAdminOtpBtn">Use a different account</a></div>
+            </div>
+
             <div class="back-link">
                 <a href="index.php">&larr; Back to Patient Portal</a>
             </div>
@@ -126,37 +145,130 @@ if (isset($_SESSION["admin_id"])) {
             btn.innerHTML = show ? eyeOff : eye;
         }
 
-        document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        let adminOtpTimer = null;
+        let adminOtpEmail = '';
+
+        function showAdminOtpError(message) {
+            const box = document.getElementById('adminOtpError');
+            box.textContent = message;
+            box.classList.add('show');
+        }
+
+        function startAdminOtpTimer() {
+            if (adminOtpTimer) clearInterval(adminOtpTimer);
+            let remaining = 60;
+            const button = document.getElementById('resendAdminOtpBtn');
+            button.disabled = true;
+            button.textContent = 'Resend code in 1:00';
+            adminOtpTimer = setInterval(() => {
+                remaining--;
+                if (remaining <= 0) {
+                    clearInterval(adminOtpTimer);
+                    adminOtpTimer = null;
+                    button.disabled = false;
+                    button.textContent = 'Resend code';
+                    return;
+                }
+                button.textContent = `Resend code in 0:${String(remaining).padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        async function requestAdminOtp(email = '') {
             hideError();
+            document.getElementById('adminOtpError').classList.remove('show');
             showLoading();
-
-            const formData = new FormData(this);
-
-            fetch('admin_login_process.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => res.text())
-            .then(result => {
+            try {
+                const formData = new FormData(document.getElementById('adminLoginForm'));
+                formData.append('action', 'request_otp');
+            if (email) adminOtpEmail = email;
+            if (adminOtpEmail) formData.append('email', adminOtpEmail);
+                const result = (await (await fetch('admin_login_process.php', { method: 'POST', body: formData })).text()).trim();
                 hideLoading();
-                if (result.trim() === 'success') {
-                    showToast('Welcome back!', 'success');
-                    document.body.classList.add('__leaving');
-                    setTimeout(() => { window.location.href = 'admin_dashboard.php'; }, 400);
-                } else if (result.trim() === 'change_password') {
-                    showToast('Please set a new password to continue.', 'success');
-                    document.body.classList.add('__leaving');
-                    setTimeout(() => { window.location.href = 'admin_change_password.php'; }, 500);
+                if (result === 'email_required') {
+                    document.getElementById('adminLoginForm').style.display = 'none';
+                    document.getElementById('adminOtpPanel').style.display = '';
+                    document.getElementById('adminOtpEmailStep').style.display = '';
+                    document.getElementById('adminOtpVerifyStep').style.display = 'none';
+                    document.getElementById('adminOtpEmail').focus();
+                } else if (result === 'otp_sent') {
+                    document.getElementById('adminLoginForm').style.display = 'none';
+                    document.getElementById('adminOtpPanel').style.display = '';
+                    document.getElementById('adminOtpEmailStep').style.display = 'none';
+                    document.getElementById('adminOtpVerifyStep').style.display = '';
+                    document.getElementById('adminOtpError').classList.remove('show');
+                    document.getElementById('adminOtpCode').focus();
+                    startAdminOtpTimer();
+                } else if (document.getElementById('adminOtpPanel').style.display !== 'none') {
+                    showAdminOtpError(result || 'Unable to send the verification code.');
                 } else {
                     showError(result);
                 }
-            })
-            .catch(err => {
+            } catch (error) {
                 hideLoading();
-                showError('Error: ' + err.message);
-            });
+                showAdminOtpError(error instanceof Error ? error.message : 'Network error');
+            }
+        }
+
+        async function verifyAdminOtp() {
+            const otp = document.getElementById('adminOtpCode').value.trim();
+            document.getElementById('adminOtpError').classList.remove('show');
+            if (!/^\d{6}$/.test(otp)) { showAdminOtpError('Enter the 6-digit verification code.'); return; }
+            showLoading();
+            try {
+                const formData = new FormData(document.getElementById('adminLoginForm'));
+                formData.append('action', 'verify_otp');
+                formData.append('otp', otp);
+                const result = (await (await fetch('admin_login_process.php', { method: 'POST', body: formData })).text()).trim();
+                hideLoading();
+                if (result === 'success' || result === 'change_password') {
+                    showToast(result === 'change_password' ? 'Please set a new password to continue.' : 'Welcome back!', 'success');
+                    document.body.classList.add('__leaving');
+                    setTimeout(() => { window.location.href = result === 'change_password' ? 'admin_change_password.php' : 'admin_dashboard.php'; }, 450);
+                } else showAdminOtpError(result);
+            } catch (error) {
+                hideLoading();
+                showAdminOtpError(error instanceof Error ? error.message : 'Network error');
+            }
+        }
+
+        function cancelAdminOtp() {
+            if (adminOtpTimer) clearInterval(adminOtpTimer);
+            adminOtpTimer = null;
+            adminOtpEmail = '';
+            const formData = new FormData(document.getElementById('adminLoginForm'));
+            formData.append('action', 'cancel_otp');
+            fetch('admin_login_process.php', { method: 'POST', body: formData }).catch(() => {});
+            document.getElementById('adminOtpPanel').style.display = 'none';
+            document.getElementById('adminLoginForm').style.display = '';
+            document.getElementById('adminOtpCode').value = '';
+            document.getElementById('adminOtpEmail').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            hideError();
+            const formData = new FormData(this);
+            showLoading();
+            fetch('admin_login_process.php', { method: 'POST', body: formData })
+                .then(res => res.text())
+                .then(result => {
+                    hideLoading();
+                    if (result.trim() === 'admin_otp_required') requestAdminOtp();
+                    else showError(result.trim());
+                })
+                .catch(err => { hideLoading(); showError('Error: ' + err.message); });
         });
+
+        document.getElementById('sendAdminOtpBtn').addEventListener('click', function() {
+            const input = document.getElementById('adminOtpEmail');
+            if (!input.value.trim() || !input.validity.valid) { showAdminOtpError('Enter a valid admin email address.'); return; }
+            requestAdminOtp(input.value.trim());
+        });
+        document.getElementById('verifyAdminOtpBtn').addEventListener('click', verifyAdminOtp);
+        document.getElementById('adminOtpCode').addEventListener('input', function() { this.value = this.value.replace(/\D/g, '').slice(0, 6); });
+        document.getElementById('resendAdminOtpBtn').addEventListener('click', function() { if (!adminOtpTimer) requestAdminOtp(); });
+        document.getElementById('cancelAdminOtpBtn').addEventListener('click', function(e) { e.preventDefault(); cancelAdminOtp(); });
     </script>
 <script>try{var __af=JSON.parse(localStorage.getItem('lustreAdminFlash')||'null');if(__af&&__af.m){localStorage.removeItem('lustreAdminFlash');window.__noFlash=1;showToast(__af.m,__af.t);}}catch(e){}</script>
 </body>
