@@ -207,6 +207,19 @@ if (isset($_SESSION["patient_id"])) {
       <label class="terms-check"><input type="checkbox" id="loginTerms" required><span>I have read and agree to the <a href="#" class="terms-link" onclick="event.preventDefault();event.stopPropagation();openModal('termsModal');">Terms and Conditions</a>.</span></label>
       <button type="submit" class="submit-btn" id="loginSubmitBtn" disabled><span>Sign In</span> &rarr;</button>
     </form>
+    <div id="doctorOtpPanel" style="display:none;">
+      <div class="modal-title">Verify your sign-in</div>
+      <div class="modal-sub">Enter the 6-digit code sent to the email address on your doctor account.</div>
+      <div class="otp-hint" id="doctorOtpHint"></div>
+      <div class="field"><label for="doctorOtpInput">Verification code</label><input type="text" id="doctorOtpInput" placeholder="Enter 6-digit code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"></div>
+      <div class="form-error" id="doctorOtpError"></div>
+      <button type="button" class="submit-btn" id="doctorOtpVerify"><span>Verify and sign in</span> &rarr;</button>
+      <div class="otp-resend">
+        <a href="#" id="doctorOtpResend">Resend code</a>
+        <span class="otp-timer" id="doctorOtpTimer"></span>
+      </div>
+      <div class="modal-switch"><a href="#" id="doctorOtpCancel">Use a different account</a></div>
+    </div>
     <a href="#" class="forgot-link" onclick="openForgotPassword()">Forgot password?</a>
     <div class="modal-switch"><span>Don't have an account?</span> <a href="#" onclick="switchModal('loginModal','registerModal')">Register here</a></div>
   </div>
@@ -518,7 +531,7 @@ dots.forEach((d,i)=>d.addEventListener('click',()=>{stopSlideshow();goSlide(i);s
 
 /* -- Modals -- */
 function openModal(id){document.getElementById(id).classList.add('active');document.body.style.overflow='hidden'}
-function closeModal(id){document.getElementById(id).classList.remove('active');document.body.style.overflow=''}
+function closeModal(id){document.getElementById(id).classList.remove('active');document.body.style.overflow='';if(id==='loginModal'&&doctorOtpUsername)cancelDoctorOtp()}
 function switchModal(a,b){closeModal(a);setTimeout(()=>openModal(b),200)}
 document.querySelectorAll('.modal-overlay, .register-modal').forEach(o=>o.addEventListener('click',e=>{if(e.target===o){closeModal(o.id);if(o.id==='registerModal')resetRegisterOtp();if(o.id==='forgotPasswordModal')resetForgotPassword();}}));
 
@@ -537,16 +550,80 @@ function syncTermsGate(cbId, btnId){
 syncTermsGate('loginTerms', 'loginSubmitBtn');
 syncTermsGate('regTerms', 'regSubmitBtn');
 
-/* -- Login (patients by email; admins and doctors by username) -- */
+/* -- Login: patients and admins sign in directly; doctors verify by OTP. -- */
+let doctorOtpUsername = '';
+let doctorOtpTimer = null;
+
+function clearDoctorOtpTimer(){
+  if(doctorOtpTimer){clearInterval(doctorOtpTimer);doctorOtpTimer=null;}
+}
+
+function cancelDoctorOtp(){
+  const fd=new FormData();fd.append('action','cancel_otp');
+  fetch('doctor_login_process.php',{method:'POST',body:fd}).catch(()=>{});
+  clearDoctorOtpTimer();doctorOtpUsername='';
+  document.getElementById('doctorOtpPanel').style.display='none';
+  document.getElementById('loginForm').style.display='';
+  document.getElementById('doctorOtpInput').value='';
+  document.getElementById('doctorOtpError').classList.remove('show');
+  document.getElementById('loginPassword').value='';
+}
+
+function startDoctorOtpTimer(){
+  clearDoctorOtpTimer();let remaining=60;
+  const link=document.getElementById('doctorOtpResend'),timer=document.getElementById('doctorOtpTimer');
+  link.style.pointerEvents='none';link.style.opacity='.55';timer.textContent='Resend in 1:00';
+  doctorOtpTimer=setInterval(()=>{
+    remaining--;
+    if(remaining<=0){clearDoctorOtpTimer();link.style.pointerEvents='';link.style.opacity='';timer.textContent='';return;}
+    timer.textContent=`Resend in 0:${String(remaining).padStart(2,'0')}`;
+  },1000);
+}
+
+async function requestDoctorOtp(showInlineError){
+  const fd=new FormData();fd.append('username',doctorOtpUsername);fd.append('password',document.getElementById('loginPassword').value);fd.append('action','request_otp');
+  showLoading();
+  try{
+    const response=await fetch('doctor_login_process.php',{method:'POST',body:fd});
+    const text=(await response.text()).trim();hideLoading();
+    if(text==='otp_sent'){
+      document.getElementById('loginForm').style.display='none';
+      document.getElementById('doctorOtpPanel').style.display='';
+      document.getElementById('doctorOtpHint').textContent='A verification code has been sent to your doctor account email.';
+      document.getElementById('doctorOtpError').classList.remove('show');
+      startDoctorOtpTimer();document.getElementById('doctorOtpInput').focus();
+      return;
+    }
+    const errorId=showInlineError?'doctorOtpError':'loginError';
+    document.getElementById(errorId).textContent=text||'Unable to send the verification code.';
+    document.getElementById(errorId).classList.add('show');
+  }catch(_){hideLoading();showToast('Network error','error');}
+}
+
+async function verifyDoctorOtp(){
+  const otp=document.getElementById('doctorOtpInput').value.trim(),error=document.getElementById('doctorOtpError');
+  error.classList.remove('show');
+  if(!/^\d{6}$/.test(otp)){error.textContent='Enter the 6-digit verification code.';error.classList.add('show');return;}
+  const fd=new FormData();fd.append('username',doctorOtpUsername);fd.append('password',document.getElementById('loginPassword').value);fd.append('action','verify_otp');fd.append('otp',otp);
+  showLoading();
+  try{
+    const response=await fetch('doctor_login_process.php',{method:'POST',body:fd});
+    const text=(await response.text()).trim();hideLoading();
+    if(text==='success'){showToast('Welcome back, Doctor!','success');setTimeout(()=>location.href='doctor_dashboard.php',900);}
+    else{error.textContent=text;error.classList.add('show');}
+  }catch(_){hideLoading();showToast('Network error','error');}
+}
+
 document.getElementById('loginForm').addEventListener('submit',function(e){
   e.preventDefault();const err=document.getElementById('loginError');err.classList.remove('show');
   if(!document.getElementById('loginTerms').checked){err.textContent='Please accept the Terms and Conditions to continue.';err.classList.add('show');return;}
   showLoading();
   const ident=document.getElementById('loginId').value.trim();
-  if(ident.indexOf('@')>=0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ident)){hideLoading();err.textContent = 'That does not look like a valid email address.';err.classList.add('show');return;}
+  if(ident.indexOf('@')>=0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ident)){hideLoading();err.textContent='That does not look like a valid email address.';err.classList.add('show');return;}
   fetch('login.php',{method:'POST',body:new FormData(this)}).then(r=>r.text()).then(res=>{hideLoading();
     res=res.trim();
-    if(res==='success:new'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php?tour=1',900);}
+    if(res==='otp_required'){doctorOtpUsername=ident;requestDoctorOtp(false);}
+    else if(res==='success:new'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php?tour=1',900);}
     else if(res==='success'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php',900);}
     else if(res==='success:doctor'){showToast('Welcome back, Doctor!','success');setTimeout(()=>location.href='doctor_dashboard.php',900);}
     else if(res==='success:admin'){showToast('Welcome back!','success');setTimeout(()=>location.href='admin_dashboard.php',900);}
@@ -554,6 +631,12 @@ document.getElementById('loginForm').addEventListener('submit',function(e){
     else{err.textContent=res;err.classList.add('show');}
   }).catch(()=>{hideLoading();showToast('Network error','error');});
 });
+
+document.getElementById('doctorOtpVerify').addEventListener('click',verifyDoctorOtp);
+document.getElementById('doctorOtpInput').addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,6);});
+document.getElementById('doctorOtpInput').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();verifyDoctorOtp();}});
+document.getElementById('doctorOtpResend').addEventListener('click',function(e){e.preventDefault();if(!doctorOtpTimer)requestDoctorOtp(true);});
+document.getElementById('doctorOtpCancel').addEventListener('click',function(e){e.preventDefault();cancelDoctorOtp();});
 
 /* -- Deep link: landing.php?signin=1 opens the Sign In sheet -- */
 if(new URLSearchParams(location.search).has('signin')){setTimeout(()=>openModal('loginModal'),350);}
