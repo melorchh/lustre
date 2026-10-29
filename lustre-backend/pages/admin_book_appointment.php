@@ -162,6 +162,24 @@ if (!$pdo->beginTransaction()) {
     echo "error: Could not start appointment booking. Please try again.";
     $conn->close(); exit;
 }
+$patient_lock = $conn->prepare("SELECT id FROM patients WHERE id = ? FOR UPDATE");
+$patient_lock->bind_param("i", $patient_id);
+if (!$patient_lock->execute()) {
+    $patient_lock->close();
+    $pdo->rollBack();
+    http_response_code(500);
+    echo "error: Could not verify the patient account. Please try again.";
+    $conn->close(); exit;
+}
+$patient_lock->store_result();
+if ($patient_lock->num_rows === 0) {
+    $patient_lock->close();
+    $pdo->rollBack();
+    echo "error: Invalid patient";
+    $conn->close(); exit;
+}
+$patient_lock->close();
+
 $daily_limit = doctor_daily_limit_status($conn, $doctor_id, $date, true);
 if ($daily_limit === null) {
     $pdo->rollBack();

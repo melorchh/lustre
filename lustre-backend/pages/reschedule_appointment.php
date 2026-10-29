@@ -158,6 +158,50 @@ if (!$pdo->beginTransaction()) {
     $conn->close();
     exit;
 }
+$patient_lock = $conn->prepare("SELECT id FROM patients WHERE id = ? FOR UPDATE");
+$patient_lock->bind_param("i", $patient_id);
+if (!$patient_lock->execute()) {
+    $patient_lock->close();
+    $pdo->rollBack();
+    http_response_code(500);
+    echo "error: Could not verify the patient account. Please try again.";
+    $conn->close();
+    exit;
+}
+$patient_lock->store_result();
+if ($patient_lock->num_rows === 0) {
+    $patient_lock->close();
+    $pdo->rollBack();
+    echo "error: Invalid patient. Please login again.";
+    $conn->close();
+    exit;
+}
+$patient_lock->close();
+
+// Re-lock and revalidate the appointment so a concurrent cancel or reschedule
+// cannot make this request overwrite newer appointment state.
+$locked_appointment = $conn->prepare("SELECT doctor_id, appointment_date, appointment_time FROM appointments WHERE id = ? AND patient_id = ? AND status IN ('pending', 'confirmed') FOR UPDATE");
+$locked_appointment->bind_param("ii", $appointment_id, $patient_id);
+if (!$locked_appointment->execute()) {
+    $locked_appointment->close();
+    $pdo->rollBack();
+    http_response_code(500);
+    echo "error: Could not verify the appointment. Please try again.";
+    $conn->close();
+    exit;
+}
+$locked_appointment->store_result();
+if ($locked_appointment->num_rows === 0) {
+    $locked_appointment->close();
+    $pdo->rollBack();
+    echo "error: Appointment not found or cannot be rescheduled";
+    $conn->close();
+    exit;
+}
+$locked_appointment->bind_result($existing_doctor_id, $old_date, $old_time);
+$locked_appointment->fetch();
+$locked_appointment->close();
+
 $daily_limit = doctor_daily_limit_status($conn, $doctor_id, $date, true, $appointment_id);
 if ($daily_limit === null) {
     $pdo->rollBack();
@@ -188,7 +232,7 @@ if (!$slot_available) {
 }
 
 // Update the appointment with the new date/time, reset status to pending, and mark it as rescheduled
-$stmt = $conn->prepare("UPDATE appointments SET doctor_id=?, appointment_date=?, appointment_time=?, appointment_duration=?, status='pending', reschedule_count = reschedule_count + 1, last_rescheduled_at = NOW() WHERE id=? AND patient_id=?");
+$stmt = $conn->prepare("UPDATE appointments SET doctor_id=?, appointment_date=?, appointment_time=?, appointment_duration=?, status='pending', reschedule_count = reschedule_count + 1, last_rescheduled_at = NOW() WHERE id=? AND patient_id=? AND status IN ('pending', 'confirmed')");
 $stmt->bind_param("issiii", $doctor_id, $date, $time_with_seconds, $appointment_duration, $appointment_id, $patient_id);
 
 if ($stmt->execute() && $stmt->affected_rows >= 0) {

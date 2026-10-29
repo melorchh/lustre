@@ -4,6 +4,8 @@ import { getInitial, fetchData, postAction, isSuccess, fmtDate, fmtTime, fmtDate
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
 import { Modal, Select } from '../components';
+import DatePicker from '../DatePicker';
+import TimePicker from '../TimePicker';
 import { Card, EmptyState, ModalHead, Stack, StatCard, StatGrid } from '../ui';
 import {
   IconAppointments, IconCheck, IconChevronRight, IconClock, IconDoctors, IconLab,
@@ -644,7 +646,7 @@ export default function AdminDashboard() {
         <div className="form-grid">
           <div className="form-group">
             <label>Date *</label>
-            <input type="date" className="form-input" min={todayISO()} value={apptForm.date} onChange={(e) => setApptForm({ ...apptForm, date: e.target.value, time: '' })} />
+            <DatePicker min={todayISO()} value={apptForm.date} onChange={(date) => setApptForm({ ...apptForm, date, time: '' })} />
           </div>
           <div className="form-group">
             <label>Time *</label>
@@ -741,12 +743,7 @@ export default function AdminDashboard() {
           </div>
           <div className="form-group">
             <label>Arrival Time *</label>
-            <input
-              type="time"
-              className="form-input"
-              value={walkinForm.arrival_time}
-              onChange={(e) => setWalkinForm({ ...walkinForm, arrival_time: e.target.value })}
-            />
+            <TimePicker value={walkinForm.arrival_time} onChange={(arrival_time) => setWalkinForm({ ...walkinForm, arrival_time })} />
           </div>
         </div>
         {(!availableDoctorsLoading && !availableDoctorsError && walkinDoctors.length === 0) || walkinSlotError || (walkinForm.doctor_id && !walkinSlotLoading && walkinSlots.length === 0) || (walkinForm.doctor_id && walkinSlots.length > 0) ? (

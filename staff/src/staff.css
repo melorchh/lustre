@@ -1855,6 +1855,24 @@ button.resched-badge:hover {
   min-width: 0;
   max-width: 100%;
 }
+:is(.admin-portal, .doctor-portal) .admin-datepicker {
+  width: 100%;
+  min-width: 0;
+}
+:is(.admin-portal, .doctor-portal) .admin-dp-trigger {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 44px;
+  min-height: 44px;
+  padding: 0.48rem 0.72rem;
+  border: 1.5px solid var(--ap-border-strong);
+  border-radius: 10px;
+  background-color: var(--ap-surface);
+  color: var(--ap-text);
+  font-size: 0.86rem;
+}
 :is(.admin-portal, .doctor-portal) .form-grid > .ap-field {
   min-width: 0;
   margin-bottom: 0.85rem;
@@ -2796,7 +2814,7 @@ button.resched-badge:hover {
   }
   :is(.admin-portal, .doctor-portal) .form-group input,
   :is(.admin-portal, .doctor-portal) .form-group select,
-  :is(.admin-portal, .doctor-portal) .form-group .ap-select-trigger {
+  :is(.admin-portal, .doctor-portal) .form-group > .ap-select > .ap-select-trigger {
     box-sizing: border-box;
     width: 100%;
     min-width: 0;

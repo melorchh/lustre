@@ -4,6 +4,8 @@ import { getInitial, postAction, isSuccess, fmtTime } from '../api';
 import { showLoading, hideLoading } from '../loading';
 import { useToast } from '../hooks';
 import { Modal, Select } from '../components';
+import DatePicker from '../DatePicker';
+import TimePicker from '../TimePicker';
 import type { ScheduleRow, TimeBlockRow } from '../types';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -111,8 +113,8 @@ export default function DoctorSchedule() {
             <Select className="form-dropdown" value={schedForm.day_of_week} onChange={(e) => setSchedForm({ ...schedForm, day_of_week: e.target.value })}>
               {DAYS.map((day) => <option key={day} value={day}>{day}</option>)}
             </Select>
-            <input className="form-input" type="time" value={schedForm.start_time} onChange={(e) => setSchedForm({ ...schedForm, start_time: e.target.value })} />
-            <input className="form-input" type="time" value={schedForm.end_time} onChange={(e) => setSchedForm({ ...schedForm, end_time: e.target.value })} />
+            <TimePicker value={schedForm.start_time} onChange={(start_time) => setSchedForm({ ...schedForm, start_time })} />
+            <TimePicker value={schedForm.end_time} onChange={(end_time) => setSchedForm({ ...schedForm, end_time })} />
             <button className="btn-primary" onClick={addSchedule}>Add</button>
           </div>
         </div>
@@ -156,13 +158,13 @@ export default function DoctorSchedule() {
         ) : (
           <>
             <label className="form-label">Date</label>
-            <input className="form-input" type="date" style={{ width: '100%' }} value={blockForm.block_date} onChange={(e) => setBlockForm({ ...blockForm, block_date: e.target.value })} />
+            <DatePicker value={blockForm.block_date} onChange={(block_date) => setBlockForm({ ...blockForm, block_date })} />
           </>
         )}
         <label className="form-label">Start</label>
-        <input className="form-input" type="time" value={blockForm.start_time} onChange={(e) => setBlockForm({ ...blockForm, start_time: e.target.value })} />
+        <TimePicker value={blockForm.start_time} onChange={(start_time) => setBlockForm({ ...blockForm, start_time })} />
         <label className="form-label">End</label>
-        <input className="form-input" type="time" value={blockForm.end_time} onChange={(e) => setBlockForm({ ...blockForm, end_time: e.target.value })} />
+        <TimePicker value={blockForm.end_time} onChange={(end_time) => setBlockForm({ ...blockForm, end_time })} />
         <label className="form-label">Reason</label>
         <input className="form-input" value={blockForm.reason} onChange={(e) => setBlockForm({ ...blockForm, reason: e.target.value })} />
         <div className="form-actions">

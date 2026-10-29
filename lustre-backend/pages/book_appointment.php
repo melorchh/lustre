@@ -172,6 +172,48 @@ if (!$pdo->beginTransaction()) {
     $conn->close();
     exit;
 }
+$patient_lock = $conn->prepare("SELECT id FROM patients WHERE id = ? FOR UPDATE");
+$patient_lock->bind_param("i", $patient_id);
+if (!$patient_lock->execute()) {
+    $patient_lock->close();
+    $pdo->rollBack();
+    http_response_code(500);
+    echo "error: Could not verify the patient account. Please try again.";
+    $conn->close();
+    exit;
+}
+$patient_lock->store_result();
+if ($patient_lock->num_rows === 0) {
+    $patient_lock->close();
+    $pdo->rollBack();
+    echo "error: Invalid patient. Please login again.";
+    $conn->close();
+    exit;
+}
+$patient_lock->close();
+
+// Recheck after locking the patient row so parallel bookings for different
+// doctors cannot both pass the one-active-appointment rule.
+$active = $conn->prepare("SELECT id FROM appointments WHERE patient_id = ? AND status IN ('pending', 'confirmed') AND appointment_date >= CURRENT_DATE LIMIT 1");
+$active->bind_param("i", $patient_id);
+if (!$active->execute()) {
+    $active->close();
+    $pdo->rollBack();
+    http_response_code(500);
+    echo "error: Could not verify your active appointments. Please try again.";
+    $conn->close();
+    exit;
+}
+$active->store_result();
+if ($active->num_rows > 0) {
+    $active->close();
+    $pdo->rollBack();
+    echo "error: You already have an active appointment. Please cancel or complete it first.";
+    $conn->close();
+    exit;
+}
+$active->close();
+
 $daily_limit = doctor_daily_limit_status($conn, $doctor_id, $date, true);
 if ($daily_limit === null) {
     $pdo->rollBack();
