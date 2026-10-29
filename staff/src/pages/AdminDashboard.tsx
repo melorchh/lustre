@@ -40,13 +40,18 @@ const EMPTY_APPT = {
 };
 
 const EMPTY_WALKIN = {
-  specialty: '', doctor_id: '', test_procedure: '', other: '', appointment_time: '',
+  specialty: '', doctor_id: '', test_procedure: '', other: '', appointment_time: '', arrival_time: '',
   name: '', contact: '', gender: '', address: '', patient_type: '', age: '',
   weight_kg: '', height_cm: '', blood_pressure: '', heart_rate: '', fundal_height: '',
 };
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function currentTime(): string {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 }
 
 export default function AdminDashboard() {
@@ -224,7 +229,7 @@ export default function AdminDashboard() {
     setAvailableDoctorIds(null);
     setWalkinSlots([]);
     setWalkinSlotError('');
-    setWalkinForm({ ...EMPTY_WALKIN });
+    setWalkinForm({ ...EMPTY_WALKIN, arrival_time: currentTime() });
     setWalkinOpen(true);
   }
 
@@ -273,6 +278,7 @@ export default function AdminDashboard() {
     if (!walkinForm.contact.trim()) { showToast('Contact number required', 'error'); return; }
     if (!walkinForm.doctor_id) { showToast('Please select a doctor', 'error'); return; }
     if (!walkinForm.appointment_time) { showToast('Please select an available appointment time', 'error'); return; }
+    if (!walkinForm.arrival_time) { showToast('Please enter the walk-in arrival time', 'error'); return; }
     if (!walkinForm.test_procedure) { showToast('Please select a test / procedure', 'error'); return; }
     if (!walkinForm.blood_pressure.trim()) { showToast('Blood pressure required', 'error'); return; }
     if (!walkinForm.heart_rate.trim()) { showToast('Heart rate required', 'error'); return; }
@@ -305,6 +311,7 @@ export default function AdminDashboard() {
         fundal_height: walkinForm.fundal_height,
         doctor_id: walkinForm.doctor_id,
         appointment_time: walkinForm.appointment_time,
+        arrival_time: walkinForm.arrival_time,
         test_procedure: proc,
       });
       if (isSuccess(res)) {
@@ -696,7 +703,17 @@ export default function AdminDashboard() {
             {!walkinSlotLoading && walkinForm.doctor_id && !walkinSlotError && walkinSlots.length === 0 && (
               <p className="form-hint">No conflict-free one-hour appointment time remains in this doctor’s shift today. Walk-in times are checked against existing appointments and time off; choose another doctor with an available time.</p>
             )}
-            {walkinForm.doctor_id && walkinSlots.length > 0 && <p className="form-hint">Same-day appointment slots are offered in one-hour intervals. Arrival time is recorded automatically when you register the client and shown separately in the queue.</p>}
+            {walkinForm.doctor_id && walkinSlots.length > 0 && <p className="form-hint">Same-day appointment slots are offered in one-hour intervals. Choose the appointment time separately from the client’s arrival time.</p>}
+          </div>
+          <div className="form-group">
+            <label>Arrival Time *</label>
+            <input
+              type="time"
+              className="form-input"
+              value={walkinForm.arrival_time}
+              onChange={(e) => setWalkinForm({ ...walkinForm, arrival_time: e.target.value })}
+            />
+            <p className="form-hint">Defaults to the current time. This is separate from the selected appointment time.</p>
           </div>
         </div>
         <div className="form-grid">
