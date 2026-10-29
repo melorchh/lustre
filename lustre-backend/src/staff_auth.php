@@ -107,10 +107,11 @@ function verify_admin_login($conn, $username, $password)
 /**
  * Verify a doctor account.
  *
+ * @param bool $create_session Set false to verify credentials without signing in.
  * @return array{ok: bool, found: bool, msg: string}
- *   On ok=true the doctor session variables are already set.
+ *   Doctor session variables are set on success only when $create_session is true.
  */
-function verify_doctor_login($conn, $username, $password)
+function verify_doctor_login($conn, $username, $password, $create_session = true)
 {
     $res = array('ok' => false, 'found' => false, 'msg' => 'Invalid username or password');
 
@@ -141,10 +142,12 @@ function verify_doctor_login($conn, $username, $password)
         return $res;
     }
 
-    $_SESSION['doctor_account_id'] = $account_id;
-    $_SESSION['doctor_id']         = $doctor_id;
-    $_SESSION['doctor_name']       = $doctor_name;
-    $_SESSION['doctor_username']   = $username;
+    if ($create_session) {
+        $_SESSION['doctor_account_id'] = $account_id;
+        $_SESSION['doctor_id']         = $doctor_id;
+        $_SESSION['doctor_name']       = $doctor_name;
+        $_SESSION['doctor_username']   = $username;
+    }
 
     $res['ok']  = true;
     $res['msg'] = 'success';

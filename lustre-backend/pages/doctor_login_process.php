@@ -14,6 +14,13 @@ $username = isset($_POST['username']) ? trim($_POST['username']) : '';
 $password = isset($_POST['password']) ? $_POST['password'] : '';
 $action   = isset($_POST['action']) ? trim($_POST['action']) : '';
 
+if ($action === 'cancel_otp') {
+    unset($_SESSION['doctor_login_pending']);
+    echo 'success';
+    $conn->close();
+    exit;
+}
+
 if (empty($username) || empty($password)) {
     echo "Username and password are required";
     exit;
@@ -165,6 +172,8 @@ if ($action === 'verify_otp') {
     $stmtConsume->execute();
     $stmtConsume->close();
 
+    unset($_SESSION['patient_id'], $_SESSION['just_registered']);
+    unset($_SESSION['admin_id'], $_SESSION['admin_name'], $_SESSION['admin_username'], $_SESSION['admin_must_change']);
     $_SESSION['doctor_account_id'] = $account_id;
     $_SESSION['doctor_id']         = $doctor_id;
     $_SESSION['doctor_name']       = $doctor_name;

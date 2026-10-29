@@ -61,13 +61,14 @@ if ($admin['found']) {
 }
 
 /* 3) Doctor account (lookup by username) */
-$doctor = verify_doctor_login($conn, $email, $password);
+$doctor = verify_doctor_login($conn, $email, $password, false);
 if ($doctor['found']) {
     if ($doctor['ok']) {
-        unset($_SESSION['patient_id'], $_SESSION['just_registered']);
-        unset($_SESSION['admin_id'], $_SESSION['admin_name'], $_SESSION['admin_username'], $_SESSION['admin_must_change']);
+        echo 'otp_required';
+        $conn->close();
+        exit;
     }
-    echo $doctor['ok'] ? "success:doctor" : $doctor['msg'];
+    echo $doctor['msg'];
     $conn->close();
     exit;
 }
