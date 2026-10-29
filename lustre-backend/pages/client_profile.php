@@ -266,6 +266,7 @@ $conn->close();
                                         data-apt="<?php echo $appt_id; ?>"
                                         data-code="<?php echo htmlspecialchars($ap['unique_code'] ?? ('APT-' . str_pad((string)$ap['id'], 6, '0', STR_PAD_LEFT)), ENT_QUOTES); ?>"
                                         data-patient="<?php echo htmlspecialchars($patient['name'], ENT_QUOTES); ?>"
+                                        data-email="<?php echo htmlspecialchars($patient['email'] ?? '', ENT_QUOTES); ?>"
                                         data-doctor="<?php echo htmlspecialchars('Dr. ' . $ap['doctor_name'] . ' (' . $ap['specialty'] . ')', ENT_QUOTES); ?>"
                                         data-service="<?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation', ENT_QUOTES); ?>"
                                         data-when="<?php echo htmlspecialchars($when_attr, ENT_QUOTES); ?>"
@@ -453,6 +454,22 @@ $conn->close();
     .result-view-body{margin-top:.7rem;background:var(--green-pale,#f0fdf4);border:1px solid rgba(22,163,74,.25);border-radius:12px;padding:.85rem 1rem;font-size:.9rem;line-height:1.65;color:inherit;white-space:pre-wrap;word-break:break-word}
     .result-view-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem;align-items:center}
     .result-view-actions a.btn-sm{text-decoration:none}
+    .send-result-box{width:min(480px,94vw);padding:2rem}
+    .send-result-heading{display:flex;align-items:center;gap:.9rem;margin-bottom:1.2rem}
+    .send-result-icon{width:48px;height:48px;display:grid;place-items:center;flex:0 0 auto;border-radius:15px;background:var(--green-pale,#f0fdf4);color:var(--green-dark,#15803d)}
+    .send-result-heading h2{margin:0;padding:0;font-size:1.2rem}
+    .send-result-heading p{margin:.25rem 0 0;color:var(--gray-600,#64748b);font-size:.87rem}
+    .send-result-recipient{display:flex;align-items:center;gap:.8rem;padding:.9rem 1rem;border:1px solid var(--gray-100,#e2e8f0);border-radius:14px;background:var(--gray-50,#f8fafc);margin:1rem 0}
+    .send-result-recipient-icon{width:38px;height:38px;display:grid;place-items:center;flex:0 0 auto;border-radius:12px;background:#fff;color:#0d9488}
+    .send-result-recipient small,.send-result-reference small{display:block;color:var(--gray-600,#64748b);font-size:.76rem;margin-bottom:.18rem}
+    .send-result-recipient strong{display:block;overflow-wrap:anywhere;font-size:.9rem}
+    .send-result-reference{padding:.75rem 0;border-top:1px solid var(--gray-100,#e2e8f0);border-bottom:1px solid var(--gray-100,#e2e8f0);font-size:.88rem}
+    .send-result-reference strong{display:block}
+    .send-result-note{margin:.9rem 0 1.2rem;color:var(--gray-600,#64748b);font-size:.82rem;line-height:1.5}
+    .send-result-actions{display:flex;justify-content:flex-end;gap:.6rem;flex-wrap:wrap}
+    .send-result-actions button{min-height:42px}
+    [data-theme="dark"] .send-result-recipient{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+    [data-theme="dark"] .send-result-recipient-icon{background:rgba(255,255,255,.08)}
 </style>
 
 <!-- Appointment Result Modal (view / print / send) -->
@@ -478,6 +495,40 @@ $conn->close();
             <button type="button" class="btn-secondary" onclick="closeModal('resultViewModal')">Close</button>
         </div>
         <p id="resultViewNote" class="muted-sub" style="margin:.7rem 0 0;font-size:.82rem"></p>
+    </div>
+</div>
+
+<!-- Send Appointment Result Confirmation -->
+<div class="modal-overlay" id="sendResultModal" role="dialog" aria-modal="true" aria-labelledby="sendResultTitle" aria-describedby="sendResultDescription">
+    <div class="modal-box send-result-box">
+        <button type="button" class="modal-close-btn" onclick="closeSendResultModal()" aria-label="Close">&times;</button>
+        <div class="send-result-heading">
+            <div class="send-result-icon" aria-hidden="true">
+                <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            </div>
+            <div>
+                <h2 id="sendResultTitle">Send result to patient?</h2>
+                <p id="sendResultDescription">The completed appointment result will be emailed securely.</p>
+            </div>
+        </div>
+        <div class="send-result-recipient">
+            <div class="send-result-recipient-icon" aria-hidden="true">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg>
+            </div>
+            <div><small>Sending to</small><strong id="sendResultEmail"></strong></div>
+        </div>
+        <div class="send-result-reference">
+            <small>Appointment</small>
+            <strong id="sendResultReference"></strong>
+        </div>
+        <p class="send-result-note" id="sendResultNote">This email includes the patient's appointment result. Please confirm the recipient before sending.</p>
+        <div class="send-result-actions">
+            <button type="button" class="btn-secondary" id="sendResultCancel" onclick="closeSendResultModal()">Cancel</button>
+            <button type="button" class="btn-primary" id="sendResultConfirm" onclick="confirmSendResult()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                <span>Send Result</span>
+            </button>
+        </div>
     </div>
 </div>
 
@@ -531,12 +582,23 @@ $conn->close();
     }
 
     function openModal(id){document.getElementById(id).classList.add('active');document.body.style.overflow='hidden';}
-    function closeModal(id){document.getElementById(id).classList.remove('active');document.body.style.overflow='';}
+    function syncModalScrollLock(){
+        document.body.style.overflow = document.querySelector('.modal-overlay.active, .result-modal.active') ? 'hidden' : '';
+    }
+    function closeModal(id){
+        document.getElementById(id).classList.remove('active');
+        syncModalScrollLock();
+    }
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
         overlay.addEventListener('click', function(e){ if(e.target === this) closeModal(this.id); });
     });
     document.addEventListener('keydown', function(e){
         if(e.key !== 'Escape') return;
+        var sendModal = document.getElementById('sendResultModal');
+        if(sendModal && sendModal.classList.contains('active')){
+            closeSendResultModal();
+            return;
+        }
         if(document.getElementById('resultModal')) closeResultModal();
         closeModal('resultViewModal');
         closeModal('apptVitalsModal');
@@ -598,10 +660,12 @@ $conn->close();
     function hideLoading(){var l=document.getElementById('loadingScreen');if(l)l.classList.remove('active');}
 
     var currentResultId = null;
+    var currentResultEmail = '';
     function openResultView(btn){
         var d = btn.dataset;
         var draft = d.status !== 'completed';
         currentResultId = parseInt(d.apt, 10) || null;
+        currentResultEmail = d.email || '';
 
         document.getElementById('resultViewMeta').innerHTML =
             '<strong>' + escapeHtml(d.patient) + '</strong> &middot; ' + escapeHtml(d.code) +
@@ -621,6 +685,8 @@ $conn->close();
         var pdf  = document.getElementById('resultViewPdf');
         var send = document.getElementById('resultViewSend');
         var note = document.getElementById('resultViewNote');
+        send.dataset.patient = d.patient || '';
+        send.dataset.code = d.code || '';
         pdf.href = 'appointment_result_pdf.php?id=' + encodeURIComponent(d.apt);
         <?php if ($is_doctor): ?>
         var editBtn = document.getElementById('resultViewEdit');
@@ -641,16 +707,49 @@ $conn->close();
     }
     function sendResultToPatient(){
         if(!currentResultId) return;
-        if(!window.confirm('Email this result to the patient?')) return;
+        var send = document.getElementById('resultViewSend');
+        document.getElementById('sendResultEmail').textContent = currentResultEmail || 'No email address on file';
+        document.getElementById('sendResultReference').textContent =
+            (send && send.dataset.patient ? send.dataset.patient + ' · ' : '') +
+            (send && send.dataset.code ? send.dataset.code : 'Appointment #' + currentResultId);
+        document.getElementById('sendResultNote').textContent = currentResultEmail
+            ? "This email includes the patient's appointment result. Please confirm the recipient before sending."
+            : 'This patient does not have an email address on file, so the result cannot be sent.';
+        document.getElementById('sendResultConfirm').disabled = !currentResultEmail;
+        openModal('sendResultModal');
+        document.getElementById('sendResultCancel').focus();
+    }
+    function closeSendResultModal(){
+        closeModal('sendResultModal');
+    }
+    function confirmSendResult(){
+        if(!currentResultId || !currentResultEmail) return;
+        var button = document.getElementById('sendResultConfirm');
+        var cancel = document.getElementById('sendResultCancel');
+        var label = button.querySelector('span');
+        button.disabled = true;
+        cancel.disabled = true;
+        label.textContent = 'Sending…';
         showLoading();
         var fd = new FormData();
         fd.append('appointment_id', currentResultId);
         fetch('send_appointment_result.php', { method:'POST', body:fd })
         .then(function(r){return r.text();}).then(function(res){
             hideLoading();
-            if(res.trim()==='success') showToast('Result sent to the patient!','success');
-            else showToast(res,'error');
-        }).catch(function(){ hideLoading(); showToast('Error','error'); });
+            if(res.trim()==='success'){
+                closeSendResultModal();
+                showToast('Result sent to the patient!','success');
+            } else {
+                showToast(res,'error');
+            }
+        }).catch(function(){
+            hideLoading();
+            showToast('Network error. The result could not be sent.','error');
+        }).finally(function(){
+            button.disabled = !currentResultEmail;
+            cancel.disabled = false;
+            label.textContent = 'Send Result';
+        });
     }
     function editResultFromModal(){
         var btn = document.getElementById('resultViewEdit');
