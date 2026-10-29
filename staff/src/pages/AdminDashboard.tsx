@@ -7,7 +7,7 @@ import { Modal, Select } from '../components';
 import { Card, EmptyState, ModalHead, Stack, StatCard, StatGrid } from '../ui';
 import {
   IconAppointments, IconCheck, IconChevronRight, IconClock, IconDoctors, IconLab,
-  IconPatients, IconPlus, IconPrint, IconReports, IconSchedules, IconVitals, IconWalkins,
+  IconPatients, IconPlus, IconPrint, IconReports, IconSchedules, IconVaccine, IconWalkins,
 } from '../icons';
 import type { AppointmentRow, DoctorRow, PatientRow, WalkinRow } from '../types';
 
@@ -385,7 +385,7 @@ export default function AdminDashboard() {
             <IconChevronRight size={16} />
           </a>
           <a href="admin_vitals.php" className="ap-quick">
-            <span className="ap-quick-icon"><IconVitals size={18} /></span>
+            <span className="ap-quick-icon"><IconVaccine size={18} /></span>
             <span className="ap-quick-body"><strong>Vaccines</strong><small>Record and manage vaccinations</small></span>
             <IconChevronRight size={16} />
           </a>
