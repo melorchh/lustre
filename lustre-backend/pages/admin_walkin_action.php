@@ -10,7 +10,9 @@ require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/unique_ids.php';
 require_once __DIR__ . '/../src/doctor_capacity.php';
 require_once __DIR__ . '/../src/appointment_time_rules.php';
+require_once __DIR__ . '/../src/time_blocks_schema.php';
 ensure_unique_ids($conn);
+ensure_time_blocks_schema($conn);
 
 $conn->query("ALTER TABLE walk_ins ADD COLUMN IF NOT EXISTS test_procedure TEXT NOT NULL DEFAULT ''");
 
@@ -81,13 +83,26 @@ if ($action === 'add_walkin') {
 
     // Validate arrival time (default: now)
     if ($arrival_time === '') {
-        $arrival_time = date('H:i');
+        echo 'Please select an available arrival time.';
+        exit;
     } elseif (!preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $arrival_time)) {
         echo 'Invalid arrival time.';
         exit;
     }
     if (appointment_time_overlaps_lunch_break($arrival_time, 60)) {
         echo 'Appointments are unavailable from 12:00 PM to 1:00 PM.';
+        exit;
+    }
+
+    $arrival_date = date('Y-m-d');
+    $slot_available = doctor_slot_is_available($conn, $doctor_id, $arrival_date, $arrival_time);
+    if ($slot_available === null) {
+        http_response_code(500);
+        echo 'Could not verify the selected doctor\'s availability. Please try again.';
+        exit;
+    }
+    if (!$slot_available) {
+        echo 'The selected time is no longer available for this doctor. Choose another time.';
         exit;
     }
 
@@ -191,7 +206,6 @@ if ($action === 'add_walkin') {
         $newId = $stmt->insert_id;
 
         // Record the walk-in entry (queue) for the selected doctor
-        $arrival_date = date('Y-m-d');
         $arrival_hm   = date('H:i:s', strtotime($arrival_time));
         $wi = $conn->prepare("INSERT INTO walk_ins (patient_id, doctor_id, arrival_date, arrival_time, test_procedure, status) VALUES (?, ?, ?, ?, ?, 'waiting')");
         $wi->bind_param("iisss", $newId, $doctor_id, $arrival_date, $arrival_hm, $test_procedure);
