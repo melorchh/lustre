@@ -185,8 +185,12 @@ $conn->close();
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Arrival Time</label>
-                    <input type="time" name="arrival_time" value="<?php echo date('H:i'); ?>">
+                    <label>Appointment Time *</label>
+                    <input type="time" name="appointment_time" value="<?php echo date('H:i'); ?>" required>
+                </div>
+                <div class="form-group">
+                    <label>Arrival Time *</label>
+                    <input type="time" name="arrival_time" value="<?php echo date('H:i'); ?>" required>
                 </div>
             </div>
             <div class="form-group">

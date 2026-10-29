@@ -34,7 +34,16 @@ if ($action === 'add_walkin') {
     $age     = trim($_POST['age'] ?? '');
     $gender  = isset($_POST['gender']) ? strtolower(trim($_POST['gender'])) : '';
     $doctor_id = isset($_POST['doctor_id']) ? intval($_POST['doctor_id']) : 0;
-    $appointment_time = trim($_POST['appointment_time'] ?? $_POST['arrival_time'] ?? '');
+    $appointment_time = trim($_POST['appointment_time'] ?? '');
+    $arrival_time = trim($_POST['arrival_time'] ?? '');
+    if ($appointment_time === '' && $arrival_time !== '') {
+        // Keep older clients working: they used arrival_time for the appointment slot.
+        $appointment_time = $arrival_time;
+        $arrival_time = '';
+    }
+    if ($arrival_time === '') {
+        $arrival_time = date('H:i');
+    }
     $test_procedure = trim($_POST['test_procedure'] ?? '');
     $blood_pressure = trim($_POST['blood_pressure'] ?? '');
     $heart_rate     = trim($_POST['heart_rate'] ?? '');
@@ -81,13 +90,16 @@ if ($action === 'add_walkin') {
         exit;
     }
 
-    // Validate the selected appointment slot. Arrival time is recorded as the
-    // actual registration time below and is not the booked appointment time.
+    // Validate the selected appointment slot independently from walk-in arrival.
     if ($appointment_time === '') {
         echo 'Please select an available appointment time.';
         exit;
     } elseif (!preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $appointment_time)) {
         echo 'Invalid appointment time.';
+        exit;
+    }
+    if (!preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $arrival_time)) {
+        echo 'Invalid arrival time.';
         exit;
     }
     if (appointment_time_overlaps_lunch_break($appointment_time, 60)) {
@@ -207,7 +219,7 @@ if ($action === 'add_walkin') {
         $newId = $stmt->insert_id;
 
         // Record the walk-in entry (queue) for the selected doctor
-        $arrival_hm   = date('H:i:s');
+        $arrival_hm   = date('H:i:s', strtotime($arrival_time));
         $appointment_hm = date('H:i:s', strtotime($appointment_time));
         $wi = $conn->prepare("INSERT INTO walk_ins (patient_id, doctor_id, arrival_date, arrival_time, test_procedure, status) VALUES (?, ?, ?, ?, ?, 'waiting')");
         $wi->bind_param("iisss", $newId, $doctor_id, $arrival_date, $arrival_hm, $test_procedure);
