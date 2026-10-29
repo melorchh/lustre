@@ -1847,6 +1847,14 @@ button.resched-badge:hover {
 :is(.admin-portal, .doctor-portal) .form-group {
   margin-bottom: 0.85rem;
 }
+:is(.admin-portal, .doctor-portal) .form-group input,
+:is(.admin-portal, .doctor-portal) .form-group select,
+:is(.admin-portal, .doctor-portal) .form-group textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
 :is(.admin-portal, .doctor-portal) .form-grid > .ap-field {
   min-width: 0;
   margin-bottom: 0.85rem;
@@ -2778,6 +2786,11 @@ button.resched-badge:hover {
   }
 }
 
+@media (max-width: 720px) {
+  :is(.admin-portal, .doctor-portal) .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 
 /* --- reports --- */
 .ap-field--select {
