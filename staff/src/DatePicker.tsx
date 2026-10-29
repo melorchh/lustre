@@ -41,27 +41,41 @@ export default function DatePicker({ value, onChange, min, max, placeholder = 'S
     if (!open) return;
     const root = rootRef.current;
     if (!root) return;
-    const viewport = window.visualViewport;
 
     const position = () => {
       const popup = popupRef.current;
       const r = root.getBoundingClientRect();
-      const vh = viewport?.height || window.innerHeight || document.documentElement.clientHeight;
-      const vw = viewport?.width || window.innerWidth || document.documentElement.clientWidth;
-      const maxCalW = Math.min(330, vw - 32);
-      const calW = Math.min(maxCalW, Math.max(Math.min(295, maxCalW), r.width));
-      const need = Math.min(
-        popup?.getBoundingClientRect().height || popup?.firstElementChild?.getBoundingClientRect().height || 380,
-        vh - 16,
-      );
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      const vw = window.innerWidth || document.documentElement.clientWidth;
       const isMobile = vw <= 480;
+      const margin = 8;
+      const calW = isMobile
+        ? Math.min(320, Math.max(0, vw - margin * 2))
+        : Math.min(330, Math.max(295, r.width));
+      const naturalHeight =
+        popup?.scrollHeight ||
+        popup?.firstElementChild?.getBoundingClientRect().height ||
+        380;
+      const visibleHeight = isMobile ? Math.min(naturalHeight, vh - margin * 2) : naturalHeight;
+      const modal = isMobile ? root.closest('.modal-box, .register-sheet, .register-modal') : null;
+      const containerRect = modal?.getBoundingClientRect();
       const downRoom = vh - r.bottom;
-      const up = !isMobile && downRoom < need + 16 && r.top > need + 16;
-      let top = isMobile ? (vh - need) / 2 : up ? r.top - need - 10 : r.bottom + 10;
-      top = Math.max(8, Math.min(top, vh - need - 8));
-      let left = isMobile ? (vw - calW) / 2 : r.left;
+      const up = !isMobile && downRoom < naturalHeight + 16 && r.top > naturalHeight + 16;
+      let top = isMobile
+        ? (containerRect
+            ? containerRect.top + (containerRect.height - visibleHeight) / 2
+            : (vh - visibleHeight) / 2)
+        : up
+          ? r.top - naturalHeight - 10
+          : r.bottom + 10;
+      top = Math.max(margin, Math.min(top, vh - visibleHeight - margin));
+      let left = isMobile && containerRect
+        ? containerRect.left + (containerRect.width - calW) / 2
+        : isMobile
+          ? (vw - calW) / 2
+          : r.left;
       if (left + calW > vw - 8) left = vw - 8 - calW;
-      if (left < 8) left = 8;
+      if (left < margin) left = margin;
       setPos({ top, left, width: calW, up });
     };
 
@@ -85,8 +99,6 @@ export default function DatePicker({ value, onChange, min, max, placeholder = 'S
     document.addEventListener('keydown', onKey);
     window.addEventListener('scroll', onScroll, true);
     window.addEventListener('resize', onScroll);
-    viewport?.addEventListener('scroll', onScroll);
-    viewport?.addEventListener('resize', onScroll);
 
     return () => {
       window.cancelAnimationFrame(raf);
@@ -95,8 +107,6 @@ export default function DatePicker({ value, onChange, min, max, placeholder = 'S
       document.removeEventListener('keydown', onKey);
       window.removeEventListener('scroll', onScroll, true);
       window.removeEventListener('resize', onScroll);
-      viewport?.removeEventListener('scroll', onScroll);
-      viewport?.removeEventListener('resize', onScroll);
     };
   }, [open, value]);
 
