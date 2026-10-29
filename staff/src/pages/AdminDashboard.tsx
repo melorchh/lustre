@@ -50,10 +50,18 @@ function todayISO(): string {
 }
 
 const ARRIVAL_START_MIN = 8 * 60;
+const LUNCH_START_MIN = 12 * 60;
+const LUNCH_END_MIN = 13 * 60;
+const APPOINTMENT_DURATION_MIN = 60;
+
+function overlapsLunchBreak(startMinute: number): boolean {
+  return startMinute < LUNCH_END_MIN && startMinute + APPOINTMENT_DURATION_MIN > LUNCH_START_MIN;
+}
 
 function arrivalOptions(): { value: string; label: string }[] {
   const out: { value: string; label: string }[] = [];
   for (let m = ARRIVAL_START_MIN; m < 24 * 60; m += 5) {
+    if (overlapsLunchBreak(m)) continue;
     const h = Math.floor(m / 60);
     const mm = m % 60;
     const value = `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
@@ -66,6 +74,7 @@ function nowHM(): string {
   const d = new Date();
   let m = Math.max(ARRIVAL_START_MIN, d.getHours() * 60 + d.getMinutes());
   m -= m % 5;
+  if (overlapsLunchBreak(m)) m = LUNCH_END_MIN;
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 }
 

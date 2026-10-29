@@ -6,6 +6,7 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/time_blocks_schema.php';
+require_once __DIR__ . '/../src/appointment_time_rules.php';
 ensure_time_blocks_schema($conn);
 
 $doctor_id = isset($_GET['doctor_id']) ? intval($_GET['doctor_id']) : 0;
@@ -112,6 +113,9 @@ foreach ($schedules as $schedule) {
         $slot_parts = explode(':', $time);
         $slot_start_seconds = ($slot_parts[0] * 3600) + ($slot_parts[1] * 60);
         $slot_end_seconds = $slot_start_seconds + (60 * 60); // full 1-hour visit window
+        if (appointment_interval_overlaps_lunch_break($slot_start_seconds, $slot_end_seconds)) {
+            continue;
+        }
         
         // Check against all booked 1-hour blocks
         foreach ($booked_blocks as $block) {
