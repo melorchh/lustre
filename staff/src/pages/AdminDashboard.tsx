@@ -386,7 +386,7 @@ export default function AdminDashboard() {
           </a>
           <a href="admin_vitals.php" className="ap-quick">
             <span className="ap-quick-icon"><IconVitals size={18} /></span>
-            <span className="ap-quick-body"><strong>Record vitals</strong><small>Vaccines and measurements</small></span>
+            <span className="ap-quick-body"><strong>Vaccines</strong><small>Record and manage vaccinations</small></span>
             <IconChevronRight size={16} />
           </a>
           <a href="admin_laboratory.php" className="ap-quick">
@@ -565,7 +565,7 @@ export default function AdminDashboard() {
             </Select>
           </div>
         </div>
-        <p className="form-hint">Pick a doctor to see available dates &amp; times. Duration is 2 hours / visit.</p>
+        <p className="form-hint">Pick a doctor to see available dates &amp; times. Duration is 1 hour / visit.</p>
 
         <p className="form-hint" style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', marginTop: '1rem' }}>Vitals (optional)</p>
         <div className="form-grid">
