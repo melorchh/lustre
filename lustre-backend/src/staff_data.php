@@ -161,7 +161,7 @@ function admin_view_data($conn, $view, array $params = array())
             'stats' => array(
                 'total'   => staff_count($conn, "SELECT COUNT(*) c FROM patients"),
                 'active'  => staff_count($conn, "SELECT COUNT(DISTINCT patient_id) c FROM appointments WHERE status IN ('pending','confirmed')"),
-                'walkins' => staff_count($conn, "SELECT COUNT(*) c FROM patients WHERE is_walk_in = 1 OR is_walk_in = TRUE"),
+                'walkins' => staff_count($conn, "SELECT COUNT(*) c FROM patients WHERE is_walk_in = 1"),
             ),
         );
 
