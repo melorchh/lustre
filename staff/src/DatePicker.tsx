@@ -41,20 +41,25 @@ export default function DatePicker({ value, onChange, min, max, placeholder = 'S
     if (!open) return;
     const root = rootRef.current;
     if (!root) return;
+    const viewport = window.visualViewport;
 
     const position = () => {
       const popup = popupRef.current;
       const r = root.getBoundingClientRect();
-      const vh = window.innerHeight || document.documentElement.clientHeight;
-      const vw = window.innerWidth || document.documentElement.clientWidth;
-      const maxCalW = Math.min(330, vw - 16);
+      const vh = viewport?.height || window.innerHeight || document.documentElement.clientHeight;
+      const vw = viewport?.width || window.innerWidth || document.documentElement.clientWidth;
+      const maxCalW = Math.min(330, vw - 32);
       const calW = Math.min(maxCalW, Math.max(Math.min(295, maxCalW), r.width));
-      const need = popup?.firstElementChild?.getBoundingClientRect().height || 380;
+      const need = Math.min(
+        popup?.getBoundingClientRect().height || popup?.firstElementChild?.getBoundingClientRect().height || 380,
+        vh - 16,
+      );
+      const isMobile = vw <= 480;
       const downRoom = vh - r.bottom;
-      const up = downRoom < need + 16 && r.top > need + 16;
-      let top = up ? r.top - need - 10 : r.bottom + 10;
+      const up = !isMobile && downRoom < need + 16 && r.top > need + 16;
+      let top = isMobile ? (vh - need) / 2 : up ? r.top - need - 10 : r.bottom + 10;
       top = Math.max(8, Math.min(top, vh - need - 8));
-      let left = vw <= 480 ? (vw - calW) / 2 : r.left;
+      let left = isMobile ? (vw - calW) / 2 : r.left;
       if (left + calW > vw - 8) left = vw - 8 - calW;
       if (left < 8) left = 8;
       setPos({ top, left, width: calW, up });
@@ -80,6 +85,8 @@ export default function DatePicker({ value, onChange, min, max, placeholder = 'S
     document.addEventListener('keydown', onKey);
     window.addEventListener('scroll', onScroll, true);
     window.addEventListener('resize', onScroll);
+    viewport?.addEventListener('scroll', onScroll);
+    viewport?.addEventListener('resize', onScroll);
 
     return () => {
       window.cancelAnimationFrame(raf);
@@ -88,6 +95,8 @@ export default function DatePicker({ value, onChange, min, max, placeholder = 'S
       document.removeEventListener('keydown', onKey);
       window.removeEventListener('scroll', onScroll, true);
       window.removeEventListener('resize', onScroll);
+      viewport?.removeEventListener('scroll', onScroll);
+      viewport?.removeEventListener('resize', onScroll);
     };
   }, [open, value]);
 

@@ -2667,6 +2667,21 @@ html[data-theme=dark] .admin-dp-trigger.placeholder .admin-dp-text {
     left: 0;
     width: 100%;
     min-width: 0;
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .admin-cal {
+    padding: 0.65rem;
+    border-radius: 16px;
+  }
+  .admin-cal .cal-head {
+    margin-bottom: 0.55rem;
+  }
+  .admin-cal .cal-nav {
+    width: 34px;
+    height: 34px;
   }
   .admin-dp-popup::before {
     content: '';
