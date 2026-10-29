@@ -7,6 +7,7 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/time_blocks_schema.php';
 require_once __DIR__ . '/../src/appointment_time_rules.php';
+require_once __DIR__ . '/../src/doctor_capacity.php';
 ensure_time_blocks_schema($conn);
 
 $doctor_id = isset($_GET['doctor_id']) ? intval($_GET['doctor_id']) : 0;
@@ -23,6 +24,20 @@ $selected_date = strtotime($date);
 $today = strtotime(date('Y-m-d'));
 
 if ($selected_date === false || date('Y-m-d', $selected_date) !== $date || $selected_date <= $today) {
+    echo json_encode([]);
+    $conn->close();
+    exit;
+}
+
+$exclude_appointment_id = isset($_GET['exclude_appointment_id']) ? (int)$_GET['exclude_appointment_id'] : 0;
+$daily_limit = doctor_daily_limit_status($conn, $doctor_id, $date, false, $exclude_appointment_id);
+if ($daily_limit === null) {
+    http_response_code(500);
+    echo json_encode(['error' => "Could not verify the doctor's daily appointment limit."]);
+    $conn->close();
+    exit;
+}
+if (!$daily_limit['available']) {
     echo json_encode([]);
     $conn->close();
     exit;
@@ -60,8 +75,13 @@ while ($row = $result->fetch_assoc()) {
 $stmt->close();
 
 // Get booked appointments for this doctor on this date with 1-hour duration blocks
-$stmt = $conn->prepare("SELECT appointment_time FROM appointments WHERE doctor_id=? AND appointment_date=? AND status IN ('pending', 'confirmed')");
-$stmt->bind_param("is", $doctor_id, $date);
+$appointment_exclusion = ($exclude_appointment_id > 0) ? " AND id <> ?" : "";
+$stmt = $conn->prepare("SELECT appointment_time FROM appointments WHERE doctor_id=? AND appointment_date=? AND status IN ('pending', 'confirmed')" . $appointment_exclusion);
+if ($exclude_appointment_id > 0) {
+    $stmt->bind_param("isi", $doctor_id, $date, $exclude_appointment_id);
+} else {
+    $stmt->bind_param("is", $doctor_id, $date);
+}
 $stmt->execute();
 $result = $stmt->get_result();
 $booked_blocks = []; // Store as [start_time, end_time] blocks

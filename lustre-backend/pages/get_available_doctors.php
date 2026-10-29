@@ -3,9 +3,9 @@
 //
 // Used by the admin walk-in form so the doctor dropdown only lists doctors
 // with room left. See lustre-backend/src/doctor_capacity.php for the rules:
-// the doctor must have an active schedule on that day. An explicit
-// doctors.daily_limit cap wins after that, otherwise the doctor's active
-// schedule minus bookings / blocked ranges decides.
+// the doctor must have an active schedule and at least one free walk-in slot.
+// Online appointments and time-off blocks reserve their overlapping slots;
+// doctors.daily_limit also caps the total daily patient count.
 //
 //   GET get_available_doctors.php[?date=YYYY-MM-DD]
 //   -> [ { id, name, specialty, daily_limit, mode, remaining }, ... ]

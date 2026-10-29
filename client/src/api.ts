@@ -11,9 +11,14 @@ export async function fetchAvailableDates(doctorId: number): Promise<MedicalDate
   return Array.isArray(data) ? data : [];
 }
 
-export async function fetchAvailableTimes(doctorId: number, date: string): Promise<string[]> {
+export async function fetchAvailableTimes(
+  doctorId: number,
+  date: string,
+  excludeAppointmentId?: number,
+): Promise<string[]> {
+  const exclude = excludeAppointmentId ? `&exclude_appointment_id=${excludeAppointmentId}` : '';
   const res = await fetch(
-    `get_available_times.php?doctor_id=${doctorId}&date=${encodeURIComponent(date)}&t=${Date.now()}`,
+    `get_available_times.php?doctor_id=${doctorId}&date=${encodeURIComponent(date)}${exclude}&t=${Date.now()}`,
   );
   if (!res.ok) throw new Error('Failed to load available times');
   const data = await res.json();

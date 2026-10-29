@@ -391,7 +391,7 @@ function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) 
     setTimes([]);
     setTimesLoading(true);
     setTimesError(false);
-    fetchAvailableTimes(apt.doctor_id, date)
+    fetchAvailableTimes(apt.doctor_id, date, apt.id)
       .then((t) => {
         setTimes(t);
         setTimesLoading(false);

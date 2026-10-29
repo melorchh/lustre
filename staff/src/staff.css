@@ -1782,6 +1782,15 @@ button.resched-badge:hover {
 :is(.admin-portal, .doctor-portal) .form-grid {
   gap: 0.75rem;
 }
+:is(.admin-portal, .doctor-portal) .walkin-schedule-grid > .walkin-procedure-field {
+  grid-column: 1 / -1;
+}
+:is(.admin-portal, .doctor-portal) .walkin-schedule-notice {
+  margin: -0.15rem 0 0.65rem;
+}
+:is(.admin-portal, .doctor-portal) .walkin-schedule-notice .form-hint {
+  margin: 0;
+}
 :is(.admin-portal, .doctor-portal) .form-group label {
   font-size: 0.7rem;
   letter-spacing: 0.06em;

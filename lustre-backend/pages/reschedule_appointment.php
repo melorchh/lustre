@@ -8,7 +8,9 @@ if (!isset($_SESSION["patient_id"])) {
 require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/appointment_time_rules.php';
 require_once __DIR__ . '/../src/time_blocks_schema.php';
+require_once __DIR__ . '/../src/doctor_capacity.php';
 ensure_time_blocks_schema($conn);
+ensure_doctor_capacity_schema($conn);
 
 $patient_id = $_SESSION["patient_id"];
 $appointment_id = isset($_POST["appointment_id"]) ? intval($_POST["appointment_id"]) : 0;
@@ -147,6 +149,30 @@ if ($stmt->num_rows > 0) {
 }
 $stmt->close();
 
+// Preserve the daily patient cap when moving an appointment. The current
+// appointment is excluded from the target-date count.
+$pdo = $conn->getPdo();
+if (!$pdo->beginTransaction()) {
+    http_response_code(500);
+    echo "error: Could not start rescheduling. Please try again.";
+    $conn->close();
+    exit;
+}
+$daily_limit = doctor_daily_limit_status($conn, $doctor_id, $date, true, $appointment_id);
+if ($daily_limit === null) {
+    $pdo->rollBack();
+    http_response_code(500);
+    echo "error: Could not verify the doctor's daily patient limit. Please try again.";
+    $conn->close();
+    exit;
+}
+if (!$daily_limit['available']) {
+    $pdo->rollBack();
+    echo "error: This doctor has reached the daily patient limit for the selected date";
+    $conn->close();
+    exit;
+}
+
 // Update the appointment with the new date/time, reset status to pending, and mark it as rescheduled
 $stmt = $conn->prepare("UPDATE appointments SET doctor_id=?, appointment_date=?, appointment_time=?, appointment_duration=?, status='pending', reschedule_count = reschedule_count + 1, last_rescheduled_at = NOW() WHERE id=? AND patient_id=?");
 $stmt->bind_param("issiii", $doctor_id, $date, $time_with_seconds, $appointment_duration, $appointment_id, $patient_id);
@@ -157,6 +183,17 @@ if ($stmt->execute() && $stmt->affected_rows >= 0) {
     $hist->bind_param("issss", $appointment_id, $old_date, $old_time, $date, $time_with_seconds);
     $hist->execute();
     $hist->close();
+
+    if (!$pdo->commit()) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        http_response_code(500);
+        echo "error: Failed to save the rescheduled appointment. Please try again.";
+        $stmt->close();
+        $conn->close();
+        exit;
+    }
 
     header('Content-Type: application/json');
     echo json_encode(['success' => true, 'appointment_id' => $appointment_id]);
@@ -186,6 +223,7 @@ if ($stmt->execute() && $stmt->affected_rows >= 0) {
         ob_end_clean();
     }
 } else {
+    $pdo->rollBack();
     echo "error: Failed to reschedule appointment. Please try again.";
 }
 
