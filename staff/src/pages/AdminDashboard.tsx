@@ -40,7 +40,7 @@ const EMPTY_APPT = {
 };
 
 const EMPTY_WALKIN = {
-  specialty: '', doctor_id: '', test_procedure: '', other: '', arrival_time: '',
+  specialty: '', doctor_id: '', test_procedure: '', other: '', appointment_time: '',
   name: '', contact: '', gender: '', address: '', patient_type: '', age: '',
   weight_kg: '', height_cm: '', blood_pressure: '', heart_rate: '', fundal_height: '',
 };
@@ -163,11 +163,6 @@ export default function AdminDashboard() {
       .then((times) => {
         if (!alive) return;
         setWalkinSlots(times);
-        setWalkinForm((form) => (
-          form.doctor_id === doctorId
-            ? { ...form, arrival_time: times[0] || '' }
-            : form
-        ));
       })
       .catch((error: unknown) => {
         if (!alive) return;
@@ -277,7 +272,7 @@ export default function AdminDashboard() {
     if (!walkinForm.name.trim()) { showToast('Patient name required', 'error'); return; }
     if (!walkinForm.contact.trim()) { showToast('Contact number required', 'error'); return; }
     if (!walkinForm.doctor_id) { showToast('Please select a doctor', 'error'); return; }
-    if (!walkinForm.arrival_time) { showToast('Please select an available arrival time', 'error'); return; }
+    if (!walkinForm.appointment_time) { showToast('Please select an available appointment time', 'error'); return; }
     if (!walkinForm.test_procedure) { showToast('Please select a test / procedure', 'error'); return; }
     if (!walkinForm.blood_pressure.trim()) { showToast('Blood pressure required', 'error'); return; }
     if (!walkinForm.heart_rate.trim()) { showToast('Heart rate required', 'error'); return; }
@@ -309,7 +304,7 @@ export default function AdminDashboard() {
         heart_rate: walkinForm.heart_rate,
         fundal_height: walkinForm.fundal_height,
         doctor_id: walkinForm.doctor_id,
-        arrival_time: walkinForm.arrival_time,
+        appointment_time: walkinForm.appointment_time,
         test_procedure: proc,
       });
       if (isSuccess(res)) {
@@ -657,7 +652,7 @@ export default function AdminDashboard() {
           </div>
           <div className="form-group">
             <label>Doctor *</label>
-            <Select className="form-dropdown form-input" value={walkinForm.doctor_id} onChange={(e) => setWalkinForm({ ...walkinForm, doctor_id: e.target.value, arrival_time: '', test_procedure: '', other: '' })}>
+            <Select className="form-dropdown form-input" value={walkinForm.doctor_id} onChange={(e) => setWalkinForm({ ...walkinForm, doctor_id: e.target.value, appointment_time: '', test_procedure: '', other: '' })}>
               <option value="">Select Doctor</option>
               {walkinDoctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name} ({doc.specialty})</option>)}
             </Select>
@@ -678,12 +673,12 @@ export default function AdminDashboard() {
             )}
           </div>
           <div className="form-group">
-            <label>Arrival Time</label>
+            <label>Appointment Time *</label>
             <Select
               className="form-dropdown form-input"
-              value={walkinForm.arrival_time}
+              value={walkinForm.appointment_time}
               disabled={!walkinForm.doctor_id || walkinSlotLoading || walkinSlots.length === 0}
-              onChange={(e) => setWalkinForm({ ...walkinForm, arrival_time: e.target.value })}
+              onChange={(e) => setWalkinForm({ ...walkinForm, appointment_time: e.target.value })}
             >
               <option value="">
                 {!walkinForm.doctor_id
@@ -691,7 +686,7 @@ export default function AdminDashboard() {
                   : walkinSlotLoading
                     ? 'Loading available times…'
                     : walkinSlots.length > 0
-                      ? 'Select arrival time'
+                      ? 'Select appointment time'
                       : 'No available times today'}
               </option>
               {walkinSlots.map((time) => <option key={time} value={time}>{fmtTime(time)}</option>)}
@@ -700,6 +695,7 @@ export default function AdminDashboard() {
             {!walkinSlotLoading && walkinForm.doctor_id && !walkinSlotError && walkinSlots.length === 0 && (
               <p className="form-hint">No one-hour appointment times remain within this doctor’s shift today.</p>
             )}
+            {walkinForm.doctor_id && <p className="form-hint">The walk-in arrival is recorded when the client is registered. Choose the doctor’s appointment time here.</p>}
           </div>
         </div>
         <div className="form-grid">
