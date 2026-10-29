@@ -3,6 +3,7 @@ require __DIR__ . '/../src/session.php';
 if (!isset($_SESSION["admin_id"])) { header("Location: admin_login.php"); exit; }
 
 require_once __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/appointment_time_rules.php';
 require_once __DIR__ . '/../src/unique_ids.php';
 ensure_unique_ids($conn);
 
@@ -21,7 +22,10 @@ if ($patient_id <= 0) { http_response_code(400); echo 'Invalid patient.'; exit; 
 function find_vaccine_slot($conn, $date, $pref_doctor, $pref_time) {
     $slots = [];
     for ($t = strtotime('08:00'); $t < strtotime('17:00'); $t += 1800) {
-        $slots[] = date('H:i:s', $t);
+        $time = date('H:i:s', $t);
+        if (!appointment_time_overlaps_lunch_break($time)) {
+            $slots[] = $time;
+        }
     }
     $pref = $pref_time !== '' ? date('H:i:s', strtotime($pref_time)) : null;
     if ($pref && in_array($pref, $slots, true)) {

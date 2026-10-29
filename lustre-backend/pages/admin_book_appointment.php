@@ -3,6 +3,7 @@ require __DIR__ . '/../src/session.php';
 if (!isset($_SESSION["admin_id"])) { echo "error: Unauthorized"; exit; }
 
 require_once __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/appointment_time_rules.php';
 require_once __DIR__ . '/../src/unique_ids.php';
 ensure_unique_ids($conn);
 require_once __DIR__ . '/../src/time_blocks_schema.php';
@@ -95,6 +96,10 @@ $time_with_seconds = $time . ":00";
 $start_timestamp = strtotime($date . ' ' . $time);
 $end_timestamp   = $start_timestamp + ($appointment_duration * 60);
 $end_time        = date('H:i:s', $end_timestamp);
+if (appointment_time_overlaps_lunch_break($time, $appointment_duration)) {
+    echo "error: Appointments are unavailable from 12:00 PM to 1:00 PM";
+    $conn->close(); exit;
+}
 
 // Overlap check (same doctor, same day, pending/confirmed)
 $stmt = $conn->prepare("

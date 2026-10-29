@@ -12,6 +12,7 @@ define('LUSTRE_STAFF_DATA_LOADED', true);
 
 require_once __DIR__ . '/api.php';
 require_once __DIR__ . '/doctor_capacity.php';
+require_once __DIR__ . '/appointment_time_rules.php';
 
 function staff_count($conn, $sql)
 {
@@ -306,7 +307,10 @@ function admin_view_data($conn, $view, array $params = array())
         }
         $slots = array();
         for ($t = strtotime('08:00'); $t < strtotime('17:00'); $t += 1800) {
-            $slots[] = date('H:i', $t) . ':00';
+            $time = date('H:i', $t) . ':00';
+            if (!appointment_time_overlaps_lunch_break($time)) {
+                $slots[] = $time;
+            }
         }
         return array(
             'patients'    => $patients,

@@ -9,6 +9,7 @@ if (!isset($_SESSION["admin_id"])) {
 require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/unique_ids.php';
 require_once __DIR__ . '/../src/doctor_capacity.php';
+require_once __DIR__ . '/../src/appointment_time_rules.php';
 ensure_unique_ids($conn);
 
 $conn->query("ALTER TABLE walk_ins ADD COLUMN IF NOT EXISTS test_procedure TEXT NOT NULL DEFAULT ''");
@@ -83,6 +84,10 @@ if ($action === 'add_walkin') {
         $arrival_time = date('H:i');
     } elseif (!preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $arrival_time)) {
         echo 'Invalid arrival time.';
+        exit;
+    }
+    if (appointment_time_overlaps_lunch_break($arrival_time, 60)) {
+        echo 'Appointments are unavailable from 12:00 PM to 1:00 PM.';
         exit;
     }
 

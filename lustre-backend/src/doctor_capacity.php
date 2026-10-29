@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/appointment_time_rules.php';
+
 // ============================================================================
 // Doctor daily capacity / availability.
 //
@@ -63,6 +65,22 @@ if (!function_exists('doctor_shift_on')) {
     }
 }
 
+if (!function_exists('doctor_has_lunch_free_shift_window')) {
+    function doctor_has_lunch_free_shift_window($shifts)
+    {
+        $window = 60 * 60;
+        $step = 30 * 60;
+        foreach ($shifts as $shift) {
+            for ($start = $shift['start']; $start + $window <= $shift['end']; $start += $step) {
+                if (!appointment_interval_overlaps_lunch_break($start, $start + $window)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+}
+
 if (!function_exists('doctor_free_windows')) {
     /**
      * How many more 1-hour visits fit in a set of shifts.
@@ -82,8 +100,11 @@ if (!function_exists('doctor_free_windows')) {
         foreach ($shifts as $shift) {
             $start = $shift['start'];
             while ($start + $window <= $shift['end']) {
-                $hit = false;
+                $hit = appointment_interval_overlaps_lunch_break($start, $start + $window);
                 foreach ($blocks as $block) {
+                    if ($hit) {
+                        break;
+                    }
                     if ($start < $block['end'] && $start + $window > $block['start']) {
                         $hit = true;
                         break;
@@ -255,7 +276,7 @@ if (!function_exists('doctor_capacity_map')) {
                 $mode      = 'daily_limit';
                 $capacity  = $limit;
                 $remaining = max(0, $limit - $count);
-                $available = $count < $limit;
+                $available = $count < $limit && doctor_has_lunch_free_shift_window($shifts[$id]);
                 if (!$available) {
                     $reason = 'full';
                 }
