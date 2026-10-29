@@ -65,21 +65,33 @@ if ($stmt->num_rows === 0) {
 }
 $stmt->close();
 
-// Mark the token as used (one-time use)
-$conn->prepare("UPDATE email_tokens SET used = 1 WHERE email = ? AND token = ? AND used = 0")->execute([$reg['email'], $token_hash]);
-
 // ---- OTP verified â€” create the account from staged session data ----
 $name     = $reg['name'];
 $email    = $reg['email'];
 $contact  = $reg['contact'];
 $address  = $reg['address'];
 $password = $reg['password'];
+$birthday = isset($reg['birthday']) ? (string)$reg['birthday'] : '';
 $gender   = isset($reg['gender']) ? $reg['gender'] : '';
+
+$birth_date = DateTime::createFromFormat('!Y-m-d', $birthday);
+$today = new DateTime('today');
+if (!$birth_date || $birth_date->format('Y-m-d') !== $birthday
+    || (int)$birth_date->format('Y') >= (int)$today->format('Y')
+    || $birth_date > $today) {
+    echo "Please register again and select a valid birthday.";
+    $conn->close();
+    exit;
+}
+$age = $birth_date->diff($today)->y;
+
+// Mark the token as used (one-time use)
+$conn->prepare("UPDATE email_tokens SET used = 1 WHERE email = ? AND token = ? AND used = 0")->execute([$reg['email'], $token_hash]);
 
 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-$stmt = $conn->prepare("INSERT INTO patients (name, email, contact, address, password, gender) VALUES (?, ?, ?, ?, ?, ?)");
-$stmt->bind_param("ssssss", $name, $email, $contact, $address, $hashed_password, $gender);
+$stmt = $conn->prepare("INSERT INTO patients (name, email, contact, address, password, gender, age) VALUES (?, ?, ?, ?, ?, ?, ?)");
+$stmt->bind_param("ssssssi", $name, $email, $contact, $address, $hashed_password, $gender, $age);
 
 if ($stmt->execute()) {
     unset($_SESSION['reg_pending']);
