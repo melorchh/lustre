@@ -2919,6 +2919,12 @@ button.resched-badge:hover {
   .admin-history-page .pdf-day-list {
     max-height: 160px;
   }
+  .admin-history-page .pdf-list-col {
+    gap: 0.3rem;
+  }
+  .admin-history-page .pdf-list-search {
+    gap: 0.15rem;
+  }
   .admin-history-page > .tab-nav {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
