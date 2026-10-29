@@ -200,7 +200,7 @@ export default function Shell({ active, title, children }: ShellProps) {
               <div className="sidebar-user-label">{prompt}</div>
               {role === 'admin' ? (
                 <button type="button" className="sidebar-user-name sidebar-user-name--button" onClick={openAccountSettings} title="Edit admin email and password">
-                  {(staff.username as string) || displayName}
+                  {firstName(name) || displayName}
                 </button>
               ) : <div className="sidebar-user-name">{displayName}</div>}
             </div>
