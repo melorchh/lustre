@@ -693,9 +693,9 @@ export default function AdminDashboard() {
             </Select>
             {walkinSlotError && <p className="form-hint">{walkinSlotError}</p>}
             {!walkinSlotLoading && walkinForm.doctor_id && !walkinSlotError && walkinSlots.length === 0 && (
-              <p className="form-hint">No one-hour appointment times remain within this doctor’s shift today.</p>
+              <p className="form-hint">No conflict-free one-hour appointment time remains in this doctor’s shift today. Walk-in times are checked against existing appointments and time off; choose another doctor with an available time.</p>
             )}
-            {walkinForm.doctor_id && <p className="form-hint">The walk-in arrival is recorded when the client is registered. Choose the doctor’s appointment time here.</p>}
+            {walkinForm.doctor_id && walkinSlots.length > 0 && <p className="form-hint">These are same-day walk-in appointment times, checked to avoid existing appointments. The client’s arrival is recorded separately when registered.</p>}
           </div>
         </div>
         <div className="form-grid">
