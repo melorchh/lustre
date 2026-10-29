@@ -2845,6 +2845,111 @@ button.resched-badge:hover {
   font-size: 0.76rem;
   font-weight: 700;
 }
+
+@media (max-width: 640px) {
+  .admin-history-page {
+    gap: 0.85rem;
+  }
+  .admin-history-page > .ap-hero {
+    padding: 1rem;
+    margin-bottom: 0;
+  }
+  .admin-history-page > .ap-hero h1 {
+    font-size: 1.3rem;
+  }
+  .admin-history-page > .ap-hero p {
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+  .admin-history-page .ap-stat-grid--seven {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+  .admin-history-page .ap-stat {
+    padding: 0.65rem 0.65rem 0.7rem 0.8rem;
+  }
+  .admin-history-page .ap-stat-label {
+    white-space: normal;
+    min-height: 1.55em;
+  }
+  .admin-history-page .ap-stat-value {
+    font-size: 1.4rem;
+  }
+  .admin-history-page .ap-stat-hint {
+    font-size: 0.65rem;
+  }
+  .admin-history-page .ap-card {
+    padding: 0.9rem;
+  }
+  .admin-history-page .ap-card-head {
+    gap: 0.65rem;
+  }
+  .admin-history-page .ap-card-actions {
+    width: 100%;
+  }
+  .admin-history-page .pdf-type-switch {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    border-radius: 12px;
+  }
+  .admin-history-page .pdf-type-btn {
+    min-height: 38px;
+    padding: 0.45rem 0.35rem;
+    white-space: normal;
+  }
+  .admin-history-page .pdf-panel-body {
+    gap: 0.9rem;
+    padding: 0.1rem 0 0;
+  }
+  .admin-history-page .pdf-cal-head {
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+  }
+  .admin-history-page .pdf-cal-head .ap-select {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .admin-history-page .pdf-cal-head .ap-select-trigger {
+    min-width: 0;
+  }
+  .admin-history-page .pdf-cal-cell {
+    height: 38px;
+  }
+  .admin-history-page .pdf-day-list {
+    max-height: 160px;
+  }
+  .admin-history-page > .tab-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
+  .admin-history-page > .tab-nav .tab-btn {
+    min-width: 0;
+    min-height: 44px;
+    padding: 0.45rem 0.35rem;
+    white-space: normal;
+  }
+  .admin-history-page .archive-day-cell {
+    padding: 0.55rem 0.65rem !important;
+  }
+  .admin-history-page .archive-day-inner {
+    gap: 0.35rem;
+  }
+  .admin-history-page .archive-day-label {
+    flex: 1 1 140px;
+    white-space: normal;
+    line-height: 1.3;
+  }
+  .admin-history-page .archive-day-count {
+    margin-left: 0;
+  }
+  .admin-history-page .table-scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
 :is(.admin-portal, .doctor-portal) .report-presets button:hover {
   background: var(--ap-surface-3);
   color: var(--ap-text);

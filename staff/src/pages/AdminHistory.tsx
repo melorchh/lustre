@@ -400,7 +400,7 @@ export default function AdminHistory() {
 
   return (
     <Shell active="history" title="Archives">
-      <Stack>
+      <Stack className="admin-history-page">
       <div className="ap-hero">
         <div className="ap-hero-copy">
           <span className="ap-hero-eyebrow">Record archive</span>
