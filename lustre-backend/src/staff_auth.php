@@ -10,8 +10,11 @@ function ensure_doctor_accounts_table($conn)
         doctor_id  INTEGER NOT NULL UNIQUE REFERENCES doctors(id) ON DELETE CASCADE,
         username   VARCHAR(100) UNIQUE NOT NULL,
         password   VARCHAR(255) NOT NULL,
+        email      VARCHAR(255),
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     )");
+    // Add email column if it doesn't exist (for existing databases)
+    $conn->query("ALTER TABLE doctor_accounts ADD COLUMN IF NOT EXISTS email VARCHAR(255)");
 }
 
 /**
