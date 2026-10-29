@@ -198,7 +198,7 @@ if (isset($_SESSION["patient_id"])) {
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <button class="modal-close" onclick="closeModal('loginModal')">&times;</button>
-    <div class="modal-title">Welcome</div>
+    <div class="modal-title" id="loginModalTitle">Welcome</div>
     <div class="modal-sub">Sign in to manage your appointments</div>
     <div class="form-error" id="loginError"></div>
     <form id="loginForm">
@@ -564,6 +564,7 @@ function cancelDoctorOtp(){
   clearDoctorOtpTimer();doctorOtpUsername='';
   document.getElementById('doctorOtpPanel').style.display='none';
   document.getElementById('loginForm').style.display='';
+  document.getElementById('loginModalTitle').textContent='Welcome';
   document.getElementById('doctorOtpInput').value='';
   document.getElementById('doctorOtpError').classList.remove('show');
   document.getElementById('loginPassword').value='';
@@ -586,7 +587,8 @@ async function requestDoctorOtp(showInlineError){
   try{
     const response=await fetch('doctor_login_process.php',{method:'POST',body:fd});
     const text=(await response.text()).trim();hideLoading();
-    if(text==='otp_sent'){
+    if(text.startsWith('otp_sent:')){
+      document.getElementById('loginModalTitle').textContent='Welcome Doctor ' + text.slice('otp_sent:'.length);
       document.getElementById('loginForm').style.display='none';
       document.getElementById('doctorOtpPanel').style.display='';
       document.getElementById('doctorOtpHint').textContent='A verification code has been sent to your doctor account email.';
