@@ -4,8 +4,10 @@ if (!isset($_SESSION["admin_id"])) { header("Location: admin_login.php"); exit; 
 
 require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/appointment_time_rules.php';
+require_once __DIR__ . '/../src/doctor_capacity.php';
 require_once __DIR__ . '/../src/unique_ids.php';
 ensure_unique_ids($conn);
+ensure_doctor_capacity_schema($conn);
 
 $action = $_POST['action'] ?? '';
 $patient_id = isset($_POST['patient_id']) ? (int)$_POST['patient_id'] : 0;
@@ -254,21 +256,42 @@ switch ($action) {
             $svc = $vaccine . ' (' . $nextLabel . ')';
             $slot = find_vaccine_slot($conn, $du, $pref_doctor, $pref_time);
             if ($slot) {
-                try {
-                    $duration = 60;
-                    $ins = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, appointment_duration, service_requested, status, notes)
-                                           VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)");
-                    $note = 'Auto-scheduled from vaccination record (' . date('M j, Y') . ').';
-                    $ins->bind_param("iississ", $patient_id, $slot[0], $du, $slot[1], $duration, $svc, $note);
-                    $ins->execute();
-                    $ins->close();
-                    $autoScheduled = [
-                        'next_dose' => $nextLabel,
-                        'date'      => $du,
-                        'time'      => substr($slot[1], 0, 5),
-                    ];
-                } catch (mysqli_sql_exception $e) {
-                    // never block the vaccination save because of a booking issue
+                $pdo = $conn->getPdo();
+                if ($pdo->beginTransaction()) {
+                    $daily_limit = doctor_daily_limit_status($conn, $slot[0], $du, true);
+                    $slot_available = doctor_appointment_slot_is_available($conn, $slot[0], $du, substr($slot[1], 0, 5));
+                    if ($daily_limit !== null && $daily_limit['available'] && $slot_available === true) {
+                        $duration = 60;
+                        $ins = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, appointment_duration, service_requested, status, notes)
+                                               VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)");
+                        if (!$ins) {
+                            $pdo->rollBack();
+                            error_log('[lustre] could not prepare auto-scheduled vaccine appointment for patient ' . $patient_id);
+                        } else {
+                            $note = 'Auto-scheduled from vaccination record (' . date('M j, Y') . ').';
+                            $ins->bind_param("iississ", $patient_id, $slot[0], $du, $slot[1], $duration, $svc, $note);
+                            if ($ins->execute() && $pdo->commit()) {
+                                $autoScheduled = [
+                                    'next_dose' => $nextLabel,
+                                    'date'      => $du,
+                                    'time'      => substr($slot[1], 0, 5),
+                                ];
+                            } else {
+                                if ($pdo->inTransaction()) {
+                                    $pdo->rollBack();
+                                }
+                                error_log('[lustre] auto-scheduled vaccine appointment insert/commit failed for patient ' . $patient_id);
+                            }
+                            $ins->close();
+                        }
+                    } else {
+                        $pdo->rollBack();
+                        if ($daily_limit === null || $slot_available === null) {
+                            error_log('[lustre] could not verify capacity for auto-scheduled vaccine appointment, patient ' . $patient_id);
+                        }
+                    }
+                } else {
+                    error_log('[lustre] could not start transaction for auto-scheduled vaccine appointment, patient ' . $patient_id);
                 }
             }
         }

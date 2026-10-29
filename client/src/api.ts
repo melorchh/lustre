@@ -4,8 +4,12 @@ export function getInitialData(): InitialData {
   return window.__LUSTRE__ ?? { patientName: 'Patient', doctors: [] };
 }
 
-export async function fetchAvailableDates(doctorId: number): Promise<MedicalDate[]> {
-  const res = await fetch(`get_available_dates.php?doctor_id=${doctorId}&days=31&t=${Date.now()}`);
+export async function fetchAvailableDates(
+  doctorId: number,
+  excludeAppointmentId?: number,
+): Promise<MedicalDate[]> {
+  const exclude = excludeAppointmentId ? `&exclude_appointment_id=${excludeAppointmentId}` : '';
+  const res = await fetch(`get_available_dates.php?doctor_id=${doctorId}${exclude}&days=31&t=${Date.now()}`);
   if (!res.ok) throw new Error('Failed to load available dates');
   const data = await res.json();
   return Array.isArray(data) ? data : [];

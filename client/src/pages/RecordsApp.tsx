@@ -367,7 +367,7 @@ function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) 
     let cancelled = false;
     setDatesLoading(true);
     setDatesError(false);
-    fetchAvailableDates(apt.doctor_id)
+    fetchAvailableDates(apt.doctor_id, apt.id)
       .then((d) => {
         if (cancelled) return;
         setDates(d);

@@ -172,6 +172,20 @@ if (!$daily_limit['available']) {
     $conn->close();
     exit;
 }
+$slot_available = doctor_appointment_slot_is_available($conn, $doctor_id, $date, $time, $appointment_id);
+if ($slot_available === null) {
+    $pdo->rollBack();
+    http_response_code(500);
+    echo "error: Could not verify the selected appointment time. Please try again.";
+    $conn->close();
+    exit;
+}
+if (!$slot_available) {
+    $pdo->rollBack();
+    echo "error: This time slot or overlapping 1-hour period is already booked";
+    $conn->close();
+    exit;
+}
 
 // Update the appointment with the new date/time, reset status to pending, and mark it as rescheduled
 $stmt = $conn->prepare("UPDATE appointments SET doctor_id=?, appointment_date=?, appointment_time=?, appointment_duration=?, status='pending', reschedule_count = reschedule_count + 1, last_rescheduled_at = NOW() WHERE id=? AND patient_id=?");
