@@ -136,6 +136,7 @@ export interface WalkinRow {
   id: number;
   arrival_date?: string;
   arrival_time: string;
+  appointment_time?: string | null;
   status: string;
   test_procedure?: string;
   created_at?: string;

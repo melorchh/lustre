@@ -549,7 +549,7 @@ export default function AdminDashboard() {
             </h3>
             <div className="table-scroll">
               <table>
-                <thead><tr><th>Queue</th><th>Patient</th><th>Type</th><th>Arrival</th><th>Test / Procedure</th><th>Status</th></tr></thead>
+                <thead><tr><th>Queue</th><th>Patient</th><th>Type</th><th>Arrival</th><th>Appointment</th><th>Test / Procedure</th><th>Status</th></tr></thead>
                 <tbody>
                   {g.rows.map((w, i) => (
                     <tr key={w.id}>
@@ -557,6 +557,7 @@ export default function AdminDashboard() {
                       <td><strong>{w.patient_name}</strong></td>
                       <td><span className="badge badge-urgent">{w.patient_type ? w.patient_type.charAt(0).toUpperCase() + w.patient_type.slice(1) : '—'}</span></td>
                       <td>{fmtTime(w.arrival_time)}</td>
+                      <td>{fmtTime(w.appointment_time)}</td>
                       <td>{w.test_procedure || '—'}</td>
                       <td>
                         <span className={`badge ${walkinBadgeClass(w.status)}`}>
@@ -641,7 +642,7 @@ export default function AdminDashboard() {
       </Modal>
 
       <Modal open={walkinOpen} onClose={() => setWalkinOpen(false)}>
-        <ModalHead title="Register walk-in client" hint="Add a counter patient to today's queue." />
+        <ModalHead title="Register walk-in client" hint="Add a counter patient to today's queue. Arrival is recorded separately from the scheduled appointment." />
         <div className="form-grid">
           <div className="form-group">
             <label>Specialty</label>
@@ -695,7 +696,7 @@ export default function AdminDashboard() {
             {!walkinSlotLoading && walkinForm.doctor_id && !walkinSlotError && walkinSlots.length === 0 && (
               <p className="form-hint">No conflict-free one-hour appointment time remains in this doctor’s shift today. Walk-in times are checked against existing appointments and time off; choose another doctor with an available time.</p>
             )}
-            {walkinForm.doctor_id && walkinSlots.length > 0 && <p className="form-hint">These are same-day walk-in appointment times, checked to avoid existing appointments. The client’s arrival is recorded separately when registered.</p>}
+            {walkinForm.doctor_id && walkinSlots.length > 0 && <p className="form-hint">Same-day appointment slots are offered in one-hour intervals. Arrival time is recorded automatically when you register the client and shown separately in the queue.</p>}
           </div>
         </div>
         <div className="form-grid">

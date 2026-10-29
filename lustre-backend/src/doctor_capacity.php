@@ -83,8 +83,8 @@ if (!function_exists('doctor_has_lunch_free_shift_window')) {
 
 if (!function_exists('doctor_available_walkin_times')) {
     /**
-     * Available five-minute walk-in start times for today, or null on query
-     * failure. Each time reserves a full hour inside an active shift.
+     * Available one-hour-spaced walk-in start times for today, or null on
+     * query failure. Each time reserves a full hour inside an active shift.
      */
     function doctor_available_walkin_times($conn, $doctor_id, $date)
     {
@@ -186,13 +186,15 @@ if (!function_exists('doctor_available_walkin_times')) {
         $stmt->close();
 
         $now = doctor_clock_seconds(date('H:i'));
-        $interval = 5 * 60;
         $window = 60 * 60;
         $busy = array_merge($booked, $blocked);
         $available = array();
         foreach ($shifts as $shift) {
-            $start = max($shift['start'], $now);
-            $start = (int)(ceil($start / $interval) * $interval);
+            $start = $shift['start'];
+            if ($start < $now) {
+                $elapsed = $now - $start;
+                $start += (int)ceil($elapsed / $window) * $window;
+            }
             while ($start + $window <= $shift['end']) {
                 $end = $start + $window;
                 $is_available = !appointment_interval_overlaps_lunch_break($start, $end);
@@ -205,7 +207,7 @@ if (!function_exists('doctor_available_walkin_times')) {
                 if ($is_available) {
                     $available[sprintf('%02d:%02d', (int)floor($start / 3600), (int)floor(($start % 3600) / 60))] = true;
                 }
-                $start += $interval;
+                $start += $window;
             }
         }
         $times = array_keys($available);

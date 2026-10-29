@@ -153,7 +153,7 @@ export default function AdminWalkins() {
                 Dr. {g.doctor} {g.specialty ? <small>({g.specialty})</small> : null}
               </h3>
               <div className="table-scroll"><table>
-                <thead><tr><th>Queue</th><th>Patient</th><th>Type</th><th>Arrival</th><th>Test / procedure</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Queue</th><th>Patient</th><th>Type</th><th>Arrival</th><th>Appointment</th><th>Test / procedure</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody>
                   {g.rows.map((w) => (
                     <tr key={w.id}>
@@ -164,6 +164,7 @@ export default function AdminWalkins() {
                       </td>
                       <td>{w.patient_type ? <span className="pill">{w.patient_type.replace(/_/g, ' ')}</span> : '—'}</td>
                       <td>{fmtTime(w.arrival_time)}</td>
+                      <td>{fmtTime(w.appointment_time)}</td>
                       <td>{w.test_procedure || '—'}</td>
                       <td><span className={`badge ${badgeClass(w.status)}`}>{statusLabel(w.status)}</span></td>
                       <td>

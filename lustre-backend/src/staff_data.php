@@ -43,6 +43,10 @@ function admin_view_data($conn, $view, array $params = array())
     case 'dashboard':
         $todayWalkins = api_all($conn->query(
             "SELECT w.id, w.arrival_date, w.arrival_time, w.status, w.test_procedure,
+                    (SELECT a.appointment_time FROM appointments a
+                     WHERE a.patient_id = w.patient_id AND a.doctor_id = w.doctor_id
+                       AND a.appointment_date = w.arrival_date
+                     ORDER BY a.id DESC LIMIT 1) AS appointment_time,
                     p.name AS patient_name, p.patient_type, p.contact,
                     d.id AS doctor_id, d.name AS doctor_name, d.specialty
              FROM walk_ins w JOIN patients p ON w.patient_id=p.id JOIN doctors d ON w.doctor_id=d.id
@@ -355,6 +359,10 @@ function admin_view_data($conn, $view, array $params = array())
         }
         $wstmt = $conn->prepare(
             "SELECT w.id, w.arrival_date, w.arrival_time, w.status, w.created_at, w.test_procedure,
+                    (SELECT a.appointment_time FROM appointments a
+                     WHERE a.patient_id = w.patient_id AND a.doctor_id = w.doctor_id
+                       AND a.appointment_date = w.arrival_date
+                     ORDER BY a.id DESC LIMIT 1) AS appointment_time,
                     p.name AS patient_name, p.patient_type, p.contact,
                     d.id AS doctor_id, d.name AS doctor_name, d.specialty
              FROM walk_ins w JOIN patients p ON w.patient_id=p.id JOIN doctors d ON w.doctor_id=d.id
