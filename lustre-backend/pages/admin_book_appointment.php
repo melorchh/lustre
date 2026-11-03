@@ -4,6 +4,7 @@ if (!isset($_SESSION["admin_id"])) { echo "error: Unauthorized"; exit; }
 
 require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/appointment_time_rules.php';
+require_once __DIR__ . '/../src/appointment_slots.php';
 require_once __DIR__ . '/../src/unique_ids.php';
 ensure_unique_ids($conn);
 require_once __DIR__ . '/../src/time_blocks_schema.php';
@@ -15,7 +16,7 @@ $patient_id = isset($_POST["patient_id"]) ? intval($_POST["patient_id"]) : 0;
 $doctor_id  = isset($_POST["doctor_id"])  ? intval($_POST["doctor_id"])  : 0;
 $date       = isset($_POST["date"])  ? trim($_POST["date"]) : '';
 $time       = isset($_POST["time"])  ? trim($_POST["time"]) : '';
-$appointment_duration = 60; // 1 hour - FIXED DURATION (matches booking)
+$appointment_duration = APPOINTMENT_SLOT_MINUTES; // one slot per appointment
 
 // Optional vitals captured with the booking
 $vt_weight = isset($_POST["weight_kg"])      ? trim($_POST["weight_kg"])      : '';
@@ -95,64 +96,13 @@ if ($has_vitals) {
 }
 
 $time_with_seconds = $time . ":00";
-$start_timestamp = strtotime($date . ' ' . $time);
-$end_timestamp   = $start_timestamp + ($appointment_duration * 60);
-$end_time        = date('H:i:s', $end_timestamp);
-if (appointment_time_overlaps_lunch_break($time, $appointment_duration)) {
-    echo "error: Appointments are unavailable from 12:00 PM to 1:00 PM";
-    $conn->close(); exit;
-}
 
-// Overlap check (same doctor, same day, pending/confirmed)
-$stmt = $conn->prepare("
-    SELECT id FROM appointments
-    WHERE doctor_id=? AND appointment_date=?
-      AND status IN ('pending','confirmed')
-      AND appointment_time < ?
-      AND appointment_time + INTERVAL '1 hour' > ?
-");
-$duration_sql = NULL;
-$stmt->bind_param("isss", $doctor_id, $date, $end_time, $time_with_seconds);
-$stmt->execute();
-$stmt->store_result();
-if ($stmt->num_rows > 0) {
-    $stmt->close();
-    echo "error: This time slot / overlapping 1-hour period is already booked for this doctor";
+// Slot must be within the doctor's first 4 available hours and have capacity.
+$slot_error = lustre_appt_validate_slot($conn, $doctor_id, $date, $time);
+if ($slot_error !== null) {
+    echo "error: " . $slot_error;
     $conn->close(); exit;
 }
-$stmt->close();
-
-// Within doctor's schedule
-$day_of_week = date('l', strtotime($date));
-$stmt = $conn->prepare("
-    SELECT id FROM doctor_schedules
-    WHERE doctor_id=? AND day_of_week=? AND ? >= start_time AND ? <= end_time AND is_active=1
-");
-$stmt->bind_param("isss", $doctor_id, $day_of_week, $time_with_seconds, $end_time);
-$stmt->execute();
-$stmt->store_result();
-if ($stmt->num_rows === 0) {
-    $stmt->close();
-    echo "error: This doctor is not available at the selected time";
-    $conn->close(); exit;
-}
-$stmt->close();
-
-// Not inside an unavailable block
-$stmt = $conn->prepare("
-    SELECT id FROM doctor_time_blocks
-    WHERE doctor_id=? AND ((block_type='date' AND block_date=?) OR (block_type='week' AND ? BETWEEN block_date AND end_date) OR (block_type='weekly' AND day_of_week=?))
-      AND ? < end_time AND ? > start_time
-");
-$stmt->bind_param("isssss", $doctor_id, $date, $date, $day_of_week, $end_time, $time_with_seconds);
-$stmt->execute();
-$stmt->store_result();
-if ($stmt->num_rows > 0) {
-    $stmt->close();
-    echo "error: This time is not available (the doctor has time off)";
-    $conn->close(); exit;
-}
-$stmt->close();
 
 // Enforce the daily cap under a doctor-row lock so simultaneous bookings cannot
 // push the doctor over the configured patient limit.
@@ -192,16 +142,10 @@ if (!$daily_limit['available']) {
     echo "error: This doctor has reached the daily patient limit for the selected date";
     $conn->close(); exit;
 }
-$slot_available = doctor_appointment_slot_is_available($conn, $doctor_id, $date, $time);
-if ($slot_available === null) {
+$slot_error = lustre_appt_validate_slot($conn, $doctor_id, $date, $time);
+if ($slot_error !== null) {
     $pdo->rollBack();
-    http_response_code(500);
-    echo "error: Could not verify the selected appointment time. Please try again.";
-    $conn->close(); exit;
-}
-if (!$slot_available) {
-    $pdo->rollBack();
-    echo "error: This time slot / overlapping 1-hour period is already booked for this doctor";
+    echo "error: " . $slot_error;
     $conn->close(); exit;
 }
 
