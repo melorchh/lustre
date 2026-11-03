@@ -137,7 +137,7 @@ function AppointmentCard({ apt, onCancel, onResched }: { apt: Appointment; onCan
   const s = statusOf(apt.status);
   const meta = STATUS_META[s] ?? { icon: <SvgClipboard size={22} />, label: apt.status };
   const cancellable = s === 'pending' || s === 'confirmed';
-  const reschedulable = s === 'pending' || s === 'confirmed';
+  const reschedulable = s === 'pending' || s === 'confirmed' || s === 'cancelled';
   return (
     <div className="appt-card">
       <div className={`appt-stripe stripe-${s}`} />
@@ -543,7 +543,10 @@ export default function RecordsApp() {
   });
   const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
   const [cancelling, setCancelling] = useState(false);
-  const [reschedTarget, setReschedTarget] = useState<Appointment | null>(null);
+  const [reschedTarget, setReschedTarget] = useState<Appointment | null>(() => {
+    const id = Number(new URLSearchParams(window.location.search).get('reschedule'));
+    return id ? appointments.find((a) => a.id === id) ?? null : null;
+  });
   const [doneMsg, setDoneMsg] = useState<string | null>(null);
 
   useScrollLock(!!cancelTarget || !!reschedTarget || !!doneMsg);

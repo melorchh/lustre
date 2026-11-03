@@ -294,6 +294,38 @@ if (!defined('LUSTRE_APPOINTMENT_SLOTS_LOADED')) {
         return $slots;
     }
 
+    // True when the slot still sits inside an active schedule and is not
+    // covered by a time-off block. Used to find appointments invalidated by a
+    // schedule change, independent of the first-4-hours booking window.
+    function lustre_appt_slot_within_schedule($conn, $doctor_id, $date, $time, $duration = null)
+    {
+        $slot_start = lustre_appt_time_to_minutes($time);
+        $duration = ($duration === null || (int)$duration <= 0)
+            ? APPOINTMENT_SLOT_MINUTES
+            : (int)$duration;
+        $slot_end = $slot_start + $duration;
+
+        $day_of_week = date('l', strtotime($date));
+        $covered = false;
+        foreach (lustre_appt_schedules_for_day($conn, $doctor_id, $day_of_week) as $schedule) {
+            if ($slot_start >= $schedule['start'] && $slot_end <= $schedule['end']) {
+                $covered = true;
+                break;
+            }
+        }
+        if (!$covered) {
+            return false;
+        }
+
+        foreach (lustre_appt_blocked_ranges($conn, $doctor_id, $date, $day_of_week) as $block) {
+            if ($slot_start < $block['end'] && $slot_end > $block['start']) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     // Returns null when the slot is bookable, otherwise a human-readable error.
     function lustre_appt_validate_slot($conn, $doctor_id, $date, $time, $exclude_appointment_id = 0)
     {

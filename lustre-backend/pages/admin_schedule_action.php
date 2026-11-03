@@ -8,6 +8,7 @@ if (!isset($_SESSION["admin_id"])) {
 
 require_once __DIR__ . '/../src/db.php';
 include __DIR__ . '/../src/schedule_sync.php';
+require_once __DIR__ . '/../src/appointment_cancellation.php';
 require_once __DIR__ . '/../src/time_blocks_schema.php';
 ensure_time_blocks_schema($conn);
 // Allow the 'week' (date-range) block type on existing databases.
@@ -67,6 +68,7 @@ if ($action === 'add') {
 
     echo "success";
     sync_doctor_schedule_text($conn, $doctor_id);
+    cancel_unavailable_appointments($conn, $doctor_id);
     $conn->close();
     exit;
 }
@@ -87,7 +89,9 @@ elseif ($action === 'toggle') {
         echo "success";
         $owns = $conn->query("SELECT doctor_id FROM doctor_schedules WHERE id = $schedule_id");
         if ($owns && $owns->num_rows > 0) {
-            sync_doctor_schedule_text($conn, (int)$owns->fetch_assoc()['doctor_id']);
+            $affected_doctor_id = (int)$owns->fetch_assoc()['doctor_id'];
+            sync_doctor_schedule_text($conn, $affected_doctor_id);
+            cancel_unavailable_appointments($conn, $affected_doctor_id);
         }
     } else {
         echo "error: Failed to update schedule status";
@@ -128,6 +132,7 @@ elseif ($action === 'delete') {
         if ($affected === 1) {
             echo "success";
             sync_doctor_schedule_text($conn, (int)$owner_doctor_id);
+            cancel_unavailable_appointments($conn, (int)$owner_doctor_id);
         } else {
             echo "error: Unexpected number of rows deleted";
         }
@@ -206,6 +211,7 @@ elseif ($action === 'add_block') {
         if ($block_type === 'weekly') {
             sync_doctor_schedule_text($conn, $doctor_id);
         }
+        cancel_unavailable_appointments($conn, $doctor_id);
         echo "success";
     } else {
         echo "error: Failed to add time block";

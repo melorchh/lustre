@@ -2,6 +2,12 @@
 require __DIR__ . '/../src/session.php';
 
 if (!isset($_SESSION["patient_id"])) {
+    // Opened from a cancellation email? Remember which appointment to open
+    // after the patient signs in.
+    $reschedule_id = isset($_GET['reschedule']) ? (int)$_GET['reschedule'] : 0;
+    if ($reschedule_id > 0) {
+        $_SESSION['after_login_reschedule'] = $reschedule_id;
+    }
     header("Location: index.php");
     exit;
 }

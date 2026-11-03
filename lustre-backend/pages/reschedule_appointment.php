@@ -26,8 +26,8 @@ if (empty($appointment_id) || empty($date) || empty($time)) {
     exit;
 }
 
-// Load the existing appointment â€” must belong to this patient and be reschedulable
-$stmt = $conn->prepare("SELECT doctor_id, appointment_date, appointment_time FROM appointments WHERE id=? AND patient_id=? AND status IN ('pending','confirmed')");
+// Load the existing appointment — must belong to this patient and be reschedulable
+$stmt = $conn->prepare("SELECT doctor_id, appointment_date, appointment_time FROM appointments WHERE id=? AND patient_id=? AND status IN ('pending','confirmed','cancelled')");
 $stmt->bind_param("ii", $appointment_id, $patient_id);
 $stmt->execute();
 $stmt->store_result();
@@ -116,7 +116,7 @@ $patient_lock->close();
 
 // Re-lock and revalidate the appointment so a concurrent cancel or reschedule
 // cannot make this request overwrite newer appointment state.
-$locked_appointment = $conn->prepare("SELECT doctor_id, appointment_date, appointment_time FROM appointments WHERE id = ? AND patient_id = ? AND status IN ('pending', 'confirmed') FOR UPDATE");
+$locked_appointment = $conn->prepare("SELECT doctor_id, appointment_date, appointment_time FROM appointments WHERE id = ? AND patient_id = ? AND status IN ('pending', 'confirmed', 'cancelled') FOR UPDATE");
 $locked_appointment->bind_param("ii", $appointment_id, $patient_id);
 if (!$locked_appointment->execute()) {
     $locked_appointment->close();
@@ -161,7 +161,7 @@ if ($slot_error !== null) {
 }
 
 // Update the appointment with the new date/time, reset status to pending, and mark it as rescheduled
-$stmt = $conn->prepare("UPDATE appointments SET doctor_id=?, appointment_date=?, appointment_time=?, appointment_duration=?, status='pending', reschedule_count = reschedule_count + 1, last_rescheduled_at = NOW() WHERE id=? AND patient_id=? AND status IN ('pending', 'confirmed')");
+$stmt = $conn->prepare("UPDATE appointments SET doctor_id=?, appointment_date=?, appointment_time=?, appointment_duration=?, status='pending', reschedule_count = reschedule_count + 1, last_rescheduled_at = NOW() WHERE id=? AND patient_id=? AND status IN ('pending', 'confirmed', 'cancelled')");
 $stmt->bind_param("issiii", $doctor_id, $date, $time_with_seconds, $appointment_duration, $appointment_id, $patient_id);
 
 if ($stmt->execute() && $stmt->affected_rows >= 0) {
