@@ -231,8 +231,8 @@ export default function BookingModal({ doctor, onClose }: BookingModalProps) {
       const msg = e instanceof Error ? e.message : 'Booking failed. Please try again.';
       // "slot just taken by someone else" — refresh the list so the stale
       // time disappears and the patient can pick another one
-      const conflict = /already booked|overlapping/i.test(msg);
-      const stale = conflict || /not available|time off/i.test(msg);
+      const conflict = /already booked|already full|overlapping/i.test(msg);
+      const stale = conflict || /not available|no longer available|time off/i.test(msg);
       setBookingError({ conflict, detail: msg, date: selectedDate, time: selectedTime });
       if (stale) loadTimes(selectedDate);
     } finally {
@@ -422,7 +422,7 @@ placeholder={"Type the specific test / procedure you need"}
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 7v5l3 3" />
               </svg>
-              {"Appointment duration: 1 hour"}
+              {"1-hour slot · first 4 hours of doctor availability · up to 4 patients per slot"}
             </div>
 
             <button className="btn-confirm" disabled={!canConfirm} onClick={submit} data-anim={canConfirm ? 'pulse' : undefined}>

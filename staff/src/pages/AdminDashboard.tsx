@@ -657,7 +657,7 @@ export default function AdminDashboard() {
             {slotError && <p className="form-hint">{slotError}</p>}
           </div>
         </div>
-        <p className="form-hint">Pick a doctor to see available dates &amp; times. Duration is 1 hour / visit.</p>
+        <p className="form-hint">Pick a doctor to see available dates &amp; times. Only the first 4 hours of the doctor&rsquo;s availability are open for booking; each 1-hour slot accepts up to 4 patients.</p>
 
         <p className="form-hint" style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', marginTop: '1rem' }}>Vitals (optional)</p>
         <div className="form-grid">

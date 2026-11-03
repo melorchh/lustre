@@ -99,7 +99,7 @@ function me_time($t){ return (new DateTime($t))->format('g:i A'); }
             <div class="content-card">
                 <h2>My Weekly Availability</h2>
                 <p style="color:#64748b;margin-bottom:1.25rem;font-size:0.93rem;">
-                    Set the days and times you are available. You can add more than one block per day and toggle each block on or off. Patients can only book on active blocks.
+                    Set the days and times you are available. You can add more than one block per day and toggle each block on or off. Patients can only book on active blocks, and only the first 4 hours of each day's availability are open for appointments. The rest of the shift is reserved for walk-ins.
                 </p>
                 <div class="day-grid">
                 <?php foreach (['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] as $day):

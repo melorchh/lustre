@@ -4,6 +4,7 @@ if (!isset($_SESSION["admin_id"])) { header("Location: admin_login.php"); exit; 
 
 require_once __DIR__ . '/../src/db.php';
 require_once __DIR__ . '/../src/appointment_time_rules.php';
+require_once __DIR__ . '/../src/appointment_slots.php';
 require_once __DIR__ . '/../src/doctor_capacity.php';
 require_once __DIR__ . '/../src/unique_ids.php';
 ensure_unique_ids($conn);
@@ -17,22 +18,10 @@ if ($patient_id <= 0) { http_response_code(400); echo 'Invalid patient.'; exit; 
 /**
  * Find a free (doctor, time) slot on a given date for auto-booking vaccine
  * doses. Prefers the chosen doctor and preferred time, then falls back to
- * other half-hour slots, then to other doctors. Returns [doctor_id, 'H:i:s']
- * or null when nothing is free. Avoids the appointments unique key
- * (doctor_id, appointment_date, appointment_time).
+ * other doctors. Returns [doctor_id, 'H:i:s'] or null when nothing is free.
  */
 function find_vaccine_slot($conn, $date, $pref_doctor, $pref_time) {
-    $slots = [];
-    for ($t = strtotime('08:00'); $t < strtotime('17:00'); $t += 1800) {
-        $time = date('H:i:s', $t);
-        if (!appointment_time_overlaps_lunch_break($time)) {
-            $slots[] = $time;
-        }
-    }
-    $pref = $pref_time !== '' ? date('H:i:s', strtotime($pref_time)) : null;
-    if ($pref && in_array($pref, $slots, true)) {
-        $slots = array_merge([$pref], array_values(array_diff($slots, [$pref])));
-    }
+    $pref = $pref_time !== '' ? substr(date('H:i:s', strtotime($pref_time)), 0, 5) : null;
 
     $docs = [];
     if ($pref_doctor > 0) $docs[] = $pref_doctor;
@@ -45,24 +34,16 @@ function find_vaccine_slot($conn, $date, $pref_doctor, $pref_time) {
     }
     if (!$docs) return null;
 
-    $check = $conn->prepare("
-        SELECT id FROM appointments
-        WHERE doctor_id=? AND appointment_date=?
-          AND appointment_time < ?
-          AND appointment_time + INTERVAL '1 hour' > ?
-          AND status IN ('pending','confirmed')
-        LIMIT 1
-    ");
     foreach ($docs as $did) {
-        foreach ($slots as $slot) {
-            $slot_end = date('H:i:s', strtotime($date . ' ' . $slot) + 60 * 60);
-            $check->bind_param("isss", $did, $date, $slot_end, $slot);
-            $check->execute();
-            $taken = $check->get_result()->fetch_assoc() !== null;
-            if (!$taken) { $check->close(); return [$did, $slot]; }
+        $slots = lustre_appt_available_slots($conn, $did, $date);
+        if (empty($slots)) {
+            continue;
         }
+        if ($pref !== null && in_array($pref, $slots, true)) {
+            return [$did, $pref . ':00'];
+        }
+        return [$did, $slots[0] . ':00'];
     }
-    $check->close();
     return null;
 }
 
@@ -259,8 +240,11 @@ switch ($action) {
                 $pdo = $conn->getPdo();
                 if ($pdo->beginTransaction()) {
                     $daily_limit = doctor_daily_limit_status($conn, $slot[0], $du, true);
-                    $slot_available = doctor_appointment_slot_is_available($conn, $slot[0], $du, substr($slot[1], 0, 5));
-                    if ($daily_limit !== null && $daily_limit['available'] && $slot_available === true) {
+                    $slot_error = null;
+                    if ($daily_limit !== null && $daily_limit['available']) {
+                        $slot_error = lustre_appt_validate_slot($conn, $slot[0], $du, substr($slot[1], 0, 5));
+                    }
+                    if ($daily_limit !== null && $daily_limit['available'] && $slot_error === null) {
                         $duration = 60;
                         $ins = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, appointment_duration, service_requested, status, notes)
                                                VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)");
@@ -286,7 +270,7 @@ switch ($action) {
                         }
                     } else {
                         $pdo->rollBack();
-                        if ($daily_limit === null || $slot_available === null) {
+                        if ($daily_limit === null) {
                             error_log('[lustre] could not verify capacity for auto-scheduled vaccine appointment, patient ' . $patient_id);
                         }
                     }

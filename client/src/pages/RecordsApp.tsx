@@ -489,7 +489,7 @@ function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) 
             <circle cx="12" cy="12" r="9" />
             <path d="M12 7v5l3 3" />
           </svg>
-          {"Appointment duration: 1 hour"}
+          {"1-hour slot · first 4 hours of doctor availability · up to 4 patients per slot"}
         </div>
 
         <button className="btn-confirm" disabled={!canConfirm} onClick={submit} data-anim={canConfirm ? 'pulse' : undefined}>
