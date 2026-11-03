@@ -3,6 +3,7 @@ require __DIR__ . '/../src/session.php';
 if (!isset($_SESSION["doctor_id"])) { echo "Unauthorized"; exit; }
 require_once __DIR__ . '/../src/db.php';
 include __DIR__ . '/../src/schedule_sync.php';
+require_once __DIR__ . '/../src/appointment_cancellation.php';
 
 header('Content-Type: text/plain; charset=utf-8');
 
@@ -154,6 +155,10 @@ if ($action === 'add') {
 } else {
     echo "Unknown action";
 }
+
+// Any pending/confirmed appointment the change made invalid is cancelled and
+// the patient is emailed a reschedule link.
+cancel_unavailable_appointments($conn, $doctor_id);
 
 $conn->close();
 ?>

@@ -30,6 +30,10 @@ $chk->close();
 $stmt = $conn->prepare("UPDATE appointments SET status = ? WHERE id = ? AND doctor_id = ?");
 $stmt->bind_param("sii", $status, $appt_id, $doctor_id);
 if ($stmt->execute()) {
+    if ($status === 'cancelled' && $stmt->affected_rows > 0) {
+        require_once __DIR__ . '/appointment_mailer.php';
+        send_appointment_email($conn, $appt_id, 'cancelled');
+    }
     echo "success";
 } else {
     echo "Failed";

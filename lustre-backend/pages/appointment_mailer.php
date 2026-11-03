@@ -11,6 +11,41 @@
  *   send_appointment_email($conn, $appointment_id, 'booked');   // or 'confirmed','cancelled','completed','rescheduled'
  */
 
+if (!function_exists('appointment_page_url')) {
+    /**
+     * Build an absolute URL to a patient-facing page. Uses APP_URL when set,
+     * otherwise derives the public origin/path from the current request.
+     */
+    function appointment_page_url($page, array $query = array())
+    {
+        $base = '';
+        if (function_exists('lustre_env')) {
+            $base = (string)lustre_env('APP_URL', '');
+        }
+        if ($base === '') {
+            $base = (string)getenv('APP_URL');
+        }
+        if ($base === '' && isset($_SERVER['APP_URL'])) {
+            $base = (string)$_SERVER['APP_URL'];
+        }
+
+        if ($base === '') {
+            $https = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== '' && strtolower((string)$_SERVER['HTTPS']) !== 'off';
+            $scheme = $https ? 'https' : 'http';
+            $host = isset($_SERVER['HTTP_HOST']) ? (string)$_SERVER['HTTP_HOST'] : 'localhost';
+            $script = isset($_SERVER['SCRIPT_NAME']) ? (string)$_SERVER['SCRIPT_NAME'] : '/';
+            $dir = rtrim(str_replace('\\', '/', dirname($script)), '/');
+            $base = $scheme . '://' . $host . $dir;
+        }
+
+        $url = rtrim($base, '/') . '/' . ltrim($page, '/');
+        if (!empty($query)) {
+            $url .= '?' . http_build_query($query);
+        }
+        return $url;
+    }
+}
+
 if (!function_exists('send_appointment_email')) {
 
     /**
@@ -92,11 +127,14 @@ if (!function_exists('send_appointment_email')) {
                 break;
 
             case 'cancelled':
-                $subject = 'Appointment Cancelled — ' . $ref;
+                $reschedule_url = appointment_page_url('my_appointments.php', array('reschedule' => $a['id']));
+                $subject = 'Appointment Cancelled — Reschedule Online — ' . $ref;
                 $title   = 'Your appointment has been cancelled.';
                 $body    = "Hi {$name},\n\n"
                     . "This is to confirm that appointment {$ref} with {$doc} on {$date} at {$time} has been cancelled.\n\n"
-                    . "If this was a mistake or you'd like to rebook, please do so through your patient dashboard or contact the clinic.\n\n"
+                    . "We're sorry for the inconvenience. You can choose a new date and time here:\n"
+                    . "{$reschedule_url}\n\n"
+                    . "Sign in to your patient account if prompted, then pick the date and time that works best for you.\n\n"
                     . "— LustreMDC Clinics & Diagnostics";
                 break;
 
