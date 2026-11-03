@@ -34,13 +34,17 @@ if ($stmt->num_rows > 0) {
         unset($_SESSION['doctor_account_id'], $_SESSION['doctor_id'], $_SESSION['doctor_name'], $_SESSION['doctor_username']);
         unset($_SESSION['admin_id'], $_SESSION['admin_name'], $_SESSION['admin_username'], $_SESSION['admin_must_change']);
         $_SESSION['patient_id'] = $id;
+        $after_login_reschedule = isset($_SESSION['after_login_reschedule']) ? (int)$_SESSION['after_login_reschedule'] : 0;
+        unset($_SESSION['after_login_reschedule']);
         // First login: session flag right after register, or account created within the last 24 h
         // (covers a lost session between registering and the first sign-in).
         $is_new = !empty($_SESSION['just_registered'])
             || ($created_at !== null && strtotime($created_at) > time() - 86400);
         unset($_SESSION['just_registered']);
         $_SESSION['last_login'] = time();
-        echo $is_new ? "success:new" : "success";
+        echo $after_login_reschedule > 0
+            ? "success:reschedule:" . $after_login_reschedule
+            : ($is_new ? "success:new" : "success");
         $conn->close();
         exit;
     }

@@ -325,6 +325,29 @@ function fill_color($s) {
     <div id="loadingScreen" class="loading-screen"><div class="spinner"></div><p>Processing...</p></div>
     <div id="toast" class="toast"></div>
 
+    <!-- Appointment Cancellation Modal -->
+    <div class="result-modal" id="dashCancelRescheduleModal">
+        <div class="result-modal-box">
+            <button class="result-close" type="button" onclick="closeDashboardCancelModal()">&#10005;</button>
+            <h3>Cancel Appointment</h3>
+            <p id="dashCancelPatient" style="color:#64748b;margin:-.35rem 0 1rem"></p>
+            <p style="color:#64748b">Choose an available replacement date and time for the patient to consider. They can accept it or choose another slot from the email link.</p>
+            <div class="form-group">
+                <label for="dashSuggestedDate">Suggested date</label>
+                <select id="dashSuggestedDate"><option value="">Select a suggested date</option></select>
+            </div>
+            <div class="form-group">
+                <label for="dashSuggestedTime">Suggested time</label>
+                <select id="dashSuggestedTime" disabled><option value="">Choose a date first</option></select>
+            </div>
+            <p id="dashCancelError" style="color:#b91c1c;min-height:1.2em" role="alert"></p>
+            <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+                <button type="button" class="btn-secondary" onclick="closeDashboardCancelModal()">Keep Appointment</button>
+                <button type="button" class="btn-primary" id="dashConfirmCancel" onclick="confirmDashboardCancellation()">Cancel &amp; Email Patient</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Appointment Result Modal -->
     <div class="result-modal" id="dashResultModal">
         <div class="result-modal-box">
@@ -511,9 +534,140 @@ function fill_color($s) {
             if(e.target === this) closeDashResultModal();
         });
 
+        let dashboardPendingCancellation = null;
+        function openDashboardCancelModal(sel){
+            const previous = sel.getAttribute('data-prev') || 'pending';
+            dashboardPendingCancellation = { select: sel, previous: previous, id: sel.getAttribute('data-id') };
+            sel.value = previous;
+            document.getElementById('dashCancelPatient').textContent =
+                'Appointment #' + dashboardPendingCancellation.id + ' for ' + (sel.dataset.patient || 'the patient') + ' will be cancelled.';
+            document.getElementById('dashCancelError').textContent = '';
+            const dateSelect = document.getElementById('dashSuggestedDate');
+            const timeSelect = document.getElementById('dashSuggestedTime');
+            dateSelect.innerHTML = '<option value="">Select a suggested date</option>';
+            timeSelect.innerHTML = '<option value="">Choose a date first</option>';
+            timeSelect.disabled = true;
+            document.getElementById('dashConfirmCancel').disabled = true;
+            document.getElementById('dashCancelRescheduleModal').classList.add('active');
+
+            fetch('get_available_dates.php?doctor_id=<?php echo $doctor_id; ?>&days=31&exclude_appointment_id=' + encodeURIComponent(dashboardPendingCancellation.id) + '&t=' + Date.now())
+                .then(response => {
+                    if(!response.ok) throw new Error('Could not load available dates.');
+                    return response.json();
+                })
+                .then(dates => {
+                    if(!Array.isArray(dates)) throw new Error('Could not load available dates.');
+                    dates.forEach(item => {
+                        if(!item || !item.date) return;
+                        const option = document.createElement('option');
+                        option.value = item.date;
+                        option.textContent = item.display || item.date;
+                        dateSelect.appendChild(option);
+                    });
+                    if(dates.length === 0) dateSelect.options[0].textContent = 'No available dates; patient can choose online';
+                    document.getElementById('dashConfirmCancel').disabled = false;
+                })
+                .catch(error => {
+                    document.getElementById('dashCancelError').textContent = error.message || 'Could not load available dates.';
+                    document.getElementById('dashConfirmCancel').disabled = false;
+                });
+        }
+
+        function closeDashboardCancelModal(){
+            if(dashboardPendingCancellation){
+                dashboardPendingCancellation.select.value = dashboardPendingCancellation.previous;
+            }
+            dashboardPendingCancellation = null;
+            document.getElementById('dashCancelRescheduleModal').classList.remove('active');
+        }
+
+        document.getElementById('dashSuggestedDate').addEventListener('change', function(){
+            const date = this.value;
+            const timeSelect = document.getElementById('dashSuggestedTime');
+            timeSelect.innerHTML = '<option value="">Loading times...</option>';
+            timeSelect.disabled = true;
+            document.getElementById('dashCancelError').textContent = '';
+            if(!date || !dashboardPendingCancellation){
+                timeSelect.innerHTML = '<option value="">Choose a date first</option>';
+                return;
+            }
+            fetch('get_available_times.php?doctor_id=<?php echo $doctor_id; ?>&date=' + encodeURIComponent(date) + '&exclude_appointment_id=' + encodeURIComponent(dashboardPendingCancellation.id) + '&t=' + Date.now())
+                .then(response => {
+                    if(!response.ok) throw new Error('Could not load available times.');
+                    return response.json();
+                })
+                .then(times => {
+                    if(!Array.isArray(times)) throw new Error('Could not load available times.');
+                    timeSelect.innerHTML = '<option value="">Select a suggested time</option>';
+                    times.forEach(time => {
+                        const option = document.createElement('option');
+                        option.value = time;
+                        option.textContent = new Date('2000-01-01T' + time).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+                        timeSelect.appendChild(option);
+                    });
+                    timeSelect.disabled = times.length === 0;
+                    if(times.length === 0) timeSelect.innerHTML = '<option value="">No available times</option>';
+                })
+                .catch(error => {
+                    timeSelect.innerHTML = '<option value="">Could not load times</option>';
+                    document.getElementById('dashCancelError').textContent = error.message || 'Could not load available times.';
+                });
+        });
+
+        function confirmDashboardCancellation(){
+            if(!dashboardPendingCancellation) return;
+            const date = document.getElementById('dashSuggestedDate').value;
+            const time = document.getElementById('dashSuggestedTime').value;
+            if(!date && document.getElementById('dashSuggestedDate').options.length > 1){
+                document.getElementById('dashCancelError').textContent = 'Choose a suggested date and time for the patient.';
+                return;
+            }
+            if(date && !time){
+                document.getElementById('dashCancelError').textContent = 'Select a suggested time.';
+                return;
+            }
+            const fd = new FormData();
+            fd.append('appointment_id', dashboardPendingCancellation.id);
+            fd.append('status', 'cancelled');
+            if(date && time){
+                fd.append('suggested_date', date);
+                fd.append('suggested_time', time);
+            }
+            document.getElementById('dashConfirmCancel').disabled = true;
+            showLoading();
+            fetch('doctor_appointment_action.php', {method:'POST', body:fd})
+                .then(response => response.text())
+                .then(result => {
+                    hideLoading();
+                    if(result.trim() === 'success'){
+                        dashboardPendingCancellation.select.setAttribute('data-prev', 'cancelled');
+                        dashboardPendingCancellation = null;
+                        document.getElementById('dashCancelRescheduleModal').classList.remove('active');
+                        showToast('Appointment cancelled and patient emailed','success');
+                        document.body.classList.add('__leaving');
+                        setTimeout(()=>location.reload(),215);
+                    }else{
+                        document.getElementById('dashConfirmCancel').disabled = false;
+                        document.getElementById('dashCancelError').textContent = result.trim() || 'Could not cancel the appointment.';
+                    }
+                })
+                .catch(()=>{
+                    hideLoading();
+                    document.getElementById('dashConfirmCancel').disabled = false;
+                    document.getElementById('dashCancelError').textContent = 'Network error. Please try again.';
+                });
+        }
+        document.getElementById('dashCancelRescheduleModal').addEventListener('click', function(e){
+            if(e.target === this) closeDashboardCancelModal();
+        });
+
         function updateDashboardAppointmentStatus(sel){
             const status = sel.value;
             const previous = sel.getAttribute('data-prev') || 'pending';
+            if(status === 'cancelled'){
+                openDashboardCancelModal(sel);
+                return;
+            }
             const appointmentId = sel.getAttribute('data-id');
             const fd = new FormData();
             fd.append('appointment_id', appointmentId);

@@ -544,8 +544,8 @@ export default function RecordsApp() {
   const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [reschedTarget, setReschedTarget] = useState<Appointment | null>(() => {
-    const id = Number(new URLSearchParams(window.location.search).get('reschedule'));
-    return id ? appointments.find((a) => a.id === id) ?? null : null;
+    const id = new URLSearchParams(window.location.search).get('reschedule');
+    return id ? appointments.find((a) => String(a.id) === id) ?? null : null;
   });
   const [doneMsg, setDoneMsg] = useState<string | null>(null);
 
