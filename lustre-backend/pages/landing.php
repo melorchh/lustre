@@ -642,6 +642,7 @@ document.getElementById('loginForm').addEventListener('submit',function(e){
     res=res.trim();
     if(res==='otp_required'){doctorOtpUsername=ident;requestDoctorOtp(false);}
     else if(res==='admin_otp_required'){adminOtpUsername=ident;requestAdminOtp();}
+    else if(res.startsWith('success:reschedule:')){showToast('Welcome to LustreMDC!','success');const id=res.slice('success:reschedule:'.length);setTimeout(()=>location.href='my_appointments.php?reschedule='+encodeURIComponent(id),900);}
     else if(res==='success:new'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php?tour=1',900);}
     else if(res==='success'){showToast('Welcome to LustreMDC!','success');setTimeout(()=>location.href='dashboard.php',900);}
     else if(res==='success:doctor'){showToast('Welcome back, Doctor!','success');setTimeout(()=>location.href='doctor_dashboard.php',900);}

@@ -52,9 +52,11 @@ if (!function_exists('send_appointment_email')) {
      * @param mysqli $conn           Active DB connection
      * @param int    $appointment_id Appointment to notify about
      * @param string $event          booked | confirmed | cancelled | completed | rescheduled
+     * @param string|null $suggested_date Optional replacement date for cancellation emails
+     * @param string|null $suggested_time Optional replacement time for cancellation emails
      * @return bool
      */
-    function send_appointment_email($conn, $appointment_id, $event)
+    function send_appointment_email($conn, $appointment_id, $event, $suggested_date = null, $suggested_time = null)
     {
         $allowed = array('booked', 'confirmed', 'cancelled', 'completed', 'rescheduled', 'reminder', 'result');
         if (!in_array($event, $allowed, true)) {
@@ -132,9 +134,15 @@ if (!function_exists('send_appointment_email')) {
                 $title   = 'Your appointment has been cancelled.';
                 $body    = "Hi {$name},\n\n"
                     . "This is to confirm that appointment {$ref} with {$doc} on {$date} at {$time} has been cancelled.\n\n"
-                    . "We're sorry for the inconvenience. You can choose a new date and time here:\n"
+                    . "We're sorry for the inconvenience. ";
+                if ($suggested_date !== null && $suggested_time !== null) {
+                    $suggested_date_text = date('F j, Y', strtotime($suggested_date));
+                    $suggested_time_text = date('g:i A', strtotime($suggested_time));
+                    $body .= "Your doctor suggested {$suggested_date_text} at {$suggested_time_text} as a replacement. This is only a suggestion and is not booked yet.\n\n";
+                }
+                $body .= "Choose a new date and time here:\n"
                     . "{$reschedule_url}\n\n"
-                    . "Sign in to your patient account if prompted, then pick the date and time that works best for you.\n\n"
+                    . "Sign in to your patient account if prompted, then choose the suggested time or another available slot.\n\n"
                     . "— LustreMDC Clinics & Diagnostics";
                 break;
 

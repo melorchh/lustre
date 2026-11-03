@@ -8,7 +8,7 @@ if (!isset($_SESSION["patient_id"])) {
     if ($reschedule_id > 0) {
         $_SESSION['after_login_reschedule'] = $reschedule_id;
     }
-    header("Location: index.php");
+    header("Location: landing.php?signin=1");
     exit;
 }
 
