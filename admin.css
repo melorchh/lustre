@@ -1191,6 +1191,10 @@ table small {
   transition:border-color .2s;
   text-align:left;
 }
+.cust-dropdown .cd-btn:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
 .cust-dropdown .cd-btn:focus{
   outline:none;
   border-color:var(--green);
