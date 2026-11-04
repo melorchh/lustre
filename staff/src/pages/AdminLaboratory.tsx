@@ -8,6 +8,11 @@ import DatePicker from '../DatePicker';
 import { Card, EmptyState, Field, FilterBar, ModalHead, Stack, StatCard, StatGrid } from '../ui';
 import { IconCheck, IconClock, IconLab, IconSearch } from '../icons';
 import type { LabTestRow } from '../types';
+import LAB_PACKAGES from '../../../shared/lab-packages.json';
+
+type LabPackage = (typeof LAB_PACKAGES)[number];
+
+const LAB_PACKAGE_GROUPS = Array.from(new Set(LAB_PACKAGES.map((labPackage) => labPackage.category)));
 
 interface OptionRow {
   id: number;
@@ -48,6 +53,7 @@ export default function AdminLaboratory() {
 
   const [req, setReq] = useState({ ...EMPTY_REQUEST });
   const [types, setTypes] = useState<string[]>([]);
+  const [selectedPackageId, setSelectedPackageId] = useState('');
 
   const [resultFor, setResultFor] = useState<LabTestRow | null>(null);
   const [resultForm, setResultForm] = useState({ ...EMPTY_RESULT });
@@ -88,15 +94,19 @@ export default function AdminLaboratory() {
   }
 
   function toggleType(t: string) {
+    setSelectedPackageId('');
     setTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
   }
 
   async function submitRequest() {
     if (!req.patient_id) { showToast('Please select a patient', 'error'); return; }
     if (!req.doctor_id) { showToast('Please select a requesting doctor', 'error'); return; }
-    if (types.length === 0) { showToast('Please select at least one test type', 'error'); return; }
-    let chosen = [...types];
-    if (chosen.includes('Other')) {
+    const selectedPackage = LAB_PACKAGES.find((labPackage) => labPackage.id === selectedPackageId);
+    if (types.length === 0 && !selectedPackage) { showToast('Please select a laboratory package or at least one test type', 'error'); return; }
+    let chosen = selectedPackage
+      ? [`${selectedPackage.name} (${selectedPackage.tests})`]
+      : [...types];
+    if (!selectedPackage && chosen.includes('Other')) {
       const custom = req.other.trim();
       if (!custom) { showToast('Please enter the custom test name', 'error'); return; }
       chosen = chosen.filter((t) => t !== 'Other');
@@ -118,6 +128,7 @@ export default function AdminLaboratory() {
         showToast(chosen.length > 1 ? `${chosen.length} lab tests requested!` : 'Lab test requested!', 'success');
         setReq({ ...EMPTY_REQUEST });
         setTypes([]);
+        setSelectedPackageId('');
         refresh();
       } else showToast(res.replace(/^error:\s*/i, ''), 'error');
     } catch (e) {
@@ -200,7 +211,7 @@ export default function AdminLaboratory() {
 
         <Card
           title="Request a lab test"
-          subtitle="Pick a patient and requesting doctor, then select one or more tests."
+          subtitle="Pick a patient and requesting doctor, then choose one lab package or one or more individual tests."
         >
           <form
             className="ap-form"
@@ -224,7 +235,35 @@ export default function AdminLaboratory() {
               </Field>
             </div>
 
-            <Field label="Test type">
+            <Field label="Laboratory package">
+              <div className="lab-package-catalog">
+                {LAB_PACKAGE_GROUPS.map((group) => (
+                  <section className="lab-package-group" key={group}>
+                    <h4>{group}</h4>
+                    <div className="lab-package-grid">
+                      {LAB_PACKAGES.filter((labPackage) => labPackage.category === group).map((labPackage: LabPackage) => (
+                        <button
+                          key={labPackage.id}
+                          type="button"
+                          className={`lab-package${selectedPackageId === labPackage.id ? ' selected' : ''}`}
+                          aria-pressed={selectedPackageId === labPackage.id}
+                          onClick={() => {
+                            setSelectedPackageId(selectedPackageId === labPackage.id ? '' : labPackage.id);
+                            setTypes([]);
+                          }}
+                        >
+                          <strong>{labPackage.name}</strong>
+                          <span>{labPackage.tests}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+              <p className="form-hint">No prices shown. Selecting a package clears individual test selections.</p>
+            </Field>
+
+            <Field label="Or select individual test types">
               <div className="test-type-checks">
                 {testTypes.map((t) => (
                   <label className={`test-type-check${types.includes(t) ? ' is-checked' : ''}`} key={t}>

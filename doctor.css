@@ -129,6 +129,79 @@ html {
 .doctor-page .badge-notset {
   font-size: 1rem;
 }
+.doctor-page .doctor-status-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  box-sizing: border-box;
+}
+.doctor-page .doctor-status-select {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 0;
+  margin: 0;
+  padding: 0 1.1rem 0 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  line-height: 1.2;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+.doctor-page .doctor-status-select:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+.doctor-page .doctor-status-select:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+.doctor-page .doctor-status-chevron {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.doctor-page .doctor-appointment-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.45rem;
+  min-width: 150px;
+}
+.doctor-page .doctor-appointment-actions .btn-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+}
+.doctor-page #apptTable {
+  min-width: 1100px;
+  table-layout: fixed;
+}
+.doctor-page #apptTable th:nth-child(1),
+.doctor-page #apptTable td:nth-child(1) { width: 5%; }
+.doctor-page #apptTable th:nth-child(2),
+.doctor-page #apptTable td:nth-child(2) { width: 22%; overflow-wrap: anywhere; }
+.doctor-page #apptTable th:nth-child(3),
+.doctor-page #apptTable td:nth-child(3) { width: 14%; }
+.doctor-page #apptTable th:nth-child(4),
+.doctor-page #apptTable td:nth-child(4) { width: 18%; overflow-wrap: anywhere; }
+.doctor-page #apptTable th:nth-child(5),
+.doctor-page #apptTable td:nth-child(5) { width: 13%; }
+.doctor-page #apptTable th:nth-child(6),
+.doctor-page #apptTable td:nth-child(6) { width: 10%; }
+.doctor-page #apptTable th:nth-child(7),
+.doctor-page #apptTable td:nth-child(7) { width: 18%; }
 
 /* ---------- Buttons: larger, easier to hit ---------- */
 .doctor-page .btn-primary {

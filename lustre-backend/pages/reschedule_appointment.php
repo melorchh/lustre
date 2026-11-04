@@ -41,6 +41,12 @@ $stmt->bind_result($existing_doctor_id, $old_date, $old_time, $existing_status);
 $stmt->fetch();
 $stmt->close();
 
+if (strtotime($old_date . ' ' . $old_time) < time()) {
+    echo "error: This appointment time has passed. Please reschedule your current appointment instead.";
+    $conn->close();
+    exit;
+}
+
 if ($existing_status === 'cancelled' && $date === $old_date) {
     echo "error: Please choose a different date from the cancelled appointment";
     $conn->close();
@@ -143,6 +149,13 @@ if ($locked_appointment->num_rows === 0) {
 $locked_appointment->bind_result($existing_doctor_id, $old_date, $old_time, $existing_status);
 $locked_appointment->fetch();
 $locked_appointment->close();
+
+if (strtotime($old_date . ' ' . $old_time) < time()) {
+    $pdo->rollBack();
+    echo "error: This appointment time has passed. Please reschedule your current appointment instead.";
+    $conn->close();
+    exit;
+}
 
 if ($existing_status === 'cancelled' && $date === $old_date) {
     $pdo->rollBack();
