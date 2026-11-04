@@ -37,9 +37,8 @@ $recent_tests = $conn->query("
 $upcoming_appts = $conn->query("
     SELECT a.id, a.appointment_date, a.appointment_time, a.status, a.patient_id, a.unique_code, a.result, p.name AS patient_name, a.service_requested
     FROM appointments a JOIN patients p ON a.patient_id = p.id
-    WHERE a.doctor_id = $doctor_id AND a.appointment_date >= CURRENT_DATE AND a.status IN ('pending','confirmed','cancelled')
-    ORDER BY CASE WHEN a.status = 'cancelled' THEN 1 ELSE 0 END,
-             a.appointment_date ASC, a.appointment_time ASC LIMIT 6
+    WHERE a.doctor_id = $doctor_id AND a.appointment_date >= CURRENT_DATE AND a.status IN ('pending','confirmed')
+    ORDER BY a.appointment_date ASC, a.appointment_time ASC LIMIT 6
 ");
 
 // Today's walk-in queue for this doctor (queue # assigned in arrival order)
@@ -214,7 +213,7 @@ function fill_color($s) {
 
             <div class="content-card">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;">
-                    <h2 style="margin-bottom:0;">Upcoming &amp; Cancelled Appointments</h2>
+                    <h2 style="margin-bottom:0;">Upcoming Appointments</h2>
                     <div style="display:flex;gap:.5rem;flex-wrap:wrap">
                         <a href="doctor_appointments.php" class="btn-sm btn-edit" style="text-decoration:none">Manage Appointments</a>
                         <a href="doctor_schedule.php" class="btn-sm btn-edit" style="text-decoration:none">Manage Availability</a>
@@ -645,7 +644,8 @@ function fill_color($s) {
                         dashboardPendingCancellation = null;
                         document.getElementById('dashCancelRescheduleModal').classList.remove('active');
                         showToast('Appointment cancelled and patient emailed','success');
-                        location.reload();
+                        document.body.classList.add('__leaving');
+                        setTimeout(()=>location.reload(),215);
                     }else{
                         document.getElementById('dashConfirmCancel').disabled = false;
                         document.getElementById('dashCancelError').textContent = result.trim() || 'Could not cancel the appointment.';
