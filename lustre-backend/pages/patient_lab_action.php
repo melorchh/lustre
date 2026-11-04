@@ -10,13 +10,20 @@ require_once __DIR__ . '/../src/db.php';
 
 $patient_id     = $_SESSION["patient_id"];
 $doctor_id      = isset($_POST['doctor_id'])      ? intval($_POST['doctor_id'])            : 0;
-$test_type      = isset($_POST['test_type'])      ? trim($_POST['test_type'])               : '';
+$test_type      = isset($_POST['test_type'])      ? $_POST['test_type']                     : '';
 $priority       = isset($_POST['priority'])       ? trim($_POST['priority'])                : 'normal';
 $scheduled_date = isset($_POST['scheduled_date']) ? trim($_POST['scheduled_date'])          : null;
 $notes          = isset($_POST['notes'])          ? trim($_POST['notes'])                   : '';
 
-if (empty($doctor_id) || empty($test_type)) {
-    echo "error: Doctor and test type are required";
+$test_types = is_array($test_type) ? $test_type : array($test_type);
+$test_types = array_values(array_unique(array_filter(array_map(function ($test) {
+    return is_string($test) ? trim($test) : '';
+}, $test_types), function ($test) {
+    return $test !== '';
+})));
+
+if (empty($doctor_id) || empty($test_types)) {
+    echo "error: Doctor and at least one test type are required";
     $conn->close();
     exit;
 }
@@ -54,21 +61,47 @@ $chk2->close();
 
 $scheduled_date_val = (!empty($scheduled_date)) ? $scheduled_date : null;
 
+$pdo = $conn->getPdo();
+if (!$pdo->beginTransaction()) {
+    http_response_code(500);
+    echo "error: Could not submit the lab request. Please try again.";
+    $conn->close();
+    exit;
+}
+
 $stmt = $conn->prepare("
     INSERT INTO lab_tests 
         (patient_id, doctor_id, test_type, priority, scheduled_date, notes, status, result)
     VALUES (?, ?, ?, ?, ?, ?, 'pending', NULL)
 ");
-$stmt->bind_param("iissss",
-    $patient_id, $doctor_id, $test_type, $priority, $scheduled_date_val, $notes
-);
+if (!$stmt) {
+    $pdo->rollBack();
+    http_response_code(500);
+    echo "error: Could not prepare the lab request. Please try again.";
+    $conn->close();
+    exit;
+}
+$inserted = true;
+foreach ($test_types as $test) {
+    $stmt->bind_param("iissss",
+        $patient_id, $doctor_id, $test, $priority, $scheduled_date_val, $notes
+    );
+    if (!$stmt->execute()) {
+        $inserted = false;
+        break;
+    }
+}
+$stmt->close();
 
-if ($stmt->execute()) {
+if ($inserted && $pdo->commit()) {
     echo "success";
 } else {
-    echo "error: Failed to submit lab request â€” " . $stmt->error;
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    http_response_code(500);
+    echo "error: Failed to submit the complete lab request. Please try again.";
 }
 
-$stmt->close();
 $conn->close();
 ?>

@@ -15,6 +15,32 @@ const PRIORITIES = [
 
 const OTHER_TEST = 'Other (specify below)';
 
+interface LabPackage {
+  category: string;
+  name: string;
+  tests: string;
+}
+
+const LAB_PACKAGES: LabPackage[] = [
+  { category: 'Routine Chemistry Packages', name: 'CBC + Chem 5', tests: 'FBS, BUN, Creatinine, Uric Acid, Total Cholesterol' },
+  { category: 'Routine Chemistry Packages', name: 'CBC + Chem 8 + UA', tests: 'CBC, Chem 8 panel, Urinalysis' },
+  { category: 'Routine Chemistry Packages', name: 'CBC + Chem 10 + UA', tests: 'CBC, Chem 10 panel, Urinalysis' },
+  { category: 'Routine Chemistry Packages', name: 'CBC + Chem 12 + UA', tests: 'CBC, Chem 12 panel, Urinalysis' },
+  { category: 'Routine Chemistry Packages', name: 'FBS + HbA1c', tests: 'Fasting Blood Sugar, Hemoglobin A1c' },
+  { category: 'All Time Packages', name: 'Hypertension Package', tests: 'TC, TG, HDL, LDL' },
+  { category: 'All Time Packages', name: 'Dehydration Check', tests: 'Na, K, Cl' },
+  { category: 'All Time Packages', name: 'Kidney Check', tests: 'Urinalysis, BUN, Creatinine, Uric Acid' },
+  { category: 'All Time Packages', name: 'Liver Package', tests: 'SGOT, SGPT, TPA' },
+  { category: 'All Time Packages', name: 'Cancer Panel Package', tests: 'CBC, CEA, SGPT, PSA' },
+  { category: 'OB-GYN Packages', name: 'Buntis Package 1 Basic', tests: 'CBC, UA, RPR/VDRL, HIV, HBsAg screening, Blood Typing' },
+  { category: 'OB-GYN Packages', name: 'Buntis Package 2', tests: 'OGTT 3 samples + Basic Buntis Package' },
+  { category: 'OB-GYN Packages', name: 'Buntis Package 3', tests: 'OGTT 4 samples + Basic Buntis Package' },
+  { category: 'Annual Physical Exam Packages', name: 'APE Basic 3', tests: 'CBC, UA, FA' },
+  { category: 'Annual Physical Exam Packages', name: 'APE Basic 5', tests: 'CBC, UA, FA, HBsAg, Drug Test' },
+  { category: 'Annual Physical Exam Packages', name: 'Basic 3 + Drug Test', tests: 'CBC, UA, FA, Drug Test' },
+  { category: 'Annual Physical Exam Packages', name: 'Drug Test Only', tests: 'Drug Test' },
+];
+
 interface StepBarProps {
   step: 1 | 2 | 3;
 }
@@ -54,8 +80,10 @@ export default function LabApp() {
     kind: 'categories',
     category: '',
   });
-  const [selectedTest, setSelectedTest] = useState('');
+  const [selectedTests, setSelectedTests] = useState<string[]>([]);
+  const [selectedPackage, setSelectedPackage] = useState<LabPackage | null>(null);
   const [customTest, setCustomTest] = useState('');
+  const [customInputOpen, setCustomInputOpen] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [doctorId, setDoctorId] = useState('');
   const [scheduledDate, setScheduledDate] = useState('');
@@ -72,26 +100,78 @@ export default function LabApp() {
 
   const pickCategory = (cat: string) => {
     setView({ kind: 'tests', category: cat });
-    setSelectedTest('');
     setCustomTest('');
+    setCustomInputOpen(false);
     scrollToTop();
   };
 
-  const pickTest = (test: string) => {
+  const toggleTest = (test: string) => {
+    setSelectedPackage(null);
+    setSelectedTests((current) => current.includes(test)
+      ? current.filter((item) => item !== test)
+      : [...current, test]);
+  };
+
+  const addCustomTest = () => {
+    const value = customTest.trim();
+    if (!value) {
+      showToast("Please enter the test name.", 'error');
+      return;
+    }
+    if (selectedTests.some((test) => test.toLowerCase() === value.toLowerCase())) {
+      showToast("That test is already selected.", 'error');
+      return;
+    }
+    setSelectedPackage(null);
+    setSelectedTests((current) => [...current, value]);
+    setCustomInputOpen(false);
+    setCustomTest('');
+  };
+
+  const pickPackage = (labPackage: LabPackage) => {
+    setSelectedTests([]);
+    setSelectedPackage(labPackage);
+    setStep(2);
+    scrollToTop();
+  };
+
+  const continueWithTests = () => {
+    if (selectedTests.length === 0) {
+      showToast("Select at least one test or choose a package.", 'error');
+      return;
+    }
+    setSelectedPackage(null);
+    setStep(2);
+    scrollToTop();
+  };
+
+  const selectedOrder = selectedPackage
+    ? `${selectedPackage.name} (${selectedPackage.tests})`
+    : selectedTests.join(', ');
+
+  const startOver = () => {
+    setStep(1);
+    setSelectedTests([]);
+    setSelectedPackage(null);
+    setCustomTest('');
+    setCustomInputOpen(false);
+    setView({ kind: 'categories', category: '' });
+    scrollToTop();
+  };
+
+  const openCustomTest = () => {
+    setSelectedPackage(null);
+    setCustomInputOpen(true);
+    setCustomTest('');
+  };
+
+  const pickIndividualTest = (test: string) => {
     if (test === OTHER_TEST) {
-      setSelectedTest(OTHER_TEST);
+      openCustomTest();
       setCustomTest('');
       return;
     }
-    setSelectedTest(test);
-    setCustomTest('');
-    window.setTimeout(() => goToStep2(test), 260);
-  };
-
-  const goToStep2 = (testName: string) => {
-    setSelectedTest(testName);
-    setStep(2);
-    scrollToTop();
+    toggleTest(test);
   };
 
   const submit = async () => {
@@ -107,7 +187,11 @@ export default function LabApp() {
     const fd = new FormData();
     fd.append('patient_id', String(patientId));
     fd.append('doctor_id', doctorId);
-    fd.append('test_type', selectedTest);
+    if (selectedPackage) {
+      fd.append('test_type[]', selectedOrder);
+    } else {
+      selectedTests.forEach((test) => fd.append('test_type[]', test));
+    }
     fd.append('priority', priority);
     fd.append('notes', notes);
     fd.append('scheduled_date', scheduledDate);
@@ -153,7 +237,7 @@ export default function LabApp() {
               <div className="row">
                 <span><SvgFlask size={18} /></span>
                 <span className="lbl">{"Test"}</span>
-                <strong>{selectedTest}</strong>
+                <strong>{selectedOrder}</strong>
               </div>
               <div className="row">
                 <span><SvgUser size={18} /></span>
@@ -176,18 +260,21 @@ export default function LabApp() {
           <div className="lab-step">
             <div className="selected-summary">
               <div>
-                <div className="selected-label">{"Selected Test"}</div>
-                <div className="selected-test-name">{selectedTest}</div>
+                <div className="selected-label">{selectedPackage ? 'Selected Package' : 'Selected Tests'}</div>
+                <div className="selected-test-name">{selectedPackage ? selectedPackage.name : `${selectedTests.length} test${selectedTests.length === 1 ? '' : 's'} selected`}</div>
+                {selectedPackage ? (
+                  <div className="selected-test-details">
+                    <span>{selectedPackage.tests}</span>
+                  </div>
+                ) : (
+                  <div className="selected-test-details">{selectedTests.join(', ')}</div>
+                )}
               </div>
               <button
                 type="button"
                 className="clear-btn"
                 onClick={() => {
-                  setStep(1);
-                  setSelectedTest('');
-                  setCustomTest('');
-                  setView({ kind: 'categories', category: '' });
-                  scrollToTop();
+                  startOver();
                 }}
               >
                 {"Change"}
@@ -276,47 +363,83 @@ export default function LabApp() {
           </div>
         ) : view.kind === 'categories' ? (
           <>
-            <div className="section-hdr">
-              <h2>{"Select a Test Category"}</h2>
-              <p>{"Choose a category then pick the specific test you need."}</p>
-            </div>
-            <div className="categories-grid">
-              {categoryNames.map((cat, i) => (
-                <button
-                  key={cat}
-                  type="button"
-                  className="category-card"
-                  style={{ animationDelay: `${i * 50}ms` }}
-                  onClick={() => pickCategory(cat)}
-                >
-                  <span className="cat-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 3h6l1 7H8L9 3z" />
-                      <path d="M8 10l-3 9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1l-3-9" />
-                    </svg>
-                  </span>
-                  <span className="cat-name">{cat}</span>
-                  <span className="cat-count">
-                    {(categories[cat] ?? []).length} test{(categories[cat] ?? []).length > 1 ? 's' : ''}
-                  </span>
-                </button>
+            <section className="lab-packages">
+              <div className="section-hdr">
+                <h2>Laboratory Packages</h2>
+                <p>Choose a package, or select multiple individual tests below.</p>
+              </div>
+              {Array.from(new Set(LAB_PACKAGES.map((labPackage) => labPackage.category))).map((group) => (
+                <div className="lab-package-group" key={group}>
+                  <h3>{group}</h3>
+                  <div className="lab-packages-grid">
+                    {LAB_PACKAGES.filter((labPackage) => labPackage.category === group).map((labPackage) => (
+                      <button
+                        key={labPackage.name}
+                        type="button"
+                        className="lab-package-card"
+                        onClick={() => pickPackage(labPackage)}
+                      >
+                        <span className="lab-package-card-top">
+                          <strong>{labPackage.name}</strong>
+                        </span>
+                        <span className="lab-package-card-tests">{labPackage.tests}</span>
+                        <span className="lab-package-card-action">Choose package <span aria-hidden="true">→</span></span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ))}
-              {hasOther && (
-                <button
-                  type="button"
-                  className="category-card category-card--other"
-                  onClick={() => pickCategory('Other')}
-                >
-                  <span className="cat-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <path d="M12 5v14M5 12h14" />
-                    </svg>
-                  </span>
-                  <span className="cat-name">{"Other"}</span>
-                  <span className="cat-count">{"Custom test"}</span>
-                </button>
+            </section>
+
+            <section className="lab-individual-tests">
+              <div className="section-hdr">
+                <h2>Choose Individual Tests</h2>
+                <p>Select as many tests as you need. You can choose from multiple categories.</p>
+              </div>
+              <div className="categories-grid">
+                {categoryNames.map((cat, i) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    className="category-card"
+                    style={{ animationDelay: `${i * 50}ms` }}
+                    onClick={() => pickCategory(cat)}
+                  >
+                    <span className="cat-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 3h6l1 7H8L9 3z" />
+                        <path d="M8 10l-3 9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1l-3-9" />
+                      </svg>
+                    </span>
+                    <span className="cat-name">{cat}</span>
+                    <span className="cat-count">
+                      {(categories[cat] ?? []).length} test{(categories[cat] ?? []).length > 1 ? 's' : ''}
+                    </span>
+                  </button>
+                ))}
+                {hasOther && (
+                  <button
+                    type="button"
+                    className="category-card category-card--other"
+                    onClick={() => pickCategory('Other')}
+                  >
+                    <span className="cat-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <path d="M12 5v14M5 12h14" />
+                      </svg>
+                    </span>
+                    <span className="cat-name">Other</span>
+                    <span className="cat-count">Custom test</span>
+                  </button>
+                )}
+              </div>
+              {selectedTests.length > 0 && (
+                <div className="lab-selection-bar">
+                  <span><strong>{selectedTests.length}</strong> individual test{selectedTests.length === 1 ? '' : 's'} selected</span>
+                  <button type="button" className="submit-btn" onClick={continueWithTests}>Continue with selected tests <span aria-hidden="true">→</span></button>
+                </div>
               )}
-            </div>
+            </section>
           </>
         ) : (
           <>
@@ -326,7 +449,7 @@ export default function LabApp() {
               </button>
               <div className="section-hdr">
                 <h2>{view.category}</h2>
-                <p>{"Select one test to continue."}</p>
+                <p>{"Select multiple tests, including tests in other categories. Your selections will be kept."}</p>
               </div>
             </div>
             <div className="tests-list">
@@ -334,38 +457,37 @@ export default function LabApp() {
                 <button
                   key={test}
                   type="button"
-                  className={`test-chip ${selectedTest === test ? 'selected' : ''}`}
+                  className={`test-chip ${selectedTests.includes(test) ? 'selected' : ''}`}
+                  aria-pressed={selectedTests.includes(test)}
                   style={{ animationDelay: `${i * 40}ms` }}
-                  onClick={() => pickTest(test)}
+                  onClick={() => pickIndividualTest(test)}
                 >
                   {test}
                 </button>
               ))}
             </div>
-            {selectedTest === OTHER_TEST && (
+            {customInputOpen && (
               <div className="custom-input-wrap visible">
                 <input
                   type="text"
                   placeholder={"Enter the name of the test..."}
                   value={customTest}
                   onChange={(e) => setCustomTest(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomTest(); } }}
                 />
                 <button
                   type="button"
                   className="proceed-btn"
-                  onClick={() => {
-                    const val = customTest.trim();
-                    if (!val) {
-                      showToast("Please enter the test name.", 'error');
-                      return;
-                    }
-                    goToStep2(val);
-                  }}
+                  onClick={addCustomTest}
                 >
-                  {"Continue with this test →"}
+                  Add test
                 </button>
               </div>
             )}
+            <div className="lab-selection-bar">
+              <span><strong>{selectedTests.length}</strong> individual test{selectedTests.length === 1 ? '' : 's'} selected</span>
+              <button type="button" className="submit-btn" disabled={selectedTests.length === 0} onClick={continueWithTests}>Continue with selected tests <span aria-hidden="true">→</span></button>
+            </div>
           </>
         )}
       </main>
