@@ -1,0 +1,104 @@
+[
+  {
+    "id": "cbc-chem-5",
+    "category": "Routine Chemistry Packages",
+    "name": "CBC + Chem 5",
+    "tests": "FBS, BUN, Creatinine, Uric Acid, Total Cholesterol"
+  },
+  {
+    "id": "cbc-chem-8-ua",
+    "category": "Routine Chemistry Packages",
+    "name": "CBC + Chem 8 + UA",
+    "tests": "CBC, Chem 8 panel, Urinalysis"
+  },
+  {
+    "id": "cbc-chem-10-ua",
+    "category": "Routine Chemistry Packages",
+    "name": "CBC + Chem 10 + UA",
+    "tests": "CBC, Chem 10 panel, Urinalysis"
+  },
+  {
+    "id": "cbc-chem-12-ua",
+    "category": "Routine Chemistry Packages",
+    "name": "CBC + Chem 12 + UA",
+    "tests": "CBC, Chem 12 panel, Urinalysis"
+  },
+  {
+    "id": "fbs-hba1c",
+    "category": "Routine Chemistry Packages",
+    "name": "FBS + HbA1c",
+    "tests": "Fasting Blood Sugar, Hemoglobin A1c"
+  },
+  {
+    "id": "hypertension",
+    "category": "All Time Packages",
+    "name": "Hypertension Package",
+    "tests": "TC, TG, HDL, LDL"
+  },
+  {
+    "id": "dehydration",
+    "category": "All Time Packages",
+    "name": "Dehydration Check",
+    "tests": "Na, K, Cl"
+  },
+  {
+    "id": "kidney-check",
+    "category": "All Time Packages",
+    "name": "Kidney Check",
+    "tests": "Urinalysis, BUN, Creatinine, Uric Acid"
+  },
+  {
+    "id": "liver",
+    "category": "All Time Packages",
+    "name": "Liver Package",
+    "tests": "SGOT, SGPT, TPA"
+  },
+  {
+    "id": "cancer-panel",
+    "category": "All Time Packages",
+    "name": "Cancer Panel Package",
+    "tests": "CBC, CEA, SGPT, PSA"
+  },
+  {
+    "id": "buntis-basic",
+    "category": "OB-GYN Packages",
+    "name": "Buntis Package 1 Basic",
+    "tests": "CBC, UA, RPR/VDRL, HIV, HBsAg screening, Blood Typing"
+  },
+  {
+    "id": "buntis-2",
+    "category": "OB-GYN Packages",
+    "name": "Buntis Package 2",
+    "tests": "OGTT 3 samples + Basic Buntis Package"
+  },
+  {
+    "id": "buntis-3",
+    "category": "OB-GYN Packages",
+    "name": "Buntis Package 3",
+    "tests": "OGTT 4 samples + Basic Buntis Package"
+  },
+  {
+    "id": "ape-basic-3",
+    "category": "Annual Physical Exam Packages",
+    "name": "APE Basic 3",
+    "tests": "CBC, UA, FA"
+  },
+  {
+    "id": "ape-basic-5",
+    "category": "Annual Physical Exam Packages",
+    "name": "APE Basic 5",
+    "tests": "CBC, UA, FA, HBsAg, Drug Test"
+  },
+  {
+    "id": "basic-3-drug-test",
+    "category": "Annual Physical Exam Packages",
+    "name": "Basic 3 + Drug Test",
+    "tests": "CBC, UA, FA, Drug Test"
+  },
+  {
+    "id": "drug-test-only",
+    "category": "Annual Physical Exam Packages",
+    "name": "Drug Test Only",
+    "tests": "Drug Test"
+  }
+]
