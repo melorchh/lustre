@@ -162,6 +162,8 @@ $conn->close();
                             <?php if ($has_result): ?>
                                 <?php if (in_array($s, ['pending', 'confirmed'])): ?>
                                     <span class="badge" style="background:#fef3c7;color:#92400e;cursor:pointer" title="Draft findings - appointment not yet completed" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="<?php echo $result_attr_d; ?>" data-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>" data-draft="1" onclick="openResultFromEl(this)">Draft</span>
+                                <?php elseif ($s === 'cancelled'): ?>
+                                    <span class="badge badge-completed" title="Cancelled appointments are read-only">Ready</span>
                                 <?php else: ?>
                                     <span class="badge badge-completed" style="cursor:pointer" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="<?php echo $result_attr_d; ?>" data-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>" onclick="openResultFromEl(this)">Ready</span>
                                 <?php endif; ?>
@@ -171,12 +173,12 @@ $conn->close();
                         </td>
                         <td style="white-space:nowrap">
                             <div style="display:flex;flex-direction:column;gap:6px;min-width:140px">
-                                <select class="action-select" data-current-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>" data-appointment-date="<?php echo htmlspecialchars($ap['appointment_date'], ENT_QUOTES); ?>" onchange="updateApptStatusDoctor(<?php echo (int)$ap['id']; ?>, this)">
+                                <select class="action-select" data-current-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>" data-appointment-date="<?php echo htmlspecialchars($ap['appointment_date'], ENT_QUOTES); ?>" onchange="updateApptStatusDoctor(<?php echo (int)$ap['id']; ?>, this)" <?php echo $s === 'cancelled' ? 'disabled title="Cancelled appointments are read-only"' : ''; ?>>
                                     <?php foreach (['pending','confirmed','completed','cancelled'] as $opt): ?>
                                         <option value="<?php echo $opt; ?>" <?php echo $s===$opt?'selected':''; ?>><?php echo ucfirst($opt); ?></option>
                                     <?php endforeach; ?>
                                 </select>
-                                <button type="button" class="btn-sm btn-vitals" title="View patient vitals" data-apt="<?php echo (int)$ap['id']; ?>" data-pid="<?php echo (int)$ap['patient_id']; ?>" data-name="<?php echo htmlspecialchars($ap['patient_name'], ENT_QUOTES); ?>" data-code="<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>" data-label="<?php echo htmlspecialchars($date_fmt, ENT_QUOTES); ?> &middot; <?php echo htmlspecialchars($time_fmt, ENT_QUOTES); ?>" onclick="openAptVitalsView(this)">
+                                <button type="button" class="btn-sm btn-vitals" title="<?php echo $s === 'cancelled' ? 'Cancelled appointments are read-only' : 'View patient vitals'; ?>" data-apt="<?php echo (int)$ap['id']; ?>" data-pid="<?php echo (int)$ap['patient_id']; ?>" data-name="<?php echo htmlspecialchars($ap['patient_name'], ENT_QUOTES); ?>" data-code="<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>" data-label="<?php echo htmlspecialchars($date_fmt, ENT_QUOTES); ?> &middot; <?php echo htmlspecialchars($time_fmt, ENT_QUOTES); ?>" onclick="openAptVitalsView(this)" <?php echo $s === 'cancelled' ? 'disabled' : ''; ?>>
                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals
                                 </button>
                                 <?php if ($s === 'completed'): ?>
@@ -190,7 +192,7 @@ $conn->close();
                                         </button>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    <button class="btn-sm" disabled style="opacity:.5;cursor:not-allowed" title="Mark as completed to add result">
+                                    <button class="btn-sm" disabled style="opacity:.5;cursor:not-allowed" title="<?php echo $s === 'cancelled' ? 'Cancelled appointments are read-only' : 'Mark as completed to add result'; ?>">
                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Add Result
                                     </button>
                                 <?php endif; ?>
@@ -488,6 +490,10 @@ $conn->close();
     }
 
     function updateApptStatusDoctor(apptId, sel){
+        if(sel.dataset.currentStatus === 'cancelled'){
+            sel.value = 'cancelled';
+            return;
+        }
         const status = sel.value;
         if(status === 'cancelled'){
             openCancelRescheduleModal(apptId, sel);

@@ -236,12 +236,12 @@ function fill_color($s) {
                                 <td><?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation'); ?></td>
                                 <td style="white-space:nowrap">
                                     <span class="badge" style="<?php echo $bc; ?>"><?php echo ucfirst($ap['status']); ?></span>
-                                    <select class="action-select apt-status" style="margin-left:6px" data-id="<?php echo (int)$ap['id']; ?>" data-prev="<?php echo htmlspecialchars($ap['status'], ENT_QUOTES); ?>" data-patient="<?php echo htmlspecialchars($ap['patient_name'], ENT_QUOTES); ?>" data-service="<?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation', ENT_QUOTES); ?>" data-result="<?php echo htmlspecialchars($ap['result'] ?? '', ENT_QUOTES); ?>" onchange="updateDashboardAppointmentStatus(this)" aria-label="Appointment status">
+                                    <select class="action-select apt-status" style="margin-left:6px" data-id="<?php echo (int)$ap['id']; ?>" data-prev="<?php echo htmlspecialchars($ap['status'], ENT_QUOTES); ?>" data-patient="<?php echo htmlspecialchars($ap['patient_name'], ENT_QUOTES); ?>" data-service="<?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation', ENT_QUOTES); ?>" data-result="<?php echo htmlspecialchars($ap['result'] ?? '', ENT_QUOTES); ?>" onchange="updateDashboardAppointmentStatus(this)" aria-label="Appointment status" <?php echo $ap['status'] === 'cancelled' ? 'disabled title="Cancelled appointments are read-only"' : ''; ?>>
                                         <?php foreach (['pending','confirmed','completed','cancelled'] as $opt): ?>
                                         <option value="<?php echo $opt; ?>" <?php echo $ap['status']===$opt?'selected':''; ?>><?php echo ucfirst($opt); ?></option>
                                         <?php endforeach; ?>
                                     </select>
-                                    <button type="button" class="btn-sm btn-vitals" style="margin-left:6px" title="View patient vitals" data-apt="<?php echo (int)$ap['id']; ?>" data-pid="<?php echo (int)$ap['patient_id']; ?>" data-name="<?php echo htmlspecialchars($ap['patient_name'], ENT_QUOTES); ?>" data-code="<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>" data-label="<?php echo htmlspecialchars(date('M j, Y', strtotime($ap['appointment_date'])), ENT_QUOTES); ?> &middot; <?php echo htmlspecialchars(date('g:i A', strtotime($ap['appointment_time'])), ENT_QUOTES); ?>" onclick="openAptVitalsView(this)">
+                                    <button type="button" class="btn-sm btn-vitals" style="margin-left:6px" title="<?php echo $ap['status'] === 'cancelled' ? 'Cancelled appointments are read-only' : 'View patient vitals'; ?>" data-apt="<?php echo (int)$ap['id']; ?>" data-pid="<?php echo (int)$ap['patient_id']; ?>" data-name="<?php echo htmlspecialchars($ap['patient_name'], ENT_QUOTES); ?>" data-code="<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>" data-label="<?php echo htmlspecialchars(date('M j, Y', strtotime($ap['appointment_date'])), ENT_QUOTES); ?> &middot; <?php echo htmlspecialchars(date('g:i A', strtotime($ap['appointment_time'])), ENT_QUOTES); ?>" onclick="openAptVitalsView(this)" <?php echo $ap['status'] === 'cancelled' ? 'disabled' : ''; ?>>
                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals
                                     </button>
                                 </td>
@@ -795,6 +795,10 @@ function fill_color($s) {
         function updateDashboardAppointmentStatus(sel){
             const status = sel.value;
             const previous = sel.getAttribute('data-prev') || 'pending';
+            if(previous === 'cancelled'){
+                sel.value = previous;
+                return;
+            }
             if(status === 'cancelled'){
                 openDashboardCancelModal(sel);
                 return;

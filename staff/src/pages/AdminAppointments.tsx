@@ -146,6 +146,7 @@ export default function AdminAppointments() {
   }
 
   async function updateStatus(id: number, status: string) {
+    if (appointments.find((a) => a.id === id)?.status === 'cancelled') return;
     showLoading();
     try {
       const res = await postAction('admin_update_appointment.php', { appointment_id: id, status });
@@ -161,6 +162,7 @@ export default function AdminAppointments() {
   }
 
   async function updatePayment(id: number, payment_status: string) {
+    if (appointments.find((a) => a.id === id)?.status === 'cancelled') return;
     showLoading();
     try {
       const res = await postAction('admin_update_appointment.php', { appointment_id: id, payment_status });
@@ -296,7 +298,7 @@ export default function AdminAppointments() {
                     <td>{fmtTime(a.appointment_time)}</td>
                     <td>
                       <div className="ap-row-actions ap-row-actions--status">
-                        <Select className="action-select" value={a.status} onChange={(e) => updateStatus(a.id, e.target.value)}>
+                        <Select className="action-select" value={a.status} disabled={a.status === 'cancelled'} onChange={(e) => updateStatus(a.id, e.target.value)}>
                           {['pending', 'confirmed', 'completed', 'cancelled'].map((o) => <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
                         </Select>
                         {(a.reschedule_count || hist.length > 0) ? (
@@ -320,7 +322,7 @@ export default function AdminAppointments() {
                       </div>
                     </td>
                     <td>
-                      <Select className="action-select" value={a.payment_status} onChange={(e) => updatePayment(a.id, e.target.value)}>
+                      <Select className="action-select" value={a.payment_status} disabled={a.status === 'cancelled'} onChange={(e) => updatePayment(a.id, e.target.value)}>
                         <option value="pending">Unpaid</option>
                         <option value="paid">Paid</option>
                       </Select>
@@ -330,8 +332,9 @@ export default function AdminAppointments() {
                         <button
                           type="button"
                           className={`badge ${a.status === 'pending' || a.status === 'confirmed' ? 'badge-pending' : 'badge-completed'} ap-badge-btn`}
+                          disabled={a.status === 'cancelled'}
                           onClick={() => setResultView(a)}
-                          title="Open the recorded result"
+                          title={a.status === 'cancelled' ? 'Cancelled appointments are read-only' : 'Open the recorded result'}
                         >
                           {a.status === 'pending' || a.status === 'confirmed' ? 'Draft' : 'Ready'}
                         </button>
@@ -343,13 +346,14 @@ export default function AdminAppointments() {
                         <small>{fmtTime(a.updated_at)}</small>
                       </span>
                       <div className="ap-row-actions ap-row-actions--inline ap-updated-actions">
-                        <button type="button" className="btn-slip" title="Print appointment slip" onClick={() => printSlip(a)}>
+                        <button type="button" className="btn-slip" title="Print appointment slip" disabled={a.status === 'cancelled'} onClick={() => printSlip(a)}>
                           <IconPrint size={16} /> Slip
                         </button>
                         <button
                           type="button"
                           className="btn-slip"
-                          title={(a.vital_count || 0) > 0 ? 'Edit recorded vitals' : 'Record vitals for this appointment'}
+                          title={a.status === 'cancelled' ? 'Cancelled appointments are read-only' : (a.vital_count || 0) > 0 ? 'Edit recorded vitals' : 'Record vitals for this appointment'}
+                          disabled={a.status === 'cancelled'}
                           onClick={() => openVitals(a)}
                         >
                           <IconVitals size={16} /> Vitals
