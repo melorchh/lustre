@@ -46,6 +46,11 @@ if ($existing_status === 'cancelled' && $date === $old_date) {
     $conn->close();
     exit;
 }
+if ($existing_status === 'cancelled' && $old_date < date('Y-m-d')) {
+    echo "error: Past cancelled appointments cannot be rescheduled";
+    $conn->close();
+    exit;
+}
 
 if (empty($doctor_id)) {
     $doctor_id = $existing_doctor_id;
@@ -147,6 +152,12 @@ $locked_appointment->close();
 if ($existing_status === 'cancelled' && $date === $old_date) {
     $pdo->rollBack();
     echo "error: Please choose a different date from the cancelled appointment";
+    $conn->close();
+    exit;
+}
+if ($existing_status === 'cancelled' && $old_date < date('Y-m-d')) {
+    $pdo->rollBack();
+    echo "error: Past cancelled appointments cannot be rescheduled";
     $conn->close();
     exit;
 }
