@@ -137,12 +137,7 @@ function AppointmentCard({ apt, onCancel, onResched }: { apt: Appointment; onCan
   const s = statusOf(apt.status);
   const meta = STATUS_META[s] ?? { icon: <SvgClipboard size={22} />, label: apt.status };
   const cancellable = s === 'pending' || s === 'confirmed';
-  const today = new Date();
-  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const reschedulable =
-    s === 'pending' ||
-    s === 'confirmed' ||
-    (s === 'cancelled' && apt.appointment_date >= todayKey);
+  const reschedulable = s === 'pending' || s === 'confirmed' || s === 'cancelled';
   return (
     <div className="appt-card">
       <div className={`appt-stripe stripe-${s}`} />
