@@ -55,8 +55,16 @@
       labelEl.textContent = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].textContent : '';
     }
 
+    function syncDisabled(){
+      btn.disabled = !!sel.disabled;
+      btn.setAttribute('aria-disabled', sel.disabled ? 'true' : 'false');
+      wrap.classList.toggle('disabled', !!sel.disabled);
+      if (sel.disabled && open) close();
+    }
+
     sel.__fdResync = function(){
       setLabel();
+      syncDisabled();
       if (open) renderOptions();
     };
 
@@ -238,11 +246,13 @@
 
     btn.addEventListener('click', function(ev){
       ev.stopPropagation();
+      if (sel.disabled) return;
       if (open) close();
       else openMenu();
     });
 
     setLabel();
+    syncDisabled();
   }
 
   function init(){

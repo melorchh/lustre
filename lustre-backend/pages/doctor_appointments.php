@@ -171,7 +171,7 @@ $conn->close();
                         </td>
                         <td style="white-space:nowrap">
                             <div style="display:flex;flex-direction:column;gap:6px;min-width:140px">
-                                <select class="action-select" data-current-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>" onchange="updateApptStatusDoctor(<?php echo (int)$ap['id']; ?>, this)">
+                                <select class="action-select" data-current-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>" data-appointment-date="<?php echo htmlspecialchars($ap['appointment_date'], ENT_QUOTES); ?>" onchange="updateApptStatusDoctor(<?php echo (int)$ap['id']; ?>, this)">
                                     <?php foreach (['pending','confirmed','completed','cancelled'] as $opt): ?>
                                         <option value="<?php echo $opt; ?>" <?php echo $s===$opt?'selected':''; ?>><?php echo ucfirst($opt); ?></option>
                                     <?php endforeach; ?>
@@ -237,13 +237,13 @@ $conn->close();
         <p style="color:#64748b">Choose an available replacement date and time for the patient to consider. They can accept it or choose another slot from the email link.</p>
         <div class="form-group">
             <label for="suggestedDate">Suggested date</label>
-            <select id="suggestedDate">
+            <select id="suggestedDate" class="form-dropdown">
                 <option value="">Select a suggested date</option>
             </select>
         </div>
         <div class="form-group">
             <label for="suggestedTime">Suggested time</label>
-            <select id="suggestedTime" disabled>
+            <select id="suggestedTime" class="form-dropdown" disabled>
                 <option value="">Choose a date first</option>
             </select>
         </div>
@@ -369,8 +369,12 @@ $conn->close();
     }
 
     let pendingDoctorCancellation = null;
+    let suggestedDateRequest = 0;
+    let suggestedTimeRequest = 0;
     function openCancelRescheduleModal(apptId, sel){
-        pendingDoctorCancellation = { id: apptId, select: sel, previousStatus: sel.dataset.currentStatus || 'pending' };
+        pendingDoctorCancellation = { id: apptId, select: sel, previousStatus: sel.dataset.currentStatus || 'pending', date: sel.dataset.appointmentDate || '' };
+        const dateRequestId = ++suggestedDateRequest;
+        suggestedTimeRequest++;
         sel.value = pendingDoctorCancellation.previousStatus;
         document.getElementById('cancelReschedulePatient').textContent =
             'Appointment #' + apptId + ' will be cancelled and the patient will receive an email.';
@@ -380,6 +384,8 @@ $conn->close();
         dateSelect.innerHTML = '<option value="">Select a suggested date</option>';
         timeSelect.innerHTML = '<option value="">Choose a date first</option>';
         timeSelect.disabled = true;
+        dateSelect.__fdResync();
+        timeSelect.__fdResync();
         document.getElementById('confirmCancelAppointment').disabled = true;
         document.getElementById('cancelRescheduleModal').classList.add('active');
 
@@ -389,24 +395,31 @@ $conn->close();
                 return response.json();
             })
             .then(dates => {
+                if(dateRequestId !== suggestedDateRequest) return;
                 if(!Array.isArray(dates)) throw new Error('Could not load available dates.');
+                let availableDateCount = 0;
                 dates.forEach(item => {
-                    if(!item || !item.date) return;
+                    if(!item || !item.date || item.date === pendingDoctorCancellation.date) return;
                     const option = document.createElement('option');
                     option.value = item.date;
                     option.textContent = item.display || item.date;
                     dateSelect.appendChild(option);
+                    availableDateCount++;
                 });
-                if(dates.length === 0) dateSelect.options[0].textContent = 'No available dates; patient can choose online';
+                if(availableDateCount === 0) dateSelect.options[0].textContent = 'No available dates; patient can choose online';
+                dateSelect.__fdResync();
                 document.getElementById('confirmCancelAppointment').disabled = false;
             })
             .catch(error => {
+                if(dateRequestId !== suggestedDateRequest) return;
                 document.getElementById('cancelRescheduleError').textContent = error.message || 'Could not load available dates.';
                 document.getElementById('confirmCancelAppointment').disabled = false;
             });
     }
 
     function closeCancelRescheduleModal(){
+        suggestedDateRequest++;
+        suggestedTimeRequest++;
         if(pendingDoctorCancellation){
             pendingDoctorCancellation.select.value = pendingDoctorCancellation.previousStatus;
         }
@@ -415,13 +428,16 @@ $conn->close();
     }
 
     document.getElementById('suggestedDate').addEventListener('change', function(){
+        const requestId = ++suggestedTimeRequest;
         const date = this.value;
         const timeSelect = document.getElementById('suggestedTime');
         timeSelect.innerHTML = '<option value="">Loading times...</option>';
         timeSelect.disabled = true;
+        timeSelect.__fdResync();
         document.getElementById('cancelRescheduleError').textContent = '';
         if(!date || !pendingDoctorCancellation){
             timeSelect.innerHTML = '<option value="">Choose a date first</option>';
+            timeSelect.__fdResync();
             return;
         }
         fetch('get_available_times.php?doctor_id=<?php echo $doctor_id; ?>&date=' + encodeURIComponent(date) + '&exclude_appointment_id=' + encodeURIComponent(pendingDoctorCancellation.id) + '&t=' + Date.now())
@@ -430,6 +446,7 @@ $conn->close();
                 return response.json();
             })
             .then(times => {
+                if(requestId !== suggestedTimeRequest) return;
                 if(!Array.isArray(times)) throw new Error('Could not load available times.');
                 timeSelect.innerHTML = '<option value="">Select a suggested time</option>';
                 times.forEach(time => {
@@ -442,9 +459,12 @@ $conn->close();
                 if(times.length === 0){
                     timeSelect.innerHTML = '<option value="">No available times</option>';
                 }
+                timeSelect.__fdResync();
             })
             .catch(error => {
+                if(requestId !== suggestedTimeRequest) return;
                 timeSelect.innerHTML = '<option value="">Could not load times</option>';
+                timeSelect.__fdResync();
                 document.getElementById('cancelRescheduleError').textContent = error.message || 'Could not load available times.';
             });
     });

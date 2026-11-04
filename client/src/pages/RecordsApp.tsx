@@ -370,7 +370,11 @@ function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) 
     fetchAvailableDates(apt.doctor_id, apt.id)
       .then((d) => {
         if (cancelled) return;
-        setDates(d);
+        setDates(
+          apt.status === 'cancelled'
+            ? d.filter((item) => item.date !== apt.appointment_date)
+            : d,
+        );
         setDatesLoading(false);
       })
       .catch(() => {
@@ -382,7 +386,7 @@ function RescheduleModal({ apt, onClose, onRescheduled }: RescheduleModalProps) 
     return () => {
       cancelled = true;
     };
-  }, [apt.doctor_id]);
+  }, [apt.doctor_id, apt.appointment_date, apt.status]);
 
   const pickDate = (date: string) => {
     if (date === selectedDate) return;

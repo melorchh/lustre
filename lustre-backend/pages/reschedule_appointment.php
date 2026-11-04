@@ -27,7 +27,7 @@ if (empty($appointment_id) || empty($date) || empty($time)) {
 }
 
 // Load the existing appointment — must belong to this patient and be reschedulable
-$stmt = $conn->prepare("SELECT doctor_id, appointment_date, appointment_time FROM appointments WHERE id=? AND patient_id=? AND status IN ('pending','confirmed','cancelled')");
+$stmt = $conn->prepare("SELECT doctor_id, appointment_date, appointment_time, status FROM appointments WHERE id=? AND patient_id=? AND status IN ('pending','confirmed','cancelled')");
 $stmt->bind_param("ii", $appointment_id, $patient_id);
 $stmt->execute();
 $stmt->store_result();
@@ -37,9 +37,15 @@ if ($stmt->num_rows === 0) {
     $conn->close();
     exit;
 }
-$stmt->bind_result($existing_doctor_id, $old_date, $old_time);
+$stmt->bind_result($existing_doctor_id, $old_date, $old_time, $existing_status);
 $stmt->fetch();
 $stmt->close();
+
+if ($existing_status === 'cancelled' && $date === $old_date) {
+    echo "error: Please choose a different date from the cancelled appointment";
+    $conn->close();
+    exit;
+}
 
 if (empty($doctor_id)) {
     $doctor_id = $existing_doctor_id;
@@ -116,7 +122,7 @@ $patient_lock->close();
 
 // Re-lock and revalidate the appointment so a concurrent cancel or reschedule
 // cannot make this request overwrite newer appointment state.
-$locked_appointment = $conn->prepare("SELECT doctor_id, appointment_date, appointment_time FROM appointments WHERE id = ? AND patient_id = ? AND status IN ('pending', 'confirmed', 'cancelled') FOR UPDATE");
+$locked_appointment = $conn->prepare("SELECT doctor_id, appointment_date, appointment_time, status FROM appointments WHERE id = ? AND patient_id = ? AND status IN ('pending', 'confirmed', 'cancelled') FOR UPDATE");
 $locked_appointment->bind_param("ii", $appointment_id, $patient_id);
 if (!$locked_appointment->execute()) {
     $locked_appointment->close();
@@ -134,9 +140,16 @@ if ($locked_appointment->num_rows === 0) {
     $conn->close();
     exit;
 }
-$locked_appointment->bind_result($existing_doctor_id, $old_date, $old_time);
+$locked_appointment->bind_result($existing_doctor_id, $old_date, $old_time, $existing_status);
 $locked_appointment->fetch();
 $locked_appointment->close();
+
+if ($existing_status === 'cancelled' && $date === $old_date) {
+    $pdo->rollBack();
+    echo "error: Please choose a different date from the cancelled appointment";
+    $conn->close();
+    exit;
+}
 
 $daily_limit = doctor_daily_limit_status($conn, $doctor_id, $date, true, $appointment_id);
 if ($daily_limit === null) {
