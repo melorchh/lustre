@@ -45,6 +45,39 @@ if ($action === 'add_walkin') {
         $arrival_time = date('H:i');
     }
     $test_procedure = trim($_POST['test_procedure'] ?? '');
+    $lab_package_id = isset($_POST['lab_package']) && is_string($_POST['lab_package'])
+        ? trim($_POST['lab_package'])
+        : '';
+    $selected_lab_package = null;
+    if ($lab_package_id !== '') {
+        $package_file = __DIR__ . '/../../shared/lab-packages.json';
+        $packages_json = is_file($package_file) ? file_get_contents($package_file) : false;
+        $packages = ($packages_json !== false) ? json_decode($packages_json, true) : null;
+        if (!is_array($packages)) {
+            error_log('[admin-walkin] Could not load the laboratory package catalog.');
+            http_response_code(500);
+            echo 'Could not load laboratory packages. Please try again.';
+            $conn->close();
+            exit;
+        }
+        foreach ($packages as $package) {
+            if (is_array($package) && isset($package['id']) && $package['id'] === $lab_package_id) {
+                $selected_lab_package = $package;
+                break;
+            }
+        }
+        if ($selected_lab_package === null) {
+            echo 'Invalid laboratory package selected.';
+            $conn->close();
+            exit;
+        }
+        $test_procedure = $selected_lab_package['name'];
+    }
+    if ($selected_lab_package === null && $test_procedure === '') {
+        echo 'Please select a test / procedure or laboratory package.';
+        $conn->close();
+        exit;
+    }
     $blood_pressure = trim($_POST['blood_pressure'] ?? '');
     $heart_rate     = trim($_POST['heart_rate'] ?? '');
     $fundal_height  = trim($_POST['fundal_height'] ?? '');
@@ -286,6 +319,38 @@ if ($action === 'add_walkin') {
         }
         $appointment_id = (int)$ap->insert_id;
         $ap->close();
+
+        if ($selected_lab_package !== null) {
+            $lab_test_type = $selected_lab_package['name'] . ' (' . $selected_lab_package['tests'] . ')';
+            $lab_priority = 'normal';
+            $lab_date = $arrival_date;
+            $lab_notes = 'Walk-in laboratory package';
+            $lab = $conn->prepare("
+                INSERT INTO lab_tests
+                    (patient_id, doctor_id, test_type, priority, scheduled_date, notes, status, result)
+                VALUES (?, ?, ?, ?, ?, ?, 'pending', NULL)
+            ");
+            if (!$lab) {
+                $stmt->close();
+                $pdo->rollBack();
+                http_response_code(500);
+                echo 'Failed to register the laboratory package.';
+                $conn->close();
+                exit;
+            }
+            $lab->bind_param("iissss", $newId, $doctor_id, $lab_test_type, $lab_priority, $lab_date, $lab_notes);
+            if (!$lab->execute()) {
+                error_log('[admin-walkin] Could not insert laboratory package order: ' . $lab->error);
+                $lab->close();
+                $stmt->close();
+                $pdo->rollBack();
+                http_response_code(500);
+                echo 'Failed to register the laboratory package.';
+                $conn->close();
+                exit;
+            }
+            $lab->close();
+        }
 
         // Vitals captured during the consultation, tied to the appointment
         $vt = $conn->prepare("INSERT INTO vitals (patient_id, appointment_id, visit_date, weight_kg, height_cm, blood_pressure, heart_rate, fundal_height) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");

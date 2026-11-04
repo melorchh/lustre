@@ -7,6 +7,7 @@ import DatePicker from '../components/DatePicker';
 import Select from '../components/Select';
 import { SvgFlask, SvgUser, SvgCalendar } from '../components/icons';
 import { useToast } from '../hooks';
+import LAB_PACKAGES from '../../../shared/lab-packages.json';
 const PRIORITIES = [
   { value: 'normal', label: 'Normal', desc: 'Standard turnaround' },
   { value: 'urgent', label: 'Urgent', desc: 'Expedited processing' },
@@ -15,31 +16,7 @@ const PRIORITIES = [
 
 const OTHER_TEST = 'Other (specify below)';
 
-interface LabPackage {
-  category: string;
-  name: string;
-  tests: string;
-}
-
-const LAB_PACKAGES: LabPackage[] = [
-  { category: 'Routine Chemistry Packages', name: 'CBC + Chem 5', tests: 'FBS, BUN, Creatinine, Uric Acid, Total Cholesterol' },
-  { category: 'Routine Chemistry Packages', name: 'CBC + Chem 8 + UA', tests: 'CBC, Chem 8 panel, Urinalysis' },
-  { category: 'Routine Chemistry Packages', name: 'CBC + Chem 10 + UA', tests: 'CBC, Chem 10 panel, Urinalysis' },
-  { category: 'Routine Chemistry Packages', name: 'CBC + Chem 12 + UA', tests: 'CBC, Chem 12 panel, Urinalysis' },
-  { category: 'Routine Chemistry Packages', name: 'FBS + HbA1c', tests: 'Fasting Blood Sugar, Hemoglobin A1c' },
-  { category: 'All Time Packages', name: 'Hypertension Package', tests: 'TC, TG, HDL, LDL' },
-  { category: 'All Time Packages', name: 'Dehydration Check', tests: 'Na, K, Cl' },
-  { category: 'All Time Packages', name: 'Kidney Check', tests: 'Urinalysis, BUN, Creatinine, Uric Acid' },
-  { category: 'All Time Packages', name: 'Liver Package', tests: 'SGOT, SGPT, TPA' },
-  { category: 'All Time Packages', name: 'Cancer Panel Package', tests: 'CBC, CEA, SGPT, PSA' },
-  { category: 'OB-GYN Packages', name: 'Buntis Package 1 Basic', tests: 'CBC, UA, RPR/VDRL, HIV, HBsAg screening, Blood Typing' },
-  { category: 'OB-GYN Packages', name: 'Buntis Package 2', tests: 'OGTT 3 samples + Basic Buntis Package' },
-  { category: 'OB-GYN Packages', name: 'Buntis Package 3', tests: 'OGTT 4 samples + Basic Buntis Package' },
-  { category: 'Annual Physical Exam Packages', name: 'APE Basic 3', tests: 'CBC, UA, FA' },
-  { category: 'Annual Physical Exam Packages', name: 'APE Basic 5', tests: 'CBC, UA, FA, HBsAg, Drug Test' },
-  { category: 'Annual Physical Exam Packages', name: 'Basic 3 + Drug Test', tests: 'CBC, UA, FA, Drug Test' },
-  { category: 'Annual Physical Exam Packages', name: 'Drug Test Only', tests: 'Drug Test' },
-];
+type LabPackage = (typeof LAB_PACKAGES)[number];
 
 interface StepBarProps {
   step: 1 | 2 | 3;
