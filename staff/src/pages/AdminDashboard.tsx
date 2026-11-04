@@ -12,7 +12,6 @@ import {
   IconPatients, IconPlus, IconPrint, IconReports, IconSchedules, IconVaccine, IconWalkins,
 } from '../icons';
 import type { AppointmentRow, DoctorRow, PatientRow, WalkinRow } from '../types';
-import LAB_PACKAGES from '../../../shared/lab-packages.json';
 
 interface HistoryEntry {
   appointment_id: number;
@@ -36,7 +35,6 @@ const AGE_BANDS: Record<string, { min: number; max: number; label: string }> = {
 };
 
 const OTHER_PROC = 'Other (specify below)';
-const LAB_PACKAGE_GROUPS = Array.from(new Set(LAB_PACKAGES.map((labPackage) => labPackage.category)));
 
 const EMPTY_APPT = {
   patient_id: '', doctor_id: '', date: '', time: '',
@@ -44,7 +42,7 @@ const EMPTY_APPT = {
 };
 
 const EMPTY_WALKIN = {
-  specialty: '', doctor_id: '', test_procedure: '', lab_package: '', other: '', appointment_time: '', arrival_time: '',
+  specialty: '', doctor_id: '', test_procedure: '', other: '', appointment_time: '', arrival_time: '',
   name: '', contact: '', gender: '', address: '', patient_type: '', age: '',
   weight_kg: '', height_cm: '', blood_pressure: '', heart_rate: '', fundal_height: '',
 };
@@ -325,8 +323,8 @@ export default function AdminDashboard() {
     }
     if (!walkinForm.appointment_time) { showToast('Please select an available appointment time', 'error'); return; }
     if (!walkinForm.arrival_time) { showToast('Please enter the walk-in arrival time', 'error'); return; }
-    if (!walkinForm.test_procedure && !walkinForm.lab_package) {
-      showToast('Please select a test / procedure or laboratory package', 'error');
+    if (!walkinForm.test_procedure) {
+      showToast('Please select a test / procedure', 'error');
       return;
     }
     if (!walkinForm.blood_pressure.trim()) { showToast('Blood pressure required', 'error'); return; }
@@ -340,12 +338,9 @@ export default function AdminDashboard() {
         return;
       }
     }
-    const selectedLabPackage = LAB_PACKAGES.find((labPackage) => labPackage.id === walkinForm.lab_package);
-    const proc = selectedLabPackage
-      ? selectedLabPackage.name
-      : walkinForm.test_procedure === OTHER_PROC
-        ? walkinForm.other.trim()
-        : walkinForm.test_procedure;
+    const proc = walkinForm.test_procedure === OTHER_PROC
+      ? walkinForm.other.trim()
+      : walkinForm.test_procedure;
     if (!proc) { showToast('Please specify the test / procedure', 'error'); return; }
 
     showLoading();
@@ -367,7 +362,6 @@ export default function AdminDashboard() {
         appointment_time: walkinForm.appointment_time,
         arrival_time: walkinForm.arrival_time,
         test_procedure: proc,
-        lab_package: walkinForm.lab_package,
       });
       if (isSuccess(res)) {
         showToast('Walk-in client registered!', 'success');
@@ -725,42 +719,14 @@ export default function AdminDashboard() {
             {availableDoctorsError && <p className="form-hint">{availableDoctorsError} Close and reopen the form to try again.</p>}
           </div>
           <div className="form-group walkin-procedure-field">
-            <label>Test / Procedure or Laboratory Package</label>
-            <Select className="form-dropdown form-input" value={walkinForm.test_procedure} disabled={!walkinForm.doctor_id || Boolean(walkinForm.lab_package)} onChange={(e) => setWalkinForm({ ...walkinForm, test_procedure: e.target.value, lab_package: '', other: e.target.value === OTHER_PROC ? walkinForm.other : '' })}>
-              <option value="" disabled>{walkinForm.lab_package ? 'Laboratory package selected' : walkinForm.doctor_id ? 'Select Test / Procedure' : 'Select a doctor first'}</option>
+            <label>Test / Procedure</label>
+            <Select className="form-dropdown form-input" value={walkinForm.test_procedure} disabled={!walkinForm.doctor_id} onChange={(e) => setWalkinForm({ ...walkinForm, test_procedure: e.target.value, other: e.target.value === OTHER_PROC ? walkinForm.other : '' })}>
+              <option value="" disabled>{walkinForm.doctor_id ? 'Select Test / Procedure' : 'Select a doctor first'}</option>
               {doctorProcs.map((p) => <option key={p} value={p}>{p}</option>)}
             </Select>
-            {walkinForm.test_procedure === OTHER_PROC && !walkinForm.lab_package && (
+            {walkinForm.test_procedure === OTHER_PROC && (
               <input type="text" className="form-input" style={{ marginTop: '.55rem' }} placeholder="Specify test / procedure..." value={walkinForm.other} onChange={(e) => setWalkinForm({ ...walkinForm, other: e.target.value })} />
             )}
-            {walkinForm.lab_package && (
-              <p className="walkin-selected-package">
-                Selected package: {LAB_PACKAGES.find((labPackage) => labPackage.id === walkinForm.lab_package)?.name}
-                <button type="button" onClick={() => setWalkinForm({ ...walkinForm, lab_package: '' })}>Clear</button>
-              </p>
-            )}
-            <details className="walkin-lab-packages">
-              <summary>Choose a laboratory package (no prices)</summary>
-              {LAB_PACKAGE_GROUPS.map((group) => (
-                <div className="walkin-lab-package-group" key={group}>
-                  <h4>{group}</h4>
-                  <div className="walkin-lab-package-grid">
-                    {LAB_PACKAGES.filter((labPackage) => labPackage.category === group).map((labPackage) => (
-                      <button
-                        key={labPackage.id}
-                        type="button"
-                        className={`walkin-lab-package${walkinForm.lab_package === labPackage.id ? ' selected' : ''}`}
-                        aria-pressed={walkinForm.lab_package === labPackage.id}
-                        onClick={() => setWalkinForm({ ...walkinForm, test_procedure: '', lab_package: labPackage.id, other: '' })}
-                      >
-                        <strong>{labPackage.name}</strong>
-                        <span>{labPackage.tests}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </details>
           </div>
           <div className="form-group">
             <label>Appointment Time *</label>

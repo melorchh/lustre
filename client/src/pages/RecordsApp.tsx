@@ -133,11 +133,17 @@ function statusOf(value: string) {
   return (value || 'unknown').toLowerCase();
 }
 
+function appointmentHasPassed(apt: Appointment): boolean {
+  const scheduledAt = new Date(`${apt.appointment_date}T${apt.appointment_time}`);
+  return Number.isFinite(scheduledAt.getTime()) && scheduledAt.getTime() < Date.now();
+}
+
 function AppointmentCard({ apt, onCancel, onResched }: { apt: Appointment; onCancel: (a: Appointment) => void; onResched: (a: Appointment) => void }) {
   const s = statusOf(apt.status);
   const meta = STATUS_META[s] ?? { icon: <SvgClipboard size={22} />, label: apt.status };
   const cancellable = s === 'pending' || s === 'confirmed';
   const reschedulable = s === 'pending' || s === 'confirmed' || s === 'cancelled';
+  const rescheduleDisabled = appointmentHasPassed(apt);
   return (
     <div className="appt-card">
       <div className={`appt-stripe stripe-${s}`} />
@@ -154,7 +160,13 @@ function AppointmentCard({ apt, onCancel, onResched }: { apt: Appointment; onCan
           {(cancellable || reschedulable) && (
             <div className="appt-actions">
               {reschedulable && (
-                <button type="button" className="btn-resched-appt" onClick={() => onResched(apt)}>
+                <button
+                  type="button"
+                  className="btn-resched-appt"
+                  disabled={rescheduleDisabled}
+                  title={rescheduleDisabled ? 'This appointment time has passed. Reschedule your current appointment instead.' : undefined}
+                  onClick={() => onResched(apt)}
+                >
                   <SvgCalendar size={14} /> {"Reschedule"}
                 </button>
               )}
@@ -549,7 +561,8 @@ export default function RecordsApp() {
   const [cancelling, setCancelling] = useState(false);
   const [reschedTarget, setReschedTarget] = useState<Appointment | null>(() => {
     const id = new URLSearchParams(window.location.search).get('reschedule');
-    return id ? appointments.find((a) => String(a.id) === id) ?? null : null;
+    const appointment = id ? appointments.find((a) => String(a.id) === id) : null;
+    return appointment && !appointmentHasPassed(appointment) ? appointment : null;
   });
   const [doneMsg, setDoneMsg] = useState<string | null>(null);
 
