@@ -371,6 +371,7 @@ export default function AdminDashboard() {
   }
 
   async function updateStatus(id: number, status: string) {
+    if (recent.find((a) => a.id === id)?.status === 'cancelled') return;
     showLoading();
     try {
       const res = await postAction('admin_update_appointment.php', { appointment_id: id, status });
@@ -389,6 +390,7 @@ export default function AdminDashboard() {
   }
 
   async function updatePayment(id: number, payment_status: string) {
+    if (recent.find((a) => a.id === id)?.status === 'cancelled') return;
     showLoading();
     try {
       const res = await postAction('admin_update_appointment.php', { appointment_id: id, payment_status });
@@ -560,16 +562,16 @@ export default function AdminDashboard() {
                     </td>
                     <td>
                       <div className="ap-row-actions">
-                        <Select className="action-select" value={a.status} onChange={(e) => updateStatus(a.id, e.target.value)}>
+                        <Select className="action-select" value={a.status} disabled={a.status === 'cancelled'} onChange={(e) => updateStatus(a.id, e.target.value)}>
                           {['pending', 'confirmed', 'completed', 'cancelled'].map((o) => (
                             <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>
                           ))}
                         </Select>
-                        <Select className="action-select" value={a.payment_status} onChange={(e) => updatePayment(a.id, e.target.value)}>
+                        <Select className="action-select" value={a.payment_status} disabled={a.status === 'cancelled'} onChange={(e) => updatePayment(a.id, e.target.value)}>
                           <option value="pending">Unpaid</option>
                           <option value="paid">Paid</option>
                         </Select>
-                        <button type="button" className="btn-slip" title="Print appointment slip" onClick={() => printSlip(a)}>
+                        <button type="button" className="btn-slip" title="Print appointment slip" disabled={a.status === 'cancelled'} onClick={() => printSlip(a)}>
                           <IconPrint size={16} /> Print slip
                         </button>
                       </div>

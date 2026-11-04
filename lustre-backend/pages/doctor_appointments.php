@@ -161,9 +161,11 @@ $conn->close();
                             ?>
                             <?php if ($has_result): ?>
                                 <?php if (in_array($s, ['pending', 'confirmed'])): ?>
-                                    <span class="badge" style="background:#fef3c7;color:#92400e;cursor:pointer" title="Draft findings - appointment not yet completed" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="<?php echo $result_attr_d; ?>" data-draft="1" onclick="openResultFromEl(this)">Draft</span>
+                                    <span class="badge" style="background:#fef3c7;color:#92400e;cursor:pointer" title="Draft findings - appointment not yet completed" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="<?php echo $result_attr_d; ?>" data-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>" data-draft="1" onclick="openResultFromEl(this)">Draft</span>
+                                <?php elseif ($s === 'cancelled'): ?>
+                                    <span class="badge badge-completed" title="Cancelled appointments are read-only">Ready</span>
                                 <?php else: ?>
-                                    <span class="badge badge-completed" style="cursor:pointer" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="<?php echo $result_attr_d; ?>" onclick="openResultFromEl(this)">Ready</span>
+                                    <span class="badge badge-completed" style="cursor:pointer" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="<?php echo $result_attr_d; ?>" data-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>" onclick="openResultFromEl(this)">Ready</span>
                                 <?php endif; ?>
                             <?php else: ?>
                                 <span style="color:#94a3b8;font-size:.82rem">No result</span>
@@ -171,26 +173,29 @@ $conn->close();
                         </td>
                         <td style="white-space:nowrap">
                             <div style="display:flex;flex-direction:column;gap:6px;min-width:140px">
-                                <select class="action-select" data-current-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>" data-appointment-date="<?php echo htmlspecialchars($ap['appointment_date'], ENT_QUOTES); ?>" onchange="updateApptStatusDoctor(<?php echo (int)$ap['id']; ?>, this)">
+                                <select class="action-select" data-current-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>" data-appointment-date="<?php echo htmlspecialchars($ap['appointment_date'], ENT_QUOTES); ?>" onchange="updateApptStatusDoctor(<?php echo (int)$ap['id']; ?>, this)" <?php echo $s === 'cancelled' ? 'disabled title="Cancelled appointments are read-only"' : ''; ?>>
                                     <?php foreach (['pending','confirmed','completed','cancelled'] as $opt): ?>
                                         <option value="<?php echo $opt; ?>" <?php echo $s===$opt?'selected':''; ?>><?php echo ucfirst($opt); ?></option>
                                     <?php endforeach; ?>
                                 </select>
+
+                                <button type="button" class="btn-sm btn-vitals" title="<?php echo $s === 'cancelled' ? 'Cancelled appointments are read-only' : 'View patient vitals'; ?>" data-apt="<?php echo (int)$ap['id']; ?>" data-pid="<?php echo (int)$ap['patient_id']; ?>" data-name="<?php echo htmlspecialchars($ap['patient_name'], ENT_QUOTES); ?>" data-code="<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>" data-label="<?php echo htmlspecialchars($date_fmt, ENT_QUOTES); ?> &middot; <?php echo htmlspecialchars($time_fmt, ENT_QUOTES); ?>" onclick="openAptVitalsView(this)" <?php echo $s === 'cancelled' ? 'disabled' : ''; ?>>
                                 <button class="btn-sm btn-vitals" title="View patient vitals" data-apt="<?php echo (int)$ap['id']; ?>" data-pid="<?php echo (int)$ap['patient_id']; ?>" data-name="<?php echo htmlspecialchars($ap['patient_name'], ENT_QUOTES); ?>" data-code="<?php echo htmlspecialchars($ap['unique_code'] ?? '', ENT_QUOTES); ?>" data-label="<?php echo htmlspecialchars($date_fmt, ENT_QUOTES); ?> &middot; <?php echo htmlspecialchars($time_fmt, ENT_QUOTES); ?>" onclick="openAptVitalsView(this)">
+
                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Vitals
                                 </button>
                                 <?php if ($s === 'completed'): ?>
                                     <?php if (!$has_result): ?>
-                                        <button class="btn-sm btn-edit" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="" onclick="openResultFromEl(this)">
+                                        <button class="btn-sm btn-edit" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="" data-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>" onclick="openResultFromEl(this)">
                                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Add Result
                                         </button>
                                     <?php else: ?>
-                                        <button class="btn-sm btn-edit" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="<?php echo $result_attr_d; ?>" onclick="openResultFromEl(this)">
+                                        <button class="btn-sm btn-edit" data-apt="<?php echo (int)$ap['id']; ?>" data-patient="<?php echo $name_attr; ?>" data-result="<?php echo $result_attr_d; ?>" data-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>" onclick="openResultFromEl(this)">
                                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit Result
                                         </button>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    <button class="btn-sm" disabled style="opacity:.5;cursor:not-allowed" title="Mark as completed to add result">
+                                    <button class="btn-sm" disabled style="opacity:.5;cursor:not-allowed" title="<?php echo $s === 'cancelled' ? 'Cancelled appointments are read-only' : 'Mark as completed to add result'; ?>">
                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Add Result
                                     </button>
                                 <?php endif; ?>
@@ -219,6 +224,25 @@ $conn->close();
         <div class="form-group">
             <label>Appointment Result / Findings</label>
             <textarea id="modalResult" rows="8" placeholder="Enter the appointment result, diagnosis, findings, and notes here..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label><input type="checkbox" id="scheduleFollowup" onchange="toggleFollowupFields()"> Schedule a follow-up checkup</label>
+        </div>
+        <div id="followupFields" style="display:none">
+            <div class="form-group">
+                <label for="followupDate">Follow-up date</label>
+                <select id="followupDate" class="form-dropdown" disabled onchange="loadFollowupTimes()">
+                    <option value="">Select a follow-up date</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="followupTime">Follow-up time</label>
+                <select id="followupTime" class="form-dropdown" disabled>
+                    <option value="">Choose a date first</option>
+                </select>
+            </div>
+            <p id="followupError" style="color:#b91c1c;min-height:1.2em" role="alert"></p>
         </div>
 
         <div style="display:flex;gap:.75rem;flex-wrap:wrap">
@@ -296,15 +320,34 @@ $conn->close();
     let currentApptId = null;
     let isCompleteOnly = false;
     let isDraftMode = false;
+    let currentApptStatus = '';
+    let followupDateRequest = 0;
+    let followupTimeRequest = 0;
     function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+    function resyncFollowupSelect(select){
+        if(window.__fdResync) window.__fdResync(select);
+    }
     function openResultFromEl(el){
         var d = el.dataset;
-        openResultModal(parseInt(d.apt,10), d.patient||'', d.result||'', false, true, d.draft==='1');
+        openResultModal(parseInt(d.apt,10), d.patient||'', d.result||'', false, true, d.draft==='1', d.status||'');
     }
-    function openResultModal(id, patientName, result, isEditOnly, completedNoResult, draftMode){
+    function openResultModal(id, patientName, result, isEditOnly, completedNoResult, draftMode, status){
         currentApptId = id;
         isCompleteOnly = !!completedNoResult || !!draftMode;
         isDraftMode = !!draftMode;
+        currentApptStatus = status || '';
+        followupDateRequest++;
+        followupTimeRequest++;
+        document.getElementById('scheduleFollowup').checked = false;
+        document.getElementById('scheduleFollowup').disabled = currentApptStatus !== 'completed';
+        document.getElementById('followupFields').style.display = 'none';
+        document.getElementById('followupError').textContent = '';
+        document.getElementById('followupDate').innerHTML = '<option value="">Select a follow-up date</option>';
+        document.getElementById('followupDate').disabled = true;
+        document.getElementById('followupTime').innerHTML = '<option value="">Choose a date first</option>';
+        document.getElementById('followupTime').disabled = true;
+        resyncFollowupSelect(document.getElementById('followupDate'));
+        resyncFollowupSelect(document.getElementById('followupTime'));
         document.getElementById('modalTitle').innerHTML = isDraftMode ? 'Consultation Findings (Draft)' : (isCompleteOnly ? 'Appointment Result' : 'Complete &amp; Enter Result');
         document.getElementById('saveResultBtn').innerHTML = isDraftMode
             ? '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Save Findings'
@@ -316,6 +359,92 @@ $conn->close();
         document.getElementById('resultModal').classList.add('active');
         document.body.style.overflow = 'hidden';
     }
+    function toggleFollowupFields(){
+        const enabled = document.getElementById('scheduleFollowup').checked;
+        const dateSelect = document.getElementById('followupDate');
+        const timeSelect = document.getElementById('followupTime');
+        document.getElementById('followupFields').style.display = enabled ? '' : 'none';
+        document.getElementById('followupError').textContent = '';
+        followupDateRequest++;
+        followupTimeRequest++;
+        dateSelect.disabled = !enabled;
+        if(!enabled){
+            dateSelect.innerHTML = '<option value="">Select a follow-up date</option>';
+            timeSelect.innerHTML = '<option value="">Choose a date first</option>';
+            timeSelect.disabled = true;
+            resyncFollowupSelect(dateSelect);
+            resyncFollowupSelect(timeSelect);
+            return;
+        }
+        dateSelect.innerHTML = '<option value="">Loading dates...</option>';
+        resyncFollowupSelect(dateSelect);
+        const requestId = ++followupDateRequest;
+        fetch('get_available_dates.php?doctor_id=<?php echo $doctor_id; ?>&days=90&t=' + Date.now())
+            .then(response => {
+                if(!response.ok) throw new Error('Could not load follow-up dates.');
+                return response.json();
+            })
+            .then(dates => {
+                if(requestId !== followupDateRequest) return;
+                if(!Array.isArray(dates)) throw new Error('Could not load follow-up dates.');
+                const today = '<?php echo date('Y-m-d'); ?>';
+                dateSelect.innerHTML = '<option value="">Select a follow-up date</option>';
+                dates.filter(item => item && item.date && item.date > today).forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.date;
+                    option.textContent = item.display || item.date;
+                    dateSelect.appendChild(option);
+                });
+                if(dateSelect.options.length === 1) dateSelect.options[0].textContent = 'No follow-up dates available';
+                resyncFollowupSelect(dateSelect);
+            })
+            .catch(error => {
+                if(requestId !== followupDateRequest) return;
+                dateSelect.innerHTML = '<option value="">Could not load dates</option>';
+                resyncFollowupSelect(dateSelect);
+                document.getElementById('followupError').textContent = error.message || 'Could not load follow-up dates.';
+            });
+    }
+    function loadFollowupTimes(){
+        const dateSelect = document.getElementById('followupDate');
+        const date = dateSelect.value;
+        const timeSelect = document.getElementById('followupTime');
+        const requestId = ++followupTimeRequest;
+        timeSelect.innerHTML = '<option value="">Loading times...</option>';
+        timeSelect.disabled = true;
+        resyncFollowupSelect(timeSelect);
+        document.getElementById('followupError').textContent = '';
+        if(!date || !document.getElementById('scheduleFollowup').checked){
+            timeSelect.innerHTML = '<option value="">Choose a date first</option>';
+            resyncFollowupSelect(timeSelect);
+            return;
+        }
+        fetch('get_available_times.php?doctor_id=<?php echo $doctor_id; ?>&date=' + encodeURIComponent(date) + '&t=' + Date.now())
+            .then(response => {
+                if(!response.ok) throw new Error('Could not load follow-up times.');
+                return response.json();
+            })
+            .then(times => {
+                if(requestId !== followupTimeRequest || dateSelect.value !== date) return;
+                if(!Array.isArray(times)) throw new Error('Could not load follow-up times.');
+                timeSelect.innerHTML = '<option value="">Select a follow-up time</option>';
+                times.forEach(time => {
+                    const option = document.createElement('option');
+                    option.value = time;
+                    option.textContent = new Date('2000-01-01T' + time).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+                    timeSelect.appendChild(option);
+                });
+                timeSelect.disabled = times.length === 0;
+                if(times.length === 0) timeSelect.innerHTML = '<option value="">No follow-up times available</option>';
+                resyncFollowupSelect(timeSelect);
+            })
+            .catch(error => {
+                if(requestId !== followupTimeRequest || dateSelect.value !== date) return;
+                timeSelect.innerHTML = '<option value="">Could not load times</option>';
+                resyncFollowupSelect(timeSelect);
+                document.getElementById('followupError').textContent = error.message || 'Could not load follow-up times.';
+            });
+    }
     function closeResultModal(){
         document.getElementById('resultModal').classList.remove('active');
         document.body.style.overflow = '';
@@ -325,16 +454,36 @@ $conn->close();
         if(!currentApptId) return;
         const result = document.getElementById('modalResult').value.trim();
         if(!result){ showToast('Please enter the appointment result','error'); return; }
+        const followupEnabled = document.getElementById('scheduleFollowup').checked;
+        const followupDate = document.getElementById('followupDate').value;
+        const followupTime = document.getElementById('followupTime').value;
+        if(followupEnabled && currentApptStatus !== 'completed'){
+            showToast('Follow-up appointments can only be scheduled for completed visits','error');
+            return;
+        }
+        if(followupEnabled && (!followupDate || !followupTime)){
+            document.getElementById('followupError').textContent = 'Choose a follow-up date and time.';
+            return;
+        }
         showLoading();
         const fd = new FormData();
         fd.append('appointment_id', currentApptId);
         fd.append('result', result);
+        if(followupEnabled){
+            fd.append('followup_date', followupDate);
+            fd.append('followup_time', followupTime);
+        }
         const action = isCompleteOnly ? 'save_result' : 'complete_and_result';
         fetch('doctor_result_action.php?action=' + action, { method:'POST', body:fd })
         .then(r=>r.text()).then(res=>{
             hideLoading();
             if(res.trim()==='success'){
-                showToast(isDraftMode ? 'Draft findings saved!' : 'Result saved successfully!','success');
+                showToast(
+                    isDraftMode
+                        ? 'Draft findings saved!'
+                        : (followupEnabled ? 'Result saved and follow-up appointment scheduled!' : 'Result saved successfully!'),
+                    'success'
+                );
                 closeResultModal();
                 document.body.classList.add('__leaving');
                 setTimeout(()=>location.reload(),215);
@@ -344,6 +493,10 @@ $conn->close();
     }
 
     function updateApptStatusDoctor(apptId, sel){
+        if(sel.dataset.currentStatus === 'cancelled'){
+            sel.value = 'cancelled';
+            return;
+        }
         const status = sel.value;
         if(status === 'cancelled'){
             openCancelRescheduleModal(apptId, sel);

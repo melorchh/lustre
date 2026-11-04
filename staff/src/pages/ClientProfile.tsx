@@ -147,7 +147,7 @@ export default function ClientProfile({ portal }: Props) {
                   <td><span className={`badge badge-${a.status}`}>{a.status}</span></td>
                   <td>{a.payment_status === 'paid' ? 'Paid' : 'Unpaid'}</td>
                   <td>
-                    {canWriteResults ? (
+                    {canWriteResults && a.status !== 'cancelled' ? (
                       <ResultEditor value={a.result || ''} onSave={(t) => saveResult(a, t)} />
                     ) : (a.result ? <span className="badge badge-completed">Ready</span> : <span style={{ color: '#94a3b8' }}>—</span>)}
                   </td>
