@@ -142,7 +142,7 @@ function AppointmentCard({ apt, onCancel, onResched }: { apt: Appointment; onCan
   const s = statusOf(apt.status);
   const meta = STATUS_META[s] ?? { icon: <SvgClipboard size={22} />, label: apt.status };
   const cancellable = s === 'pending' || s === 'confirmed';
-  const reschedulable = s === 'pending' || s === 'confirmed' || s === 'cancelled';
+  const reschedulable = s === 'pending' || s === 'confirmed' || (s === 'cancelled' && apt.reschedule_count === 0);
   const rescheduleDisabled = appointmentHasPassed(apt);
   return (
     <div className="appt-card">

@@ -19,6 +19,7 @@ export interface Appointment {
   appointment_time: string;
   status: string;
   payment_status: string;
+  reschedule_count: number;
   result: string | null;
   result_date: string | null;
   created_at: string;
