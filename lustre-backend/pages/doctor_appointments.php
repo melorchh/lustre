@@ -153,14 +153,15 @@ $conn->close();
                         <td><?php echo $date_fmt; ?><br><small style="color:#94a3b8"><?php echo $time_fmt; ?></small></td>
                         <td><?php echo htmlspecialchars($ap['service_requested'] ?: 'General consultation'); ?></td>
                         <td>
-                            <span class="badge doctor-status-badge" style="background:<?php echo $status_badge; ?>">
-                                <select class="doctor-status-select" data-current-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>" data-appointment-date="<?php echo htmlspecialchars($ap['appointment_date'], ENT_QUOTES); ?>" onchange="updateApptStatusDoctor(<?php echo (int)$ap['id']; ?>, this)" <?php echo $s === 'cancelled' ? 'disabled title="Cancelled appointments are read-only"' : ''; ?> aria-label="Appointment status">
-                                    <?php foreach (['pending','confirmed','completed','cancelled'] as $opt): ?>
-                                        <option value="<?php echo $opt; ?>" <?php echo $s===$opt?'selected':''; ?>><?php echo ucfirst($opt); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                            <button type="button" class="badge doctor-status-badge" style="background:<?php echo $status_badge; ?>"
+                                data-current-status="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>"
+                                data-appointment-date="<?php echo htmlspecialchars($ap['appointment_date'], ENT_QUOTES); ?>"
+                                onclick="toggleDoctorStatusMenu(this, <?php echo (int)$ap['id']; ?>)"
+                                <?php echo $s === 'cancelled' ? 'disabled title="Cancelled appointments are read-only"' : 'aria-haspopup="menu" aria-expanded="false"'; ?>
+                                aria-label="Appointment status: <?php echo htmlspecialchars(ucfirst($s), ENT_QUOTES); ?>">
+                                <span class="doctor-status-label"><?php echo htmlspecialchars(ucfirst($s)); ?></span>
                                 <svg class="doctor-status-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-                            </span>
+                            </button>
                         </td>
                         <td>
                             <?php
@@ -227,8 +228,8 @@ $conn->close();
             <textarea id="modalResult" rows="8" placeholder="Enter the appointment result, diagnosis, findings, and notes here..."></textarea>
         </div>
 
-        <div class="form-group">
-            <label><input type="checkbox" id="scheduleFollowup" onchange="toggleFollowupFields()"> Schedule a follow-up checkup</label>
+        <div class="form-group followup-check-group">
+            <label class="followup-check-label"><input type="checkbox" id="scheduleFollowup" onchange="toggleFollowupFields()"> <span>Schedule a follow-up checkup</span></label>
         </div>
         <div id="followupFields" style="display:none">
             <div class="form-group">
@@ -493,14 +494,75 @@ $conn->close();
         }).catch(()=>{ hideLoading(); showToast('Error','error'); });
     }
 
-    function updateApptStatusDoctor(apptId, sel){
-        if(sel.dataset.currentStatus === 'cancelled'){
-            sel.value = 'cancelled';
+    let activeDoctorStatusMenu = null;
+    function closeDoctorStatusMenu(){
+        if(!activeDoctorStatusMenu) return;
+        activeDoctorStatusMenu.button.setAttribute('aria-expanded', 'false');
+        activeDoctorStatusMenu.menu.remove();
+        activeDoctorStatusMenu = null;
+    }
+
+    function toggleDoctorStatusMenu(button, apptId){
+        if(button.dataset.currentStatus === 'cancelled' || button.disabled) return;
+        if(activeDoctorStatusMenu && activeDoctorStatusMenu.button === button){
+            closeDoctorStatusMenu();
             return;
         }
-        const status = sel.value;
+        closeDoctorStatusMenu();
+
+        const menu = document.createElement('div');
+        menu.className = 'doctor-status-menu';
+        menu.setAttribute('role', 'menu');
+        ['pending', 'confirmed', 'completed', 'cancelled'].forEach(status => {
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.className = 'doctor-status-menu-option' + (status === button.dataset.currentStatus ? ' is-current' : '');
+            option.setAttribute('role', 'menuitem');
+            option.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            option.addEventListener('click', () => {
+                closeDoctorStatusMenu();
+                updateApptStatusDoctor(apptId, button, status);
+            });
+            menu.appendChild(option);
+        });
+        document.body.appendChild(menu);
+
+        const rect = button.getBoundingClientRect();
+        const menuWidth = Math.min(Math.max(148, rect.width), window.innerWidth - 16);
+        const menuHeight = menu.offsetHeight;
+        const left = Math.min(Math.max(8, rect.left), window.innerWidth - menuWidth - 8);
+        const top = rect.bottom + menuHeight + 8 <= window.innerHeight
+            ? rect.bottom + 5
+            : Math.max(8, rect.top - menuHeight - 5);
+        menu.style.left = left + 'px';
+        menu.style.top = top + 'px';
+        menu.style.minWidth = menuWidth + 'px';
+        activeDoctorStatusMenu = { button, menu };
+        button.setAttribute('aria-expanded', 'true');
+        menu.querySelector('button')?.focus();
+    }
+
+    document.addEventListener('pointerdown', function(event){
+        if(activeDoctorStatusMenu && !activeDoctorStatusMenu.menu.contains(event.target) && !activeDoctorStatusMenu.button.contains(event.target)){
+            closeDoctorStatusMenu();
+        }
+    });
+    document.addEventListener('keydown', function(event){
+        if(event.key === 'Escape' && activeDoctorStatusMenu){
+            const button = activeDoctorStatusMenu.button;
+            closeDoctorStatusMenu();
+            button.focus();
+        }
+    });
+    window.addEventListener('scroll', closeDoctorStatusMenu, true);
+    window.addEventListener('resize', closeDoctorStatusMenu);
+
+    function updateApptStatusDoctor(apptId, button, status){
+        if(button.dataset.currentStatus === 'cancelled'){
+            return;
+        }
         if(status === 'cancelled'){
-            openCancelRescheduleModal(apptId, sel);
+            openCancelRescheduleModal(apptId, button);
             return;
         }
         const fd = new FormData();
@@ -529,7 +591,6 @@ $conn->close();
         pendingDoctorCancellation = { id: apptId, select: sel, previousStatus: sel.dataset.currentStatus || 'pending', date: sel.dataset.appointmentDate || '' };
         const dateRequestId = ++suggestedDateRequest;
         suggestedTimeRequest++;
-        sel.value = pendingDoctorCancellation.previousStatus;
         document.getElementById('cancelReschedulePatient').textContent =
             'Appointment #' + apptId + ' will be cancelled and the patient will receive an email.';
         document.getElementById('cancelRescheduleError').textContent = '';
@@ -574,9 +635,6 @@ $conn->close();
     function closeCancelRescheduleModal(){
         suggestedDateRequest++;
         suggestedTimeRequest++;
-        if(pendingDoctorCancellation){
-            pendingDoctorCancellation.select.value = pendingDoctorCancellation.previousStatus;
-        }
         pendingDoctorCancellation = null;
         document.getElementById('cancelRescheduleModal').classList.remove('active');
     }
@@ -650,7 +708,11 @@ $conn->close();
                 hideLoading();
                 if(result.trim() === 'success'){
                     pendingDoctorCancellation.select.dataset.currentStatus = 'cancelled';
-                    pendingDoctorCancellation.select.value = 'cancelled';
+                    pendingDoctorCancellation.select.disabled = true;
+                    pendingDoctorCancellation.select.querySelector('.doctor-status-label').textContent = 'Cancelled';
+                    pendingDoctorCancellation.select.style.background = '#fee2e2';
+                    pendingDoctorCancellation.select.style.color = '#991b1b';
+                    pendingDoctorCancellation.select.style.color = '#991b1b';
                     pendingDoctorCancellation = null;
                     document.getElementById('cancelRescheduleModal').classList.remove('active');
                     showToast('Appointment cancelled and patient emailed','success');

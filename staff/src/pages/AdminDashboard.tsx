@@ -42,7 +42,7 @@ const EMPTY_APPT = {
 };
 
 const EMPTY_WALKIN = {
-  specialty: '', doctor_id: '', test_procedure: '', other: '', appointment_time: '', arrival_time: '',
+  patient_id: '', specialty: '', doctor_id: '', test_procedure: '', other: '', appointment_time: '', arrival_time: '',
   name: '', contact: '', gender: '', address: '', patient_type: '', age: '',
   weight_kg: '', height_cm: '', blood_pressure: '', heart_rate: '', fundal_height: '',
 };
@@ -76,6 +76,7 @@ export default function AdminDashboard() {
   const history = (bundle.rescheduleHistory as HistoryEntry[]) || [];
 
   const [apptOpen, setApptOpen] = useState(false);
+  const [apptMode, setApptMode] = useState<'booking' | 'returning-walkin'>('booking');
   const [apptForm, setApptForm] = useState({ ...EMPTY_APPT });
   const [slots, setSlots] = useState<string[]>([]);
   const [slotLoading, setSlotLoading] = useState(false);
@@ -89,6 +90,7 @@ export default function AdminDashboard() {
   const [availableDoctorIds, setAvailableDoctorIds] = useState<number[]>([]);
   const [availableDoctorsLoading, setAvailableDoctorsLoading] = useState(false);
   const [availableDoctorsError, setAvailableDoctorsError] = useState('');
+  const walkinFormActive = walkinOpen || (apptOpen && apptMode === 'returning-walkin');
 
   const historyByAppt = useMemo(() => {
     const map: Record<number, HistoryEntry[]> = {};
@@ -112,7 +114,7 @@ export default function AdminDashboard() {
 
   // Load available appointment times when the doctor/date pair changes.
   useEffect(() => {
-    if (!apptOpen || !apptForm.doctor_id || !apptForm.date) {
+    if (!apptOpen || apptMode !== 'booking' || !apptForm.doctor_id || !apptForm.date) {
       setSlots([]);
       setSlotError('');
       return;
@@ -145,11 +147,11 @@ export default function AdminDashboard() {
       })
       .finally(() => { if (alive) setSlotLoading(false); });
     return () => { alive = false; };
-  }, [apptOpen, apptForm.doctor_id, apptForm.date]);
+  }, [apptOpen, apptMode, apptForm.doctor_id, apptForm.date]);
 
   useEffect(() => {
     const doctorId = walkinForm.doctor_id;
-    if (!walkinOpen || !doctorId) {
+    if (!walkinFormActive || !doctorId) {
       setWalkinSlots([]);
       setWalkinSlotLoading(false);
       setWalkinSlotError('');
@@ -200,11 +202,16 @@ export default function AdminDashboard() {
       });
 
     return () => { alive = false; };
-  }, [walkinOpen, walkinForm.doctor_id]);
+  }, [walkinFormActive, walkinForm.doctor_id]);
 
   // Load only doctors the server verifies can take a walk-in today.
   useEffect(() => {
-    if (!walkinOpen) return;
+    if (!walkinFormActive) {
+      setAvailableDoctorIds([]);
+      setAvailableDoctorsLoading(false);
+      setAvailableDoctorsError('');
+      return;
+    }
     let alive = true;
     setAvailableDoctorIds([]);
     setAvailableDoctorsLoading(true);
@@ -247,7 +254,7 @@ export default function AdminDashboard() {
         if (alive) setAvailableDoctorsLoading(false);
       });
     return () => { alive = false; };
-  }, [walkinOpen]);
+  }, [walkinFormActive]);
 
   async function refresh() {
     try {
@@ -260,9 +267,20 @@ export default function AdminDashboard() {
 
   function openAppt() {
     setApptForm({ ...EMPTY_APPT });
+    setApptMode('booking');
+    setWalkinForm({ ...EMPTY_WALKIN, arrival_time: currentTime() });
     setSlots([]);
     setSlotError('');
     setApptOpen(true);
+  }
+
+  function changeApptMode(mode: 'booking' | 'returning-walkin') {
+    setApptMode(mode);
+    setWalkinForm({ ...EMPTY_WALKIN, arrival_time: currentTime() });
+    setAvailableDoctorIds([]);
+    setAvailableDoctorsError('');
+    setWalkinSlots([]);
+    setWalkinSlotError('');
   }
 
   function openWalkin() {
@@ -314,8 +332,10 @@ export default function AdminDashboard() {
   }, [doctors, availableDoctorIds, walkinForm.specialty]);
 
   async function registerWalkin() {
-    if (!walkinForm.name.trim()) { showToast('Patient name required', 'error'); return; }
-    if (!walkinForm.contact.trim()) { showToast('Contact number required', 'error'); return; }
+    const returningPatient = apptOpen && apptMode === 'returning-walkin';
+    if (returningPatient && !walkinForm.patient_id) { showToast('Please select a registered patient', 'error'); return; }
+    if (!returningPatient && !walkinForm.name.trim()) { showToast('Patient name required', 'error'); return; }
+    if (!returningPatient && !walkinForm.contact.trim()) { showToast('Contact number required', 'error'); return; }
     if (!walkinForm.doctor_id) { showToast('Please select a doctor', 'error'); return; }
     if (availableDoctorsLoading || !availableDoctorIds.includes(Number(walkinForm.doctor_id))) {
       showToast('Please select a doctor with verified availability today', 'error');
@@ -346,7 +366,8 @@ export default function AdminDashboard() {
     showLoading();
     try {
       const res = await postAction('admin_walkin_action.php', {
-        action: 'add_walkin',
+        action: returningPatient ? 'add_returning_walkin' : 'add_walkin',
+        patient_id: returningPatient ? walkinForm.patient_id : '',
         name: walkinForm.name,
         contact: walkinForm.contact,
         gender: walkinForm.gender,
@@ -364,8 +385,9 @@ export default function AdminDashboard() {
         test_procedure: proc,
       });
       if (isSuccess(res)) {
-        showToast('Walk-in client registered!', 'success');
-        setWalkinOpen(false);
+        showToast(returningPatient ? 'Returning patient added to the walk-in queue!' : 'Walk-in client registered!', 'success');
+        if (returningPatient) setApptOpen(false);
+        else setWalkinOpen(false);
         refresh();
       } else showToast(res.replace(/^error:\s*/i, ''), 'error');
     } catch (e) {
@@ -633,7 +655,18 @@ export default function AdminDashboard() {
       </Stack>
 
       <Modal open={apptOpen} onClose={() => setApptOpen(false)}>
-        <ModalHead title="New appointment" hint="Book a slot for a registered patient." />
+        <ModalHead
+          title={apptMode === 'booking' ? 'New appointment' : 'Returning walk-in'}
+          hint={apptMode === 'booking'
+            ? 'Book a future slot for a registered patient.'
+            : "Add a returning patient to today's walk-in queue without creating a duplicate patient record."}
+        />
+        <div className="appt-mode-switch" role="group" aria-label="Appointment type">
+          <button type="button" className={apptMode === 'booking' ? 'active' : ''} onClick={() => changeApptMode('booking')}>Future appointment</button>
+          <button type="button" className={apptMode === 'returning-walkin' ? 'active' : ''} onClick={() => changeApptMode('returning-walkin')}>Returning walk-in</button>
+        </div>
+        {apptMode === 'booking' ? (
+        <>
         <label className="form-label">Patient *</label>
         <Select className="form-dropdown form-input" searchable value={apptForm.patient_id} onChange={(e) => setApptForm({ ...apptForm, patient_id: e.target.value })}>
           <option value="">Select patient...</option>
@@ -698,6 +731,95 @@ export default function AdminDashboard() {
           <button type="button" className="btn-secondary" onClick={() => setApptOpen(false)}>Cancel</button>
           <button type="button" className="btn-primary" onClick={bookAppointment}>Book Appointment</button>
         </div>
+        </>
+        ) : (
+        <>
+        <label className="form-label">Registered patient *</label>
+        <Select className="form-dropdown form-input" searchable value={walkinForm.patient_id} onChange={(e) => setWalkinForm({ ...walkinForm, patient_id: e.target.value })}>
+          <option value="">Select returning patient...</option>
+          {patientsList.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}{p.contact ? ` — ${p.contact}` : ''}</option>
+          ))}
+        </Select>
+
+        <div className="form-grid walkin-schedule-grid">
+          <div className="form-group">
+            <label>Specialty</label>
+            <Select className="form-dropdown form-input" value={walkinForm.specialty} onChange={(e) => setWalkinForm({ ...walkinForm, specialty: e.target.value, doctor_id: '', test_procedure: '', other: '' })}>
+              <option value="">All specialties</option>
+              {specialties.map((s) => <option key={s} value={s}>{s}</option>)}
+            </Select>
+          </div>
+          <div className="form-group">
+            <label>Doctor *</label>
+            <Select className="form-dropdown form-input" value={walkinForm.doctor_id} disabled={availableDoctorsLoading || Boolean(availableDoctorsError)} onChange={(e) => setWalkinForm({ ...walkinForm, doctor_id: e.target.value, appointment_time: '', test_procedure: '', other: '' })}>
+              <option value="">{availableDoctorsLoading ? 'Checking availability…' : availableDoctorsError ? 'Availability could not be checked' : 'Select Doctor'}</option>
+              {walkinDoctors.map((doc) => <option key={doc.id} value={doc.id}>Dr. {doc.name} ({doc.specialty})</option>)}
+            </Select>
+            {availableDoctorsError && <p className="form-hint">{availableDoctorsError} Switch modes and try again.</p>}
+          </div>
+          <div className="form-group walkin-procedure-field">
+            <label>Test / Procedure *</label>
+            <Select className="form-dropdown form-input" value={walkinForm.test_procedure} disabled={!walkinForm.doctor_id} onChange={(e) => setWalkinForm({ ...walkinForm, test_procedure: e.target.value, other: e.target.value === OTHER_PROC ? walkinForm.other : '' })}>
+              <option value="" disabled>{walkinForm.doctor_id ? 'Select Test / Procedure' : 'Select a doctor first'}</option>
+              {doctorProcs.map((p) => <option key={p} value={p}>{p}</option>)}
+            </Select>
+            {walkinForm.test_procedure === OTHER_PROC && (
+              <input type="text" className="form-input" style={{ marginTop: '.55rem' }} placeholder="Specify test / procedure..." value={walkinForm.other} onChange={(e) => setWalkinForm({ ...walkinForm, other: e.target.value })} />
+            )}
+          </div>
+          <div className="form-group">
+            <label>Appointment Time *</label>
+            <Select className="form-dropdown form-input" value={walkinForm.appointment_time} disabled={!walkinForm.doctor_id || walkinSlotLoading || walkinSlots.length === 0} onChange={(e) => setWalkinForm({ ...walkinForm, appointment_time: e.target.value })}>
+              <option value="">
+                {!walkinForm.doctor_id
+                  ? 'Select a doctor first'
+                  : walkinSlotLoading
+                    ? 'Loading available times…'
+                    : walkinSlots.length > 0
+                      ? 'Select appointment time'
+                      : 'No available times today'}
+              </option>
+              {walkinSlots.map((time) => <option key={time} value={time}>{fmtTime(time)}</option>)}
+            </Select>
+            {walkinSlotError && <p className="form-hint">{walkinSlotError}</p>}
+          </div>
+          <div className="form-group">
+            <label>Arrival Time *</label>
+            <TimePicker value={walkinForm.arrival_time} onChange={(arrival_time) => setWalkinForm({ ...walkinForm, arrival_time })} />
+          </div>
+        </div>
+        <p className="form-hint">The selected doctor and appointment time must be available today. Arrival time is recorded separately for the queue.</p>
+
+        <p className="form-hint" style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', marginTop: '1rem' }}>Vitals</p>
+        <div className="form-grid">
+          <div className="form-group">
+            <label>Weight (kg)</label>
+            <input type="number" className="form-input" step="0.1" min="0" placeholder="e.g. 58.5" value={walkinForm.weight_kg} onChange={(e) => setWalkinForm({ ...walkinForm, weight_kg: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label>Height (cm)</label>
+            <input type="number" className="form-input" step="0.1" min="0" placeholder="e.g. 160.0" value={walkinForm.height_cm} onChange={(e) => setWalkinForm({ ...walkinForm, height_cm: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label>Blood Pressure *</label>
+            <input type="text" className="form-input" placeholder="e.g. 110/70" value={walkinForm.blood_pressure} onChange={(e) => setWalkinForm({ ...walkinForm, blood_pressure: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label>Heart Rate (bpm) *</label>
+            <input type="number" className="form-input" min="0" max="250" placeholder="e.g. 78" value={walkinForm.heart_rate} onChange={(e) => setWalkinForm({ ...walkinForm, heart_rate: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label>Fundal Height (cm)</label>
+            <input type="number" className="form-input" step="0.1" min="0" max="50" placeholder="e.g. 24.0" value={walkinForm.fundal_height} onChange={(e) => setWalkinForm({ ...walkinForm, fundal_height: e.target.value })} />
+          </div>
+        </div>
+        <div className="form-actions">
+          <button type="button" className="btn-secondary" onClick={() => setApptOpen(false)}>Cancel</button>
+          <button type="button" className="btn-primary" onClick={registerWalkin}>Add to walk-in queue</button>
+        </div>
+        </>
+        )}
       </Modal>
 
       <Modal open={walkinOpen} onClose={() => setWalkinOpen(false)}>

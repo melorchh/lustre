@@ -821,8 +821,7 @@ $conn->close();
         body{animation:__meFade .4s ease both}
         body.__leaving{animation:__meFadeOut .22s ease forwards;pointer-events:none}
         button:not(:disabled):active{transform:scale(.965) !important}
-        .content-card{animation:__meIn .42s cubic-bezier(.22,1,.36,1) both;animation-delay:.1s;opacity:0;animation-fill-mode:both}
-        .stat-card{opacity:0;animation:__meIn .38s cubic-bezier(.22,1,.36,1) both;animation-fill-mode:both}
+        .stat-card{animation:__meIn .38s cubic-bezier(.22,1,.36,1) forwards}
         tr{transition:background .12s}
         .stats-grid .stat-card:nth-child(1){animation-delay:.04s}
         .stats-grid .stat-card:nth-child(2){animation-delay:.09s}
