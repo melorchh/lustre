@@ -1,6 +1,10 @@
 <?php
 require __DIR__ . '/../src/session.php';
-if (!isset($_SESSION["patient_id"])) {
+require_once __DIR__ . '/../src/appointment_reschedule_tokens.php';
+
+$email_token = isset($_POST['token']) ? trim($_POST['token']) : '';
+$email_mode = $email_token !== '';
+if (!isset($_SESSION["patient_id"]) && !$email_mode) {
     echo "error: Please login first";
     exit;
 }
@@ -13,12 +17,23 @@ require_once __DIR__ . '/../src/doctor_capacity.php';
 ensure_time_blocks_schema($conn);
 ensure_doctor_capacity_schema($conn);
 
-$patient_id = $_SESSION["patient_id"];
-$appointment_id = isset($_POST["appointment_id"]) ? intval($_POST["appointment_id"]) : 0;
-$doctor_id = isset($_POST["doctor_id"]) ? intval($_POST["doctor_id"]) : 0;
+$patient_id = isset($_SESSION["patient_id"]) ? (int)$_SESSION["patient_id"] : 0;
+$token_row = $email_mode ? find_appointment_reschedule_token($conn, $email_token) : null;
+$appointment_id = $email_mode
+    ? ($token_row ? $token_row['appointment_id'] : 0)
+    : (isset($_POST["appointment_id"]) ? intval($_POST["appointment_id"]) : 0);
+$doctor_id = $email_mode ? 0 : (isset($_POST["doctor_id"]) ? intval($_POST["doctor_id"]) : 0);
 $date = isset($_POST["date"]) ? trim($_POST["date"]) : '';
 $time = isset($_POST["time"]) ? trim($_POST["time"]) : '';
 $appointment_duration = APPOINTMENT_SLOT_MINUTES; // one slot per appointment
+
+if ($email_mode && !$token_row) {
+    http_response_code(410);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'message' => 'This rescheduling link has expired or was already used. Please contact the clinic.']);
+    $conn->close();
+    exit;
+}
 
 if (empty($appointment_id) || empty($date) || empty($time)) {
     echo "error: Please fill all fields";
@@ -27,8 +42,15 @@ if (empty($appointment_id) || empty($date) || empty($time)) {
 }
 
 // Load the existing appointment — must belong to this patient and be reschedulable
-$stmt = $conn->prepare("SELECT doctor_id, appointment_date, appointment_time, status, reschedule_count FROM appointments WHERE id=? AND patient_id=? AND status IN ('pending','confirmed','cancelled')");
-$stmt->bind_param("ii", $appointment_id, $patient_id);
+$appointment_sql = $email_mode
+    ? "SELECT patient_id, doctor_id, appointment_date, appointment_time, status, reschedule_count FROM appointments WHERE id=? AND status IN ('pending','confirmed','cancelled')"
+    : "SELECT patient_id, doctor_id, appointment_date, appointment_time, status, reschedule_count FROM appointments WHERE id=? AND patient_id=? AND status IN ('pending','confirmed','cancelled')";
+$stmt = $conn->prepare($appointment_sql);
+if ($email_mode) {
+    $stmt->bind_param("i", $appointment_id);
+} else {
+    $stmt->bind_param("ii", $appointment_id, $patient_id);
+}
 $stmt->execute();
 $stmt->store_result();
 if ($stmt->num_rows === 0) {
@@ -37,9 +59,10 @@ if ($stmt->num_rows === 0) {
     $conn->close();
     exit;
 }
-$stmt->bind_result($existing_doctor_id, $old_date, $old_time, $existing_status, $reschedule_count);
+$stmt->bind_result($appointment_patient_id, $existing_doctor_id, $old_date, $old_time, $existing_status, $reschedule_count);
 $stmt->fetch();
 $stmt->close();
+$patient_id = (int)$appointment_patient_id;
 
 if ($existing_status === 'cancelled' && (int)$reschedule_count > 0) {
     echo "error: This cancelled appointment has already been rescheduled";
@@ -79,8 +102,8 @@ $stmt->close();
 // Validate date is not in the past
 $selected_date = strtotime($date);
 $today = strtotime(date('Y-m-d'));
-if ($selected_date < $today) {
-    echo "error: Cannot schedule appointments in the past";
+if ($selected_date === false || date('Y-m-d', $selected_date) !== $date || $selected_date <= $today) {
+    echo "error: Please choose a valid date at least one day in advance";
     $conn->close();
     exit;
 }
@@ -155,6 +178,31 @@ if ($locked_appointment->num_rows === 0) {
 $locked_appointment->bind_result($existing_doctor_id, $old_date, $old_time, $existing_status, $reschedule_count);
 $locked_appointment->fetch();
 $locked_appointment->close();
+if ($email_mode) {
+    $doctor_id = (int)$existing_doctor_id;
+    $consume = $conn->prepare("UPDATE appointment_reschedule_tokens SET used = 1 WHERE token_hash = ? AND appointment_id = ? AND used = 0 AND expires_at > NOW()");
+    $consume->bind_param('si', $token_row['token_hash'], $appointment_id);
+    $consume_ok = $consume->execute();
+    $token_consumed = $consume->affected_rows === 1;
+    $consume_error = $consume->error;
+    $consume->close();
+    if (!$consume_ok || !$token_consumed) {
+        if (!$consume_ok) {
+            error_log('Unable to consume appointment reschedule link: ' . $consume_error);
+        }
+        $pdo->rollBack();
+        http_response_code($consume_ok ? 410 : 500);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'success' => false,
+            'message' => $consume_ok
+                ? 'This rescheduling link has expired or was already used. Please contact the clinic.'
+                : 'Unable to submit your request. Please try again.',
+        ]);
+        $conn->close();
+        exit;
+    }
+}
 
 if ($existing_status === 'cancelled' && (int)$reschedule_count > 0) {
     $pdo->rollBack();
@@ -207,8 +255,38 @@ if ($stmt->execute() && $stmt->affected_rows >= 0) {
     // Log the reschedule into history so admins can see old -> new details
     $hist = $conn->prepare("INSERT INTO reschedule_history (appointment_id, old_date, old_time, new_date, new_time, rescheduled_at) VALUES (?, ?, ?, ?, ?, NOW())");
     $hist->bind_param("issss", $appointment_id, $old_date, $old_time, $date, $time_with_seconds);
-    $hist->execute();
+    $history_saved = $hist->execute();
+    $history_error = $hist->error;
     $hist->close();
+
+    if ($email_mode && !$history_saved) {
+        error_log('Unable to save reschedule history for appointment ' . $appointment_id . ': ' . $history_error);
+        $pdo->rollBack();
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'message' => 'Unable to save your rescheduling request. Please try again.']);
+        $stmt->close();
+        $conn->close();
+        exit;
+    }
+
+    if ($email_mode) {
+        $invalidate = $conn->prepare("UPDATE appointment_reschedule_tokens SET used = 1 WHERE appointment_id = ? AND used = 0");
+        $invalidate->bind_param('i', $appointment_id);
+        $invalidate_ok = $invalidate->execute();
+        $invalidate_error = $invalidate->error;
+        $invalidate->close();
+        if (!$invalidate_ok) {
+            error_log('Unable to invalidate appointment reschedule links: ' . $invalidate_error);
+            $pdo->rollBack();
+            http_response_code(500);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'message' => 'Unable to submit your request. Please try again.']);
+            $stmt->close();
+            $conn->close();
+            exit;
+        }
+    }
 
     if (!$pdo->commit()) {
         if ($pdo->inTransaction()) {
