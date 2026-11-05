@@ -369,8 +369,8 @@ function fill_color($s) {
                 <label>Notes / Result / Findings</label>
                 <textarea id="dashResult" rows="6" placeholder="Enter the diagnosis, findings, and notes for this consultation..."></textarea>
             </div>
-            <div class="form-group">
-                <label><input type="checkbox" id="dashScheduleFollowup" onchange="toggleDashFollowupFields()"> Schedule a follow-up checkup</label>
+            <div class="form-group followup-check-group">
+                <label class="followup-check-label"><input type="checkbox" id="dashScheduleFollowup" onchange="toggleDashFollowupFields()"> <span>Schedule a follow-up checkup</span></label>
             </div>
             <div id="dashFollowupFields" style="display:none">
                 <div class="form-group">
