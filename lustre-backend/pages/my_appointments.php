@@ -32,6 +32,7 @@ $stmt = $conn->prepare("
         a.appointment_time,
         a.status,
         a.payment_status,
+        a.reschedule_count,
         a.created_at,
         a.result,
         a.result_date,
