@@ -129,7 +129,14 @@ if (!function_exists('send_appointment_email')) {
                 break;
 
             case 'cancelled':
-                $reschedule_url = appointment_page_url('my_appointments.php', array('reschedule' => $a['id']));
+                require_once __DIR__ . '/../src/appointment_reschedule_tokens.php';
+                try {
+                    $reschedule_token = create_appointment_reschedule_token($conn, $a['id']);
+                } catch (Throwable $e) {
+                    error_log('Unable to create appointment reschedule link (appt=' . $appointment_id . '): ' . $e->getMessage());
+                    return false;
+                }
+                $reschedule_url = appointment_page_url('email_reschedule.php', array('token' => $reschedule_token));
                 $subject = 'Appointment Cancelled — Reschedule Online — ' . $ref;
                 $title   = 'Your appointment has been cancelled.';
                 $body    = "Hi {$name},\n\n"
@@ -142,7 +149,7 @@ if (!function_exists('send_appointment_email')) {
                 }
                 $body .= "Choose a new date and time here:\n"
                     . "{$reschedule_url}\n\n"
-                    . "Sign in to your patient account if prompted, then choose the suggested time or another available slot.\n\n"
+                    . "Choose an available date and time without signing in. This secure link expires in 7 days and can only be used once.\n\n"
                     . "— LustreMDC Clinics & Diagnostics";
                 break;
 
