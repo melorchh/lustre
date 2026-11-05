@@ -31,6 +31,32 @@
   color: #475569;
   margin: 0.6rem 0 0.3rem;
 }
+.appt-mode-switch {
+  display: flex;
+  gap: 0.35rem;
+  margin: 0 0 1rem;
+  padding: 0.3rem;
+  border: 1px solid var(--ap-border);
+  border-radius: 10px;
+  background: var(--ap-surface-2);
+}
+.appt-mode-switch button {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ap-muted);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.appt-mode-switch button.active {
+  background: var(--ap-surface);
+  color: var(--ap-accent);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+}
 .lab-package-catalog {
   display: grid;
   gap: 0.9rem;

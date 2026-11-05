@@ -23,7 +23,177 @@ $conn->query("ALTER TABLE patients ADD CONSTRAINT patients_patient_type_check CH
 
 $action = $_POST['action'] ?? '';
 
-if ($action === 'add_walkin') {
+if ($action === 'add_returning_walkin') {
+    $patient_id = isset($_POST['patient_id']) ? (int)$_POST['patient_id'] : 0;
+    $doctor_id = isset($_POST['doctor_id']) ? (int)$_POST['doctor_id'] : 0;
+    $appointment_time = trim($_POST['appointment_time'] ?? '');
+    $arrival_time = trim($_POST['arrival_time'] ?? '');
+    $test_procedure = trim($_POST['test_procedure'] ?? '');
+    $weight = trim($_POST['weight_kg'] ?? '');
+    $height = trim($_POST['height_cm'] ?? '');
+    $blood_pressure = trim($_POST['blood_pressure'] ?? '');
+    $heart_rate = trim($_POST['heart_rate'] ?? '');
+    $fundal_height = trim($_POST['fundal_height'] ?? '');
+
+    if ($patient_id <= 0) { echo 'Please select a registered patient.'; $conn->close(); exit; }
+    if ($doctor_id <= 0) { echo 'Please select a doctor.'; $conn->close(); exit; }
+    if ($test_procedure === '') { echo 'Please select a test / procedure.'; $conn->close(); exit; }
+    if (!preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $appointment_time)) {
+        echo 'Please select an available appointment time.';
+        $conn->close();
+        exit;
+    }
+    if (!preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $arrival_time)) {
+        echo 'Please enter a valid arrival time.';
+        $conn->close();
+        exit;
+    }
+    if ($blood_pressure === '' || !preg_match('/^\d{2,3}\/\d{2,3}$/', $blood_pressure)) {
+        echo 'Blood pressure is required (e.g. 110/70).';
+        $conn->close();
+        exit;
+    }
+    if ($heart_rate === '' || !is_numeric($heart_rate) || (int)$heart_rate < 0 || (int)$heart_rate > 250) {
+        echo 'Heart rate is required (0-250 bpm).';
+        $conn->close();
+        exit;
+    }
+    if ($weight !== '' && (!is_numeric($weight) || (float)$weight <= 0)) {
+        echo 'Please provide a valid weight.';
+        $conn->close();
+        exit;
+    }
+    if ($height !== '' && (!is_numeric($height) || (float)$height <= 0 || (float)$height > 300)) {
+        echo 'Please provide a valid height.';
+        $conn->close();
+        exit;
+    }
+    if ($fundal_height !== '' && (!is_numeric($fundal_height) || (float)$fundal_height < 0 || (float)$fundal_height > 50)) {
+        echo 'Invalid fundal height.';
+        $conn->close();
+        exit;
+    }
+    if (appointment_time_overlaps_lunch_break($appointment_time, 60)) {
+        echo 'Appointments are unavailable from 12:00 PM to 1:00 PM.';
+        $conn->close();
+        exit;
+    }
+
+    $date = date('Y-m-d');
+    $arrival_hm = date('H:i:s', strtotime($arrival_time));
+    $appointment_hm = date('H:i:s', strtotime($appointment_time));
+    $weight_value = $weight !== '' ? (float)$weight : null;
+    $height_value = $height !== '' ? (float)$height : null;
+    $heart_rate_value = (int)$heart_rate;
+    $fundal_height_value = $fundal_height !== '' ? (float)$fundal_height : null;
+
+    $pdo = $conn->getPdo();
+    if (!$pdo->beginTransaction()) {
+        http_response_code(500);
+        echo 'Could not start walk-in registration. Please try again.';
+        $conn->close();
+        exit;
+    }
+    $abortReturningWalkin = function ($message, $http_status = 400) use ($pdo, $conn) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        http_response_code($http_status);
+        echo $message;
+        $conn->close();
+        exit;
+    };
+
+    $patient_lock = $conn->prepare("SELECT id FROM patients WHERE id = ? FOR UPDATE");
+    if (!$patient_lock) $abortReturningWalkin('Could not verify the selected patient. Please try again.', 500);
+    $patient_lock->bind_param("i", $patient_id);
+    if (!$patient_lock->execute()) {
+        $patient_lock->close();
+        $abortReturningWalkin('Could not verify the selected patient. Please try again.', 500);
+    }
+    $patient_lock->store_result();
+    $patient_exists = $patient_lock->num_rows > 0;
+    $patient_lock->close();
+    if (!$patient_exists) $abortReturningWalkin('The selected patient could not be found.');
+
+    $doctor_check = $conn->prepare("SELECT id FROM doctors WHERE id = ?");
+    if (!$doctor_check) $abortReturningWalkin('Could not verify the selected doctor. Please try again.', 500);
+    $doctor_check->bind_param("i", $doctor_id);
+    if (!$doctor_check->execute()) {
+        $doctor_check->close();
+        $abortReturningWalkin('Could not verify the selected doctor. Please try again.', 500);
+    }
+    $doctor_check->store_result();
+    $doctor_exists = $doctor_check->num_rows > 0;
+    $doctor_check->close();
+    if (!$doctor_exists) $abortReturningWalkin('The selected doctor could not be found.');
+
+    $daily_limit = doctor_daily_limit_status($conn, $doctor_id, $date, true);
+    if ($daily_limit === null) $abortReturningWalkin('Could not verify the selected doctor\'s availability. Please try again.', 500);
+    if (!$daily_limit['available']) $abortReturningWalkin('The selected doctor has reached the daily patient limit. Please pick another doctor.');
+
+    $slot_available = doctor_slot_is_available($conn, $doctor_id, $date, $appointment_time);
+    if ($slot_available === null) $abortReturningWalkin('Could not verify the selected time. Please try again.', 500);
+    if (!$slot_available) $abortReturningWalkin('The selected time is no longer available for this doctor. Choose another time.');
+
+    $walkin = $conn->prepare("INSERT INTO walk_ins (patient_id, doctor_id, arrival_date, arrival_time, test_procedure, status) VALUES (?, ?, ?, ?, ?, 'waiting')");
+    if (!$walkin) $abortReturningWalkin('Could not add the patient to the walk-in queue. Please try again.', 500);
+    $walkin->bind_param("iisss", $patient_id, $doctor_id, $date, $arrival_hm, $test_procedure);
+    if (!$walkin->execute()) {
+        error_log('[admin-walkin] Could not create returning patient queue entry: ' . $walkin->error);
+        $walkin->close();
+        $abortReturningWalkin('Could not add the patient to the walk-in queue. Please try again.', 500);
+    }
+    $walkin->close();
+
+    $appointment_duration = 60;
+    $appointment = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, appointment_duration, service_requested, status, payment_status, reminder_sent) VALUES (?, ?, ?, ?, ?, ?, 'confirmed', 'pending', 1)");
+    if (!$appointment) $abortReturningWalkin('Could not create the walk-in appointment. Please try again.', 500);
+    $appointment->bind_param("iissis", $patient_id, $doctor_id, $date, $appointment_hm, $appointment_duration, $test_procedure);
+    if (!$appointment->execute()) {
+        error_log('[admin-walkin] Could not create returning patient appointment: ' . $appointment->error);
+        $appointment->close();
+        $abortReturningWalkin('Could not create the walk-in appointment. Please try again.', 500);
+    }
+    $appointment_id = (int)$appointment->insert_id;
+    $appointment->close();
+
+    $vitals = $conn->prepare("INSERT INTO vitals (patient_id, appointment_id, visit_date, weight_kg, height_cm, blood_pressure, heart_rate, fundal_height) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    if (!$vitals) $abortReturningWalkin('Could not save the patient\'s vitals. Please try again.', 500);
+    $vitals->bind_param("iisddsid", $patient_id, $appointment_id, $date, $weight_value, $height_value, $blood_pressure, $heart_rate_value, $fundal_height_value);
+    if (!$vitals->execute()) {
+        error_log('[admin-walkin] Could not save returning patient vitals: ' . $vitals->error);
+        $vitals->close();
+        $abortReturningWalkin('Could not save the patient\'s vitals. Please try again.', 500);
+    }
+    $vitals->close();
+
+    if ($weight_value !== null && $height_value !== null) {
+        $profile_update = $conn->prepare("UPDATE patients SET weight_kg = ?, height_cm = ? WHERE id = ?");
+        if (!$profile_update) $abortReturningWalkin('Could not update the patient profile. Please try again.', 500);
+        $profile_update->bind_param("ddi", $weight_value, $height_value, $patient_id);
+    } elseif ($weight_value !== null) {
+        $profile_update = $conn->prepare("UPDATE patients SET weight_kg = ? WHERE id = ?");
+        if (!$profile_update) $abortReturningWalkin('Could not update the patient profile. Please try again.', 500);
+        $profile_update->bind_param("di", $weight_value, $patient_id);
+    } elseif ($height_value !== null) {
+        $profile_update = $conn->prepare("UPDATE patients SET height_cm = ? WHERE id = ?");
+        if (!$profile_update) $abortReturningWalkin('Could not update the patient profile. Please try again.', 500);
+        $profile_update->bind_param("di", $height_value, $patient_id);
+    } else {
+        $profile_update = null;
+    }
+    if ($profile_update) {
+        if (!$profile_update->execute()) {
+            $profile_update->close();
+            $abortReturningWalkin('Could not update the patient profile. Please try again.', 500);
+        }
+        $profile_update->close();
+    }
+
+    if (!$pdo->commit()) $abortReturningWalkin('Could not save the walk-in registration. Please try again.', 500);
+    echo 'success:' . $patient_id;
+} elseif ($action === 'add_walkin') {
     $name    = trim($_POST['name'] ?? '');
     $email   = trim($_POST['email'] ?? '');
     $contact = trim($_POST['contact'] ?? '');
