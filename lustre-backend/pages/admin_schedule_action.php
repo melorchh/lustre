@@ -76,8 +76,8 @@ elseif ($action === 'toggle') {
     $schedule_id = isset($_POST['schedule_id']) ? intval($_POST['schedule_id']) : 0;
     $is_active = isset($_POST['is_active']) ? intval($_POST['is_active']) : 0;
 
-    if (empty($schedule_id)) {
-        echo "error: Invalid schedule ID";
+    if (empty($schedule_id) || !in_array($is_active, [0, 1], true)) {
+        echo "error: Invalid schedule status";
         $conn->close();
         exit;
     }

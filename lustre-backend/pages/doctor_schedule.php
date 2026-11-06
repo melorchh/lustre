@@ -127,12 +127,12 @@ function me_time($t){ return (new DateTime($t))->format('g:i A'); }
                                         <span><?php echo me_time($sched['start_time']); ?> &ndash; <?php echo me_time($sched['end_time']); ?></span>
                                     </div>
                                     <label class="switch" title="Toggle availability">
-                                        <input type="checkbox" <?php echo $sched_active ? 'checked' : ''; ?> onchange="toggleDay(<?php echo (int)$sched['id']; ?>, this.checked)">
+                                        <input type="checkbox" <?php echo $sched_active ? 'checked' : ''; ?> onchange="toggleDay(<?php echo (int)$sched['id']; ?>, this.checked, this)">
                                         <span class="slider"></span>
                                     </label>
                                 </div>
                                 <div style="display:flex;gap:.5rem">
-                                    <button class="btn-sm btn-edit" onclick="openEditModal(<?php echo (int)$sched['id']; ?>, '<?php echo $day; ?>', '<?php echo $sched['start_time']; ?>', '<?php echo $sched['end_time']; ?>')">Edit</button>
+                                    <button class="btn-sm btn-edit" onclick="openEditModal(<?php echo (int)$sched['id']; ?>, '<?php echo $day; ?>', '<?php echo date('H:i', strtotime($sched['start_time'])); ?>', '<?php echo date('H:i', strtotime($sched['end_time'])); ?>')">Edit</button>
                                     <button class="btn-sm btn-delete" onclick="deleteSchedule(<?php echo (int)$sched['id']; ?>)">Remove</button>
                                 </div>
                             </div>
@@ -361,9 +361,9 @@ function me_time($t){ return (new DateTime($t))->format('g:i A'); }
         });
 
         function openAddModal(day){
+            document.getElementById('addForm').reset();
             document.getElementById('addDay').value = day;
             document.getElementById('addDayLabel').textContent = 'Set your availability for ' + day + '.';
-            document.getElementById('addForm').reset();
             openModal('addModal');
         }
         document.getElementById('addForm').addEventListener('submit', function(e){
@@ -387,16 +387,24 @@ function me_time($t){ return (new DateTime($t))->format('g:i A'); }
             .catch(()=>{hideLoading();showToast('Error','error');});
         });
 
-        function toggleDay(id, checked){
+        function toggleDay(id, checked, input){
             const fd = new FormData();
             fd.append('schedule_id', id);
             fd.append('is_active', checked ? '1' : '0');
+            input.disabled = true;
             fetch('doctor_schedule_action.php?action=toggle_active',{method:'POST',body:fd})
             .then(r=>r.text()).then(res=>{
-                if(res.trim()==='success'){ showToast('Availability updated!','success'); }
-                else { showToast(res,'error'); }
+                if(res.trim()==='success'){
+                    showToast('Availability updated!','success');
+                    document.body.classList.add('__leaving');
+                    setTimeout(()=>location.reload(),215);
+                } else {
+                    input.checked = !checked;
+                    showToast(res,'error');
+                }
             })
-            .catch(()=>{showToast('Error','error');});
+            .catch(()=>{input.checked = !checked;showToast('Error','error');})
+            .finally(()=>{input.disabled = false;});
         }
 
         let isDeleting = false;

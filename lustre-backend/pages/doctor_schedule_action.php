@@ -81,16 +81,22 @@ if ($action === 'add') {
     $schedule_id = isset($_POST['schedule_id']) ? (int)$_POST['schedule_id'] : 0;
     $is_active   = isset($_POST['is_active']) ? (int)$_POST['is_active'] : 0;
 
-    if (!$schedule_id) { echo "Invalid schedule"; $conn->close(); exit; }
+    if (!$schedule_id || !in_array($is_active, [0, 1], true)) { echo "Invalid schedule status"; $conn->close(); exit; }
     if (!own_schedule($conn, $doctor_id, $schedule_id)) {
         echo "You are not allowed to modify this schedule"; $conn->close(); exit;
     }
 
     $stmt = $conn->prepare("UPDATE doctor_schedules SET is_active = ? WHERE id = ?");
     $stmt->bind_param("ii", $is_active, $schedule_id);
-    echo $stmt->execute() ? "success" : "Failed: " . $stmt->error;
+    $updated = $stmt->execute();
+    echo $updated ? "success" : "Failed to update availability";
     $stmt->close();
-    sync_doctor_schedule_text($conn, $doctor_id);
+    if ($updated) {
+        sync_doctor_schedule_text($conn, $doctor_id);
+        if ($is_active === 0) {
+            cancel_unavailable_appointments($conn, $doctor_id);
+        }
+    }
 
 } elseif ($action === 'delete') {
     $schedule_id = isset($_POST['schedule_id']) ? (int)$_POST['schedule_id'] : 0;
