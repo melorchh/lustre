@@ -192,6 +192,8 @@ if ($action === 'add_returning_walkin') {
     }
 
     if (!$pdo->commit()) $abortReturningWalkin('Could not save the walk-in registration. Please try again.', 500);
+    require_once __DIR__ . '/appointment_mailer.php';
+    send_appointment_notification($conn, $appointment_id, 'confirmed');
     echo 'success:' . $patient_id;
 } elseif ($action === 'add_walkin') {
     $name    = trim($_POST['name'] ?? '');
@@ -478,6 +480,9 @@ if ($action === 'add_returning_walkin') {
             $conn->close();
             exit;
         }
+
+        require_once __DIR__ . '/appointment_mailer.php';
+        send_appointment_notification($conn, $appointment_id, 'confirmed');
 
         echo "success:" . $newId;
     } else {

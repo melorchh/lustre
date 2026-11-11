@@ -35,7 +35,7 @@ function lustre_env($key, $default = '')
 }
 }
 
-// Optional local fallback: array of DB_*/SMTP_*/GROQ_*/CRON_* overrides.
+// Optional local fallback: array of DB_*/SMTP_*/GROQ_*/TEXTBEE_*/CRON_* overrides.
 $__env_local = __DIR__ . '/../env.local.php';
 if (is_file($__env_local)) {
     $__env_vals = include $__env_local;

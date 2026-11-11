@@ -32,10 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param("si", $status, $appointment_id);
         
         if ($stmt->execute()) {
-            // Notify the patient by email for meaningful status changes
+            // Notify the patient by email and SMS for appointment status changes.
             require_once __DIR__ . '/appointment_mailer.php';
             $event = $status; // confirmed / cancelled / completed map directly to mailer events
-            send_appointment_email($conn, $appointment_id, $event);
+            send_appointment_notification($conn, $appointment_id, $event);
             echo "success";
         } else {
             echo "error: Failed to update status";

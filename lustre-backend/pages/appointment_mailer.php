@@ -1,6 +1,6 @@
 <?php
 /**
- * Appointment email notifications for LustreMDC.
+ * Appointment email and SMS notifications for LustreMDC.
  *
  * Reusable helper that looks up an appointment and emails the patient
  * for key events. Designed to be non-fatal: any SMTP failure is logged and
@@ -56,7 +56,7 @@ if (!function_exists('send_appointment_email')) {
      * @param string|null $suggested_time Optional replacement time for cancellation emails
      * @return bool
      */
-    function send_appointment_email($conn, $appointment_id, $event, $suggested_date = null, $suggested_time = null)
+    function send_appointment_email($conn, $appointment_id, $event, $suggested_date = null, $suggested_time = null, $reschedule_url = null)
     {
         $allowed = array('booked', 'confirmed', 'cancelled', 'completed', 'rescheduled', 'reminder', 'result');
         if (!in_array($event, $allowed, true)) {
@@ -129,14 +129,16 @@ if (!function_exists('send_appointment_email')) {
                 break;
 
             case 'cancelled':
-                require_once __DIR__ . '/../src/appointment_reschedule_tokens.php';
-                try {
-                    $reschedule_token = create_appointment_reschedule_token($conn, $a['id']);
-                } catch (Throwable $e) {
-                    error_log('Unable to create appointment reschedule link (appt=' . $appointment_id . '): ' . $e->getMessage());
-                    return false;
+                if ($reschedule_url === null) {
+                    require_once __DIR__ . '/../src/appointment_reschedule_tokens.php';
+                    try {
+                        $reschedule_token = create_appointment_reschedule_token($conn, $a['id']);
+                    } catch (Throwable $e) {
+                        error_log('Unable to create appointment reschedule link (appt=' . $appointment_id . '): ' . $e->getMessage());
+                        return false;
+                    }
+                    $reschedule_url = appointment_page_url('email_reschedule.php', array('token' => $reschedule_token));
                 }
-                $reschedule_url = appointment_page_url('email_reschedule.php', array('token' => $reschedule_token));
                 $subject = 'Appointment Cancelled — Reschedule Online — ' . $ref;
                 $title   = 'Your appointment has been cancelled.';
                 $body    = "Hi {$name},\n\n"
@@ -215,6 +217,92 @@ if (!function_exists('send_appointment_email')) {
         } catch (Exception $e) {
             error_log('Appointment email failed (event=' . $event . ', appt=' . $appointment_id . '): ' . $e->getMessage());
             return false;
+        }
+    }
+
+    if (!function_exists('send_appointment_sms')) {
+        function send_appointment_sms($conn, $appointment_id, $event, $reschedule_url = null)
+        {
+            if (!in_array($event, array('confirmed', 'cancelled', 'rescheduled', 'reminder'), true)) {
+                return false;
+            }
+
+            $stmt = $conn->prepare("
+                SELECT a.id, a.appointment_date, a.appointment_time,
+                       p.contact AS patient_contact, d.name AS doctor_name
+                FROM appointments a
+                JOIN patients p ON a.patient_id = p.id
+                JOIN doctors d ON a.doctor_id = d.id
+                WHERE a.id = ?
+            ");
+            $stmt->bind_param('i', $appointment_id);
+            if (!$stmt->execute()) {
+                error_log('Unable to load appointment for SMS (appt=' . $appointment_id . '): ' . $stmt->error);
+                $stmt->close();
+                return false;
+            }
+            $result = $stmt->get_result();
+            $appointment = $result ? $result->fetch_assoc() : null;
+            $stmt->close();
+
+            if (!$appointment) {
+                error_log('SMS notification skipped: appointment not found (appt=' . $appointment_id . ').');
+                return false;
+            }
+            if (trim((string)$appointment['patient_contact']) === '') {
+                error_log('SMS notification skipped: patient has no contact number (appt=' . $appointment_id . ').');
+                return false;
+            }
+
+            require_once __DIR__ . '/../src/TextBeeSMS.php';
+
+            $reference = 'APPT-' . str_pad($appointment['id'], 6, '0', STR_PAD_LEFT);
+            $date = date('M j, Y', strtotime($appointment['appointment_date']));
+            $time = date('g:i A', strtotime($appointment['appointment_time']));
+            $doctor = 'Dr. ' . $appointment['doctor_name'];
+
+            switch ($event) {
+                case 'confirmed':
+                    $message = "LustreMDC: Your appointment {$reference} with {$doctor} is confirmed for {$date} at {$time}.";
+                    break;
+                case 'cancelled':
+                    $message = "LustreMDC: Appointment {$reference} with {$doctor} on {$date} at {$time} has been cancelled.";
+                    $message .= $reschedule_url !== null
+                        ? " Reschedule securely here: {$reschedule_url} (link expires in 7 days)."
+                        : ' Please contact the clinic to arrange a new appointment.';
+                    break;
+                case 'rescheduled':
+                    $message = "LustreMDC: Appointment {$reference} with {$doctor} is now scheduled for {$date} at {$time}. Your request is pending clinic confirmation.";
+                    break;
+                case 'reminder':
+                    $message = "LustreMDC reminder: Appointment {$reference} with {$doctor} is on {$date} at {$time}. Please arrive on time.";
+                    break;
+                default:
+                    return false;
+            }
+
+            return textbee_send_sms($appointment['patient_contact'], $message);
+        }
+    }
+
+    if (!function_exists('send_appointment_notification')) {
+        function send_appointment_notification($conn, $appointment_id, $event, $suggested_date = null, $suggested_time = null)
+        {
+            $reschedule_url = null;
+            if ($event === 'cancelled') {
+                try {
+                    require_once __DIR__ . '/../src/appointment_reschedule_tokens.php';
+                    $token = create_appointment_reschedule_token($conn, $appointment_id);
+                    $reschedule_url = appointment_page_url('email_reschedule.php', array('token' => $token));
+                } catch (Throwable $e) {
+                    error_log('Unable to prepare appointment reschedule notification (appt=' . $appointment_id . '): ' . $e->getMessage());
+                }
+            }
+
+            $email_sent = send_appointment_email($conn, $appointment_id, $event, $suggested_date, $suggested_time, $reschedule_url);
+            $sms_sent = send_appointment_sms($conn, $appointment_id, $event, $reschedule_url);
+
+            return $email_sent || $sms_sent;
         }
     }
 }

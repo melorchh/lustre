@@ -1,8 +1,8 @@
 <?php
 // ===========================================================================
 // Automated appointment reminder — run ~1 hour before the schedule.
-// Finds confirmed/pending appointments starting in roughly 1 hour and emails
-// the patient a reminder. Marks each as reminded so it is never sent twice,
+// Finds confirmed/pending appointments starting in roughly 1 hour and sends
+// the patient an email and/or SMS reminder. Marks each as reminded so it is never sent twice,
 // even if this script runs multiple times within the window.
 //
 // Vercel does not support server-cron in the way XAMPP's Task Scheduler did,
@@ -76,7 +76,7 @@ require_once __DIR__ . '/appointment_mailer.php';
 
 $sent = 0;
 foreach ($ids as $id) {
-    if (send_appointment_email($conn, $id, 'reminder')) {
+    if (send_appointment_notification($conn, $id, 'reminder')) {
         $upd = $conn->prepare("UPDATE appointments SET reminder_sent = 1 WHERE id = ?");
         $upd->bind_param('i', $id);
         $upd->execute();
