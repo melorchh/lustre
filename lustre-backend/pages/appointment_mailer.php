@@ -266,10 +266,11 @@ if (!function_exists('send_appointment_email')) {
                     $message = "LustreMDC: Your appointment {$reference} with {$doctor} is confirmed for {$date} at {$time}.";
                     break;
                 case 'cancelled':
-                    $message = "LustreMDC: Appointment {$reference} with {$doctor} on {$date} at {$time} has been cancelled.";
-                    $message .= $reschedule_url !== null
-                        ? " Reschedule securely here: {$reschedule_url} (link expires in 7 days)."
-                        : ' Please contact the clinic to arrange a new appointment.';
+                    // Keep the link message short: long URL-bearing SMS can be rejected
+                    // or split by carriers/devices that do not reliably handle multipart SMS.
+                    $message = $reschedule_url !== null
+                        ? "LustreMDC: Reschedule (7 days): {$reschedule_url}"
+                        : "LustreMDC: Appointment {$reference} cancelled. Please contact the clinic to reschedule.";
                     break;
                 case 'rescheduled':
                     $message = "LustreMDC: Appointment {$reference} with {$doctor} is now scheduled for {$date} at {$time}. Your request is pending clinic confirmation.";
