@@ -57,6 +57,7 @@ $walkins = $conn->query("
     FROM walk_ins w
     JOIN patients p ON w.patient_id = p.id
     WHERE w.doctor_id = $doctor_id AND w.arrival_date = '$queue_today'
+      AND w.status IN ('waiting', 'in_service')
     ORDER BY w.arrival_time ASC, w.created_at ASC, w.id ASC
 ");
 if ($walkins) {
@@ -399,7 +400,7 @@ function fill_color($s) {
     <div class="result-modal" id="walkinResultModal">
         <div class="result-modal-box">
             <button class="result-close" onclick="closeWalkinResultModal()">&#10005;</button>
-            <h3 id="wqResultTitle">Consultation Result</h3>
+            <h3 id="wqResultTitle">Appointment Consultation Result</h3>
             <div class="info-row" id="wqResultInfoRow"></div>
             <div class="form-group">
                 <label>Consultation Checklist</label>
@@ -1013,10 +1014,9 @@ function fill_color($s) {
         let wqModalMode = 'edit';
         let wqModalId = null;
         function wqInfoHtml(row){
-            return '<div class="info-item"><label>Queue</label><span>#'+row.queue+'</span></div>' +
-                '<div class="info-item"><label>Patient</label><span>'+wqEsc(row.name)+'</span></div>' +
-                '<div class="info-item"><label>Test / Procedure</label><span>'+(row.procedure?wqEsc(row.procedure):'—')+'</span></div>' +
-                '<div class="info-item"><label>Status</label><span>'+wqLabel(row.status)+'</span></div>';
+            return '<div class="info-item"><label>Patient</label><span>'+wqEsc(row.name)+'</span></div>' +
+                '<div class="info-item"><label>Service</label><span>'+(row.procedure?wqEsc(row.procedure):'—')+'</span></div>' +
+                '<div class="info-item"><label>Appt ID</label><span>'+(row.appointment_id?'#'+wqEsc(String(row.appointment_id)):'—')+'</span></div>';
         }
         function openWalkinResultModal(id, mode){
             id = parseInt(id, 10);
@@ -1024,7 +1024,7 @@ function fill_color($s) {
             wqModalMode = mode || 'edit';
             const row = wqRowData[id];
             const title = document.getElementById('wqResultTitle');
-            if (title) title.textContent = 'Consultation Result';
+            if (title) title.textContent = 'Appointment Consultation Result';
             const info = document.getElementById('wqResultInfoRow');
             if (info) info.innerHTML = row ? wqInfoHtml(row) : '<div class="info-item"><label>Patient</label><span>Loading&hellip;</span></div>';
             const saved = wqDrafts[id] !== undefined ? wqDrafts[id] : (wqResults[id] !== undefined ? wqResults[id] : (row ? String(row.result || '') : ''));
