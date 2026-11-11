@@ -34,7 +34,9 @@ function create_appointment_reschedule_token($conn, $appointment_id)
     }
     $stmt->close();
 
-    $token = bin2hex(random_bytes(32));
+    // 128 bits of entropy is sufficient for a short-lived, single-use token
+    // and keeps reschedule URLs compact enough for reliable SMS delivery.
+    $token = bin2hex(random_bytes(16));
     $token_hash = hash('sha256', $token);
     $expires_at = date('Y-m-d H:i:s', time() + (7 * 24 * 60 * 60));
     $stmt = $conn->prepare("INSERT INTO appointment_reschedule_tokens (appointment_id, token_hash, expires_at) VALUES (?, ?, ?)");
@@ -51,7 +53,8 @@ function create_appointment_reschedule_token($conn, $appointment_id)
 
 function find_appointment_reschedule_token($conn, $token)
 {
-    if (!is_string($token) || !preg_match('/\A[a-f0-9]{64}\z/', $token)) {
+    // Accept the previous 64-character format so already-issued links continue to work.
+    if (!is_string($token) || !preg_match('/\A(?:[a-f0-9]{32}|[a-f0-9]{64})\z/', $token)) {
         return null;
     }
 
