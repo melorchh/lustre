@@ -313,13 +313,13 @@ if ($stmt->execute() && $stmt->affected_rows >= 0) {
         @flush();
     }
 
-    // Email the patient a reschedule confirmation (non-fatal on failure).
+    // Notify the patient by email and SMS (non-fatal on notification failure).
     // Buffered so any warnings/output the mailer produces are discarded and
     // can never be appended to the JSON response above.
     ob_start();
     try {
         require_once __DIR__ . '/appointment_mailer.php';
-        send_appointment_email($conn, $appointment_id, 'rescheduled');
+        send_appointment_notification($conn, $appointment_id, 'rescheduled');
     } catch (Throwable $e) {
         error_log('Reschedule email failed (appt=' . $appointment_id . '): ' . $e->getMessage());
     }

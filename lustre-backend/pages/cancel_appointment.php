@@ -35,9 +35,9 @@ $stmt = $conn->prepare("UPDATE appointments SET status='cancelled' WHERE id=?");
 $stmt->bind_param("i", $appointment_id);
 
 if ($stmt->execute()) {
-    // Email the patient a cancellation confirmation (non-fatal on failure)
+    // Notify the patient by email and SMS (non-fatal on notification failure).
     require_once __DIR__ . '/appointment_mailer.php';
-    send_appointment_email($conn, $appointment_id, 'cancelled');
+    send_appointment_notification($conn, $appointment_id, 'cancelled');
     echo "success";
 } else {
     echo "error: Failed to cancel appointment";

@@ -84,9 +84,15 @@ $update_sql = $status === 'cancelled'
 $stmt = $conn->prepare($update_sql);
 $stmt->bind_param("sii", $status, $appt_id, $doctor_id);
 if ($stmt->execute()) {
-    if ($status === 'cancelled' && $stmt->affected_rows > 0) {
+    if (in_array($status, ['confirmed', 'cancelled'], true) && $stmt->affected_rows > 0) {
         require_once __DIR__ . '/appointment_mailer.php';
-        send_appointment_email($conn, $appt_id, 'cancelled', $suggested_date ?: null, $suggested_time ?: null);
+        send_appointment_notification(
+            $conn,
+            $appt_id,
+            $status,
+            $status === 'cancelled' ? ($suggested_date ?: null) : null,
+            $status === 'cancelled' ? ($suggested_time ?: null) : null
+        );
     }
     if ($status === 'cancelled' && $stmt->affected_rows === 0) {
         echo "Appointment is no longer cancellable";
